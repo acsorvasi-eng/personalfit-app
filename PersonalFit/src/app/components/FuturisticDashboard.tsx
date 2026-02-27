@@ -917,10 +917,16 @@ export function FuturisticDashboard() {
       if (!finalText.trim()) return;
       hapticProcess();
 
-      // Add user message to history
+      // Add user message to history (guard against accidental duplicates)
       msgIdRef.current++;
       const userMsg: ChatMessage = { id: msgIdRef.current, role: "user", text: finalText.trim() };
-      setMessages(prev => [...prev, userMsg]);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === "user" && last.text === userMsg.text) {
+          return prev;
+        }
+        return [...prev, userMsg];
+      });
 
       // Stop listening temporarily
       shouldRestartRef.current = false;
@@ -1063,10 +1069,16 @@ export function FuturisticDashboard() {
 
   // ─── Typewriter completion → auto-resume listening if mic is active ───
   const handleTypewriterComplete = useCallback(() => {
-    // Add AI message to history
+    // Add AI message to history (guard against accidental duplicates)
     const pending = pendingAiRef.current;
     if (pending) {
-      setMessages(prev => [...prev, { id: pending.id, role: "ai", text: pending.text }]);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === "ai" && last.text === pending.text) {
+          return prev;
+        }
+        return [...prev, { id: pending.id, role: "ai", text: pending.text }];
+      });
       pendingAiRef.current = null;
     }
     setIsTyping(false);
