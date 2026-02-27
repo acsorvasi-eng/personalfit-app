@@ -991,7 +991,7 @@ export function FuturisticDashboard() {
       {/* ═══ TRIGGER BUTTON ═══ */}
       <button
         onClick={handleOpen}
-        className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center backdrop-blur-xl shadow-lg hover:shadow-xl transition-all active:scale-90 border border-white/20"
+        className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center backdrop-blur-xl shadow-lg hover:shadow-xl transition-all active:scale-90 border border-white/20 md:w-14 md:h-14"
         aria-label={t('dashboard.openAssistant')}
       >
         <Brain className="w-6 h-6 text-white" />
@@ -1021,7 +1021,7 @@ export function FuturisticDashboard() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", stiffness: 380, damping: 38 }}
-              className="fixed inset-0 z-[61] flex flex-col"
+              className="fixed inset-0 z-[61] flex flex-col md:items-center"
             >
               <div className="flex-1 relative flex flex-col overflow-hidden">
                 {/* Base bg */}
@@ -1040,14 +1040,14 @@ export function FuturisticDashboard() {
                 </div>
 
                 {/* ── Central area: Orb + Messages ── */}
-                <div className="relative flex-1 flex flex-col items-center px-4 overflow-hidden z-10">
+                <div className="relative flex-1 flex flex-col items-center px-4 md:px-8 overflow-hidden z-10">
                   {/* Orb */}
                   <div className="flex-shrink-0 py-1">
                     <VoiceOrb state={orbState} />
                   </div>
 
                   {/* Conversation messages — scrollable */}
-                  <div className="flex-1 w-full max-w-md overflow-y-auto py-3 space-y-2.5 scrollbar-hide">
+                  <div className="flex-1 w-full max-w-md md:max-w-xl lg:max-w-2xl overflow-y-auto py-3 space-y-2.5 scrollbar-hide">
                     {messages.map((msg) => (
                       <motion.div
                         key={msg.id}

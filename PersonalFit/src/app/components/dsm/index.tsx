@@ -506,7 +506,7 @@ export function BottomNav({ t }: BottomNavProps) {
     <nav className="fixed bottom-0 left-0 right-0 z-40" role="navigation" aria-label={t("nav.menu")}>
       {/* Frosted glass background */}
       <div className="bg-white/95 dark:bg-[#121212]/95 backdrop-blur-lg border-t border-gray-200/80 dark:border-[#2a2a2a]/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-        <div className="max-w-4xl mx-auto flex items-end px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] sm:px-3">
+        <div className="mx-auto flex items-end px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] sm:px-3 w-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
           <NavLinkItem to="/foods" icon={Apple} label={t("nav.foods")} active={isActive("/foods")} />
           <NavLinkItem to="/shopping" icon={ShoppingCart} label={t("nav.shopping")} active={isActive("/shopping")} />
           <NavLinkItem to="/" icon={UtensilsCrossed} label={t("nav.menu")} active={isActive("/")} />

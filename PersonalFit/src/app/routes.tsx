@@ -33,6 +33,7 @@ import { SubscriptionScreen } from "./components/onboarding/SubscriptionScreen";
 // Plan Setup & Manual Input
 import { PlanSetupScreen } from "./components/onboarding/PlanSetupScreen";
 import { ManualMealInput } from "./components/ManualMealInput";
+import { ProtectedRoute, OnboardingGuard } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -42,51 +43,95 @@ export const router = createBrowserRouter([
       // === Onboarding Flow Routes ===
       {
         path: "splash",
-        Component: SplashScreen,
+        element: (
+          <OnboardingGuard>
+            <SplashScreen />
+          </OnboardingGuard>
+        ),
       },
       {
         path: "onboarding",
-        Component: OnboardingScreen,
+        element: (
+          <OnboardingGuard>
+            <OnboardingScreen />
+          </OnboardingGuard>
+        ),
       },
       {
         path: "login",
-        Component: LoginScreen,
+        element: (
+          <OnboardingGuard>
+            <LoginScreen />
+          </OnboardingGuard>
+        ),
       },
       {
         path: "terms",
-        Component: TermsScreen,
+        element: (
+          <ProtectedRoute>
+            <TermsScreen />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "subscription",
-        Component: SubscriptionScreen,
+        element: (
+          <ProtectedRoute>
+            <SubscriptionScreen />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "plan-setup",
-        Component: PlanSetupScreen,
+        element: (
+          <ProtectedRoute>
+            <PlanSetupScreen />
+          </ProtectedRoute>
+        ),
       },
 
       // === Special Full-Screen Routes ===
       {
         path: "body-vision",
-        Component: BodyVision3D,
+        element: (
+          <ProtectedRoute>
+            <BodyVision3D />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "log-meal",
-        Component: LogMeal,
+        element: (
+          <ProtectedRoute>
+            <LogMeal />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "checkout",
-        Component: Checkout,
+        element: (
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "manual-meal-input",
-        Component: ManualMealInput,
+        element: (
+          <ProtectedRoute>
+            <ManualMealInput />
+          </ProtectedRoute>
+        ),
       },
 
       // === Main App Routes (with bottom navigation) ===
       {
         path: "/",
-        Component: Layout,
+        element: (
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        ),
         children: [
           { index: true, Component: UnifiedMenu },
           { path: "foods", Component: Foods },

@@ -86,9 +86,13 @@ export function Layout() {
 
   return (
     <AppInitializer>
-      <div className="h-screen flex flex-col bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#121212] dark:to-[#121212] overflow-hidden">
+      <div className="min-h-screen h-svh flex flex-col bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#121212] dark:to-[#121212] overflow-hidden">
         {/* Main Content */}
-        <main className="flex-1 overflow-hidden max-w-4xl mx-auto w-full pb-20" role="main" aria-label={t('nav.menu')}>
+        <main
+          className="flex-1 overflow-hidden w-full pb-20 px-4 sm:px-6 md:px-8 lg:px-10 max-w-5xl mx-auto"
+          role="main"
+          aria-label={t('nav.menu')}
+        >
           <Outlet />
         </main>
 
@@ -100,7 +104,7 @@ export function Layout() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
-              className="fixed right-4 bottom-24 z-50 sm:right-6 lg:right-8"
+              className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
             >
               <WaterTracker
                 current={waterIntake}

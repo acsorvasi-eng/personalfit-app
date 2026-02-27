@@ -229,8 +229,8 @@ export function LoginScreen() {
   // ═══════════════════════════════════════════════════════════
   if (view === 'forgotPassword') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-[#121212] dark:via-[#121212] dark:to-[#121212] flex flex-col items-center justify-center p-6">
-        <div className="max-w-md w-full">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-[#121212] dark:via-[#121212] dark:to-[#121212] flex flex-col items-center justify-center px-4 py-6 sm:px-6 md:px-8">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -354,8 +354,8 @@ export function LoginScreen() {
   // Main Auth View (Sign In / Register)
   // ═══════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-[#121212] dark:via-[#121212] dark:to-[#121212] flex flex-col items-center justify-center p-6">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-[#121212] dark:via-[#121212] dark:to-[#121212] flex flex-col items-center justify-center px-4 py-6 sm:px-6 md:px-8">
+      <div className="w-full max-w-sm sm:max-w-md md:max-w-lg">
         {/* ── Logo Section ──────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
