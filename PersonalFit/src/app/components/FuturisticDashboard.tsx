@@ -34,6 +34,78 @@ const SPEECH_LANG_MAP: Record<string, string> = {
   ro: 'ro-RO',
 };
 
+// Map UI language → TTS voice locale (can be tuned later)
+const TTS_LANG_MAP: Record<string, string> = {
+  hu: 'hu-HU',
+  en: 'en-US',
+  ro: 'ro-RO',
+};
+
+function speakText(text: string, language: string) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text.trim()) return;
+  try {
+    const synth = window.speechSynthesis;
+    const targetLang = TTS_LANG_MAP[language] || 'hu-HU';
+
+    const pickVoice = () => {
+      const voices = synth.getVoices() || [];
+      if (!voices.length) return undefined;
+
+      // Első szűrés: pontos vagy prefix egyezés nyelv szerint
+      const langMatches = voices.filter((v) => v.lang?.toLowerCase().startsWith(targetLang.toLowerCase()));
+
+      const byLang = langMatches.length ? langMatches : voices;
+
+      // Próbáljunk "fiatal női" karakterű hangot választani név alapján
+      const preferredNameHints = [
+        'female',
+        'woman',
+        'Samantha',
+        'Zira',
+        'Google magyar',
+        'Google UK English Female',
+        'Google US English',
+      ];
+
+      for (const hint of preferredNameHints) {
+        const v = byLang.find((voice) => voice.name.toLowerCase().includes(hint.toLowerCase()));
+        if (v) return v;
+      }
+
+      // Ha nincs jó match, vegyük az első nyelv szerinti hangot
+      return byLang[0];
+    };
+
+    const startSpeaking = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = targetLang;
+      utterance.rate = 1.02;
+      utterance.pitch = 1.05;
+
+      const voice = pickVoice();
+      if (voice) {
+        utterance.voice = voice;
+      }
+
+      synth.cancel();
+      synth.speak(utterance);
+    };
+
+    // Ha a voice‑lista még nem töltődött be, várjunk rá egyszer
+    if (!synth.getVoices().length) {
+      const handler = () => {
+        synth.removeEventListener('voiceschanged', handler as any);
+        startSpeaking();
+      };
+      synth.addEventListener('voiceschanged', handler as any);
+    } else {
+      startSpeaking();
+    }
+  } catch {
+    // Fail silently if TTS is not available
+  }
+}
+
 // ─── Web Speech API type declarations ──────────────────────────────
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
@@ -795,11 +867,14 @@ export function FuturisticDashboard() {
         setStatusLabel(t('dashboard.responding'));
         setCurrentAiText(result.response);
 
+        // Speak the AI response aloud using browser TTS
+        speakText(result.response, language);
+
         // Store the pending AI message for completion handler
         pendingAiRef.current = { id: aiMsgId, text: result.response };
       }, 600 + Math.random() * 400);
     };
-  }, [ctx, t]);
+  }, [ctx, t, language]);
 
   // ─── SpeechRecognition setup ───
   const initRecognition = useCallback(() => {
@@ -1005,13 +1080,13 @@ export function FuturisticDashboard() {
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop */}
+            {/* Backdrop - fully opaque so underlying dashboard UI is not visible in assistant view */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-[3px]"
+              className="fixed inset-0 z-[60] bg-slate-950"
               onClick={handleClose}
             />
 
@@ -1024,9 +1099,8 @@ export function FuturisticDashboard() {
               className="fixed inset-0 z-[61] flex flex-col md:items-center"
             >
               <div className="flex-1 relative flex flex-col overflow-hidden">
-                {/* Base bg */}
-                <div className="absolute inset-0 bg-slate-800" />
-                <div className="absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-transparent via-black/80 via-[50%] to-transparent" />
+                {/* Base bg with smooth dark gradient so the top animation isn't cut or transparent */}
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900" />
 
                 {/* ── Close button ── */}
                 <div className="relative z-20 flex justify-end px-5" style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 16px))" }}>
@@ -1042,7 +1116,7 @@ export function FuturisticDashboard() {
                 {/* ── Central area: Orb + Messages ── */}
                 <div className="relative flex-1 flex flex-col items-center px-4 md:px-8 overflow-hidden z-10">
                   {/* Orb */}
-                  <div className="flex-shrink-0 py-1">
+                  <div className="flex-shrink-0 pt-6 pb-3 md:pt-8">
                     <VoiceOrb state={orbState} />
                   </div>
 
