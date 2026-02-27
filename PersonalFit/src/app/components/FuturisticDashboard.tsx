@@ -34,14 +34,58 @@ const SPEECH_LANG_MAP: Record<string, string> = {
   ro: 'ro-RO',
 };
 
-// Map UI language → TTS voice locale (can be tuned later)
+// Map UI language → TTS voice locale (used for Web Speech fallback)
 const TTS_LANG_MAP: Record<string, string> = {
   hu: 'hu-HU',
   en: 'en-US',
   ro: 'ro-RO',
 };
 
-function speakText(text: string, language: string) {
+const ELEVEN_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel – natural female voice
+
+async function speakWithElevenLabs(text: string): Promise<boolean> {
+  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined;
+  if (!apiKey || !text.trim()) return false;
+
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE_ID}`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'audio/mpeg',
+      },
+      body: JSON.stringify({
+        text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.4,
+          similarity_boost: 0.85,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn('[TTS] ElevenLabs request failed:', res.status, await res.text());
+      return false;
+    }
+
+    const audioData = await res.arrayBuffer();
+    const blob = new Blob([audioData], { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => URL.revokeObjectURL(url);
+    audio.play().catch((err) => {
+      console.warn('[TTS] Failed to play ElevenLabs audio:', err);
+    });
+    return true;
+  } catch (err) {
+    console.warn('[TTS] ElevenLabs error, falling back to Web Speech:', err);
+    return false;
+  }
+}
+
+function speakWithWebSpeech(text: string, language: string) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text.trim()) return;
   try {
     const synth = window.speechSynthesis;
@@ -51,12 +95,9 @@ function speakText(text: string, language: string) {
       const voices = synth.getVoices() || [];
       if (!voices.length) return undefined;
 
-      // Első szűrés: pontos vagy prefix egyezés nyelv szerint
       const langMatches = voices.filter((v) => v.lang?.toLowerCase().startsWith(targetLang.toLowerCase()));
-
       const byLang = langMatches.length ? langMatches : voices;
 
-      // Próbáljunk "fiatal női" karakterű hangot választani név alapján
       const preferredNameHints = [
         'female',
         'woman',
@@ -72,14 +113,13 @@ function speakText(text: string, language: string) {
         if (v) return v;
       }
 
-      // Ha nincs jó match, vegyük az első nyelv szerinti hangot
       return byLang[0];
     };
 
     const startSpeaking = () => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = targetLang;
-      utterance.rate = 1.02;
+      utterance.rate = 0.98;
       utterance.pitch = 1.05;
 
       const voice = pickVoice();
@@ -91,7 +131,6 @@ function speakText(text: string, language: string) {
       synth.speak(utterance);
     };
 
-    // Ha a voice‑lista még nem töltődött be, várjunk rá egyszer
     if (!synth.getVoices().length) {
       const handler = () => {
         synth.removeEventListener('voiceschanged', handler as any);
@@ -103,6 +142,14 @@ function speakText(text: string, language: string) {
     }
   } catch {
     // Fail silently if TTS is not available
+  }
+}
+
+async function speakText(text: string, language: string) {
+  if (!text.trim()) return;
+  const usedEleven = await speakWithElevenLabs(text);
+  if (!usedEleven) {
+    speakWithWebSpeech(text, language);
   }
 }
 
@@ -170,6 +217,8 @@ interface AIContext {
   nextMealName: string;
   nextMealSlotLabel: string;
   nextMealKcal: string;
+  /** Human‑readable summary for today's full menu (breakfast, lunch, dinner) */
+  todayMenuSummary: string;
   workoutCal: number;
   workoutMin: number;
   alerts: { name: string; status: "low" | "empty" }[];
@@ -246,6 +295,7 @@ function buildAIContext(
   let nextMealName = t('dashboard.noData');
   let nextMealSlotLabel = t('dashboard.breakfast');
   let nextMealKcal = "0";
+  let todayMenuSummary = t('dashboard.noData');
 
   if (dayData) {
     if (minutes < 8 * 60 && dayData.breakfast[0]) {
@@ -260,6 +310,18 @@ function buildAIContext(
       nextMealName = dayData.dinner[0].name;
       nextMealSlotLabel = t('dashboard.dinner');
       nextMealKcal = dayData.dinner[0].calories;
+    }
+
+    // Build a friendly, localized summary for today's full menu
+    const breakfastName = dayData.breakfast[0]?.name;
+    const lunchName = dayData.lunch[0]?.name;
+    const dinnerName = dayData.dinner[0]?.name;
+    const parts: string[] = [];
+    if (breakfastName) parts.push(`${t('menu.breakfast')}: ${breakfastName}`);
+    if (lunchName) parts.push(`${t('menu.lunch')}: ${lunchName}`);
+    if (dinnerName) parts.push(`${t('menu.dinner')}: ${dinnerName}`);
+    if (parts.length) {
+      todayMenuSummary = parts.join(' • ');
     }
   }
 
@@ -285,6 +347,7 @@ function buildAIContext(
     nextMealName,
     nextMealSlotLabel,
     nextMealKcal,
+    todayMenuSummary,
     workoutCal,
     workoutMin,
     alerts,
@@ -324,6 +387,22 @@ function buildGreeting(ctx: AIContext, t: (key: string) => string): string {
 }
 
 // ─── Process command (NLU) ─────────────────────────────────────────
+function setTodayWaterIntake(totalMl: number) {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const raw = localStorage.getItem("waterTracking");
+    const data = raw ? JSON.parse(raw) : {};
+    const clamped = Math.max(0, Math.min(totalMl, 5000));
+    data[today] = clamped;
+    localStorage.setItem("waterTracking", JSON.stringify(data));
+    // Notify other parts of the app (Layout, UnifiedMenu, etc.)
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new Event("waterTrackerSync"));
+  } catch {
+    // Fail silently if storage is not available
+  }
+}
+
 function processCommand(text: string, ctx: AIContext, flow: ActiveFlow | null, lastSuggestedRef: React.MutableRefObject<string>, t: (key: string) => string): FlowResult {
   const lower = text.toLowerCase().replace(/[áàăâ]/g, "a").replace(/[éè]/g, "e").replace(/[íìî]/g, "i").replace(/[óò]/g, "o").replace(/[öő]/g, "o").replace(/[úù]/g, "u").replace(/[üű]/g, "u").replace(/[ș]/g, "s").replace(/[ț]/g, "t");
 
@@ -344,6 +423,25 @@ function processCommand(text: string, ctx: AIContext, flow: ActiveFlow | null, l
       if (/delutan|du|este|holnap|afternoon|evening|tomorrow|dupa-amiaza|seara|maine/.test(lower)) {
         return flow.onYes(ctx, t);
       }
+    }
+  }
+
+  // ── Explicit water intake update (e.g. "ma ittam 2 liter vizet") ──
+  if ((/ittam|ittunk|i drank|i have drunk|am baut/.test(lower)) && (/viz|vizet|water|apa/.test(lower))) {
+    const amountMatch = lower.match(/(\d+(?:[.,]\d+)?)\s*(l|liter|litert|litre|liters?|ml|milliliter|millilitert)/);
+    if (amountMatch) {
+      const value = parseFloat(amountMatch[1].replace(',', '.'));
+      const unit = amountMatch[2];
+      let ml = value;
+      if (/l|liter|litre/.test(unit)) {
+        ml = value * 1000;
+      }
+      setTodayWaterIntake(ml);
+      const litres = (ml / 1000).toFixed(1);
+      return {
+        response: `Értettem. Ma ${litres} liter vízfogyasztással számolok.`,
+        newFlow: null,
+      };
     }
   }
 
@@ -445,6 +543,14 @@ function processCommand(text: string, ctx: AIContext, flow: ActiveFlow | null, l
           newFlow: null,
         }),
       },
+    };
+  }
+
+  // ── Full daily menu summary ──
+  if (/napi menu|napi menut|napi menumat|mondd el a napi menu|tell me today'?s menu|today'?s menu|meniul de azi|meniul zilei/.test(lower)) {
+    return {
+      response: ctx.todayMenuSummary,
+      newFlow: null,
     };
   }
 
@@ -622,11 +728,11 @@ const OUTER_BASE = 70;
 const SIZE = 230;
 const CENTER = SIZE / 2;
 
-const ORB_COLORS: Record<OrbState, { bar: string; glow: string; bg: string }> = {
-  idle: { bar: "#a78bfa", glow: "rgba(167, 139, 250, 0.25)", bg: "rgba(167, 139, 250, 0.08)" },
-  listening: { bar: "#22d3ee", glow: "rgba(34, 211, 238, 0.35)", bg: "rgba(34, 211, 238, 0.1)" },
-  thinking: { bar: "#fbbf24", glow: "rgba(251, 191, 36, 0.25)", bg: "rgba(251, 191, 36, 0.08)" },
-  speaking: { bar: "#34d399", glow: "rgba(52, 211, 153, 0.3)", bg: "rgba(52, 211, 153, 0.1)" },
+const ORB_COLORS: Record<OrbState, { bar: string }> = {
+  idle: { bar: "#a78bfa" },
+  listening: { bar: "#22d3ee" },
+  thinking: { bar: "#fbbf24" },
+  speaking: { bar: "#34d399" },
 };
 
 function VoiceOrb({ state }: { state: OrbState }) {
@@ -665,18 +771,8 @@ function VoiceOrb({ state }: { state: OrbState }) {
   const iconColor = state === "listening" ? "#22d3ee" : state === "thinking" ? "#fbbf24" : state === "speaking" ? "#34d399" : "#a78bfa";
 
   return (
-    <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 rounded-full blur-2xl transition-colors duration-700"
-        style={{ backgroundColor: colors.glow }}
-      />
-      {/* Background circle */}
-      <div
-        className="absolute inset-4 rounded-full transition-colors duration-700"
-        style={{ backgroundColor: colors.bg }}
-      />
-      {/* Bars */}
+    <div className="relative flex items-center justify-center" style={{ width: SIZE, height: SIZE }}>
+      {/* Bars (clean radial lines, no extra glow/blur) */}
       <svg width={SIZE} height={SIZE} className="absolute inset-0">
         {bars.map((h, i) => {
           const angle = (i / NUM_BARS) * 360;
@@ -702,25 +798,9 @@ function VoiceOrb({ state }: { state: OrbState }) {
         })}
       </svg>
       {/* Center icon */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-500"
-          style={{
-            backgroundColor: `${colors.bg}`,
-            boxShadow: state === "listening" ? `0 0 40px ${colors.glow}` : state === "speaking" ? `0 0 30px ${colors.glow}` : "none",
-          }}
-        >
-          <IconComponent className="w-9 h-9 transition-colors duration-500" style={{ color: iconColor }} />
-        </div>
+      <div className="relative flex items-center justify-center">
+        <IconComponent className="w-9 h-9 transition-colors duration-500" style={{ color: iconColor }} />
       </div>
-      {/* Thinking rotation overlay */}
-      {state === "thinking" && (
-        <motion.div
-          className="absolute inset-0 rounded-full border-2 border-amber-400/30 border-t-amber-400"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-        />
-      )}
     </div>
   );
 }
@@ -1077,134 +1157,39 @@ export function FuturisticDashboard() {
       </button>
 
       {/* ═══ AI PANEL ═══ */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop - fully opaque so underlying dashboard UI is not visible in assistant view */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[60] bg-slate-950"
-              onClick={handleClose}
-            />
+      {isOpen && (
+        <>
+          {/* Backdrop — static, no opening animation */}
+          <div
+            className="fixed inset-0 z-[60] bg-slate-950"
+            onClick={handleClose}
+          />
 
-            {/* Panel */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 380, damping: 38 }}
-              className="fixed inset-0 z-[61] flex flex-col md:items-center"
-            >
-              <div className="flex-1 relative flex flex-col overflow-hidden">
-                {/* Base bg with smooth dark gradient so the top animation isn't cut or transparent */}
-                <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900" />
+          {/* Panel — static, no slide-up animation */}
+          <div className="fixed inset-0 z-[61] flex flex-col md:items-center">
+            <div className="flex-1 relative flex flex-col overflow-hidden">
+              {/* Base bg with smooth dark gradient so the top animation isn't cut or transparent */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900" />
 
-                {/* ── Close button ── */}
-                <div className="relative z-20 flex justify-end px-5" style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 16px))" }}>
-                  <button
-                    onClick={handleClose}
-                    className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90"
-                    aria-label={t('dashboard.close')}
-                  >
-                    <X className="w-5 h-5 text-white/70" />
-                  </button>
+              {/* ── Close button ── */}
+              <div className="relative z-20 flex justify-end px-5" style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 16px))" }}>
+                <button
+                  onClick={handleClose}
+                  className="w-10 h-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90"
+                  aria-label={t('dashboard.close')}
+                >
+                  <X className="w-5 h-5 text-white/70" />
+                </button>
+              </div>
+
+              {/* ── Central area: ONLY Orb (no additional cards/messages) ── */}
+              <div className="relative flex-1 flex flex-col items-center px-4 md:px-8 overflow-hidden z-10">
+                <div className="flex-shrink-0 pt-6 pb-3 md:pt-8">
+                  <VoiceOrb state={orbState} />
                 </div>
+              </div>
 
-                {/* ── Central area: Orb + Messages ── */}
-                <div className="relative flex-1 flex flex-col items-center px-4 md:px-8 overflow-hidden z-10">
-                  {/* Orb */}
-                  <div className="flex-shrink-0 pt-6 pb-3 md:pt-8">
-                    <VoiceOrb state={orbState} />
-                  </div>
-
-                  {/* Conversation messages — scrollable */}
-                  <div className="flex-1 w-full max-w-md md:max-w-xl lg:max-w-2xl overflow-y-auto py-3 space-y-2.5 scrollbar-hide">
-                    {messages.map((msg) => (
-                      <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                            msg.role === "user"
-                              ? "bg-cyan-500/15 border border-cyan-400/20 text-cyan-100"
-                              : "bg-emerald-500/10 border border-emerald-400/15 text-emerald-100"
-                          }`}
-                        >
-                          <p className="text-sm leading-relaxed">{msg.text}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-
-                    {/* Current AI response (typewriter) */}
-                    {isTyping && currentAiText && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-start"
-                      >
-                        <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-emerald-500/10 border border-emerald-400/15 text-emerald-100">
-                          <p className="text-sm leading-relaxed">
-                            <TypewriterText text={currentAiText} onComplete={handleTypewriterComplete} />
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Interim user speech (real-time — dashed border) */}
-                    {isListeningNow && interimText && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-end"
-                      >
-                        <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-cyan-500/8 border border-cyan-400/20 border-dashed">
-                          <p className="text-sm leading-relaxed text-cyan-200/80">{interimText}</p>
-                          <CountdownBar active={silenceActive} duration={2000} />
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Processing dots */}
-                    {isProcessing && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex justify-start"
-                      >
-                        <div className="rounded-2xl px-4 py-3 bg-emerald-500/10 border border-emerald-400/15 flex gap-1.5">
-                          {[0, 1, 2].map(i => (
-                            <motion.div
-                              key={i}
-                              className="w-2 h-2 rounded-full bg-amber-400"
-                              animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
-                              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-                            />
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Empty state hint */}
-                    {messages.length === 0 && !isTyping && !isProcessing && (
-                      <div className="flex items-center justify-center py-6">
-                        <p className="text-white/15 text-sm text-center">
-                          {t('dashboard.tapMicPrompt')}
-                        </p>
-                      </div>
-                    )}
-
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-
-                {/* ── Bottom: Mic toggle ── */}
+              {/* ── Bottom: Mic toggle ── */}
                 <div
                   className="relative flex items-center justify-center px-6 py-5 z-10"
                   style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom, 20px))" }}
@@ -1289,11 +1274,10 @@ export function FuturisticDashboard() {
                     )}
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

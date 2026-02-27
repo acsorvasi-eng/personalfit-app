@@ -17,6 +17,13 @@ export default defineConfig({
     },
   },
 
+  // Dev server config – use a dedicated port so it doesn't collide
+  // with other local tools (e.g. UI Testing dashboards)
+  server: {
+    port: 5174,
+    strictPort: true,
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
