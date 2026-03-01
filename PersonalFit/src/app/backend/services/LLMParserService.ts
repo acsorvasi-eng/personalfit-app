@@ -37,24 +37,30 @@ interface LLMParserOutput {
 }
 
 async function callClaudeAPI(text: string): Promise<string> {
+  // Production: use Vercel serverless proxy
+  // Development: use direct API (needs VITE_ANTHROPIC_API_KEY)
+  const isProduction = import.meta.env.PROD;
+
+  if (isProduction) {
+    const response = await fetch('/api/parse-document', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.substring(0, 50000) }),
+    });
+    if (!response.ok) throw new Error(`Proxy hiba: ${response.status}`);
+    const data = await response.json();
+    if (!data.result) throw new Error('Üres válasz a proxytól');
+    return data.result;
+  }
+
+  // Development fallback: direct API call
   const apiKey = getApiKey();
   if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY nincs beállítva');
 
   const maxTextLength = 50000;
-  const truncatedText = text.length > maxTextLength
-    ? text.substring(0, maxTextLength) + '\n\n[SZÖVEG CSONKÍTVA]'
-    : text;
+  const truncatedText = text.length > maxTextLength ? text.substring(0, maxTextLength) + '\n\n[CSONKÍTVA]' : text;
 
-  const schema = `{
-  "userProfile": { "name": "string|null", "age": "number|null", "weight": "number|null", "height": "number|null", "bmi": "number|null", "gender": "male|female|null", "blood_pressure": "string|null", "activity_level": "sedentary|lightly_active|moderately_active|very_active|extremely_active|null", "goal": "weight_loss|maintenance|muscle_gain|null", "allergies": [], "dietary_preferences": [], "calorie_target": "number|null" },
-  "nutritionPlan": { "weeks": [[{ "week": 1, "day": 1, "day_label": "string", "is_training_day": false, "meals": [{ "meal_type": "breakfast", "name": "string", "ingredients": [{ "name": "string", "quantity_grams": 100, "unit": "g" }], "total_calories": null }] }]], "detected_weeks": 1, "detected_days_per_week": 7 },
-  "measurements": [{ "date": "YYYY-MM-DD", "weight": null, "body_fat": null, "waist": null, "chest": null, "arm": null, "hip": null, "thigh": null, "neck": null, "notes": "" }],
-  "trainingDays": [{ "week": 1, "day": 1, "activity": "string", "duration_minutes": 45, "intensity": "moderate", "estimated_calories": 300, "notes": "" }],
-  "warnings": [],
-  "confidence": 0.8
-}`;
-
-  const response = await fetch(ANTHROPIC_API_URL, {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -62,25 +68,16 @@ async function callClaudeAPI(text: string): Promise<string> {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
-      messages: [{
-        role: 'user',
-        content: `Elemezd ezt a dokumentumot és add vissza az adatokat ebben a JSON struktúrában:\n${schema}\n\nDOKUMENTUM:\n---\n${truncatedText}\n---`,
-      }],
+      messages: [{ role: 'user', content: `Elemezd:\n${truncatedText}` }],
     }),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Anthropic API hiba (${response.status}): ${errorText}`);
-  }
-
+  if (!response.ok) throw new Error(`API hiba: ${response.status}`);
   const data = await response.json();
-  const content = data.content?.[0];
-  if (!content || content.type !== 'text') throw new Error('Váratlan API válasz formátum');
-  return content.text;
+  return data.content?.[0]?.text ?? '';
 }
 
 function safeParseJSON(rawResponse: string): LLMParserOutput | null {
