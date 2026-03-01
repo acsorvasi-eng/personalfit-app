@@ -111,15 +111,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // ─── Check for Google redirect result ───
-    // If user signed in via redirect (popup was blocked), handle the result here
-    checkGoogleRedirectResult().then((redirectUser) => {
-      if (redirectUser) {
-        setUser(redirectUser);
+    // If user signed in via redirect (popup was blocked), handle the result here.
+    // Guard: if getRedirectResult() never resolves (e.g. Firebase/network hang), stop loading after 3s.
+    let settled = false;
+    const stopLoading = () => {
+      if (!settled) {
+        settled = true;
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }).catch(() => {
-      setIsLoading(false);
-    });
+    };
+    const timeoutId = setTimeout(stopLoading, 3000);
+
+    console.log('[Auth] checkGoogleRedirectResult starting');
+    checkGoogleRedirectResult()
+      .then((redirectUser) => {
+        if (redirectUser) setUser(redirectUser);
+        stopLoading();
+      })
+      .catch(() => stopLoading())
+      .finally(() => {
+        console.log('[Auth] checkGoogleRedirectResult done');
+        clearTimeout(timeoutId);
+      });
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
