@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-haiku-4-5',
         max_tokens: 4096,
         system: `Te egy táplálkozási dokumentum elemző vagy. Elemezd a szöveget és add vissza JSON formátumban. Csak a dokumentumban szereplő adatokat add vissza. Az étkezési típusok: breakfast, lunch, dinner, snack, post_workout. Napok: 1=Hétfő, 2=Kedd, 3=Szerda, 4=Csütörtök, 5=Péntek, 6=Szombat, 7=Vasárnap. Válaszolj KIZÁRÓLAG valid JSON formátumban, markdown nélkül.`,
         messages: [{
@@ -34,7 +34,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const data = await response.json();
     const content = data.content?.[0]?.text;
-    if (!content) return res.status(500).json({ error: 'Empty response from Claude' });
+    if (!content) {
+      console.error('[parse-document] Empty response from Claude — full data:', data);
+      return res.status(500).json({ error: 'Empty response from Claude' });
+    }
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     return res.status(200).json({ result: content });
