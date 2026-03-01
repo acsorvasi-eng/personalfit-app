@@ -34,7 +34,6 @@ import { useState, useCallback } from 'react';
 import * as AIParser from '../backend/services/AIParserService';
 import type { AIParsedDocument, AIParsedUserProfile } from '../backend/services/AIParserService';
 import { parseWithLLM } from '../backend/services/LLMParserService';
-console.log('[DEBUG] LLM parser available:', import.meta.env.VITE_ANTHROPIC_API_KEY ? 'YES' : 'NO');
 import * as NutritionPlanSvc from '../backend/services/NutritionPlanService';
 import * as ShoppingListSvc from '../backend/services/ShoppingListService';
 import * as ActivitySvc from '../backend/services/ActivityService';
