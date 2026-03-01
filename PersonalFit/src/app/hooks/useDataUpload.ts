@@ -33,6 +33,8 @@
 import { useState, useCallback } from 'react';
 import * as AIParser from '../backend/services/AIParserService';
 import type { AIParsedDocument, AIParsedUserProfile } from '../backend/services/AIParserService';
+import { parseWithLLM } from '../backend/services/LLMParserService';
+console.log('[DEBUG] LLM parser available:', import.meta.env.VITE_ANTHROPIC_API_KEY ? 'YES' : 'NO');
 import * as NutritionPlanSvc from '../backend/services/NutritionPlanService';
 import * as ShoppingListSvc from '../backend/services/ShoppingListService';
 import * as ActivitySvc from '../backend/services/ActivityService';
@@ -237,7 +239,7 @@ export function useDataUpload() {
       // v2: Use the unified document parser which handles PDF extraction
       let parsed: AIParsedDocument;
       try {
-        parsed = await AIParser.parseUploadedFile(file);
+        parsed = await parseWithLLM(await file.text()).catch(() => AIParser.parseUploadedFile(file));
       } catch (extractionError) {
         // If PDF extraction completely fails, show error — NO demo data fallback
         console.warn('[Upload] File extraction failed:', extractionError);
@@ -291,7 +293,7 @@ export function useDataUpload() {
       });
 
       // v2: Use unified document parser
-      const parsed = await AIParser.parseDocumentText(text);
+      const parsed = await parseWithLLM(text);
 
       const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
       const hasPersonalData = !!(parsed.userProfile.weight || parsed.userProfile.height || parsed.userProfile.age);
