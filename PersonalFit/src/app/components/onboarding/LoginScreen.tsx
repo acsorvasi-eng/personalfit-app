@@ -87,7 +87,7 @@ export function LoginScreen() {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,7 +148,7 @@ export function LoginScreen() {
       }
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError(null);
 
     try {
@@ -169,7 +169,7 @@ export function LoginScreen() {
       const translatedMsg = key ? t(key) : '';
       setError(translatedMsg || err?.message || t('login.error'));
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -241,7 +241,7 @@ export function LoginScreen() {
     setResetError(null);
   };
 
-  const anyLoading = isLoading || isGoogleLoading;
+  const anyLoading = isSubmitting || isGoogleLoading;
 
   // ═══════════════════════════════════════════════════════════
   // Forgot Password View
