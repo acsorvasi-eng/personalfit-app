@@ -11,7 +11,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getDB } from '../backend/db';
-import { seedDatabase } from '../backend/seed';
 
 export interface BackendInitState {
   isReady: boolean;
@@ -39,15 +38,9 @@ export function useBackendInit(): BackendInitState {
         // Step 1: Open/create database
         const db = await getDB();
 
-        // Step 2: Check food count and seed if needed
+        // Step 2: Check food count (no automatic seeding)
         const foodCount = await db.count('foods');
-        if (foodCount === 0) {
-          await seedDatabase();
-          const newCount = await db.count('foods');
-          setState({ isReady: true, isLoading: false, error: null, foodCount: newCount });
-        } else {
-          setState({ isReady: true, isLoading: false, error: null, foodCount });
-        }
+        setState({ isReady: true, isLoading: false, error: null, foodCount });
 
         console.log(`[Backend] Initialized. Foods in DB: ${await db.count('foods')}`);
       } catch (error) {

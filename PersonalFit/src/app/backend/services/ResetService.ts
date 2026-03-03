@@ -33,6 +33,7 @@ const LOCAL_STORAGE_KEYS_TO_CLEAR = [
   'bodyVisionData',
   'appFirstUsageDate',
   'onboardingCompleted', 'hasSeenSplash',
+  'uploadStaging',
 ];
 
 // ═══════════════════════════════════════════════════════════════
