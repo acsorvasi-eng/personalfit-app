@@ -5,15 +5,17 @@
  * Loads the active nutrition plan from IndexedDB and converts it to
  * the WeekData[] format used by the UI components.
  *
- * FALLBACK STRATEGY:
+ * FALLBACK STRATEGY (UPDATED):
  *   1. If an active plan exists with meal data → use IndexedDB data
  *   2. If an active plan exists but has NO meal data → fallback to mealData.ts
- *   3. If NO active plan exists → fallback to mealData.ts
+ *   3. If NO active plan exists → return an empty plan (no fallback)
  *   4. On error → fallback to mealData.ts
  *
- * This ensures the app always shows the predefined 4-week meal plan
- * from the backend-uploaded étrend, even if IndexedDB is empty or
- * the AI parser import didn't complete.
+ * FONTOS VÁLTOZÁS:
+ *   - Terv törlése vagy teljes adat-visszaállítás után (nincs aktív terv)
+ *     az app NEM mutat többé hardcoded étrendet, hanem valóban üres
+ *     állapotban marad. Így a Profil → „Adatok törlése” után a Menüm fül
+ *     nem fog úgy kinézni, mintha még lenne aktív étrend.
  *
  * Data flow:
  *   IndexedDB → NutritionPlanService → WeekData[] → UI
@@ -258,12 +260,25 @@ export function usePlanData(): PlanDataState {
 
   const loadData = useCallback(async () => {
     try {
+      // Hard override after factory reset: never load any plan data
+      // while the forceNoActivePlan flag is set.
+      try {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('forceNoActivePlan') === '1') {
+          console.log('[usePlanData] forceNoActivePlan flag set — returning empty data');
+          setPlanData([]);
+          setActivePlan(null);
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // ignore and continue with normal flow
+      }
+
       const plan = await NutritionPlanSvc.getActivePlan();
       if (!plan) {
-        // No active plan — fall back to hardcoded meal plan so the app
-        // always shows meal content even before the user uploads a plan.
-        console.log('[usePlanData] No active plan, using hardcoded fallback');
-        setPlanData(getFallbackPlanData());
+        // Nincs aktív terv: valóban üres állapotot adunk vissza.
+        console.log('[usePlanData] No active plan, returning empty data');
+        setPlanData([]);
         setActivePlan(null);
         setIsLoading(false);
         return;
@@ -272,9 +287,8 @@ export function usePlanData(): PlanDataState {
       setActivePlan(plan);
       const weeks = await buildWeekData(plan);
       if (!hasActualMealData(weeks)) {
-        // Active plan exists but has no meal content (e.g. empty shell from
-        // a document upload that contained only personal data). Treat it the
-        // same as "no plan" and fall back silently to the hardcoded plan.
+        // Aktív terv van, de nincs benne étkezési adat → csendes fallback
+        // a hardcoded 4 hetes tervre, hogy a Menüm fül ne legyen teljesen üres.
         console.log('[usePlanData] Active plan has no meal data, using hardcoded fallback');
         setPlanData(getFallbackPlanData());
         setActivePlan(null);
@@ -284,8 +298,10 @@ export function usePlanData(): PlanDataState {
       setIsLoading(false);
     } catch (error) {
       console.warn('[usePlanData] Failed to load:', error);
-      // Even on error, provide the hardcoded fallback
-      setPlanData(getFallbackPlanData());
+      // Hiba esetén ne jelenjen meg a hardcoded étrend – a reset után
+      // kifejezetten azt szeretnénk, hogy a Menüm fül üres legyen,
+      // amíg a felhasználó új tervet nem tölt fel.
+      setPlanData([]);
       setActivePlan(null);
       setIsLoading(false);
     }
@@ -353,6 +369,20 @@ export function usePlanFoods() {
 
   const loadFoods = useCallback(async () => {
     try {
+      // Hard override after factory reset: do not load any foods while
+      // the forceNoActivePlan flag is present.
+      try {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('forceNoActivePlan') === '1') {
+          console.log('[usePlanFoods] forceNoActivePlan flag set — returning empty foods');
+          setFoods([]);
+          setCategories(['Osszes']);
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // ignore and continue with normal flow
+      }
+
       const plan = await NutritionPlanSvc.getActivePlan();
       if (!plan) {
         setFoods([]);
@@ -389,35 +419,21 @@ export function usePlanFoods() {
       const planFoods: PlanFood[] = [];
       const categorySet = new Set<string>();
 
-      if (foodIdSet.size > 0) {
-        // Plan has linked foods → show only plan-linked foods
-        for (const foodId of foodIdSet) {
-          const food = await db.get<any>('foods', foodId);
-          if (food) {
-            const catLabel = CATEGORY_LABELS[food.category] || food.category;
-            categorySet.add(catLabel);
-            planFoods.push({
-              id: food.id,
-              name: food.name,
-              description: food.description || '',
-              category: catLabel,
-              calories: food.calories_per_100g,
-              protein: food.protein_per_100g,
-              carbs: food.carbs_per_100g,
-              fat: food.fat_per_100g,
-              benefits: food.benefits || [],
-              suitableFor: food.suitable_for || [],
-              source: food.source,
-            });
-          }
-        }
-      } else {
-        // FALLBACK: Plan has no meal items yet → show ALL foods in DB
-        // This ensures the Food Catalog isn't empty even if the parser
-        // didn't produce meal items (e.g., PDF extraction edge cases)
-        console.log('[usePlanFoods] No meal-linked foods found, falling back to all DB foods');
-        const allFoods = await db.getAll<any>('foods');
-        for (const food of allFoods) {
+      if (foodIdSet.size === 0) {
+        // Ha az aktív tervben nincs egyetlen étel sem, akkor a katalógus
+        // is üres marad – nem esünk vissza az összes DB ételre, hogy a
+        // factory reset után se jelenjen meg "látszólagos" tartalom.
+        console.log('[usePlanFoods] No meal-linked foods found; returning empty catalog');
+        setFoods([]);
+        setCategories(['Osszes']);
+        setIsLoading(false);
+        return;
+      }
+
+      // Plan has linked foods → show only plan-linked foods
+      for (const foodId of foodIdSet) {
+        const food = await db.get<any>('foods', foodId);
+        if (food) {
           const catLabel = CATEGORY_LABELS[food.category] || food.category;
           categorySet.add(catLabel);
           planFoods.push({

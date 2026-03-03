@@ -30,6 +30,20 @@ import * as FoodCatalogService from './FoodCatalogService';
 // ═══════════════════════════════════════════════════════════════
 
 export async function getActivePlan(): Promise<NutritionPlanEntity | undefined> {
+  // After a full reset we may want to "mask out" any stale plans that
+  // somehow survived in IndexedDB. The flag is cleared whenever a new
+  // plan is explicitly activated.
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const forceNoPlan = localStorage.getItem('forceNoActivePlan');
+      if (forceNoPlan === '1') {
+        return undefined;
+      }
+    }
+  } catch {
+    // localStorage not available – ignore and fall back to DB
+  }
+
   const db = await getDB();
   const all = await db.getAll<NutritionPlanEntity>('nutrition_plans');
   return all.find(p => p.is_active);
@@ -89,6 +103,15 @@ export async function activatePlan(planId: string): Promise<void> {
   }
 
   notifyDBChange({ store: 'nutrition_plans', action: 'put', key: planId });
+
+  // Any explicit activation means we're out of "reset" mode.
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('forceNoActivePlan');
+    }
+  } catch {
+    // ignore
+  }
 }
 
 export async function deletePlan(planId: string): Promise<void> {

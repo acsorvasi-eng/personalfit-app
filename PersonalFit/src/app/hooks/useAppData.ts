@@ -56,13 +56,26 @@ export function useAppData(): AppDataState {
 
       const measurementCount = await db.count('measurements');
 
+      // If a full reset was executed, we may want to treat the app as
+      // having no active plan even if stale records still live in
+      // IndexedDB. The flag is cleared as soon as a new plan is
+      // explicitly activated.
+      let forceNoPlan = false;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          forceNoPlan = localStorage.getItem('forceNoActivePlan') === '1';
+        }
+      } catch {
+        forceNoPlan = false;
+      }
+
       setState({
-        hasData: plans.length > 0,
-        hasActivePlan: !!activePlan,
+        hasData: forceNoPlan ? false : plans.length > 0,
+        hasActivePlan: forceNoPlan ? false : !!activePlan,
         hasTrainingPlan: !!activeTrainingPlan,
         hasMeasurements: measurementCount > 0,
-        planCount: plans.length,
-        activePlanLabel: activePlan?.label || null,
+        planCount: forceNoPlan ? 0 : plans.length,
+        activePlanLabel: forceNoPlan ? null : activePlan?.label || null,
         isLoading: false,
       });
     } catch (error) {

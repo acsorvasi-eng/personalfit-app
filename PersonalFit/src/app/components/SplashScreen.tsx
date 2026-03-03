@@ -73,6 +73,36 @@ export function SplashScreen() {
     navigate('/onboarding');
   };
 
+  const handleSecretLogoBypass = () => {
+    // Dev-only hidden shortcut: double-click logo to bypass login
+    if (!(import.meta.env.DEV || window.location.hostname === 'localhost')) return;
+
+    const devUser = {
+      id: 'dev_bypass_user',
+      email: 'dev@sixth-halt.local',
+      name: 'Dev Bypass',
+      avatar: '',
+      provider: 'demo',
+      createdAt: new Date().toISOString(),
+      isFirstLogin: false,
+    };
+
+    try {
+      localStorage.setItem('authUser', JSON.stringify(devUser));
+      localStorage.setItem('hasAcceptedTerms', 'true');
+      localStorage.setItem('hasCompletedOnboarding', 'true');
+      localStorage.setItem('hasSeenSplash', 'true');
+      localStorage.setItem('hasPlanSetup', 'true');
+      localStorage.setItem('hasCompletedFullFlow', 'true');
+    } catch {
+      // If localStorage fails, just fall back to normal flow
+      return;
+    }
+
+    // Full reload so AuthProvider re-reads localStorage and ProtectedRoute sees user
+    window.location.href = '/';
+  };
+
   const selectedLang = languages.find(l => l.code === selectedLanguage) || languages[0];
 
   return (
@@ -172,7 +202,10 @@ export function SplashScreen() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="flex items-center justify-center mb-8"
           >
-            <div className="relative">
+            <div
+              className="relative"
+              onDoubleClick={handleSecretLogoBypass}
+            >
               <div className="w-28 h-28 bg-white rounded-3xl shadow-2xl flex items-center justify-center transform rotate-6">
                 <UtensilsCrossed className="w-16 h-16 text-blue-500" />
               </div>

@@ -896,7 +896,7 @@ export function Profile() {
                   onClick={async () => {
                     setIsResetting(true);
                     if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
-                    const result = await performFullReset({ clearTheme: false, reseed: true });
+                    const result = await performFullReset({ clearTheme: false, reseed: false });
                     setIsResetting(false);
                     if (result.success) {
                       setShowResetFinal(false);

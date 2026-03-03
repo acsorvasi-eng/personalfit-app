@@ -210,14 +210,24 @@ export function Foods() {
   const [activeTab, setActiveTab] = useState("Osszes");
   const [selectedFood, setSelectedFood] = useState<PlanFood | null>(null);
 
-  // Decide data source: planFoods from IndexedDB, or fallback to hardcoded
+  // Decide data source:
+  //   - If van aktív tervhez kötött étel (planFoods) → azt használjuk
+  //   - Ha nincs aktív terv → ténylegesen üres lista (EmptyState fog megjelenni)
+  //   - Ha van aktív terv, de valamiért nincs planFoods → fallback a hardcoded foodDatabase-re
   const { foods, categories } = useMemo(() => {
     if (planFoods.length > 0) {
       return { foods: planFoods, categories: planCategories };
     }
-    // Fallback: convert the hardcoded foodDatabase
+
+    if (!appData.hasActivePlan) {
+      // Nincs aktív terv: ne mutassunk hardcoded étellistát, az üres állapot
+      // kommunikálja, hogy előbb tervet kell feltölteni.
+      return { foods: [] as PlanFood[], categories: ["Osszes"] };
+    }
+
+    // Aktív terv van, de nincs betöltött étel → biztonságos fallback a hardcoded adatbázisra
     return convertFoodDBtoPlainFoods(foodDatabase);
-  }, [planFoods, planCategories]);
+  }, [planFoods, planCategories, appData.hasActivePlan]);
 
   // Build localized tabs — inject Kedvencek after Összes
   const tabs = useMemo(() => {

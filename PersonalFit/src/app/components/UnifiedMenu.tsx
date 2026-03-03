@@ -637,17 +637,128 @@ export function UnifiedMenu() {
   const loggedSlotMap = { breakfast: 'after-breakfast' as const, lunch: 'after-lunch' as const, dinner: 'after-dinner' as const };
 
   // ─── Render ────────────────────────────────────────────────
-
-  // Show EmptyState only if no nutrition plan AND no fallback data available
+ 
+  // Speciális „üres menü” layout: aktív naptár + víz + három étkezés-kártya
   if (!appData.isLoading && !appData.hasActivePlan && !hasPlanData) {
     return (
-      <div className="h-full flex flex-col overflow-hidden">
-        <DataUploadSheet open={uploadSheetOpen} onClose={() => setUploadSheetOpen(false)} onComplete={() => appData.refresh()} />
-        <EmptyState variant="menu" onUpload={() => setUploadSheetOpen(true)} />
+      <div className="h-full flex flex-col overflow-hidden relative" role="main" aria-label={t("calendar.dailyMealPlan")}>
+        <div className="flex-shrink-0">
+          <PageHeader
+            icon={UtensilsCrossed}
+            title={t("menu.title")}
+            subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
+            gradientFrom="from-blue-400"
+            gradientTo="to-emerald-500"
+            action={<FuturisticDashboard />}
+            stats={[
+              {
+                label: t("menu.restDay"),
+                value: 0,
+                suffix: "kcal",
+              },
+            ]}
+          />
+        </div>
+
+        <div className="flex-shrink-0">
+          <CalendarStrip
+            selectedDate={selectedDate}
+            calendarMonth={calendarMonth}
+            calendarYear={calendarYear}
+            onSelectDate={goToDay}
+            onPrevMonth={goToPrevMonth}
+            onNextMonth={goToNextMonth}
+          />
+        </div>
+
+        <div
+          ref={contentRef}
+          className="flex-1 overflow-y-auto relative"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          aria-live="polite"
+          aria-atomic="false"
+        >
+          <div className="px-3 sm:px-4 lg:px-6 py-3 space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`-mx-3 sm:-mx-4 lg:-mx-6 px-4 sm:px-5 lg:px-7 py-3 ${
+                isTrainingDay
+                  ? 'bg-gradient-to-r from-orange-50/80 via-amber-50/60 to-orange-50/80 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-orange-950/30'
+                  : isSwimDay
+                  ? 'bg-gradient-to-r from-cyan-50/80 via-teal-50/60 to-cyan-50/80 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-cyan-950/30'
+                  : 'bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-blue-50/80 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-blue-950/30'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
+                  isTrainingDay ? 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-500/20 dark:to-amber-500/20' : isSwimDay ? 'bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-500/20 dark:to-teal-500/20' : 'bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-500/20 dark:to-indigo-500/20'
+                }`}>
+                  {isTrainingDay ? <Dumbbell className="w-5 h-5 text-orange-600 dark:text-orange-400" /> : isSwimDay ? <Waves className="w-5 h-5 text-cyan-600 dark:text-cyan-400" /> : <Moon className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800 dark:text-orange-300' : isSwimDay ? 'text-cyan-800 dark:text-cyan-300' : 'text-blue-800 dark:text-blue-300'}`}>
+                      {dayLabel}
+                    </span>
+                    <span className={`text-[12px] font-medium ${isTrainingDay ? 'text-orange-500 dark:text-orange-400' : isSwimDay ? 'text-cyan-500 dark:text-cyan-400' : 'text-blue-500 dark:text-blue-400'}`}>
+                      • {isTrainingDay ? t("menu.higherCarbs") : t("menu.lowerCarbs")}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] mt-0.5 ${isTrainingDay ? 'text-orange-400 dark:text-orange-500/70' : isSwimDay ? 'text-cyan-400 dark:text-cyan-500/70' : 'text-blue-400 dark:text-blue-500/70'}`}>
+                    {t("menu.day")} {((dayOfMonth - 1) % 28) + 1}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {status.isToday && !status.isInEatingWindow && (
+              <div ref={restTimerRef}>
+                <RestTimerCard
+                  restingTimeMinutes={status.restingTimeMinutes}
+                  currentMeal={status.currentMeal}
+                  t={t}
+                  consumedSnacks={consumedSnacks}
+                  onSnackConsume={handleSnackConsume}
+                  onWaterTap={handleWaterTap}
+                  waterIntakeMl={waterIntakeMl}
+                />
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <EmptyMealCard
+                title={t("menu.breakfast")}
+                time="06:00 - 08:00"
+                icon="🌅"
+              />
+              <EmptyMealCard
+                title={t("menu.lunch")}
+                time="12:30 - 13:30"
+                icon="☀️"
+              />
+              <EmptyMealCard
+                title={t("menu.dinner")}
+                time="17:30 - 18:30"
+                icon="🌙"
+              />
+            </div>
+
+            <div className="h-4" />
+          </div>
+        </div>
+
+        <DataUploadSheet
+          open={uploadSheetOpen}
+          onClose={() => setUploadSheetOpen(false)}
+          onComplete={() => appData.refresh()}
+        />
       </div>
     );
   }
-
+ 
   return (
     <div className="h-full flex flex-col overflow-hidden relative" role="main" aria-label={t("calendar.dailyMealPlan")}>
       {/* ══ TIME WINDOW FEEDBACK TOAST ══ */}
@@ -1737,9 +1848,9 @@ function MealDetailSheet({
 // ══════════════════════════════════════════════════════════════
 // LoggedMealAsCard
 // ══════════════════════════════════════════════════════════════
-
+ 
 interface LoggedMealAsCardProps { meal: LoggedMeal; onRemove: () => void; }
-
+ 
 function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
   const { t, locale: cardLocale } = useLanguage();
   const mealTime = new Date(meal.timestamp);
@@ -1785,5 +1896,37 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// EmptyMealCard – neutral meal slot without plan data
+// ══════════════════════════════════════════════════════════════
+
+function EmptyMealCard({ title, time, icon }: { title: string; time: string; icon: string }) {
+  return (
+    <div className="w-full bg-white dark:bg-card rounded-2xl border border-dashed border-gray-200 dark:border-[#2a2a2a]/80 px-4 py-3.5 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-[#252525] flex items-center justify-center text-lg">
+          <span aria-hidden="true">{icon}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            {title}
+          </span>
+          <span className="text-[11px] text-gray-500 dark:text-gray-400">
+            {time}
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-0.5">
+        <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
+          –
+        </span>
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">
+          kcal
+        </span>
+      </div>
+    </div>
   );
 }

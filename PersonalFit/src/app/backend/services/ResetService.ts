@@ -23,16 +23,19 @@ import { seedDatabase } from '../seed';
 const LOCAL_STORAGE_KEYS_TO_CLEAR = [
   'userProfile', 'authUser', 'authToken',
   'totalConsumedCalories', 'dailyHistory', 'lastActiveDate',
-  'menuCheckedMeals', 'selectedMeals',
+  // Menu-related selections & state
+  'menuCheckedMeals', 'menuSelectedMeals', 'selectedMeals',
+  // Favorites and shopping
   'foodFavorites',
   'shoppingList', 'shoppingChecked',
-  // NOTE: workoutTracking, workoutSchedule, workoutFavorites, exerciseFavorites, connectedWorkoutApps
-  // are intentionally NOT cleared — sport data is managed locally/manually
+  // Water & weight tracking
   'waterTracking',
   'weightHistory',
+  // Body-vision & onboarding
   'bodyVisionData',
   'appFirstUsageDate',
   'onboardingCompleted', 'hasSeenSplash',
+  // Upload staging area
   'uploadStaging',
 ];
 
@@ -64,6 +67,7 @@ export function clearLocalStorage(): void {
     const key = localStorage.key(i);
     if (key && (
       key.startsWith('loggedMeals_') ||
+      key.startsWith('snacks_') ||
       key.startsWith('water_') ||
       key.startsWith('meal_') ||
       key.startsWith('day-')
@@ -100,9 +104,17 @@ export async function performFullReset(
   try {
     console.log('[Reset] Starting full data wipe...');
 
-    // Step 1: Destroy IndexedDB
+    // Step 1: Destroy IndexedDB (best-effort)
     await destroyDatabase();
-    console.log('[Reset] IndexedDB destroyed.');
+    console.log('[Reset] IndexedDB destroy requested.');
+
+    // Step 1b: Safety net — clear all object stores in case delete was blocked
+    try {
+      await clearAllStores();
+      console.log('[Reset] All object stores cleared.');
+    } catch (err) {
+      console.warn('[Reset] Failed to clear object stores:', err);
+    }
 
     // Step 2: Clear localStorage
     clearLocalStorage();
@@ -110,6 +122,16 @@ export async function performFullReset(
       localStorage.removeItem('themeMode');
     }
     console.log('[Reset] localStorage cleared.');
+
+    // Step 2b: Set a flag so the UI/plan loader knows we're in a
+    // "no active plan" state until a new plan is explicitly activated.
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('forceNoActivePlan', '1');
+      }
+    } catch {
+      // ignore
+    }
 
     // Step 3: Re-seed if requested
     if (options.reseed) {
