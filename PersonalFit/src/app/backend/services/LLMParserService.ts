@@ -49,8 +49,8 @@ async function callClaudeAPI(text: string): Promise<string> {
     });
     if (!response.ok) throw new Error(`Proxy hiba: ${response.status}`);
     const data = await response.json();
-    if (!data.result) throw new Error('Üres válasz a proxytól');
-    return data.result;
+    if (!data.result && !data.foods) throw new Error('Üres válasz a proxytól');
+    return data.result ?? JSON.stringify(data.foods);
   }
 
   // Development fallback: direct API call

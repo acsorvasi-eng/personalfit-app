@@ -94,7 +94,7 @@ export interface ResetOptions {
  *   3. Biometric or password validation
  */
 export async function performFullReset(
-  options: ResetOptions = { clearTheme: false, reseed: true }
+  options: ResetOptions = { clearTheme: false, reseed: false }
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log('[Reset] Starting full data wipe...');

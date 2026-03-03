@@ -49,7 +49,7 @@ import type {
   Gender,
   GoalType,
 } from '../models';
-import { todayDate, nowISO } from '../db';
+import { todayDate, nowISO, getDB } from '../db';
 import * as ActivityService from './ActivityService';
 
 // ═══════════════════════════════════════════════════════════════
@@ -150,11 +150,33 @@ function readProfile(): ProfileData {
   };
 }
 
-function readConsumedToday(): number {
+async function readConsumedToday(): Promise<number> {
   try {
+    const db = await getDB();
+    const today = todayDate();
+    const allMealDays = await db.getAll('meal_days');
+    const todayMealDayIds = allMealDays
+      .filter((md: any) => md.date === today)
+      .map((md: any) => md.id);
+    if (todayMealDayIds.length === 0) {
+      const raw = localStorage.getItem('totalConsumedCalories');
+      return raw ? parseInt(raw) || 0 : 0;
+    }
+    let total = 0;
+    for (const mealDayId of todayMealDayIds) {
+      const meals = await db.getAllFromIndex('meals', 'by-meal-day', mealDayId);
+      for (const meal of meals as any[]) {
+        const items = await db.getAllFromIndex('meal_items', 'by-meal', meal.id);
+        for (const item of items as any[]) {
+          if (item.calories) total += item.calories;
+        }
+      }
+    }
+    return total;
+  } catch {
     const raw = localStorage.getItem('totalConsumedCalories');
     return raw ? parseInt(raw) || 0 : 0;
-  } catch { return 0; }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -189,7 +211,7 @@ export async function computeDailyBudget(): Promise<DailyCalorieBudget> {
   const burnedScheduled = await ActivityService.getScheduledCaloriesBurn(weekOfMonth, dayOfWeek);
 
   // Step 6: Read consumed
-  const consumed = readConsumedToday();
+  const consumed = await readConsumedToday();
 
   // Step 7: Calculate budget and balance
   const totalBurn = burnedActivity + burnedScheduled;
