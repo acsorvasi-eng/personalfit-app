@@ -15,37 +15,39 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'No content provided' });
     }
 
-    const prompt = `You are a nutrition document analyzer. Extract ALL foods from the text below.
+    const prompt = `You are a professional nutrition document analyzer. Extract ALL meal plan data.
 
-CRITICAL - Hungarian meal type detection:
-- "reggeli", "Reggeli", "reggelire" → meal_type: "breakfast"
-- "ebéd", "Ebéd", "ebédre", "ebedre" → meal_type: "lunch"
-- "vacsora", "Vacsora", "vacsorára", "vacsorara" → meal_type: "dinner"
-- "uzsonna", "snack" → meal_type: "snack"
-- "edzés utáni", "post workout" → meal_type: "post_workout"
-- No meal keyword found → meal_type: "lunch" (default)
+HUNGARIAN → ENGLISH MAPPING:
+Meal types: "Reggeli"→"breakfast", "Ebéd"→"lunch", "Vacsora"→"dinner", "Edzés után"→"post_workout"
+Days: "HÉTFŐ"→1, "KEDD"→2, "SZERDA"→3, "CSÜTÖRTÖK"→4, "PÉNTEK"→5, "SZOMBAT"→6, "VASÁRNAP"→7
+Weeks: "1. HÉT"→1, "2. HÉT"→2, "3. HÉT"→3, "4. HÉT"→4
+Training: "(EDZÉS)" in day = is_training:true, "(PIHENŐ)" = is_training:false
 
-For each food: estimate calories_per_100g from nutritional databases if not provided.
+CALORIES PER 100G: Calculate as (total_calories / amount_g * 100). Use nutritional database estimates if needed.
+TABLESPOON conversion: "1 ek" = 15g
 
-Return ONLY this exact JSON (no explanation, no markdown):
+Extract EVERY week (1-4), EVERY day (1-7), EVERY meal, EVERY ingredient.
+
+Return ONLY this JSON (no explanation):
 {
   "nutritionPlan": {
-    "detected_weeks": 1,
+    "detected_weeks": 4,
     "weeks": [
       {
         "week": 1,
         "days": [
           {
             "day": 1,
+            "is_training": true,
             "meals": [
               {
                 "meal_type": "breakfast",
                 "items": [
                   {
-                    "name": "food name in original language",
-                    "amount_g": 200,
-                    "calories_per_100g": 89,
-                    "total_calories": 178,
+                    "name": "Tojás",
+                    "amount_g": 180,
+                    "calories_per_100g": 155,
+                    "total_calories": 279,
                     "protein_g": null,
                     "carbs_g": null,
                     "fat_g": null
@@ -66,14 +68,24 @@ Return ONLY this exact JSON (no explanation, no markdown):
       }
     ]
   },
+  "trainingDays": [
+    {
+      "week": 1,
+      "day": 1,
+      "activity": "gym training",
+      "duration_minutes": 60,
+      "estimated_calories": 300,
+      "intensity": "high",
+      "notes": "Hétfő EDZÉS"
+    }
+  ],
   "userProfile": {},
   "measurements": [],
-  "trainingDays": [],
   "warnings": [],
-  "confidence": 0.9
+  "confidence": 0.95
 }
 
-IMPORTANT: Create a separate meal object for EACH meal type found. Put each food under the correct meal_type based on the Hungarian keywords above.
+IMPORTANT: Include ALL 4 weeks with ALL 7 days each. Include ALL training days in trainingDays array.
 
 Text to analyze:
 ${inputText.substring(0, 50000)}`;
@@ -104,6 +116,6 @@ ${inputText.substring(0, 50000)}`;
 }
 ```
 
-**`Cmd+A` → töröl → `Cmd+V` → `Cmd+S`** — majd terminálban:
+**`Cmd+S`** → terminálban:
 ```
-git add -A && git commit -m "fix: clean parse-document.ts" && git push
+git add -A && git commit -m "feat: 4-week meal plan + training days parsing" && git push
