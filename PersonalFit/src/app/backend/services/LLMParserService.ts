@@ -13,7 +13,7 @@ import type { AIParsedUserProfile, AIParsedDocument } from './AIParserService';
 import { parseDocumentText } from './AIParserService';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = 'claude-haiku-4-5';
 const MAX_TOKENS = 4096;
 
 function getApiKey(): string | null {
@@ -68,7 +68,7 @@ async function callClaudeAPI(text: string): Promise<string> {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-haiku-4-5',
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Elemezd:\n${truncatedText}` }],
@@ -144,9 +144,12 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
 }
 
 export async function parseWithLLM(rawText: string): Promise<AIParsedDocument & { usedLLM: boolean }> {
+  const isProduction = import.meta.env.PROD;
   const apiKey = getApiKey();
 
-  if (!apiKey) {
+  // In production, always use the proxy (no VITE_ANTHROPIC_API_KEY needed)
+  // In development, fallback to regex if no API key
+  if (!isProduction && !apiKey) {
     console.warn('[LLMParser] API kulcs nincs beállítva — regex parser használata');
     const regexResult = await parseDocumentText(rawText);
     return { ...regexResult, usedLLM: false };
@@ -171,7 +174,7 @@ export async function parseWithLLM(rawText: string): Promise<AIParsedDocument & 
 }
 
 export function isLLMParserAvailable(): boolean {
-  return !!getApiKey();
+  return !!getApiKey() || import.meta.env.PROD;
 }
 
 export function getParserInfo(): { name: string; available: boolean } {
