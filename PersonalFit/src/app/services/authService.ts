@@ -12,6 +12,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
+  sendEmailVerification,
   updateEmail as fbUpdateEmail,
   updatePassword as fbUpdatePassword,
   reauthenticateWithCredential,
@@ -124,6 +125,14 @@ export async function registerWithEmail(
 
     if (displayName) {
       await updateProfile(fbUser, { displayName });
+    }
+
+    // Send verification email from Firebase so the user gets
+    // a real email in their inbox confirming the registration.
+    try {
+      await sendEmailVerification(fbUser);
+    } catch (verifyErr) {
+      console.warn('[Auth] Failed to send verification email:', verifyErr);
     }
 
     const appUser = firebaseUserToAuthUser(fbUser, true);

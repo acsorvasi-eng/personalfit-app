@@ -104,10 +104,6 @@ ${inputText.substring(0, 50000)}`;
 }
 ```
 
-**`Cmd + S`** – mentés
-
----
-
-Ezután a `LLMParserService.ts`-ben is van egy hibás model név. Cursor terminálban:
+**`Cmd+A` → töröl → `Cmd+V` → `Cmd+S`** — majd terminálban:
 ```
-grep -n "claude-haiku-4-5-20251001" src/app/backend/services/LLMParserService.ts
+git add -A && git commit -m "fix: clean parse-document.ts" && git push

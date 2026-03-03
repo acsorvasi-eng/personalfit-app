@@ -69,7 +69,15 @@ function mapFirebaseError(code: string): string {
 export function LoginScreen() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { loginWithGoogle, loginWithEmail, registerWithEmail, termsAccepted } = useAuth();
+  const {
+    loginWithGoogle,
+    loginWithEmail,
+    registerWithEmail,
+    termsAccepted,
+    isAuthenticated,
+    isLoading,
+    getNextRoute,
+  } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>('register');
   const [view, setView] = useState<ScreenView>('auth');
@@ -100,6 +108,17 @@ export function LoginScreen() {
       // localStorage might be unavailable in some environments; ignore and keep default mode
     }
   }, []);
+
+  // If user is already logged in, don't show the login screen again.
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated) return;
+
+    const target = getNextRoute();
+    if (target && target !== '/login') {
+      navigate(target, { replace: true });
+    }
+  }, [isAuthenticated, isLoading, getNextRoute, navigate]);
 
   // ── Navigate after successful auth ────────────────────────
   const navigateAfterAuth = useCallback(
