@@ -3,49 +3,111 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { text } = req.body;
-  if (!text) return res.status(400).json({ error: 'No text provided' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 4096,
-      system: `Te egy táplálkozási és fitnesz dokumentum elemző vagy.
-Elemezd a szöveget és add vissza JSON formátumban.
-Csak a dokumentumban szereplő adatokat add vissza.
-Az étkezési típusok: breakfast, lunch, dinner, snack, post_workout
-A napok számai: 1=Hétfő, 2=Kedd, 3=Szerda, 4=Csütörtök, 5=Péntek, 6=Szombat, 7=Vasárnap
-Válaszolj KIZÁRÓLAG valid JSON formátumban, NE írj magyarázatot.`,
-      messages: [{
-        role: 'user',
-        content: `Elemezd ez ezt a JSON struktúrát:
+    const { content, text } = req.body;
+    const inputText = content || text;
+
+    if (!inputText) {
+      return res.status(400).json({ error: 'No content provided' });
+    }
+
+    const prompt = `You are a nutrition document analyzer. Extract ALL foods from the text below.
+
+CRITICAL - Hungarian meal type detection:
+- "reggeli", "Reggeli", "reggelire" → meal_type: "breakfast"
+- "ebéd", "Ebéd", "ebédre", "ebedre" → meal_type: "lunch"
+- "vacsora", "Vacsora", "vacsorára", "vacsorara" → meal_type: "dinner"
+- "uzsonna", "snack" → meal_type: "snack"
+- "edzés utáni", "post workout" → meal_type: "post_workout"
+- No meal keyword found → meal_type: "lunch" (default)
+
+For each food: estimate calories_per_100g from nutritional databases if not provided.
+
+Return ONLY this exact JSON (no explanation, no markdown):
 {
-  "userProfile": { "name": null, "age": null, "weight": null, "height": null, "gender": null, "goal": null, "calorie_target": null, "allergies": [], "dietary_preferences": [] },
-  "nutritionPlan": { "weeks": [], "detected_weeks": 0, "detected_days_per_week": 0 },
+  "nutritionPlan": {
+    "detected_weeks": 1,
+    "weeks": [
+      {
+        "week": 1,
+        "days": [
+          {
+            "day": 1,
+            "meals": [
+              {
+                "meal_type": "breakfast",
+                "items": [
+                  {
+                    "name": "food name in original language",
+                    "amount_g": 200,
+                    "calories_per_100g": 89,
+                    "total_calories": 178,
+                    "protein_g": null,
+                    "carbs_g": null,
+                    "fat_g": null
+                  }
+                ]
+              },
+              {
+                "meal_type": "lunch",
+                "items": []
+              },
+              {
+                "meal_type": "dinner",
+                "items": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "userProfile": {},
   "measurements": [],
   "trainingDays": [],
   "warnings": [],
-  "confidence": 0.8
+  "confidence": 0.9
 }
 
-SZÖVEG:
-${text.substring(0, 50000)}`
-      }]
+IMPORTANT: Create a separate meal object for EACH meal type found. Put each food under the correct meal_type based on the Hungarian keywords above.
+
+Text to analyze:
+${inputText.substring(0, 50000)}`;
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    const content = response.content?.[0]?.text;
-    if (!content) {
-      console.error('[parse-document] Empty response:', JSON.stringify(response));
-      return res.status(500).json({ error: 'Empty response from AI' });
+    const responseText = response.content[0].type === 'text' ? response.content[0].text : '';
+
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return res.status(200).json({ result: JSON.stringify(parsed) });
+      } catch {
+        return res.status(200).json({ result: responseText });
+      }
     }
 
-    const cleaned = content.replace(/```json|```/g, '').trim();
-    return res.status(200).json({ result: cleaned });
-
-  } catch (err: any) {
-    console.error('[parse-document] Error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(200).json({ result: responseText });
+  } catch (error: any) {
+    console.error('Parse document error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 }
+```
+
+**`Cmd + S`** – mentés
+
+---
+
+Ezután a `LLMParserService.ts`-ben is van egy hibás model név. Cursor terminálban:
+```
+grep -n "claude-haiku-4-5-20251001" src/app/backend/services/LLMParserService.ts
