@@ -220,7 +220,10 @@ export function useDataUpload() {
 
   /**
    * Upload and process a file.
-   * v2: Uses REAL text extraction for PDFs via pdfjs-dist.
+   *
+   * For PDFs: use AIParser.parseUploadedFile (pdfjs-dist) to get clean text,
+   * then optionally enhance with LLM if rawText is available.
+   * For non-PDF files: keep using file.text() → parseWithLLM.
    */
   const uploadFile = useCallback(async (file: File) => {
     try {
@@ -235,12 +238,41 @@ export function useDataUpload() {
 
       setStep('parsing', 10);
 
-      // v2: Use the unified document parser which handles PDF extraction
       let parsed: AIParsedDocument;
+
+      // Detect PDF by extension or MIME type
+      const lowerName = file.name.toLowerCase();
+      const mimeType = file.type.toLowerCase();
+      const isPdf = lowerName.endsWith('.pdf') || mimeType === 'application/pdf';
+
       try {
-        parsed = await parseWithLLM(await file.text()).catch(() => AIParser.parseUploadedFile(file));
+        if (isPdf) {
+          // 1) Extract & parse with PDF-aware parser
+          const baseParsed = await AIParser.parseUploadedFile(file);
+
+          // 2) If we have raw text and LLM is available, enhance with AI
+          if (baseParsed.rawText && baseParsed.rawText.trim().length > 0) {
+            try {
+              const llmParsed = await parseWithLLM(baseParsed.rawText);
+              parsed = {
+                ...llmParsed,
+                // Preserve original rawText from PDF extraction (already sanitized)
+                rawText: baseParsed.rawText,
+              };
+            } catch (llmErr) {
+              console.warn('[Upload] LLM enhancement failed, falling back to base PDF parse:', llmErr);
+              parsed = baseParsed;
+            }
+          } else {
+            parsed = baseParsed;
+          }
+        } else {
+          // Non‑PDF: keep existing behaviour (file.text → LLM/regex parser)
+          const rawText = await file.text();
+          parsed = await parseWithLLM(rawText);
+        }
       } catch (extractionError) {
-        // If PDF extraction completely fails, show error — NO demo data fallback
+        // If extraction completely fails, show error — NO demo data fallback
         console.warn('[Upload] File extraction failed:', extractionError);
         const msg = extractionError instanceof Error ? extractionError.message : 'Ismeretlen hiba';
         setState(prev => ({
