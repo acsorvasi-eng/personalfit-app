@@ -37,7 +37,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const DB_NAME = 'NutriPlanDB';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 // ═══════════════════════════════════════════════════════════════
 // STORE SCHEMAS — defines indexes for each object store
@@ -144,6 +144,12 @@ const STORE_SCHEMAS: Record<string, StoreSchema> = {
   user_profile: {
     keyPath: 'id',
     indexes: [],
+  },
+  weight_history: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'by-date', keyPath: 'date' },
+    ],
   },
   daily_history: {
     keyPath: 'date',
@@ -356,16 +362,36 @@ function openDatabase(): Promise<IDBDatabase> {
       const db = request.result;
       const oldVersion = event.oldVersion;
 
+      const hasStore = (name: string) => {
+        const names = db.objectStoreNames;
+        // DOMStringList may have .contains, older browsers use array-like
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (names as any).contains
+          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (names as any).contains(name)
+          : Array.prototype.includes.call(names, name);
+      };
+
       if (oldVersion < 1) {
-        // Create all object stores and indexes
+        // Fresh database: create all stores
         for (const [storeName, schema] of Object.entries(STORE_SCHEMAS)) {
           const store = db.createObjectStore(storeName, { keyPath: schema.keyPath });
           for (const idx of schema.indexes) {
             store.createIndex(idx.name, idx.keyPath as any, idx.options);
           }
         }
+      } else {
+        // Upgrade path: create any missing stores (e.g. weight_history)
+        for (const [storeName, schema] of Object.entries(STORE_SCHEMAS)) {
+          if (!hasStore(storeName)) {
+            const store = db.createObjectStore(storeName, { keyPath: schema.keyPath });
+            for (const idx of schema.indexes) {
+              store.createIndex(idx.name, idx.keyPath as any, idx.options);
+            }
+          }
+        }
       }
-      // Future migrations: if (oldVersion < 2) { ... }
+      // Future migrations: if (oldVersion < 3) { ... }
     };
 
     request.onsuccess = () => resolve(request.result);

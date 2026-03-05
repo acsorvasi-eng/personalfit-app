@@ -32,9 +32,12 @@
 
 import { useState, useCallback } from 'react';
 import * as AIParser from '../backend/services/AIParserService';
+import { extractTextFromPDF } from '../backend/services/AIParserService';
 import type { AIParsedDocument, AIParsedUserProfile } from '../backend/services/AIParserService';
 import { parseWithLLM } from '../backend/services/LLMParserService';
+import { saveUserProfile } from '../backend/services/UserProfileService';
 import * as NutritionPlanSvc from '../backend/services/NutritionPlanService';
+import { mapAICategoryToFoodCategory } from '../backend/services/NutritionPlanService';
 import * as ShoppingListSvc from '../backend/services/ShoppingListService';
 import * as ActivitySvc from '../backend/services/ActivityService';
 import * as MeasurementSvc from '../backend/services/MeasurementService';
@@ -115,12 +118,19 @@ export interface UploadResult {
  * Only OVERWRITES fields that have real extracted values.
  * Does NOT clear fields that weren't found in the document.
  */
-function populateUserProfile(extracted: AIParsedUserProfile): string[] {
-  const saved = localStorage.getItem('userProfile');
-  const existing = saved ? JSON.parse(saved) : {
-    name: '', age: 0, weight: 0, height: 0,
-    bloodPressure: '', activityLevel: '', goal: '',
-    allergies: '', dietaryPreferences: '', avatar: ''
+async function populateUserProfile(extracted: AIParsedUserProfile): Promise<string[]> {
+  const existing = {
+    name: '',
+    age: 0,
+    weight: 0,
+    height: 0,
+    bloodPressure: '',
+    activityLevel: '',
+    goal: '',
+    allergies: '',
+    dietaryPreferences: '',
+    avatar: '',
+    calorieTarget: undefined as number | undefined,
   };
 
   const fieldsUpdated: string[] = [];
@@ -179,10 +189,13 @@ function populateUserProfile(extracted: AIParsedUserProfile): string[] {
   }
 
   if (fieldsUpdated.length > 0) {
-    localStorage.setItem('userProfile', JSON.stringify(existing));
-    // Notify all listeners
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new Event('profileUpdated'));
+    await saveUserProfile(existing);
+    try {
+      window.dispatchEvent(new Event('profileUpdated'));
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      // window not available (non-browser env) — ignore
+    }
     console.log('[Upload] Profile updated:', fieldsUpdated.join(', '));
   }
 
@@ -219,11 +232,10 @@ export function useDataUpload() {
   }, []);
 
   /**
-   * Upload and process a file.
+   * Upload and process a file → FULL terv import.
    *
-   * For PDFs: use AIParser.parseUploadedFile (pdfjs-dist) to get clean text,
-   * then optionally enhance with LLM if rawText is available.
-   * For non-PDF files: keep using file.text() → parseWithLLM.
+   * For PDFs: use AIParser.parseUploadedFile (pdfjs-dist) to get clean text.
+   * For non-PDF files: read raw text and use unified regex-based parser.
    */
   const uploadFile = useCallback(async (file: File) => {
     try {
@@ -247,29 +259,13 @@ export function useDataUpload() {
 
       try {
         if (isPdf) {
-          // 1) Extract & parse with PDF-aware parser
-          const baseParsed = await AIParser.parseUploadedFile(file);
-
-          // 2) If we have raw text and LLM is available, enhance with AI
-          if (baseParsed.rawText && baseParsed.rawText.trim().length > 0) {
-            try {
-              const llmParsed = await parseWithLLM(baseParsed.rawText);
-              parsed = {
-                ...llmParsed,
-                // Preserve original rawText from PDF extraction (already sanitized)
-                rawText: baseParsed.rawText,
-              };
-            } catch (llmErr) {
-              console.warn('[Upload] LLM enhancement failed, falling back to base PDF parse:', llmErr);
-              parsed = baseParsed;
-            }
-          } else {
-            parsed = baseParsed;
-          }
+          // PDF: extract text with pdfjs, then try LLM first (if key/proxy), else regex parser
+          const rawText = await extractTextFromPDF(file);
+          parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
         } else {
-          // Non‑PDF: keep existing behaviour (file.text → LLM/regex parser)
+          // Text/Word: read raw text, try LLM first then regex
           const rawText = await file.text();
-          parsed = await parseWithLLM(rawText);
+          parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
         }
       } catch (extractionError) {
         // If extraction completely fails, show error — NO demo data fallback
@@ -300,7 +296,7 @@ export function useDataUpload() {
         return;
       }
 
-      // Process the extracted data
+      // FULL MODE: teljes terv import
       return processExtractedData(parsed, file.name);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
@@ -309,8 +305,7 @@ export function useDataUpload() {
   }, []);
 
   /**
-   * Process raw text input.
-   * v2: Uses the unified document parser.
+   * Process raw text input → FULL terv import.
    */
   const processText = useCallback(async (text: string) => {
     try {
@@ -323,8 +318,8 @@ export function useDataUpload() {
         result: null,
       });
 
-      // v2: Use unified document parser
-      const parsed = await parseWithLLM(text);
+      // Try LLM first (if key/proxy), else regex parser
+      const parsed = await parseWithLLM(text).catch(() => AIParser.parseDocumentText(text));
 
       const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
       const hasPersonalData = !!(parsed.userProfile.weight || parsed.userProfile.height || parsed.userProfile.age);
@@ -341,6 +336,7 @@ export function useDataUpload() {
         return;
       }
 
+      // FULL MODE: teljes terv import
       return processExtractedData(parsed, 'Szöveges bemenet');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
@@ -361,7 +357,7 @@ export function useDataUpload() {
 
       // ── Step 1: Populate user profile from extracted data ──
       setStep('parsing', 20);
-      const extractedFields = populateUserProfile(parsed.userProfile);
+      const extractedFields = await populateUserProfile(parsed.userProfile);
       if (extractedFields.length > 0) {
         console.log(`[Upload] Extracted personal data: ${extractedFields.join(', ')}`);
       }
@@ -617,12 +613,211 @@ export function useDataUpload() {
     }
   }, []);
 
+  /**
+   * FAST MODE: only extracts foods from the parsed nutrition plan
+   * and populates the FoodCatalog, without creating full meal plans.
+   * Target: 3–5s quick import for „csak étellista”.
+   */
+  const processFoodsOnly = useCallback(async (
+    parsed: AIParsedDocument,
+    sourceLabel: string,
+  ) => {
+    try {
+      const allWarnings = [...parsed.warnings];
+
+      // Step 1: update basic profile info (cheap, keeps UX consistent)
+      setStep('parsing', 20);
+      const extractedFields = await populateUserProfile(parsed.userProfile);
+      if (extractedFields.length > 0) {
+        console.log(`[Upload/FoodsOnly] Extracted personal data: ${extractedFields.join(', ')}`);
+      }
+
+      // Step 2: collect unique foods from nutrition plan
+      if (!parsed.nutritionPlan || parsed.nutritionPlan.weeks.length === 0) {
+        allWarnings.push('Étrend terv nem található a dokumentumban — nem sikerült ételeket kinyerni.');
+        setState(prev => ({
+          ...prev,
+          step: 'error',
+          error: 'Nem sikerült ételeket kinyerni az étrendből.',
+          warnings: allWarnings,
+        }));
+        return;
+      }
+
+      setStep('populating_foods', 40);
+
+      const seen = new Set<string>();
+      const foodInputs: FoodCatalogSvc.CreateFoodInput[] = [];
+
+      for (const week of parsed.nutritionPlan.weeks) {
+        for (const day of week) {
+          for (const meal of day.meals) {
+            for (const ing of meal.ingredients) {
+              const rawName = (ing.name || '').trim();
+              if (!rawName) continue;
+
+              // Normalize + re-validate against the latest AI parser rules
+              const cleanedName = AIParser.cleanFoodName(rawName);
+              if (!AIParser.isCleanFoodName(cleanedName)) continue;
+
+              const key = cleanedName.toLowerCase();
+              if (seen.has(key)) continue;
+              seen.add(key);
+
+              const category = mapAICategoryToFoodCategory(ing.estimated_category);
+              const calories = ing.estimated_calories_per_100g ?? 100;
+              const protein = ing.estimated_protein_per_100g ?? 0;
+              const carbs = ing.estimated_carbs_per_100g ?? 0;
+              const fat = ing.estimated_fat_per_100g ?? 0;
+
+              foodInputs.push({
+                name: cleanedName,
+                description: 'AI-ból kinyert étel az étrend dokumentumból',
+                category,
+                calories_per_100g: calories,
+                protein_per_100g: protein,
+                carbs_per_100g: carbs,
+                fat_per_100g: fat,
+                source: 'ai_generated',
+              });
+            }
+          }
+        }
+      }
+
+      if (foodInputs.length === 0) {
+        setState(prev => ({
+          ...prev,
+          step: 'error',
+          error: 'Nem sikerült egyetlen használható ételt sem kinyerni.',
+          warnings: allWarnings,
+        }));
+        return;
+      }
+
+      // Step 3: write foods to catalog (batched)
+      const summary = await FoodCatalogSvc.createFoodsBatch(foodInputs);
+
+      console.log('[Upload/FoodsOnly] Foods created:', summary.created.length, 'skipped:', summary.skipped.length);
+
+      // Step 4: finalize quick upload result (no full plan yet)
+      setStep('complete', 100);
+
+      const label = `${sourceLabel} — Gyors étellista`;
+
+      const result: UploadResult = {
+        planId: 'foods-only',
+        planLabel: label,
+        totalWeeks: 0,
+        totalDays: 0,
+        totalMeals: 0,
+        newFoods: summary.created.length,
+        shoppingItems: 0,
+        measurementsRecorded: false,
+        trainingPlanCreated: false,
+        confidence: parsed.confidence,
+        personalDataExtracted: extractedFields.length > 0,
+        extractedFields,
+      };
+
+      setState(prev => ({
+        ...prev,
+        step: 'complete',
+        progress: 100,
+        result,
+        confidence: parsed.confidence,
+        warnings: allWarnings,
+      }));
+
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
+      setState(prev => ({ ...prev, step: 'error', error: message }));
+    }
+  }, []);
+
   // NOTE: generateFromDemoData REMOVED — app works strictly from uploaded data only
 
   return {
     ...state,
     uploadFile,
     processText,
+    // Gyors mód – külön publikus hívók
+    uploadFileFoodsOnly: async (file: File) => {
+      setState({
+        step: 'reading_file',
+        progress: 5,
+        error: null,
+        warnings: [],
+        confidence: 0,
+        result: null,
+      });
+
+      setStep('parsing', 10);
+
+      let parsed: AIParsedDocument;
+
+      const lowerName = file.name.toLowerCase();
+      const mimeType = file.type.toLowerCase();
+      const isPdf = lowerName.endsWith('.pdf') || mimeType === 'application/pdf';
+
+      try {
+        if (isPdf) {
+          parsed = await AIParser.parseUploadedFile(file);
+        } else {
+          const rawText = await file.text();
+          parsed = await AIParser.parseDocumentText(rawText);
+        }
+      } catch (extractionError) {
+        console.warn('[Upload/FoodsOnly] File extraction failed:', extractionError);
+        const msg = extractionError instanceof Error ? extractionError.message : 'Ismeretlen hiba';
+        setState(prev => ({
+          ...prev,
+          step: 'error',
+          error: `Feldolgozási hiba: ${msg}`,
+        }));
+        return;
+      }
+
+      const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
+      if (!hasNutritionPlan) {
+        setState(prev => ({
+          ...prev,
+          step: 'error',
+          error: 'Nem sikerült étrendet kinyerni a dokumentumból.',
+          warnings: [...prev.warnings, ...parsed.warnings],
+        }));
+        return;
+      }
+
+      return processFoodsOnly(parsed, file.name);
+    },
+    processTextFoodsOnly: async (text: string) => {
+      setState({
+        step: 'parsing',
+        progress: 15,
+        error: null,
+        warnings: [],
+        confidence: 0,
+        result: null,
+      });
+
+      const parsed = await AIParser.parseDocumentText(text);
+      const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
+
+      if (!hasNutritionPlan) {
+        setState(prev => ({
+          ...prev,
+          step: 'error',
+          error: 'Nem sikerült étrendet kinyerni a szövegből.',
+          warnings: [...prev.warnings, ...parsed.warnings],
+        }));
+        return;
+      }
+
+      return processFoodsOnly(parsed, 'Szöveges bemenet — Gyors mód');
+    },
+    processExtractedData,
     reset,
     isProcessing: !['idle', 'complete', 'error'].includes(state.step),
   };

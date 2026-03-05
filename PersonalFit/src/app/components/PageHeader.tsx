@@ -75,13 +75,14 @@ export function PageHeader({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={`${gradientClasses} ${roundedBottom ? 'rounded-b-3xl' : ''} shadow-lg text-white relative overflow-hidden`}>
+    <div className={`${gradientClasses} ${roundedBottom ? 'rounded-b-3xl' : ''} mt-6 shadow-lg text-white relative overflow-hidden`}>
       {/* Subtle decorative circles */}
       <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" aria-hidden="true" />
       <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-white/5 rounded-full" aria-hidden="true" />
       {/* Extra decorative circle for desktop */}
       <div className="absolute top-1/2 left-1/3 w-56 h-56 bg-white/3 rounded-full hidden lg:block" aria-hidden="true" />
 
+      {/* Inner content keeps 16px baseline padding on mobile */}
       <div className="relative z-10 px-4 pt-6 pb-4 sm:px-6 sm:pt-8 sm:pb-5 lg:px-8 lg:pt-10 lg:pb-6">
         {/* Top row: Icon + Title + Action */}
         <div className="flex items-center justify-between mb-1">
@@ -96,10 +97,14 @@ export function PageHeader({
             {/* Title & Subtitle */}
             <div className="flex-1 min-w-0">
               {titleElement ? titleElement : (
-                <h1 className="text-white truncate">{title}</h1>
+                <h1 className="text-white text-[32px] leading-[130%] font-bold truncate">
+                  {title}
+                </h1>
               )}
               {subtitle && (
-                <p className="text-white/80 text-xs sm:text-sm mt-0.5 truncate">{subtitle}</p>
+                <p className="text-white/80 text-[14px] leading-[130%] mt-0.5 truncate">
+                  {subtitle}
+                </p>
               )}
             </div>
           </div>
@@ -137,7 +142,7 @@ export function PageHeader({
                         : 'bg-white/15 border-white/10'
                   }`}
                 >
-                  <div className={`text-xl sm:text-2xl font-black text-white tracking-tight ${
+                  <div className={`text-[24px] leading-[130%] font-bold text-white tracking-tight ${
                     isClickable ? 'drop-shadow-md' : ''
                   }`}>
                     {stat.isAction ? (
@@ -153,7 +158,7 @@ export function PageHeader({
                       </>
                     )}
                   </div>
-                  <div className={`text-[11px] sm:text-[13px] mt-0.5 font-medium ${
+                  <div className={`text-[12px] leading-[130%] mt-0.5 font-medium ${
                     isClickable ? 'text-white/90' : 'text-white/75'
                   }`}>{stat.label}</div>
                 </div>

@@ -26,6 +26,7 @@ import { performFullReset } from "../backend/services/ResetService";
 import { useStagingManager } from "../hooks/useStagingManager";
 import { useLanguage, LanguageCode } from "../contexts/LanguageContext";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../services/authService";
+import { getUserProfile, saveUserProfile } from "../backend/services/UserProfileService";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ProfileData {
@@ -85,6 +86,31 @@ export function Profile() {
   const [goalDraftKg, setGoalDraftKg] = useState('');
   const [goalDraftMonths, setGoalDraftMonths] = useState('');
 
+  // Első betöltéskor frissítsük a profilt az IndexedDB-ből is.
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await getUserProfile();
+        setProfile(prev => ({
+          ...prev,
+          name: stored.name,
+          age: stored.age,
+          metabolicAge: (stored as any).metabolicAge || 0,
+          weight: stored.weight,
+          height: stored.height,
+          bloodPressure: stored.bloodPressure,
+          activityLevel: stored.activityLevel,
+          goal: stored.goal,
+          allergies: stored.allergies,
+          dietaryPreferences: stored.dietaryPreferences,
+          avatar: stored.avatar,
+        }));
+      } catch {
+        // ha hiba van, marad a localStorage alap
+      }
+    })();
+  }, []);
+
   // ─── Weight Logger ──────────────────────────────────────────
   const logWeight = useCallback((kg: number) => {
     if (kg <= 0 || kg > 500) return;
@@ -104,7 +130,13 @@ export function Profile() {
     const updatedProfile = { ...profile, weight: kg };
     setProfile(updatedProfile);
     localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-    window.dispatchEvent(new Event('profileUpdated'));
+    saveUserProfile({ weight: kg }).then(() => {
+      try {
+        window.dispatchEvent(new Event('profileUpdated'));
+      } catch {
+        // ignore
+      }
+    });
 
     // Haptic feedback — meal check pattern
     if (navigator.vibrate) navigator.vibrate([10, 20]);
@@ -123,13 +155,33 @@ export function Profile() {
 
   // ─── Re-read profile when storage changes (e.g. after upload) ───
   const reReadProfile = useCallback(() => {
-    const saved = localStorage.getItem('userProfile');
-    if (saved) {
+    (async () => {
       try {
-        const parsed = JSON.parse(saved);
-        setProfile(parsed);
-      } catch { /* ignore parse errors */ }
-    }
+        const stored = await getUserProfile();
+        setProfile(prev => ({
+          ...prev,
+          name: stored.name,
+          age: stored.age,
+          metabolicAge: (stored as any).metabolicAge || 0,
+          weight: stored.weight,
+          height: stored.height,
+          bloodPressure: stored.bloodPressure,
+          activityLevel: stored.activityLevel,
+          goal: stored.goal,
+          allergies: stored.allergies,
+          dietaryPreferences: stored.dietaryPreferences,
+          avatar: stored.avatar,
+        }));
+      } catch {
+        const saved = localStorage.getItem('userProfile');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setProfile(parsed);
+          } catch { /* ignore parse errors */ }
+        }
+      }
+    })();
     const wh = localStorage.getItem('weightHistory');
     if (wh) {
       try { setWeightHistory(JSON.parse(wh)); } catch { /* ignore */ }
@@ -312,7 +364,13 @@ export function Profile() {
     const updated = { ...profile, avatar: croppedImage };
     setProfile(updated);
     localStorage.setItem('userProfile', JSON.stringify(updated));
-    window.dispatchEvent(new Event('profileUpdated'));
+    saveUserProfile({ avatar: croppedImage }).then(() => {
+      try {
+        window.dispatchEvent(new Event('profileUpdated'));
+      } catch {
+        // ignore
+      }
+    });
   };
 
   // ─── Render ─────────────────────────────────────────────────────
@@ -348,12 +406,7 @@ export function Profile() {
         onClose={() => setIsBodyCompUploadOpen(false)}
         onComplete={() => {
           appData.refresh();
-          // Re-read profile from localStorage after body comp upload
-          const saved = localStorage.getItem('userProfile');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            setProfile(parsed);
-          }
+          reReadProfile();
         }}
       />
 
@@ -384,13 +437,17 @@ export function Profile() {
             const updated = { ...profile, name };
             setProfile(updated);
             localStorage.setItem('userProfile', JSON.stringify(updated));
-            window.dispatchEvent(new Event('profileUpdated'));
+            saveUserProfile({ name }).then(() => {
+              try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+            });
           }}
           onAgeSave={(age) => {
             const updated = { ...profile, age };
             setProfile(updated);
             localStorage.setItem('userProfile', JSON.stringify(updated));
-            window.dispatchEvent(new Event('profileUpdated'));
+            saveUserProfile({ age }).then(() => {
+              try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+            });
           }}
           onAvatarClick={() => avatarInputRef.current?.click()}
         />
@@ -439,7 +496,9 @@ export function Profile() {
                     const updated = { ...profile, height: Number(v) };
                     setProfile(updated);
                     localStorage.setItem('userProfile', JSON.stringify(updated));
-                    window.dispatchEvent(new Event('profileUpdated'));
+                    saveUserProfile({ height: Number(v) }).then(() => {
+                      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+                    });
                   }}
                 />
                 <div className="bg-gray-50 dark:bg-[#252525] rounded-xl px-2 py-3 text-center border border-gray-100 dark:border-[#2a2a2a]">
@@ -467,7 +526,9 @@ export function Profile() {
                     const updated = { ...profile, metabolicAge: Number(v) };
                     setProfile(updated);
                     localStorage.setItem('userProfile', JSON.stringify(updated));
-                    window.dispatchEvent(new Event('profileUpdated'));
+                    saveUserProfile({ metabolicAge: Number(v) } as any).then(() => {
+                      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+                    });
                   }}
                 />
               </div>

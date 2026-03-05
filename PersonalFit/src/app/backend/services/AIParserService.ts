@@ -149,6 +149,20 @@ function normalizeTextFull(s: string): string {
 function sanitizeExtractedText(raw: string): string {
   let text = raw;
 
+  // ── Step 0: AGRESSZÍV PDF token filter — teljes sorok törlése ──
+  // Ha egy sor PDF metaadatot / bináris stream tokent tartalmaz → ki
+  const pdfTokenPattern = /\/Producer|\/Creator|\/Author|\/Title|\/Subject|\/Keywords|endobj|startxref|%%EOF|xref\b|\bobj\b|\bstream\b|\bendstream\b|<<|>>|%PDF-|\(Microsoft|\(Acrobat|BT\s|ET\s|Tf\s|Td\s|Tm\s|cmyk|DeviceRGB|FontDescriptor|CIDFont|ToUnicode|Encoding|Widths|BaseFont/i;
+  const lines0 = text.split('\n');
+  text = lines0.filter(line => {
+    const t = line.trim();
+    if (!t) return true;
+    if (pdfTokenPattern.test(t)) {
+      console.warn(`[AIParser v4] PDF token line dropped: "${t.substring(0, 80)}"`);
+      return false;
+    }
+    return true;
+  }).join('\n');
+
   // ── Step 1: Remove BOM, zero-width chars, control chars ──
   text = text.replace(/[\uFEFF\u200B\u200C\u200D\u2060\uFFFD]/g, '');
   // eslint-disable-next-line no-control-regex
@@ -185,8 +199,9 @@ function sanitizeExtractedText(raw: string): string {
   text = text.replace(/[ \t]+/g, ' ');
   text = text.replace(/\n{3,}/g, '\n\n');
 
-  // ── Step 7: Remove lines that are >60% non-letter characters ──
-  // These are corrupted lines that will produce garbage food names
+  // ── Step 7: Remove lines that tartalmaznak túl kevés betűt ──
+  // Ha egy sorban a karakterek nagy része nem betű (szám, szimbólum, zaj),
+  // az nagyon gyakran PDF szemét → inkább dobjuk el teljesen.
   const lines = text.split('\n');
   const cleanLines = lines.filter(line => {
     const trimmed = line.trim();
@@ -194,7 +209,7 @@ function sanitizeExtractedText(raw: string): string {
     if (trimmed.length < 3) return false;  // too short to be useful
     const letterCount = (trimmed.match(/[a-záéíóöőúüűăâîșțA-ZÁÉÍÓÖŐÚÜŰĂÂÎȘȚ]/g) || []).length;
     const ratio = letterCount / trimmed.length;
-    return ratio >= 0.4; // at least 40% real letters
+    return ratio >= 0.6; // legalább 60% valódi betű (szigorítva)
   });
 
   text = cleanLines.join('\n');
@@ -206,37 +221,72 @@ function sanitizeExtractedText(raw: string): string {
 /**
  * Validate that a food name is clean and human-readable.
  * Rejects names with corrupted characters, random symbols, or garbage.
+ *
+ * v4.1: Szigorított — cirill/görög/stb. Unicode blokkok azonnali elutasítás,
+ * PDF token minták, hex stringek, 70% betűarány, max 5% szimbólum.
  */
-function isCleanFoodName(name: string): boolean {
+export function isCleanFoodName(name: string): boolean {
   if (!name || name.length < 2) return false;
   if (name.length > 120) return false;
 
-  // Must contain at least one letter
+  // Kötelező: legalább 1 latin vagy HU/RO betű
   if (!/[a-záéíóöőúüűăâîșțA-ZÁÉÍÓÖŐÚÜŰĂÂÎȘȚ]/.test(name)) return false;
 
-  // Count real letters vs total length
-  const letterCount = (name.match(/[a-záéíóöőúüűăâîșțA-ZÁÉÍÓÖŐÚÜŰĂÂÎȘȚ]/g) || []).length;
-  const ratio = letterCount / name.length;
-  if (ratio < 0.5) return false; // Less than 50% letters = corrupted
+  // ── KEMÉNY SZABÁLY 1: Nem-latin script karakterek azonnali elutasítás ──
+  if (/[\u0400-\u04FF]/.test(name)) return false; // Cirill (Є, ф, φ stb.)
+  if (/[\u0370-\u03FF]/.test(name)) return false; // Görög (φ, α, β stb.)
+  if (/[\u0600-\u06FF]/.test(name)) return false; // Arab
+  if (/[\u4E00-\u9FFF]/.test(name)) return false; // CJK
+  if (/[\u0E00-\u0E7F]/.test(name)) return false; // Thai
+  if (/[\u0590-\u05FF]/.test(name)) return false; // Héber
 
-  // Reject if contains obviously corrupted patterns:
-  // 3+ consecutive consonants that aren't valid in HU/RO/EN
-  const validClusters = /str|scr|spr|spl|chr|thr|sch|nts|ncs|gy|ly|ny|ty|sz|zs|cs|dz|dzs/i;
-  const consonantRuns = name.match(/[bcdfghjklmnpqrstvwxyz]{4,}/gi);
+  // ── KEMÉNY SZABÁLY 2: PDF token minták azonnali elutasítás ──
+  if (/endobj|startxref|\/Producer|\/Creator|xref\b|\bobj\b|%PDF|BT\s|ET\s|FontDescriptor/i.test(name)) return false;
+
+  // ── KEMÉNY SZABÁLY 3: Hex / bináris minták ──
+  if (/[0-9a-f]{8,}/i.test(name) && !/^[a-z]/i.test(name)) return false; // hex string
+  if (/\\[0-9]{3}/.test(name)) return false; // octal escape
+  if (/0x[0-9a-f]{2,}/i.test(name)) return false; // hex literal
+
+  // ── Betűarány: legalább 70% valódi latin/HU/RO betű ──
+  const letterMatches = name.match(/[a-záéíóöőúüűăâîșțA-ZÁÉÍÓÖŐÚÜŰĂÂÎȘȚ]/g) || [];
+  const letterCount = letterMatches.length;
+  const ratio = letterCount / name.length;
+  if (ratio < 0.7) return false; // Szigorítva 60% → 70%
+
+  // ── Szimbólum arány: max 5% nem alfanumerikus jel ──
+  const symbolCount = (name.match(/[^\p{L}\p{N}\s(),.'\-–]/gu) || []).length;
+  if (symbolCount > 0 && symbolCount / name.length > 0.05) return false;
+
+   // ── Számjegy a névben: tipikusan mennyiség / PDF zaj → dobjuk ──
+   // A mennyiséget már másutt levágjuk, élelmiszer névben ritkán van szám.
+   if (/\d/.test(name)) return false;
+
+   // ── Magánhangzó ellenőrzés: legyen "kimondható" szó ──
+   const vowelMatches = name.match(/[aeiouáéíóöőúüűăâîșțAEIOUÁÉÍÓÖŐÚÜŰĂÂÎȘȚ]/g) || [];
+   if (name.length >= 6 && vowelMatches.length < 2) return false;
+
+  // ── Zavaros mássalhangzó-torlódás (nem HU/RO/EN) ──
+  const validClusters = /str|scr|spr|spl|chr|thr|sch|nts|ncs|gy|ly|ny|ty|sz|zs|cs|dz|dzs|rr|ll|ss|tt|pp|ck/i;
+  const consonantRuns = name.match(/[bcdfghjklmnpqrstvwxyz]{5,}/gi);
   if (consonantRuns) {
     for (const run of consonantRuns) {
       if (!validClusters.test(run)) return false;
     }
   }
 
-  // Reject names that are just numbers/units
+  // ── Csak szám/egység ──
   if (/^\d+\s*(g|kg|ml|dl|db|ek|tk)$/i.test(name)) return false;
 
-  // Reject if starts with symbols (but allow parentheses — valid in food lists)
+  // ── Nem betűvel/számmal kezdődik ──
   if (/^[^a-záéíóöőúüűăâîșțA-ZÁÉÍÓÖŐÚÜŰĂÂÎȘȚ\d(]/.test(name)) return false;
 
-  // Reject if it's ONLY a number (bare calorie value with no food name)
+  // ── Csak szám ──
   if (/^\d+$/.test(name)) return false;
+
+  // ── Minimum 2 különböző betű ──
+  const uniqueLetters = new Set(letterMatches.map(l => l.toLowerCase()));
+  if (uniqueLetters.size < 2) return false;
 
   return true;
 }
@@ -245,7 +295,7 @@ function isCleanFoodName(name: string): boolean {
  * Clean a food name for display: trim excess whitespace,
  * remove trailing/leading punctuation, capitalize first letter.
  */
-function cleanFoodName(raw: string): string {
+export function cleanFoodName(raw: string): string {
   let name = raw.trim();
   // Remove leading/trailing dashes, bullets, dots, colons
   name = name.replace(/^[-•–—:.,;]+\s*/, '').replace(/\s*[-•–—:.,;]+$/, '');
@@ -310,7 +360,7 @@ function containsWord(line: string, keyword: string): boolean {
 // PDF TEXT EXTRACTION (pdfjs-dist v5)
 // ═══════════════════════════════════════════════════════════════
 
-async function extractTextFromPDF(file: File): Promise<string> {
+export async function extractTextFromPDF(file: File): Promise<string> {
   // Strategy 1: pdfjs-dist with CDN worker
   try {
     const pdfjsLib = await import('pdfjs-dist');
@@ -670,7 +720,7 @@ function extractPersonalData(rawText: string): AIParsedUserProfile {
   return profile;
 }
 
-// ══════════════��════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // MEASUREMENT EXTRACTION
 // ═══════════════════════════════════════════════════════════════
 
@@ -966,6 +1016,12 @@ function parseCleanFoodItem(raw: string): StructuredMealPlanFood | null {
   let text = raw.trim();
   if (!text) return null;
 
+  // Sorok, amelyek kcal összefoglalót tartalmaznak ("150 kcal komplex CH")
+  // nem valós ételek, hanem statisztika → hagyjuk ki.
+  if (/kcal/i.test(text)) {
+    return null;
+  }
+
   // Remove leading bullet/dash markers
   text = text.replace(/^[-•–—]\s*/, '');
 
@@ -974,11 +1030,12 @@ function parseCleanFoodItem(raw: string): StructuredMealPlanFood | null {
   text = text.replace(/\((\d+(?:[.,]\d+)?\s*(?:g|kg|ml|dl|db|dkg))\)(\d{2,4})\b/gi, '($1)');
 
   // Also strip standalone trailing calorie numbers not preceded by a unit
-  // e.g. "1 banán (120g) 225" — the 225 is calories, not part of the food
+  // e.g. "1 banán (120g) 225" vagy "sárgarépa720" — a 225/720 kalória, nem része a névnek
   text = text.replace(/\)\s*(\d{2,4})\s*$/g, ')');
 
-  // Strip bare trailing numbers if they look like calories (3-4 digits at end of line)
-  text = text.replace(/\s+\d{3,4}\s*$/, '');
+  // Strip bare trailing numbers if they look like calories (3-4 digits at end of line),
+  // akkor is, ha közvetlenül a szóhoz tapadnak: "sárgarépa720" → "sárgarépa"
+  text = text.replace(/\d{3,4}\s*$/, '');
 
   // ── Extract quantity + unit ──
   // Pattern 1: number + unit at end or embedded: "joghurt 250g", "250g joghurt"
@@ -1001,6 +1058,13 @@ function parseCleanFoodItem(raw: string): StructuredMealPlanFood | null {
     if (spacedQty) {
       quantity = `${spacedQty[1]} ${spacedQty[2]}`;
       foodName = text.replace(spacedQty[0], '').trim();
+    } else {
+      // Ha sehol nincs mennyiség vagy szám, akkor ez valószínűleg
+      // cím / megjegyzés ("Extra változatosság", "Napi összesen" stb.),
+      // ne kezeljük ételként.
+      if (!/\d/.test(text)) {
+        return null;
+      }
     }
   }
 
@@ -1444,7 +1508,7 @@ export async function parseNutritionPlanText(
     // ── Parse as ingredient line (v4: "+" splitting + clean validation) ──
     if (currentMeal && line.length > 2) {
       // Skip lines that are clearly headers/metadata, not ingredients
-      const skipPatterns = /^(?:\d+\.\s*het|het\s*\d|week\s*\d|sapt|ossz|total|megjegyzes|note|observat)/i;
+      const skipPatterns = /(?:^\d+\.\s*het|^het\s*\d|^week\s*\d|^sapt|ossz|total|megjegyzes|note|observat|napi\s+osszesen|heti\s+osszegzes|extra\s+valtozatossag|atlag\s+kaloria|átlag\s+kal[oó]ria|average\s+calories|opcion[aá]lis\s+uszas|opcion[aá]lis\s+úsz[aá]s|uszas|úsz[aá]s)/i;
       if (skipPatterns.test(lower)) continue;
 
       // v4: Split by "+" delimiter — "joghurt 250g + Dió 40g" → 2 items
@@ -1502,7 +1566,6 @@ export async function parseNutritionPlanText(
   };
 
   // ─── POST-PARSE VALIDATION: strict binary outcome ─────────────
-  // Count actual meals that contain at least 1 ingredient (real food data)
   let totalMealsWithFood = 0;
   let totalIngredients = 0;
   for (const week of plan.weeks) {
@@ -1518,22 +1581,67 @@ export async function parseNutritionPlanText(
 
   const hasRealData = totalMealsWithFood > 0 && totalIngredients > 0;
 
-  // EXPLICIT ERROR: no structural markers at all
   if (structuralMarkersFound === 0) {
     console.warn('[AIParser v3] No structural markers (week/day/meal) detected in text.');
     warnings.push('PARSE_ERROR: No structured meal plan data detected. The document does not contain recognizable week/day/meal markers in HU, RO, or EN.');
-  }
-  // EXPLICIT ERROR: markers found but no actual food data extracted
-  else if (!hasRealData) {
+  } else if (!hasRealData) {
     console.warn(`[AIParser v3] Structural markers found (${structuralMarkersFound}) but 0 meals with ingredients.`);
     warnings.push('PARSE_ERROR: Structural markers (week/day/meal headers) were detected, but no food items could be extracted from the document. The content between meal headers may be empty or unrecognizable.');
   }
 
-  // If parse error detected → null out the plan to prevent downstream ghost data
+  // ─── FALLBACK: flat list — if no structure or no ingredients, try to extract any "food + quantity" lines as one meal ───
+  let finalPlan: AIParsedNutritionPlan = plan;
+  const hasParseErrorBeforeFallback = warnings.some(w => w.startsWith('PARSE_ERROR:'));
+  if (!hasRealData && hasParseErrorBeforeFallback) {
+    const flatIngredients: Array<{ name: string; quantity_grams: number; unit: 'g' | 'ml' | 'db'; matched_food_id?: string; estimated_calories_per_100g?: number; estimated_protein_per_100g?: number; estimated_carbs_per_100g?: number; estimated_fat_per_100g?: number; estimated_category?: string }> = [];
+    for (const line of lines) {
+      const lower = normalizeTextFull(line);
+      if (detectWeekNumber(line) !== null || detectDayFromLine(line) !== null || detectMealType(line) !== null) continue;
+      const skipPatterns = /(?:^\d+\.\s*het|^het\s*\d|^week\s*\d|^sapt|ossz|total|megjegyzes|note|observat|napi\s+osszesen|heti\s+osszegzes|oldal|page\s*\d|^\d+$|^[\d\s.:\-]+$)/i;
+      if (skipPatterns.test(lower) || line.length < 3 || line.length > 120) continue;
+      if (/^[^\p{L}\p{N}]/u.test(line.trim()) || /[<>{}[\]\\|@#$%^*~`]/.test(line)) continue;
+      const parts = splitFoodsByPlus(line);
+      for (const part of parts) {
+        const cleanFood = parseCleanFoodItem(part);
+        if (!cleanFood) continue;
+        const parsed = parseIngredientLine(part);
+        const matchedId = await matchFoodByName(cleanFood.name);
+        const estimated = estimateIngredientNutrition(cleanFood.name);
+        flatIngredients.push({
+          name: cleanFood.name,
+          quantity_grams: parsed.quantity_grams,
+          unit: parsed.unit,
+          matched_food_id: matchedId ?? undefined,
+          estimated_calories_per_100g: estimated.calories_per_100g,
+          estimated_protein_per_100g: estimated.protein_per_100g,
+          estimated_carbs_per_100g: estimated.carbs_per_100g,
+          estimated_fat_per_100g: estimated.fat_per_100g,
+          estimated_category: estimated.category,
+        });
+      }
+    }
+    if (flatIngredients.length > 0) {
+      console.log(`[AIParser v3] Fallback: extracted ${flatIngredients.length} food items as flat list (no week/day/meal structure).`);
+      warnings.splice(warnings.findIndex(w => w.startsWith('PARSE_ERROR:')), 1);
+      warnings.push('Strukturált hét/nap/étkezés nem található; a dokumentumból étellista került importálásra egy nap alatt.');
+      finalPlan = {
+        weeks: [[{
+          week: 1,
+          day: 1,
+          day_label: 'Importált lista',
+          is_training_day: false,
+          meals: [{ meal_type: 'lunch', name: 'Importált ételek', ingredients: flatIngredients }],
+        }]],
+        detected_weeks: 1,
+        detected_days_per_week: 1,
+      };
+    }
+  }
+
   const hasParseError = warnings.some(w => w.startsWith('PARSE_ERROR:'));
-  const finalPlan: AIParsedNutritionPlan = hasParseError
-    ? { weeks: [], detected_weeks: 0, detected_days_per_week: 0 }
-    : plan;
+  if (hasParseError) {
+    finalPlan = { weeks: [], detected_weeks: 0, detected_days_per_week: 0 };
+  }
 
   const result: AIParseResult = {
     id: generateId(),
@@ -1553,30 +1661,10 @@ export async function parseNutritionPlanText(
 // STRUCTURED JSON OUTPUT
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Convert internal AIParsedNutritionPlan to clean structured JSON format (v4):
- * {
- *   "week1": {
- *     "monday": {
- *       "breakfast": [
- *         { "name": "Görög joghurt 3%", "quantity": "250g", "calories": null },
- *         { "name": "Dió", "quantity": "40g", "calories": null }
- *       ],
- *       "lunch": [...],
- *       "dinner": [...]
- *     }
- *   }
- * }
- *
- * ONLY returns clean, validated food items.
- * Returns { data: null, error: string } if parsing failed.
- * NO hardcoded fallback, NO corrupted characters.
- */
 export function toStructuredMealPlanJSON(
   plan: AIParsedNutritionPlan | null,
   warnings: string[]
 ): { data: StructuredMealPlanJSON | null; error: string | null } {
-  // Check for explicit parse error
   const hasParseError = warnings.some(w => w.startsWith('PARSE_ERROR:'));
   if (hasParseError || !plan || plan.weeks.length === 0) {
     return {
@@ -1600,21 +1688,17 @@ export function toStructuredMealPlanJSON(
       };
 
       for (const meal of day.meals) {
-        // v4: Build clean food array — only validated items, no corrupted names
         const cleanFoods: StructuredMealPlanFood[] = [];
 
         for (const ing of meal.ingredients) {
-          // Final validation gate: reject any corrupted food name
           if (!isCleanFoodName(ing.name)) {
             console.warn(`[AIParser v4] Output gate rejected: "${ing.name}"`);
             continue;
           }
 
-          // Build human-readable quantity string
           let quantity = '';
           if (ing.quantity_grams && ing.unit) {
             if (ing.unit === 'db') {
-              // "db" items: show as "1 db", "2 db"
               const count = Math.round(ing.quantity_grams / 50) || 1;
               quantity = `${count} db`;
             } else {
@@ -1622,8 +1706,6 @@ export function toStructuredMealPlanJSON(
             }
           }
 
-          // Auto-fill calories from knowledge base / database match.
-          // Only fill when there's a real match (not the generic "Egyeb" fallback).
           let calories: number | null = null;
           const calPer100 = ing.estimated_calories_per_100g;
           const category = ing.estimated_category;
@@ -1638,7 +1720,6 @@ export function toStructuredMealPlanJSON(
           });
         }
 
-        // Assign to the correct meal slot
         const mealType = meal.meal_type;
         if (mealType === 'breakfast') {
           dayPlan.breakfast.push(...cleanFoods);
@@ -1659,7 +1740,6 @@ export function toStructuredMealPlanJSON(
     }
   }
 
-  // ─── OUTPUT VALIDATION: verify the JSON actually contains clean food ───
   let totalFoodsInOutput = 0;
   let totalWithCalories = 0;
   for (const weekKey of Object.keys(result)) {
@@ -1690,10 +1770,6 @@ export function toStructuredMealPlanJSON(
   return { data: result, error: null };
 }
 
-/**
- * High-level function: parse raw text and return structured JSON.
- * Returns explicit error if no data found — NO hardcoded fallback.
- */
 export async function parseToStructuredMealPlan(
   rawText: string
 ): Promise<{ data: StructuredMealPlanJSON | null; error: string | null; warnings: string[] }> {
@@ -1712,17 +1788,6 @@ export async function parseToStructuredMealPlan(
 // UNIFIED DOCUMENT PARSER (v3 entry point)
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Unified document parser. Parses ALL extractable data from text:
- *   - Personal profile (weight, height, BMI, age, blood pressure, etc.)
- *   - Nutrition plan (weeks → days → meals → ingredients)
- *   - Body measurements (waist, chest, arm, etc.)
- *   - Training plan (activities, durations, intensities)
- *   - Allergies, dietary preferences, calorie targets
- *
- * FONTOS: A parser a dokumentumbol kinyert ertekeket SZO SZERINT veszi!
- * Ha nincs strukturalt adat, EXPLICIT HIBAUZENET — NEM hardcoded fallback.
- */
 export async function parseDocumentText(rawText: string): Promise<AIParsedDocument> {
   const warnings: string[] = [];
 
@@ -1736,7 +1801,6 @@ export async function parseDocumentText(rawText: string): Promise<AIParsedDocume
   const planResult = await parseNutritionPlanText(sanitizedText);
   warnings.push(...planResult.warnings);
 
-  // Respect PARSE_ERROR: if plan parsing failed, null it out — NO ghost data
   const planHasError = planResult.warnings.some(w => w.startsWith('PARSE_ERROR:'));
   const nutritionPlan: AIParsedNutritionPlan | null = planHasError
     ? null
@@ -1744,7 +1808,6 @@ export async function parseDocumentText(rawText: string): Promise<AIParsedDocume
 
   // Step 3: Parse measurements
   const measurements = parseMeasurementsText(sanitizedText);
-  // Cross-reference: if we got weight from personal data, add it to measurements
   if (userProfile.weight && measurements.length > 0 && !measurements[0].weight) {
     measurements[0].weight = userProfile.weight;
   }
@@ -1786,11 +1849,9 @@ export async function parseDocumentText(rawText: string): Promise<AIParsedDocume
     confidence += 0.05;
   }
 
-  // If nothing was extracted, low confidence
   if (factors === 0) confidence = 0.05;
   confidence = Math.min(1, Math.max(0, confidence));
 
-  // Generate warnings for missing critical data
   if (!userProfile.weight) warnings.push('Testsuly nem talalhato a dokumentumban');
   if (!userProfile.height) warnings.push('Magassag nem talalhato a dokumentumban');
   if (!userProfile.age) warnings.push('Kor nem talalhato a dokumentumban');
@@ -1827,10 +1888,6 @@ export function detectFileType(file: File): 'pdf' | 'word' | 'image' | 'text' {
 // MAIN FILE PARSER (v3 — real extraction, NO fallback)
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Parse an uploaded file. Extracts REAL data from PDFs using pdfjs-dist.
- * Returns explicit error if extraction fails — NO hardcoded data fallback.
- */
 export async function parseUploadedFile(file: File): Promise<AIParsedDocument> {
   const fileType = detectFileType(file);
 
@@ -1841,7 +1898,6 @@ export async function parseUploadedFile(file: File): Promise<AIParsedDocument> {
   } else if (fileType === 'pdf') {
     rawText = await extractTextFromPDF(file);
   } else if (fileType === 'word') {
-    // Word files: try reading as text (some .docx have embedded text)
     try {
       rawText = await file.text();
       const cleaned = rawText.replace(/[^\x20-\x7E\xC0-\xFF\n\r\tÁáÉéÍíÓóÖöŐőÚúÜüŰűĂăÂâÎîȘșȚț]/g, ' ');

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3Ready Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Primitive - Accent */
+      --accent-300: #003C99;
+      --accent-400: #004FCC;
+      --accent-500: #0066FF;
+      --accent-950: #F4F9FF;
+      /* Primitive - Neutral */
+      --neutral-050: #000000;
+      --neutral-100: #1A1A1A;
+      --neutral-900: #EEEEEE;
+      --neutral-950: #FAFAFA;
+      /* Semantic */
+      --green:  #40BF40;
+      --yellow: #F2960D;
+      --red:    #F20D1D;
+      /* Shadows */
+      --shadow-xs:  0 1px 2px 0 rgba(0,0,0,0.05);
+      --shadow-sm:  0 1px 3px 0 rgba(0,0,0,0.10), 0 1px 2px -1px rgba(0,0,0,0.10);
+      --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
+      --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
+      --shadow-xl:  0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10);
+      --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #EEEEEE;
+      padding: 48px 40px;
+      min-height: 100vh;
+    }
+
+    h1.ds-title {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 116%;
+      color: #FAFAFA;
+      margin-bottom: 8px;
+    }
+    .ds-subtitle {
+      font-size: 16px;
+      font-weight: 400;
+      color: #EEEEEE;
+      opacity: 0.5;
+      margin-bottom: 64px;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 56px;
+      border-bottom: 1px solid #1A1A1A;
+      padding-bottom: 0;
+    }
+    nav a {
+      font-size: 14px;
+      font-weight: 400;
+      color: #EEEEEE;
+      opacity: 0.5;
+      text-decoration: none;
+      padding: 10px 16px;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    nav a.active, nav a:hover {
+      opacity: 1;
+      border-bottom: 2px solid #0066FF;
+      color: #FAFAFA;
+    }
+
+    /* Section */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 400;
+      color: #FAFAFA;
+      margin-bottom: 32px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1A1A1A;
+    }
+
+    /* === COLORS === */
+    .color-group { margin-bottom: 40px; }
+    .color-group-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #EEEEEE;
+      opacity: 0.4;
+      margin-bottom: 16px;
+    }
+    .color-row { display: flex; flex-wrap: wrap; gap: 12px; }
+    .color-chip {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 120px;
+    }
+    .color-swatch {
+      width: 100%;
+      height: 64px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .color-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: #EEEEEE;
+    }
+    .color-value {
+      font-size: 11px;
+      font-weight: 400;
+      color: #EEEEEE;
+      opacity: 0.4;
+      font-family: monospace;
+    }
+    .color-desc {
+      font-size: 11px;
+      font-weight: 400;
+      color: #EEEEEE;
+      opacity: 0.3;
+    }
+
+    /* === TYPOGRAPHY === */
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 32px;
+      padding: 24px 0;
+      border-bottom: 1px solid #1A1A1A;
+    }
+    .type-meta {
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+    .type-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #0066FF;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .type-specs {
+      font-size: 11px;
+      font-weight: 400;
+      color: #EEEEEE;
+      opacity: 0.4;
+      margin-top: 4px;
+      font-family: monospace;
+    }
+    .type-sample { color: #FAFAFA; }
+
+    /* === SPACING === */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 10px 0;
+      border-bottom: 1px solid #1A1A1A;
+    }
+    .spacing-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #EEEEEE;
+      opacity: 0.5;
+      min-width: 60px;
+      font-family: monospace;
+    }
+    .spacing-value {
+      font-size: 12px;
+      color: #0066FF;
+      min-width: 50px;
+      font-family: monospace;
+    }
+    .spacing-bar {
+      background: #0066FF;
+      height: 16px;
+      border-radius: 3px;
+      opacity: 0.7;
+    }
+
+    /* === SHADOWS === */
+    .shadow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 24px;
+    }
+    .shadow-card {
+      background: #1A1A1A;
+      border-radius: 12px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .shadow-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #EEEEEE;
+    }
+    .shadow-desc {
+      font-size: 11px;
+      color: #EEEEEE;
+      opacity: 0.35;
+      font-family: monospace;
+      text-align: center;
+    }
+
+    /* === BUTTONS === */
+    .button-section { display: flex; flex-direction: column; gap: 40px; }
+    .button-group-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #EEEEEE;
+      opacity: 0.4;
+      margin-bottom: 20px;
+    }
+    .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-sm  { font-size: 12px; padding: 8px 16px; }
+    .btn-md  { font-size: 14px; padding: 12px 24px; }
+    .btn-lg  { font-size: 16px; padding: 16px 32px; }
+
+    .btn-primary { background: #0066FF; color: #F4F9FF; }
+    .btn-primary:hover { background: #004FCC; }
+    .btn-primary:active { background: #003C99; }
+
+    .btn-secondary {
+      background: transparent;
+      color: #EEEEEE;
+      border: 1.5px solid #EEEEEE;
+    }
+    .btn-secondary:hover { background: rgba(238,238,238,0.08); }
+
+    .btn-ghost {
+      background: transparent;
+      color: #0066FF;
+      border: none;
+    }
+    .btn-ghost:hover { background: rgba(0,102,255,0.1); }
+
+    .btn-danger { background: #F20D1D; color: #FAFAFA; }
+    .btn-success { background: #40BF40; color: #000; }
+    .btn-warning { background: #F2960D; color: #000; }
+
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Status badges */
+    .badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge-brand   { background: #0066FF; color: #F4F9FF; }
+    .badge-success { background: rgba(64,191,64,0.15); color: #40BF40; border: 1px solid rgba(64,191,64,0.3); }
+    .badge-warning { background: rgba(242,150,13,0.15); color: #F2960D; border: 1px solid rgba(242,150,13,0.3); }
+    .badge-error   { background: rgba(242,13,29,0.15); color: #F20D1D; border: 1px solid rgba(242,13,29,0.3); }
+
+    /* Card component */
+    .card {
+      background: #1A1A1A;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 320px;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #FAFAFA;
+      margin-bottom: 8px;
+    }
+    .card-body {
+      font-size: 14px;
+      font-weight: 400;
+      color: #EEEEEE;
+      opacity: 0.6;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .card-footer { display: flex; gap: 8px; }
+
+    /* Input */
+    .input-demo {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 360px;
+    }
+    .input-field {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      background: #1A1A1A;
+      border: 1.5px solid rgba(238,238,238,0.15);
+      border-radius: 8px;
+      color: #EEEEEE;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .input-field:focus { border-color: #0066FF; }
+    .input-field::placeholder { color: rgba(238,238,238,0.3); }
+    .input-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: #EEEEEE;
+      opacity: 0.6;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .input-group { display: flex; flex-direction: column; }
+
+    /* === BREAKPOINTS === */
+    .bp-grid { display: flex; flex-direction: column; gap: 16px; }
+    .bp-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 16px 20px;
+      background: #1A1A1A;
+      border-radius: 10px;
+    }
+    .bp-device {
+      font-size: 13px;
+      font-weight: 800;
+      color: #FAFAFA;
+      min-width: 120px;
+    }
+    .bp-size {
+      font-size: 12px;
+      font-family: monospace;
+      color: #0066FF;
+      min-width: 100px;
+    }
+    .bp-bar-wrap {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .bp-bar { height: 100%; border-radius: 4px; background: #0066FF; opacity: 0.6; }
+  </style>
+</head>
+<body>
+
+  <h1 class="ds-title">3Ready Design System</h1>
+  <p class="ds-subtitle">Visual token reference — colors · typography · spacing · shadows · components</p>
+
+  <nav>
+    <a class="active" onclick="show('colors', this)">Colors</a>
+    <a onclick="show('typography', this)">Typography</a>
+    <a onclick="show('spacing', this)">Spacing</a>
+    <a onclick="show('shadows', this)">Shadows</a>
+    <a onclick="show('components', this)">Components</a>
+    <a onclick="show('breakpoints', this)">Breakpoints</a>
+  </nav>
+
+  <!-- COLORS -->
+  <div id="colors" class="section active">
+    <p class="section-title">Color Tokens</p>
+
+    <div class="color-group">
+      <div class="color-group-title">Primitive — Accent (Brand)</div>
+      <div class="color-row">
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#003C99"></div>
+          <div class="color-name">accent-300</div>
+          <div class="color-value">#003C99</div>
+          <div class="color-desc">Brand pressed</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#004FCC"></div>
+          <div class="color-name">accent-400</div>
+          <div class="color-value">#004FCC</div>
+          <div class="color-desc">Brand hover</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#0066FF"></div>
+          <div class="color-name">accent-500</div>
+          <div class="color-value">#0066FF</div>
+          <div class="color-desc">Brand default ★</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#F4F9FF; border:1px solid rgba(255,255,255,0.2)"></div>
+          <div class="color-name">accent-950</div>
+          <div class="color-value">#F4F9FF</div>
+          <div class="color-desc">On-brand text</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-title">Primitive — Neutral</div>
+      <div class="color-row">
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#000000; border:1px solid rgba(255,255,255,0.15)"></div>
+          <div class="color-name">neutral-050</div>
+          <div class="color-value">#000000</div>
+          <div class="color-desc">Background</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#1A1A1A"></div>
+          <div class="color-name">neutral-100</div>
+          <div class="color-value">#1A1A1A</div>
+          <div class="color-desc">Surface / Card</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#EEEEEE"></div>
+          <div class="color-name">neutral-900</div>
+          <div class="color-value">#EEEEEE</div>
+          <div class="color-desc">Text primary</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#FAFAFA"></div>
+          <div class="color-name">neutral-950</div>
+          <div class="color-value">#FAFAFA</div>
+          <div class="color-desc">Content secondary</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-title">Semantic — Status</div>
+      <div class="color-row">
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#40BF40"></div>
+          <div class="color-name">Success</div>
+          <div class="color-value">#40BF40</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#F2960D"></div>
+          <div class="color-name">Warning</div>
+          <div class="color-value">#F2960D</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#F20D1D"></div>
+          <div class="color-name">Error</div>
+          <div class="color-value">#F20D1D</div>
+        </div>
+        <div class="color-chip" style="flex:1"></div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-title">Semantic — Roles</div>
+      <div class="color-row">
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#000000; border:1px solid rgba(255,255,255,0.15)"></div>
+          <div class="color-name">background.default</div>
+          <div class="color-value">→ neutral-050</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#1A1A1A"></div>
+          <div class="color-name">surface.default</div>
+          <div class="color-value">→ neutral-100</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#0066FF"></div>
+          <div class="color-name">brand.default</div>
+          <div class="color-value">→ accent-500</div>
+        </div>
+        <div class="color-chip" style="flex:1">
+          <div class="color-swatch" style="background:#EEEEEE"></div>
+          <div class="color-name">content.default</div>
+          <div class="color-value">→ neutral-900</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div id="typography" class="section">
+    <p class="section-title">Typography — Inter</p>
+
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Display XL</div>
+        <div class="type-specs">112px / 100% / 800</div>
+      </div>
+      <div class="type-sample" style="font-size:56px;font-weight:800;line-height:100%">Display XL</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Display</div>
+        <div class="type-specs">48px / 116% / 800</div>
+      </div>
+      <div class="type-sample" style="font-size:48px;font-weight:800;line-height:116%">Display</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Headline</div>
+        <div class="type-specs">32px / 125% / 800</div>
+      </div>
+      <div class="type-sample" style="font-size:32px;font-weight:800;line-height:125%">Headline Text</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Title</div>
+        <div class="type-specs">24px / 133% / 800</div>
+      </div>
+      <div class="type-sample" style="font-size:24px;font-weight:800;line-height:133%">Title Text Example</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Section</div>
+        <div class="type-specs">20px / 120% / 400</div>
+      </div>
+      <div class="type-sample" style="font-size:20px;font-weight:400;line-height:120%">Section heading text</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Body</div>
+        <div class="type-specs">16px / 150% / 400</div>
+      </div>
+      <div class="type-sample" style="font-size:16px;font-weight:400;line-height:150%">Body text — used for paragraphs, descriptions, and general content across the application.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">
+        <div class="type-label">Caption</div>
+        <div class="type-specs">12px / 130% / 400</div>
+      </div>
+      <div class="type-sample" style="font-size:12px;font-weight:400;line-height:130%;opacity:0.6">Caption text — metadata, timestamps, helper text</div>
+    </div>
+  </div>
+
+  <!-- SPACING -->
+  <div id="spacing" class="section">
+    <p class="section-title">Spacing — 4px base grid</p>
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div class="spacing-row"><div class="spacing-label">space-0</div><div class="spacing-value">0px</div><div class="spacing-bar" style="width:0px;min-width:2px;opacity:0.2"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-1</div><div class="spacing-value">4px</div><div class="spacing-bar" style="width:4px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-2</div><div class="spacing-value">8px</div><div class="spacing-bar" style="width:8px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-3</div><div class="spacing-value">12px</div><div class="spacing-bar" style="width:12px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-4</div><div class="spacing-value">16px</div><div class="spacing-bar" style="width:16px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-5</div><div class="spacing-value">20px</div><div class="spacing-bar" style="width:20px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-6</div><div class="spacing-value">24px</div><div class="spacing-bar" style="width:24px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-8</div><div class="spacing-value">32px</div><div class="spacing-bar" style="width:32px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-10</div><div class="spacing-value">40px</div><div class="spacing-bar" style="width:40px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-12</div><div class="spacing-value">48px</div><div class="spacing-bar" style="width:48px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-16</div><div class="spacing-value">64px</div><div class="spacing-bar" style="width:64px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-20</div><div class="spacing-value">80px</div><div class="spacing-bar" style="width:80px"></div></div>
+      <div class="spacing-row"><div class="spacing-label">space-24</div><div class="spacing-value">96px</div><div class="spacing-bar" style="width:96px"></div></div>
+    </div>
+  </div>
+
+  <!-- SHADOWS -->
+  <div id="shadows" class="section">
+    <p class="section-title">Shadows</p>
+    <div class="shadow-grid">
+      <div class="shadow-card" style="box-shadow:var(--shadow-xs)">
+        <div class="shadow-name">xs</div>
+        <div class="shadow-desc">0 1px 2px</div>
+      </div>
+      <div class="shadow-card" style="box-shadow:var(--shadow-sm)">
+        <div class="shadow-name">sm</div>
+        <div class="shadow-desc">0 1px 3px</div>
+      </div>
+      <div class="shadow-card" style="box-shadow:var(--shadow-md)">
+        <div class="shadow-name">md</div>
+        <div class="shadow-desc">0 4px 6px</div>
+      </div>
+      <div class="shadow-card" style="box-shadow:var(--shadow-lg)">
+        <div class="shadow-name">lg</div>
+        <div class="shadow-desc">0 10px 15px</div>
+      </div>
+      <div class="shadow-card" style="box-shadow:var(--shadow-xl)">
+        <div class="shadow-name">xl</div>
+        <div class="shadow-desc">0 20px 25px</div>
+      </div>
+      <div class="shadow-card" style="box-shadow:var(--shadow-2xl)">
+        <div class="shadow-name">2xl</div>
+        <div class="shadow-desc">0 25px 50px</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div id="components" class="section">
+    <p class="section-title">Components</p>
+
+    <div class="button-section">
+      <div>
+        <div class="button-group-title">Buttons — Primary</div>
+        <div class="button-row">
+          <button class="btn btn-primary btn-sm">Small</button>
+          <button class="btn btn-primary btn-md">Medium</button>
+          <button class="btn btn-primary btn-lg">Large</button>
+          <button class="btn btn-primary btn-md" disabled>Disabled</button>
+        </div>
+      </div>
+      <div>
+        <div class="button-group-title">Buttons — Secondary / Ghost</div>
+        <div class="button-row">
+          <button class="btn btn-secondary btn-md">Secondary</button>
+          <button class="btn btn-ghost btn-md">Ghost</button>
+        </div>
+      </div>
+      <div>
+        <div class="button-group-title">Buttons — Status</div>
+        <div class="button-row">
+          <button class="btn btn-success btn-md">Success</button>
+          <button class="btn btn-warning btn-md">Warning</button>
+          <button class="btn btn-danger btn-md">Danger</button>
+        </div>
+      </div>
+      <div>
+        <div class="button-group-title">Badges</div>
+        <div class="button-row" style="align-items:center">
+          <span class="badge badge-brand">Brand</span>
+          <span class="badge badge-success">● Success</span>
+          <span class="badge badge-warning">● Warning</span>
+          <span class="badge badge-error">● Error</span>
+        </div>
+      </div>
+      <div>
+        <div class="button-group-title">Card</div>
+        <div class="card">
+          <div class="card-title">Card Title</div>
+          <div class="card-body">A surface component used for cards, menus, tooltips, and bottom sheets. Background: neutral-100.</div>
+          <div class="card-footer">
+            <button class="btn btn-primary btn-sm">Primary</button>
+            <button class="btn btn-secondary btn-sm">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="button-group-title">Inputs</div>
+        <div class="input-demo">
+          <div class="input-group">
+            <label class="input-label">Email</label>
+            <input class="input-field" type="email" placeholder="user@example.com" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Password</label>
+            <input class="input-field" type="password" placeholder="••••••••" />
+          </div>
+          <button class="btn btn-primary btn-md" style="width:100%">Sign in</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREAKPOINTS -->
+  <div id="breakpoints" class="section">
+    <p class="section-title">Breakpoints</p>
+    <div class="bp-grid">
+      <div class="bp-row">
+        <div class="bp-device">📱 Phone portrait</div>
+        <div class="bp-size">360 × 800px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:19%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">📱 Phone landscape</div>
+        <div class="bp-size">640 × 360px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:33%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">📟 Tablet portrait</div>
+        <div class="bp-size">640 × 960px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:33%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">📟 Tablet landscape</div>
+        <div class="bp-size">960 × 640px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:50%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">🖥 Desktop</div>
+        <div class="bp-size">1280px+</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:67%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">📺 TV SD</div>
+        <div class="bp-size">960 × 540px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:50%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">📺 TV HD</div>
+        <div class="bp-size">1920 × 1080px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:100%"></div></div>
+      </div>
+      <div class="bp-row">
+        <div class="bp-device">🚗 Automotive HD</div>
+        <div class="bp-size">1920 × 1080px</div>
+        <div class="bp-bar-wrap"><div class="bp-bar" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function show(id, el) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>

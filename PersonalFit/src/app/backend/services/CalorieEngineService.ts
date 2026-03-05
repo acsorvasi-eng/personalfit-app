@@ -50,6 +50,7 @@ import type {
   GoalType,
 } from '../models';
 import { todayDate, nowISO, getDB } from '../db';
+import { getUserProfile } from './UserProfileService';
 import * as ActivityService from './ActivityService';
 
 // ═══════════════════════════════════════════════════════════════
@@ -93,16 +94,6 @@ export function calculateGoalTarget(
 // PROFILE READER (from localStorage for compatibility)
 // ═══════════════════════════════════════════════════════════════
 
-interface ProfileData {
-  weight: number;
-  height: number;
-  age: number;
-  gender: Gender;
-  activityLevel: ActivityLevel;
-  goal: GoalType;
-  calorieTarget?: number;
-}
-
 function mapActivityLevel(level: string): ActivityLevel {
   const MAP: Record<string, ActivityLevel> = {
     'Alacsony': 'sedentary',
@@ -124,30 +115,36 @@ function mapGoal(goal: string): GoalType {
   return MAP[goal] || 'weight_loss';
 }
 
-function readProfile(): ProfileData {
+async function readProfile(): Promise<{
+  weight: number;
+  height: number;
+  age: number;
+  gender: Gender;
+  activityLevel: ActivityLevel;
+  goal: GoalType;
+  calorieTarget?: number;
+}> {
   try {
-    const raw = localStorage.getItem('userProfile');
-    if (raw) {
-      const data = JSON.parse(raw);
-      return {
-        weight: data.weight || 80,
-        height: data.height || 175,
-        age: data.age || 30,
-        gender: data.gender === 'female' ? 'female' : 'male',
-        activityLevel: mapActivityLevel(data.activityLevel || 'Kozepes'),
-        goal: mapGoal(data.goal || 'Fogyas'),
-        calorieTarget: data.calorieTarget,
-      };
-    }
-  } catch { /* fallback */ }
-  return {
-    weight: 80,
-    height: 175,
-    age: 30,
-    gender: 'male',
-    activityLevel: 'moderately_active',
-    goal: 'weight_loss',
-  };
+    const stored = await getUserProfile();
+    return {
+      weight: stored.weight || 80,
+      height: stored.height || 175,
+      age: stored.age || 30,
+      gender: (stored as any).gender === 'female' ? 'female' : 'male',
+      activityLevel: mapActivityLevel(stored.activityLevel || 'Kozepes'),
+      goal: mapGoal(stored.goal || 'Fogyas'),
+      calorieTarget: stored.calorieTarget,
+    };
+  } catch {
+    return {
+      weight: 80,
+      height: 175,
+      age: 30,
+      gender: 'male',
+      activityLevel: 'moderately_active',
+      goal: 'weight_loss',
+    };
+  }
 }
 
 async function readConsumedToday(): Promise<number> {
@@ -188,7 +185,7 @@ async function readConsumedToday(): Promise<number> {
  * This is the core function that other modules depend on.
  */
 export async function computeDailyBudget(): Promise<DailyCalorieBudget> {
-  const profile = readProfile();
+  const profile = await readProfile();
 
   // Step 1: BMR
   const bmr = calculateBMR(profile.weight, profile.height, profile.age, profile.gender);
@@ -254,8 +251,8 @@ export async function getEnergyBalance(): Promise<EnergyBalanceSnapshot> {
  * Get the user's base calorie target (without activity adjustments).
  * For display in profile/settings.
  */
-export function getBaseCalorieTarget(): number {
-  const profile = readProfile();
+export async function getBaseCalorieTarget(): Promise<number> {
+  const profile = await readProfile();
   if (profile.calorieTarget) return profile.calorieTarget;
   const bmr = calculateBMR(profile.weight, profile.height, profile.age, profile.gender);
   const tdee = calculateTDEE(bmr, profile.activityLevel);
@@ -265,14 +262,14 @@ export function getBaseCalorieTarget(): number {
 /**
  * Detailed breakdown for debugging / profile display.
  */
-export function getCalorieBreakdown(): {
+export async function getCalorieBreakdown(): Promise<{
   bmr: number;
   tdee: number;
   goalAdjustment: number;
   target: number;
-  profile: ProfileData;
-} {
-  const profile = readProfile();
+  profile: any;
+}> {
+  const profile = await readProfile();
   const bmr = calculateBMR(profile.weight, profile.height, profile.age, profile.gender);
   const tdee = calculateTDEE(bmr, profile.activityLevel);
   const target = calculateGoalTarget(tdee, profile.goal);

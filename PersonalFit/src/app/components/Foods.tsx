@@ -19,7 +19,7 @@
  *   - Localized (HU/EN/RO) via t() calls
  */
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Search,
   X,
@@ -36,11 +36,13 @@ import { usePlanFoods, type PlanFood } from "../hooks/usePlanData";
 import { useAppData } from "../hooks/useAppData";
 import { EmptyState } from "./EmptyState";
 import { DataUploadSheet } from "./DataUploadSheet";
-import { useLanguage } from "../contexts/LanguageContext";
+import { useLanguage, type LanguageCode } from "../contexts/LanguageContext";
 import { foodDatabase, type Food } from "../data/mealData";
 import { useFavoriteFoods } from "../hooks/useFavoriteFoods";
+import { cleanupCorruptedAIFoods } from "../backend/services/FoodCatalogService";
 import { PageHeader } from "./PageHeader";
 import { TabFilter } from "./TabFilter";
+import { translateFoodName } from "../utils/foodTranslations";
 
 // ═══════════════════════════════════════════════════════════════
 // CATEGORY MAPPING
@@ -202,13 +204,28 @@ export function Foods() {
     categories: planCategories,
     isLoading: planLoading,
   } = usePlanFoods();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { isFavorite, toggleFavorite, favoriteCount } = useFavoriteFoods();
 
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("Osszes");
   const [selectedFood, setSelectedFood] = useState<PlanFood | null>(null);
+
+  // Egyszeri tisztítás: távolítsuk el a korábban betöltött, teljesen
+  // értelmetlen AI ételeket (korrupt nevek a PDF-ből).
+  useEffect(() => {
+    (async () => {
+      try {
+        const removed = await cleanupCorruptedAIFoods();
+        if (removed > 0) {
+          console.log(`[Foods] Törölt korrupt AI ételek száma: ${removed}`);
+        }
+      } catch (err) {
+        console.warn("[Foods] cleanupCorruptedAIFoods hiba:", err);
+      }
+    })();
+  }, []);
 
   // Decide data source:
   //   - If van aktív tervhez kötött étel (planFoods) → azt használjuk
@@ -323,7 +340,7 @@ export function Foods() {
       </div>
 
       {/* ═══ Category Tabs — uses shared TabFilter DSM component ═══ */}
-      <div className="flex-shrink-0 px-3 sm:px-4 pt-3 pb-1">
+      <div className="flex-shrink-0 px-4 pt-3 pb-1">
         <TabFilter
           tabs={tabs}
           activeTab={activeTab}
@@ -337,7 +354,7 @@ export function Foods() {
 
       {/* ═══ Search — visible only on Összes tab ═══ */}
       {activeTab === "Osszes" && (
-        <div className="flex-shrink-0 px-3 sm:px-4 pt-2 pb-1">
+        <div className="flex-shrink-0 px-4 pt-2 pb-1">
           <div className="relative flex items-center bg-gray-50 dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#2a2a2a] rounded-xl transition-all focus-within:border-[var(--primary)] focus-within:ring-1 focus-within:ring-[var(--primary)]/20">
             <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 ml-3 shrink-0" />
             <input
@@ -361,7 +378,7 @@ export function Foods() {
       )}
 
       {/* ═══ Food List ═══ */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 pb-3">
+      <div className="flex-1 overflow-y-auto px-4 pb-3">
         {planLoading ? (
           <div className="space-y-3 pt-2">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -409,6 +426,8 @@ export function Foods() {
                   food={food}
                   t={t}
                   isFavorite={isFavorite(food.id)}
+                    language={language as LanguageCode}
+                    showCategoryLabel={activeTab === "Osszes"}
                   onToggleFavorite={() => {
                     if (navigator.vibrate) navigator.vibrate([10, 20]);
                     toggleFavorite(food.id);
@@ -454,12 +473,16 @@ function FoodCard({
   isFavorite,
   onToggleFavorite,
   onTap,
+  showCategoryLabel,
+  language,
 }: {
   food: PlanFood;
   t: (key: string) => string;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onTap: () => void;
+  showCategoryLabel: boolean;
+  language: LanguageCode;
 }) {
   const colors = CATEGORY_COLORS[food.category] || DEFAULT_COLORS;
   const catLabel = t(CATEGORY_I18N_MAP[food.category] || food.category);
@@ -476,16 +499,18 @@ function FoodCard({
             className="text-[var(--text-base)] text-gray-800 dark:text-gray-100 truncate"
             style={{ fontWeight: 600, fontFamily: "var(--font-family-base)" }}
           >
-            {food.name}
+            {translateFoodName(food.name, language)}
           </h3>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span
-              className={`text-[var(--text-xs)] ${colors.text} ${colors.darkText}`}
-              style={{ fontWeight: 600 }}
-            >
-              {catLabel}
-            </span>
-          </div>
+          {showCategoryLabel && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span
+                className={`text-[var(--text-xs)] ${colors.text} ${colors.darkText}`}
+                style={{ fontWeight: 600 }}
+              >
+                {catLabel}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right: Favorite + calories + chevron */}

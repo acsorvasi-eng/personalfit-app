@@ -10,7 +10,7 @@ import type {
   AIParsedTrainingDay,
 } from '../models';
 import type { AIParsedUserProfile, AIParsedDocument } from './AIParserService';
-import { parseDocumentText } from './AIParserService';
+import { parseDocumentText, isCleanFoodName } from './AIParserService';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-haiku-4-5';
@@ -115,8 +115,29 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
     userProfile.bmi = Math.round((userProfile.weight / (h * h)) * 10) / 10;
   }
 
-  const nutritionPlan: AIParsedNutritionPlan | null =
+  // Filter garbage: only keep ingredients with clean, human-readable names
+  let nutritionPlan: AIParsedNutritionPlan | null =
     llmOutput.nutritionPlan?.weeks?.length ? llmOutput.nutritionPlan : null;
+  if (nutritionPlan) {
+    const weeksFiltered = nutritionPlan.weeks
+      .map(w => w
+        .map(d => ({
+          ...d,
+          meals: d.meals
+            .map(m => ({
+              ...m,
+              ingredients: (m.ingredients || []).filter(
+                (ing: { name?: string }) => ing?.name && isCleanFoodName(String(ing.name).trim())
+              ),
+            }))
+            .filter(m => m.ingredients.length > 0),
+        }))
+        .filter(d => d.meals.length > 0),
+      )
+      .filter(w => w.length > 0);
+    if (weeksFiltered.length === 0) nutritionPlan = null;
+    else nutritionPlan = { ...nutritionPlan, weeks: weeksFiltered, detected_weeks: weeksFiltered.length };
+  }
 
   let measurements: AIParsedMeasurement[] = llmOutput.measurements ?? [];
   if (userProfile.weight && measurements.length === 0) {

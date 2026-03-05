@@ -21,9 +21,56 @@ import type {
   MealItemEntity,
   MealType,
   AIParsedNutritionPlan,
+  AIParsedDay,
+  AIParsedMeal,
   FoodCategory,
 } from '../models';
 import * as FoodCatalogService from './FoodCatalogService';
+import { isCleanFoodName } from './AIParserService';
+
+// ═══════════════════════════════════════════════════════════════
+// NORMALIZE TO 4 WEEKS (for import from 1–3 week documents)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Always produce a 4-week plan from the parsed document:
+ * - 1 week in doc → repeat 4× (weeks 1–4 same)
+ * - 2 weeks in doc → repeat 2× (weeks 3–4 = copy of weeks 1–2)
+ * - 3 weeks in doc → week 4 = copy of week 1
+ * - 4+ weeks in doc → use first 4 weeks as-is
+ */
+function normalizePlanToFourWeeks(parsed: AIParsedNutritionPlan): AIParsedNutritionPlan {
+  const src = parsed.weeks;
+  if (src.length === 0) return parsed;
+
+  function cloneWeek(weekDays: AIParsedDay[], newWeekNum: number): AIParsedDay[] {
+    return weekDays.map(d => ({
+      ...d,
+      week: newWeekNum,
+      meals: d.meals.map(m => ({
+        ...m,
+        ingredients: m.ingredients.map(ing => ({ ...ing })),
+      })),
+    }));
+  }
+
+  let weeks: AIParsedDay[][];
+  if (src.length === 1) {
+    weeks = [cloneWeek(src[0], 1), cloneWeek(src[0], 2), cloneWeek(src[0], 3), cloneWeek(src[0], 4)];
+  } else if (src.length === 2) {
+    weeks = [cloneWeek(src[0], 1), cloneWeek(src[1], 2), cloneWeek(src[0], 3), cloneWeek(src[1], 4)];
+  } else if (src.length === 3) {
+    weeks = [cloneWeek(src[0], 1), cloneWeek(src[1], 2), cloneWeek(src[2], 3), cloneWeek(src[0], 4)];
+  } else {
+    weeks = src.slice(0, 4).map((w, i) => cloneWeek(w, i + 1));
+  }
+
+  return {
+    weeks,
+    detected_weeks: 4,
+    detected_days_per_week: Math.max(...weeks.map(w => w.length), parsed.detected_days_per_week),
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════
 // PLAN LIFECYCLE
@@ -240,7 +287,7 @@ export async function getMealItems(mealId: string): Promise<MealItemEntity[]> {
   return db.getAllFromIndex<MealItemEntity>('meal_items', 'by-meal', mealId);
 }
 
-export async function addMealItem(input: {
+type AddMealItemInput = {
   meal_id: string;
   food_id: string;
   food_name: string;
@@ -250,7 +297,11 @@ export async function addMealItem(input: {
   protein_per_100g: number;
   carbs_per_100g: number;
   fat_per_100g: number;
-}): Promise<MealItemEntity> {
+};
+
+// Internal helper: insert meal item WITHOUT recalculating totals.
+// Used by bulk import to avoid O(N^2) aggregation work.
+async function addMealItemBare(input: AddMealItemInput): Promise<MealItemEntity> {
   const db = await getDB();
   const factor = input.quantity_grams / 100;
 
@@ -269,6 +320,12 @@ export async function addMealItem(input: {
   };
 
   await db.put('meal_items', entity);
+  return entity;
+}
+
+export async function addMealItem(input: AddMealItemInput): Promise<MealItemEntity> {
+  const entity = await addMealItemBare(input);
+  // Standard path: recalc+notify immediately (used by UI actions).
   await recalculateMealTotals(input.meal_id);
   notifyDBChange({ store: 'meal_items', action: 'put', key: entity.id });
   return entity;
@@ -364,7 +421,7 @@ const AI_CATEGORY_MAP: Record<string, FoodCategory> = {
   'Mag': 'Mag',
 };
 
-function mapAICategoryToFoodCategory(aiCategory?: string): FoodCategory {
+export function mapAICategoryToFoodCategory(aiCategory?: string): FoodCategory {
   if (!aiCategory) return 'Feherje';
   return AI_CATEGORY_MAP[aiCategory] || 'Feherje';
 }
@@ -384,6 +441,9 @@ export async function importFromAIParse(
   parsed: AIParsedNutritionPlan,
   label: string
 ): Promise<NutritionPlanEntity & { stats: ImportStats }> {
+  // Normalize to 4 weeks: 1→4×, 2→2×, 3→+week1, 4→as-is
+  parsed = normalizePlanToFourWeeks(parsed);
+
   const db = await getDB();
   const stats: ImportStats = {
     totalIngredients: 0,
@@ -419,7 +479,7 @@ export async function importFromAIParse(
       for (const mealData of dayData.meals) {
         for (const ingData of mealData.ingredients) {
           const normName = ingData.name.toLowerCase().trim();
-          if (!normName || normName.length < 2 || !isValidIngredientName(normName)) continue;
+          if (!normName || normName.length < 2 || !isValidIngredientName(normName) || !isCleanFoodName(ingData.name)) continue;
           if (foodIdCache.has(normName)) continue;
 
           stats.totalIngredients++;
@@ -509,6 +569,9 @@ export async function importFromAIParse(
   console.log(`[NutritionPlanSvc] Food resolution complete: ${stats.matchedExisting} matched, ${stats.createdNew} created, ${stats.totalIngredients} total`);
 
   // ─── Step 3: Create meal days, meals, and meal items ──────
+  // Performance optimization: insert all items first, then recalc macros per meal once.
+  const mealsToRecalc = new Set<string>();
+
   for (const weekDays of parsed.weeks) {
     for (const dayData of weekDays) {
       const mealDay = await createMealDay({
@@ -532,12 +595,13 @@ export async function importFromAIParse(
           sort_order: mealIdx,
         });
         stats.totalMeals++;
+        mealsToRecalc.add(meal.id);
 
         for (const ingData of mealData.ingredients) {
           const normName = ingData.name.toLowerCase().trim();
 
           // Skip invalid ingredient names (symbols, punctuation, too short)
-          if (!normName || normName.length < 2 || !isValidIngredientName(normName)) {
+          if (!normName || normName.length < 2 || !isValidIngredientName(normName) || !isCleanFoodName(ingData.name)) {
             continue;
           }
 
@@ -551,7 +615,7 @@ export async function importFromAIParse(
             continue;
           }
 
-          await addMealItem({
+          await addMealItemBare({
             meal_id: meal.id,
             food_id: foodId,
             food_name: ingData.name,
@@ -566,6 +630,11 @@ export async function importFromAIParse(
         }
       }
     }
+  }
+
+  // ─── Step 4: Recalculate macros once per meal (not per item) ─────
+  for (const mealId of mealsToRecalc) {
+    await recalculateMealTotals(mealId);
   }
 
   console.log(`[NutritionPlanSvc] Import complete: ${stats.totalDays} days, ${stats.totalMeals} meals, ${stats.totalMealItems} meal items`);
@@ -591,13 +660,51 @@ export interface ImportStats {
 
 /**
  * Validates if a string is a plausible ingredient name.
- * Rejects pure punctuation, bullet chars, numbers-only, and other parser artifacts.
+ * Strictly rejects PDF artifacts, binary data, XML metadata, and other parser garbage.
  */
 function isValidIngredientName(name: string): boolean {
-  // Must contain at least one letter (any script)
-  if (!/\p{L}/u.test(name)) return false;
-  // Reject if it's ONLY symbols / punctuation / whitespace (no real word content)
-  // Strip all non-letter chars; if fewer than 2 letters remain, reject
-  const lettersOnly = name.replace(/[^\p{L}]/gu, '');
-  return lettersOnly.length >= 2;
+  if (!name || name.length < 2) return false;
+
+  const n = name.trim();
+
+  // ── PDF / binary token blacklist ──────────────────────────────
+  const PDF_TOKENS = [
+    'endobj', 'endstream', 'startxref', 'xref', '%%eof',
+    'obj endobj', '0 obj', '1 0 obj', '2 0 obj', '3 0 obj',
+    '<</', '>>', '/type', '/page', '/font', '/width', '/height',
+    '/filter', '/length', '/subtype', '/basefont', '/encoding',
+    'stream', 'endstream', '/producer', '/creator', '/creationdate',
+    '/modifydate', '/title', '/author', '/subject', '/keywords',
+    'xmp:', 'rdf:', 'dc:', 'pdf:', 'xmpmm:', 'xaptk',
+    '</xmp', '</rdf', '<rdf:', '<xmp', 'x:xmpmeta',
+    'xmlns', 'uuid:', 'w3.org', 'adobe.com',
+    'microsoft word', 'microsoft office', 'acrobat',
+    'itext', 'fpdf', 'reportlab', 'ghostscript',
+  ];
+
+  const lower = n.toLowerCase();
+  for (const token of PDF_TOKENS) {
+    if (lower.includes(token)) return false;
+  }
+
+  // ── Must start with a normal letter (latin) ───────────────────
+  if (!/^[a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]/u.test(n)) return false;
+
+  // ── Reject if contains too many non-latin / symbol characters ─
+  const latinLetters = (n.match(/[a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]/g) || []).length;
+  const ratio = latinLetters / n.length;
+  if (ratio < 0.6) return false;
+
+  // ── Reject if contains suspicious symbol clusters ─────────────
+  if (/[<>{}[\]\\|@#$%^*~`]/.test(n)) return false;
+  if (/[^\x00-\x7F\u00C0-\u024F\u0400-\u04FF]/.test(n) && latinLetters < 3) return false;
+
+  // ── Reject if it's just a number / date / code ────────────────
+  if (/^\d[\d\s:./-]*$/.test(n)) return false;
+  if (/^\d{2}:\d{2}/.test(n)) return false;
+
+  // ── Minimum real word length ───────────────────────────────────
+  if (latinLetters < 3) return false;
+
+  return true;
 }

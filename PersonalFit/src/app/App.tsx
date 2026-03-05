@@ -11,6 +11,8 @@
 import { Component, type ReactNode, type ErrorInfo, useState, useEffect } from "react";
 import { RouterProvider } from "react-router";
 import { router } from "./routes";
+import { WeightHistoryService } from "./backend/services/WeightHistoryService";
+import { cleanupCorruptedAIFoods } from "./backend/services/FoodCatalogService";
 
 // ─── Global Error Boundary ──────────────────────────────────────────
 interface EBProps { children: ReactNode; }
@@ -73,7 +75,6 @@ function GlobalErrorCatcher({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
-      // Defer state update to avoid "Cannot update during render" cascade
       queueMicrotask(() => {
         setUncaughtError(`[window.onerror] ${event.message}\n\nSource: ${event.filename}:${event.lineno}:${event.colno}\n\nStack:\n${event.error?.stack || "(no stack)"}`);
       });
@@ -81,7 +82,6 @@ function GlobalErrorCatcher({ children }: { children: ReactNode }) {
     const onRejection = (event: PromiseRejectionEvent) => {
       const reason = event.reason;
       const msg = reason instanceof Error ? `${reason.message}\n\n${reason.stack}` : String(reason);
-      // Defer state update to avoid "Cannot update during render" cascade
       queueMicrotask(() => {
         setUncaughtError(`[Unhandled Promise Rejection]\n${msg}`);
       });
@@ -116,6 +116,24 @@ function GlobalErrorCatcher({ children }: { children: ReactNode }) {
 
 // ─── Root App ────────────────────────────────────────────────────────
 export default function App() {
+  // Egyszeri migráció: weightHistory localStorage → IndexedDB
+  useEffect(() => {
+    WeightHistoryService.migrateFromLocalStorage().catch((err) => {
+      console.warn("[App] WeightHistory migration failed:", err);
+    });
+  }, []);
+
+  // Egyszeri cleanup: korrupt AI-generált ételek törlése az adatbázisból
+  useEffect(() => {
+    cleanupCorruptedAIFoods().then((removed) => {
+      if (removed > 0) {
+        console.log(`[App] Cleanup: ${removed} korrupt étel törölve az adatbázisból`);
+      }
+    }).catch((err) => {
+      console.warn("[App] Food cleanup failed:", err);
+    });
+  }, []);
+
   return (
     <GlobalErrorCatcher>
       <ErrorBoundary>

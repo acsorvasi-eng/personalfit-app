@@ -85,6 +85,7 @@ const PIPELINE_STEPS: Array<{ step: UploadStep; icon: React.ElementType; label: 
 
 export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetProps) {
   const [mode, setMode] = useState<'choose' | 'text' | 'processing' | 'result'>('choose');
+  const [strategy, setStrategy] = useState<'foodsOnly' | 'full'>('foodsOnly');
   const [textInput, setTextInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,8 +102,14 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate([10, 20]);
 
-    await upload.uploadFile(file);
-  }, [upload]);
+    if (strategy === 'foodsOnly' && 'uploadFileFoodsOnly' in upload) {
+      // Gyors mód: csak étellista
+      // @ts-ignore runtime check above
+      await upload.uploadFileFoodsOnly(file);
+    } else {
+      await upload.uploadFile(file);
+    }
+  }, [upload, strategy]);
 
   const handleTextSubmit = useCallback(async () => {
     if (!textInput.trim()) return;
@@ -110,8 +117,14 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
 
     if (navigator.vibrate) navigator.vibrate([10, 20]);
 
-    await upload.processText(textInput);
-  }, [textInput, upload]);
+    if (strategy === 'foodsOnly' && 'processTextFoodsOnly' in upload) {
+      // Gyors mód: csak étellista
+      // @ts-ignore runtime check above
+      await upload.processTextFoodsOnly(textInput);
+    } else {
+      await upload.processText(textInput);
+    }
+  }, [textInput, upload, strategy]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,6 +141,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     if (upload.isProcessing) return; // Don't close while processing
     upload.reset();
     setMode('choose');
+    setStrategy('foodsOnly');
     setTextInput('');
     setSelectedFile(null);
     onClose();
@@ -222,6 +236,8 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
                       onFileSelect={() => fileInputRef.current?.click()}
                       onTextMode={() => setMode('text')}
                       onDrop={handleDrop}
+                      strategy={strategy}
+                      onStrategyChange={setStrategy}
                     />
                   </motion.div>
                 )}
@@ -305,10 +321,12 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
 // ═══════════════════════════════════════════════════════════════
 
 /** Mode 1: Choose upload method — CLEAN (no feature grid) */
-function ChooseMode({ onFileSelect, onTextMode, onDrop }: {
+function ChooseMode({ onFileSelect, onTextMode, onDrop, strategy, onStrategyChange }: {
   onFileSelect: () => void;
   onTextMode: () => void;
   onDrop: (e: React.DragEvent) => void;
+  strategy: 'foodsOnly' | 'full';
+  onStrategyChange: (s: 'foodsOnly' | 'full') => void;
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
   const { t } = useLanguage();
@@ -379,6 +397,34 @@ function ChooseMode({ onFileSelect, onTextMode, onDrop }: {
         <div className="flex-1 h-px bg-gray-200 dark:bg-[#2a2a2a]" />
         <span className="text-xs text-gray-400 dark:text-gray-500" style={{ fontWeight: 500 }}>{t("upload.or")}</span>
         <div className="flex-1 h-px bg-gray-200 dark:bg-[#2a2a2a]" />
+      </div>
+
+      {/* Mode toggle: Gyors vs. Teljes */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onStrategyChange('foodsOnly')}
+          className={`flex-1 px-3 py-2 rounded-2xl text-xs border transition-colors ${
+            strategy === 'foodsOnly'
+              ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-400 dark:text-emerald-300'
+              : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-[#2a2a2a] dark:bg-[#252525] dark:text-gray-300'
+          }`}
+        >
+          <span className="block font-semibold">Gyors mód</span>
+          <span className="block text-[10px] opacity-80">Csak étellista (3–5 mp)</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => onStrategyChange('full')}
+          className={`flex-1 px-3 py-2 rounded-2xl text-xs border transition-colors ${
+            strategy === 'full'
+              ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:border-blue-400 dark:text-blue-300'
+              : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-[#2a2a2a] dark:bg-[#252525] dark:text-gray-300'
+          }`}
+        >
+          <span className="block font-semibold">Teljes mód</span>
+          <span className="block text-[10px] opacity-80">Étrend + bevásárlólista</span>
+        </button>
       </div>
 
       {/* Text paste option */}

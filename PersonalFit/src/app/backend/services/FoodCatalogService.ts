@@ -12,9 +12,9 @@
  *   - Search is indexed via the `search_index` field.
  *   - Favorites stored per-user locally (in the food entity itself).
  */
-
 import { getDB, generateId, nowISO, notifyDBChange } from '../db';
 import type { FoodEntity, FoodCategory, FoodSource } from '../models';
+import { isCleanFoodName } from './AIParserService';
 
 // ═══════════════════════════════════════════════════════════════
 // QUERY
@@ -122,6 +122,7 @@ export async function createFood(input: CreateFoodInput): Promise<FoodEntity> {
 /**
  * Batch create foods (for AI extraction results).
  * Skips duplicates silently.
+ * v4.1: Final gate — rejects corrupted names before DB write.
  */
 export async function createFoodsBatch(inputs: CreateFoodInput[]): Promise<{ created: FoodEntity[]; skipped: string[] }> {
   const db = await getDB();
@@ -132,6 +133,13 @@ export async function createFoodsBatch(inputs: CreateFoodInput[]): Promise<{ cre
   const skipped: string[] = [];
 
   for (const input of inputs) {
+    // Final gate: reject corrupted names before they ever reach the DB
+    if (isCorruptedFoodName(input.name)) {
+      console.warn(`[FoodCatalog] createFoodsBatch gate rejected: "${input.name}"`);
+      skipped.push(input.name);
+      continue;
+    }
+
     if (existingNames.has(input.name.toLowerCase())) {
       skipped.push(input.name);
       continue;
@@ -220,4 +228,62 @@ export async function deleteFood(id: string): Promise<void> {
 
   await db.delete('foods', id);
   notifyDBChange({ store: 'foods', action: 'delete', key: id });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DATA HYGIENE UTILITIES
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Szigorított ellenőrzés: korrupt / zajos élelmiszer név detektálása.
+ *
+ * v4.1: Cirill/görög/stb. Unicode blokkok azonnali elutasítás,
+ * PDF token minták, hex stringek, 70% betűarány, max 5% szimbólum,
+ * minimum 2 különböző betű.
+ */
+function isCorruptedFoodName(name: string): boolean {
+  if (!name) return true;
+
+  // Összefoglaló sorok (kcal, átlag kalória stb.) mindig korruptak
+  if (/^\d+\s*kcal/i.test(name)) return true;
+  if (/extra\s+valtozatossag|átlag\s+kal[oó]ria|average\s+calories/i.test(name)) return true;
+
+  // A parser központi validátora: ha ez szerint nem "tiszta" élelmiszer név,
+  // akkor a katalógusban is korruptnak tekintjük.
+  if (!isCleanFoodName(name)) return true;
+
+  return false;
+}
+
+/**
+ * Deep cleanup rutin: törli az összes nem system-locked ételt
+ * amelyek neve korrupt / zajos.
+ *
+ * v4.1: Nem csak ai_generated source-t néz — minden nem-system ételt
+ * ellenőriz, mivel a meglévő ~483 rekord vegyes source-szal kerülhetett be.
+ *
+ * Visszatér: hány rekordot törölt.
+ */
+export async function cleanupCorruptedAIFoods(): Promise<number> {
+  const db = await getDB();
+  const all = await db.getAll<FoodEntity>('foods');
+  let removed = 0;
+
+  for (const food of all) {
+    // System locked ételeket soha ne töröljük
+    if (food.is_system_locked) continue;
+
+    if (isCorruptedFoodName(food.name)) {
+      console.warn(`[FoodCatalog] Deep cleanup törölte: "${food.name}" (source: ${food.source})`);
+      await db.delete('foods', food.id);
+      removed++;
+    }
+  }
+
+  if (removed > 0) {
+    notifyDBChange({ store: 'foods', action: 'delete' });
+    console.log(`[FoodCatalog] Deep cleanup befejezve: ${removed} korrupt étel törölve`);
+  }
+
+  return removed;
 }
