@@ -69,7 +69,7 @@ function normalizePlanToFourWeeks(parsed: AIParsedNutritionPlan): AIParsedNutrit
   return {
     weeks,
     detected_weeks: 4,
-    detected_days_per_week: Math.max(...weeks.map(w => w.length), parsed.detected_days_per_week),
+    detected_days_per_week: Math.max(...weeks.map(w => w.length), parsed.detected_days_per_week ?? 0),
   };
 }
 

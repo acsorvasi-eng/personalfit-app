@@ -81,3 +81,11 @@ Mark completed tasks with `[x]` and add a short "Done: ..." line.
 - [x] **TASK-026** — Add to README a link to TASKS.md in the Project structure section (e.g. under docs: "and [TASKS.md](./TASKS.md) for current work"). Done: 2026-03-05 — docs bullet now ends with "See TASKS.md for current work."
 - [x] **TASK-027** — In agents/architect.md (or agents/README if present), ensure the first step references "pick next unchecked task from TASKS.md"; add one sentence if missing. Done: 2026-03-05 — Step 1 clarified to "pick the next unchecked task (first uncompleted, no [x])".
 - [x] **TASK-028** — Run full verify: `npm run typecheck` and `npm run build`; confirm both pass and document in TASKS that batch 8 is verified. Done: 2026-03-05 — typecheck and build run; both pass; batch 8 verified.
+
+---
+
+## Follow-up batch 9 — PDF nutrition parser & meal data (2026-03-05)
+
+- [x] **TASK-029** — Ensure PDF/LLM parser output always includes `detected_days_per_week` so `normalizePlanToFourWeeks` does not get NaN. Set it in api/parse-document result and in LLMParserService when wrapping proxy response. Done: 2026-03-05 — api/parse-document sets detected_days_per_week; LLMParserService fills it if missing; NutritionPlanService uses ?? 0 in Math.max.
+- [x] **TASK-030** — Add a short "PDF parser & meal data" subsection to README (or docs): upload → PDF text extraction → LLM/regex parse → importFromAIParse → foods + meal_days + meals + meal_items. Done: 2026-03-05 — "PDF parser & meal data" subsection added under Development in README.
+- [x] **TASK-031** — In api/parse-document, ensure the JSON response body key is consistent: client expects `result` (stringified plan). Verify and document in a one-line comment in LLMParserService. Done: 2026-03-05 — Comment in LLMParserService documents that proxy response body must have "result" (stringified AIParsedNutritionPlan).

@@ -30,3 +30,7 @@ await window.cleanupCorruptedAIFoods()
 ```
 
 This removes corrupted or composite food names from the Foods store and, when available, uses the LLM-assisted splitter to replace composite meals with base ingredients. See MISSION.md → "Data hygiene & cleanup". For IndexedDB store schemas see [docs/DATA_LAYER.md](docs/DATA_LAYER.md).
+
+### PDF parser & meal data
+
+Uploaded PDFs (or pasted text) are processed as follows: **file upload** → **PDF text extraction** (pdfjs-dist) → **parse** (LLM via `/api/parse-document` or fallback regex in AIParserService) → **import** via `NutritionPlanService.importFromAIParse` → **foods** (base ingredients only), **meal_days**, **meals**, and **meal_items** are created in IndexedDB. Only base ingredients are written to the foods store; composite names are split by the pipeline before save.

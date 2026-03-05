@@ -51,12 +51,14 @@ async function callClaudeAPI(text: string): Promise<string> {
     const data = await response.json();
     if (!data.result && !data.foods) throw new Error('Üres válasz a proxytól');
 
-    // The proxy returns an AIParsedNutritionPlan-like object stringified in result.
-    // Wrap it into an LLMParserOutput shape so safeParseJSON() + convertToAIParsedDocument()
-    // can treat it as { nutritionPlan }.
+    // Proxy response body must have "result": stringified AIParsedNutritionPlan (detected_weeks, detected_days_per_week, weeks).
+    // Wrap into LLMParserOutput so safeParseJSON() + convertToAIParsedDocument() get { nutritionPlan }.
     if (data.result) {
       try {
         const plan = JSON.parse(data.result);
+        if (plan && typeof plan.detected_days_per_week !== 'number') {
+          plan.detected_days_per_week = plan.weeks?.[0]?.length ?? 7;
+        }
         return JSON.stringify({ nutritionPlan: plan });
       } catch {
         // If parsing fails, fall back to raw result

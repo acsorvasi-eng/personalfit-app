@@ -41,8 +41,10 @@ export default async function handler(req: any, res: any) {
       .filter(w => w !== null && w.length > 0)
       .map(days => days!);
 
+    const daysInFirstWeek = weeksArray[0]?.length ?? 7;
     const result = {
       detected_weeks: weeksArray.length,
+      detected_days_per_week: daysInFirstWeek,
       weeks: weeksArray,
     };
 
