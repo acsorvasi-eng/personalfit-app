@@ -642,13 +642,15 @@ export function UnifiedMenu() {
   if (!appData.isLoading && !appData.hasActivePlan && !hasPlanData) {
     return (
       <div className="h-full flex flex-col overflow-hidden relative" role="main" aria-label={t("calendar.dailyMealPlan")}>
-        <div className="flex-shrink-0">
+        {/* Full-bleed header (same pattern as AI Calorie Calculator): breaks out of Layout padding on sm+ */}
+        <div className="flex-shrink-0 sm:-mx-4 md:-mx-6 lg:-mx-8">
           <PageHeader
             icon={UtensilsCrossed}
             title={t("menu.title")}
             subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
             gradientFrom="from-blue-400"
-            gradientTo="to-emerald-500"
+            gradientVia="via-emerald-400"
+            gradientTo="to-teal-500"
             action={<FuturisticDashboard />}
             stats={[
               {
@@ -783,14 +785,15 @@ export function UnifiedMenu() {
         )}
       </AnimatePresence>
 
-      {/* ══ HEADER ══ */}
-      <div className="flex-shrink-0">
+      {/* ══ HEADER — full-bleed, same pattern as AI Calorie Calculator ══ */}
+      <div className="flex-shrink-0 sm:-mx-4 md:-mx-6 lg:-mx-8">
         <PageHeader
           icon={UtensilsCrossed}
           title={t("menu.title")}
           subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
           gradientFrom="from-blue-400"
-          gradientTo="to-emerald-500"
+          gradientVia="via-emerald-400"
+          gradientTo="to-teal-500"
           action={<FuturisticDashboard />}
           stats={[
             {

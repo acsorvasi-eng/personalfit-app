@@ -112,6 +112,118 @@ const COOKING_VERB_PREFIXES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
+// HUNGARIAN COMPOUND DISH SPLITTING
+// ═══════════════════════════════════════════════════════════════
+
+/** Phrases that are a single ingredient (do not split). */
+const SINGLE_INGREDIENT_PHRASES = new Set([
+  'édes burgonya', 'édesburgonya', 'edes burgonya', 'edesburgonya',
+]);
+
+/** Hungarian adjective forms → base ingredient name (singular). */
+const ADJECTIVE_TO_BASE: Record<string, string> = {
+  petrezsejmes: 'petrezselyem', petrezselymes: 'petrezselyem',
+  brokkolis: 'brokkoli',
+  gombás: 'gomba', gombas: 'gomba',
+  mákos: 'mák', makos: 'mák',
+  karfiolos: 'karfiol',
+  spenótos: 'spenót', spenotos: 'spenót',
+  túrós: 'túró', turos: 'túró',
+};
+
+/**
+ * Split Hungarian compound dish names into base ingredients.
+ * Rule: if the name contains a known vegetable/ingredient as prefix or suffix, split it.
+ * Otherwise return the name as a single ingredient.
+ *
+ * Examples:
+ * - "Petrezsejmes krumpli" → ["krumpli", "petrezselyem"]
+ * - "Édes burgonya" → ["édes burgonya"]
+ * - "Mákos laska steviával" → ["tészta", "mák", "stevia"]
+ * - "Brokkolis spagetti" → ["spagetti", "brokkoli"]
+ * - "Gombás rántotta" → ["tojás", "gomba"]
+ * - "Lencsefőzelék" → ["lencse"]
+ * - "Karfiolpüré" → ["karfiol"]
+ */
+export function splitHungarianCompoundDish(raw: string): string[] {
+  if (!raw || typeof raw !== 'string') return [];
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  const lower = trimmed.toLowerCase();
+
+  // Single-ingredient phrases: keep as one
+  if (SINGLE_INGREDIENT_PHRASES.has(lower)) {
+    return [trimmed];
+  }
+
+  const out: string[] = [];
+
+  // Instrumental "-val/-vel" at end: e.g. "mákos laska steviával" → add "stevia"
+  const instrumentalMatch = lower.match(/\s+([a-záéíóöőúüű]+?)(val|vel|sal|sel|szal|szel|zzel)\s*$/i);
+  if (instrumentalMatch) {
+    const stem = instrumentalMatch[1];
+    const display = (stem === 'steviá' || stem === 'stevia') ? 'stevia' : (stem.charAt(0).toUpperCase() + stem.slice(1));
+    if (display.length >= 2) out.push(display);
+  }
+  const rest = instrumentalMatch ? lower.slice(0, lower.length - (instrumentalMatch[0].length)).trim() : lower;
+
+  // Compound word (no space): Xfőzelék → [X], Xpüré → [X]
+  const fozelekMatch = rest.match(/^([a-záéíóöőúüű]+)főzelék$/i) || rest.match(/^([a-záéíóöőúüű]+)fozelek$/i);
+  if (fozelekMatch) {
+    const base = fozelekMatch[1];
+    if (base.length >= 2) {
+      out.push(base.charAt(0).toUpperCase() + base.slice(1));
+      return out.length ? out.reverse() : [trimmed];
+    }
+  }
+  const pureMatch = rest.match(/^([a-záéíóöőúüű]+)püré$/i) || rest.match(/^([a-záéíóöőúüű]+)pure$/i);
+  if (pureMatch) {
+    const base = pureMatch[1];
+    if (base.length >= 2) {
+      out.push(base.charAt(0).toUpperCase() + base.slice(1));
+      return out.length ? out.reverse() : [trimmed];
+    }
+  }
+
+  // "X rántotta" / "X rantotta" → tojás + modifier
+  const rantottaMatch = rest.match(/^(.+?)\s+rántotta$/i) || rest.match(/^(.+?)\s+rantotta$/i);
+  if (rantottaMatch) {
+    const modifier = rantottaMatch[1].trim();
+    const baseIng = ADJECTIVE_TO_BASE[modifier.toLowerCase()] ?? modifier;
+    out.push('tojás');
+    out.push(baseIng.charAt(0).toUpperCase() + baseIng.slice(1));
+    return out.length ? out.reverse() : [trimmed];
+  }
+
+  // "X spagetti" / "X tészta" / "X laska" → tészta + modifier
+  const pastaMatch = rest.match(/^(.+?)\s+(spagetti|tészta|teszta|laska)\s*$/i);
+  if (pastaMatch) {
+    const modifier = pastaMatch[1].trim();
+    const baseIng = ADJECTIVE_TO_BASE[modifier.toLowerCase()] ?? modifier;
+    out.push('tészta');
+    out.push(baseIng.charAt(0).toUpperCase() + baseIng.slice(1));
+    return out.length ? out.reverse() : [trimmed];
+  }
+
+  // "X Y" where X is known adjective (petrezsejmes krumpli, brokkolis spagetti)
+  const words = rest.split(/\s+/);
+  if (words.length >= 2) {
+    const first = words[0];
+    const baseFromAdj = ADJECTIVE_TO_BASE[first];
+    if (baseFromAdj) {
+      const second = words.slice(1).join(' ');
+      out.push(second.charAt(0).toUpperCase() + second.slice(1));
+      out.push(baseFromAdj.charAt(0).toUpperCase() + baseFromAdj.slice(1));
+      return out.length ? out.reverse() : [trimmed];
+    }
+  }
+
+  // No compound pattern matched: keep as single ingredient (ignore instrumental-only extraction)
+  return [trimmed];
+}
+
+// ═══════════════════════════════════════════════════════════════
 // BASE INGREDIENT NORMALIZATION PIPELINE
 // ═══════════════════════════════════════════════════════════════
 

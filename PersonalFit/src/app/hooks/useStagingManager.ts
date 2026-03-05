@@ -107,6 +107,28 @@ export function stagePlan(params: {
   console.log('[StagingManager] Plan staged:', staging.label);
 }
 
+/**
+ * Set staging state to 'active' (publish) without user action.
+ * Used by upload pipeline to auto-publish after successful import.
+ * Returns true if staging was found and updated.
+ */
+export function setStagingActive(): boolean {
+  try {
+    const raw = localStorage.getItem(STAGING_KEY);
+    if (!raw) return false;
+    const staging: StagingInfo = JSON.parse(raw);
+    staging.state = 'active';
+    staging.publishedAt = new Date().toISOString();
+    localStorage.setItem(STAGING_KEY, JSON.stringify(staging));
+    window.dispatchEvent(new Event('stagingUpdated'));
+    window.dispatchEvent(new Event('profileUpdated'));
+    window.dispatchEvent(new Event('storage'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // HOOK
 // ═══════════════════════════════════════════════════════════════

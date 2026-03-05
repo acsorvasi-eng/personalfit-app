@@ -47,7 +47,7 @@ import { parseBaseIngredients, normalizeIngredientName, isSingleBaseIngredientNa
 import { getDB, nowISO } from '../backend/db';
 // REMOVED: import { mealPlan } from '../data/mealData'; — no more hardcoded demo data
 import type { MealType } from '../backend/models';
-import { stagePlan } from './useStagingManager';
+import { stagePlan, setStagingActive } from './useStagingManager';
 import { getLocale } from '../contexts/LanguageContext';
 
 // ═══════════════════════════════════════════════════════════════
@@ -545,9 +545,9 @@ export function useDataUpload() {
         }
       }
 
-      // ── Step 9: Stage AND auto-publish the plan ──
+      // ── Step 9: Stage then auto-publish the plan ──
       // Data is already in IndexedDB and plan is already activated.
-      // We stage then immediately publish to skip the manual gate.
+      // Stage then immediately publish so the user does not need to go to Settings.
       setStep('staging', 95);
       stagePlan({
         planId,
@@ -562,22 +562,8 @@ export function useDataUpload() {
         confidence: parsed.confidence,
         extractedFields,
       });
-
-      // Auto-publish: set staging state to 'active' immediately
-      try {
-        const stagingRaw = localStorage.getItem('uploadStaging');
-        if (stagingRaw) {
-          const staging = JSON.parse(stagingRaw);
-          staging.state = 'active';
-          staging.publishedAt = new Date().toISOString();
-          localStorage.setItem('uploadStaging', JSON.stringify(staging));
-          window.dispatchEvent(new Event('stagingUpdated'));
-          window.dispatchEvent(new Event('profileUpdated'));
-          window.dispatchEvent(new Event('storage'));
-          console.log('[Upload] Auto-published plan:', label);
-        }
-      } catch (e) {
-        console.warn('[Upload] Auto-publish failed:', e);
+      if (setStagingActive()) {
+        console.log('[Upload] Auto-published plan:', label);
       }
 
       // ── Complete ──

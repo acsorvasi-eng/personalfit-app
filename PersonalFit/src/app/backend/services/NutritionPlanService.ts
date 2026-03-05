@@ -435,7 +435,13 @@ export function mapAICategoryToFoodCategory(aiCategory?: string): FoodCategory {
  *   5. FoodCatalogService.isSingleBaseIngredientName (reject meal names)
  */
 function getAtomicIngredientNames(rawName: string): string[] {
-  const bases = FoodCatalogService.parseBaseIngredients(rawName);
+  // First try Hungarian compound-dish splitting (e.g. "Petrezsejmes krumpli" → ["krumpli", "petrezselyem"])
+  const compoundSplit = FoodCatalogService.splitHungarianCompoundDish(rawName);
+  const bases =
+    compoundSplit.length > 1
+      ? compoundSplit
+      : FoodCatalogService.parseBaseIngredients(compoundSplit[0] ?? rawName);
+
   const unique = new Set<string>();
   const result: string[] = [];
 
