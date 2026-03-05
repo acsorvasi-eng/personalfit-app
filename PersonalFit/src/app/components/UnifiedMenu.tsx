@@ -656,6 +656,12 @@ export function UnifiedMenu() {
                 value: 0,
                 suffix: "kcal",
               },
+              {
+                label: t("menu.mealException"),
+                value: "+",
+                isAction: true,
+                onClick: () => navigate("/log-meal"),
+              },
             ]}
           />
         </div>

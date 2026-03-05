@@ -30,9 +30,25 @@ Az étkezési típusok: breakfast, lunch, dinner, snack, post_workout
 A napok számai: 1=Hétfő, 2=Kedd, 3=Szerda, 4=Csütörtök, 5=Péntek, 6=Szombat, 7=Vasárnap
 Válaszolj KIZÁRÓLAG valid JSON formátumban. NE írj magyarázatot, NE használj markdown jelölést.`;
 
+// REQUIREMENT 1: reject garbage and label text (not food)
+const FORBIDDEN_CHARS = /[φ~{}\[\]<>*=]/;
+const LABEL_PHRASES = ['napi összesen', 'protein + egészséges zsír'];
+const MAX_INGREDIENT_NAME_LENGTH = 25;
+
+function isAcceptableIngredientName(name: string): boolean {
+  if (!name || typeof name !== 'string') return false;
+  const s = name.trim();
+  if (s.length > MAX_INGREDIENT_NAME_LENGTH) return false;
+  if (FORBIDDEN_CHARS.test(s)) return false;
+  const lower = s.toLowerCase();
+  if (LABEL_PHRASES.some(phrase => lower.includes(phrase))) return false;
+  return true;
+}
+
 interface LLMParserOutput {
   userProfile?: Partial<AIParsedUserProfile>;
   nutritionPlan?: AIParsedNutritionPlan | null;
+  ingredients?: string[];
   measurements?: AIParsedMeasurement[];
   trainingDays?: AIParsedTrainingDay[];
   warnings?: string[];
@@ -54,22 +70,27 @@ async function callClaudeAPI(text: string): Promise<string> {
     const data = await response.json();
     if (!data.result && !data.foods) throw new Error('Üres válasz a proxytól');
 
-    // Proxy response body must have "result": stringified AIParsedNutritionPlan (detected_weeks, detected_days_per_week, weeks).
-    // Wrap into LLMParserOutput so safeParseJSON() + convertToAIParsedDocument() get { nutritionPlan }.
+    // Proxy returns { result: stringified { ingredients?, weeks, detected_weeks, detected_days_per_week } }.
+    // REQUIREMENT 1: ingredients = clean atomic names. REQUIREMENT 2: weeks = 4-week meal plan.
     if (data.result) {
       try {
         const plan = JSON.parse(data.result);
-        if (plan && typeof plan.detected_days_per_week !== 'number') {
-          plan.detected_days_per_week = plan.weeks?.[0]?.length ?? 7;
-        }
-        return JSON.stringify({ nutritionPlan: plan });
+        const nutritionPlan = {
+          weeks: plan.weeks ?? [],
+          detected_weeks: plan.detected_weeks ?? (plan.weeks?.length ?? 0),
+          detected_days_per_week: typeof plan.detected_days_per_week === 'number'
+            ? plan.detected_days_per_week
+            : (plan.weeks?.[0]?.length ?? 7),
+        };
+        return JSON.stringify({
+          nutritionPlan: nutritionPlan.weeks?.length ? nutritionPlan : null,
+          ingredients: Array.isArray(plan.ingredients) ? plan.ingredients : undefined,
+        });
       } catch {
-        // If parsing fails, fall back to raw result
         return String(data.result);
       }
     }
 
-    // Fallback: foods-only shape (not currently used by parser, but keep for safety)
     return JSON.stringify({ nutritionPlan: data.foods ?? null });
   }
 
@@ -174,7 +195,8 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
                     ...(ing.estimated_category && { estimated_category: ing.estimated_category }),
                   };
                 })
-                .filter((ing): ing is AIParsedMeal['ingredients'][0] => Boolean(ing.name && isCleanFoodName(ing.name))),
+                .filter((ing): ing is AIParsedMeal['ingredients'][0] =>
+                  Boolean(ing.name && isAcceptableIngredientName(ing.name) && isCleanFoodName(ing.name))),
             }))
             .filter(m => m.ingredients.length > 0),
         }))

@@ -2,10 +2,15 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+/** User daily calorie target (kcal). For now hardcoded; later from user profile (userProfile.dailyCalorieTarget). */
+const DAILY_CALORIE_TARGET = 2000;
+
 // Day name → day number mapping
 const DAY_NUMBER: Record<string, number> = {
   'HÉTFŐ': 1, 'KEDD': 2, 'SZERDA': 3, 'CSÜTÖRTÖK': 4,
   'PÉNTEK': 5, 'SZOMBAT': 6, 'VASÁRNAP': 7,
+  'Hétfő': 1, 'Kedd': 2, 'Szerda': 3, 'Csütörtök': 4,
+  'Péntek': 5, 'Szombat': 6, 'Vasárnap': 7,
 };
 
 // Meal type → macro ratio estimates (protein%, carb%, fat% of calories)
@@ -15,6 +20,42 @@ const MACRO_RATIOS: Record<string, { p: number; c: number; f: number }> = {
   dinner:    { p: 0.35, c: 0.15, f: 0.50 },
   snack:     { p: 0.50, c: 0.35, f: 0.15 },
 };
+
+// Garbage patterns: merged table cells, PDF noise, label text (not food)
+const GARBAGE_PATTERNS = [
+  /\([A-Za-z0-9*φ~{}\[\]<>=\\]+\)/g,           // (AVk*FhA8φNI...
+  /[φ~{}\[\]<>*=]/g,                             // single forbidden chars
+  /\bNapi összesen\b/gi,
+  /\bProtein\s*\+\s*egészséges zsír\b/gi,
+];
+const LABEL_PHRASES = ['napi összesen', 'protein + egészséges zsír', 'összesen'];
+
+/**
+ * Clean PDF-extracted text: remove merged cell garbage, label lines, forbidden chars.
+ * REQUIREMENT 1: no "(AVk*FhA8φNI...", no φ, ~, }, {, <, >, *, =
+ */
+function cleanPdfText(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  let out = text;
+
+  for (const re of GARBAGE_PATTERNS) {
+    out = out.replace(re, ' ');
+  }
+
+  // Remove lines that are only labels or too long without spaces (run-on garbage)
+  const lines = out.split(/\r?\n/);
+  const cleaned = lines
+    .map(line => {
+      const t = line.trim();
+      const lower = t.toLowerCase();
+      if (LABEL_PHRASES.some(phrase => lower.includes(phrase))) return '';
+      if (t.length > 25 && !/\s/.test(t)) return ''; // no space in long string = garbage
+      return line;
+    })
+    .filter(Boolean);
+
+  return cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -29,26 +70,17 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const chunks = splitIntoWeekChunks(rawText);
-    console.log(`[parse-document] Processing ${chunks.length} weeks in parallel`);
+    const cleanedText = cleanPdfText(rawText);
+    const payload = await parseDocumentToIngredientsAndPlan(cleanedText);
 
-    // Process all weeks IN PARALLEL to avoid timeout
-    const weekPromises = chunks.map((chunk, i) => processWeek(chunk, i + 1));
-    const weekResults = await Promise.all(weekPromises);
-
-    // Build AIParsedNutritionPlan format (what importFromAIParse expects)
-    const weeksArray = weekResults
-      .filter(w => w !== null && w.length > 0)
-      .map(days => days!);
-
-    const daysInFirstWeek = weeksArray[0]?.length ?? 7;
     const result = {
-      detected_weeks: weeksArray.length,
-      detected_days_per_week: daysInFirstWeek,
-      weeks: weeksArray,
+      ingredients: payload.ingredients,
+      detected_weeks: payload.detected_weeks,
+      detected_days_per_week: payload.detected_days_per_week,
+      weeks: payload.weeks,
     };
 
-    console.log(`[parse-document] Done: ${weeksArray.length} weeks, ${weeksArray.flat().length} days total`);
+    console.log(`[parse-document] Done: ${payload.ingredients.length} ingredients, ${payload.weeks.length} weeks`);
     return res.status(200).json({ result: JSON.stringify(result) });
 
   } catch (error: any) {
@@ -58,262 +90,169 @@ export default async function handler(req: any, res: any) {
 }
 
 /**
- * Process one week chunk with Claude AI.
- * Returns array of day objects in AIParsedNutritionPlan format.
+ * Single LLM call: extract (1) clean ingredients list, (2) 30-day meal plan.
+ * Then convert plan to 4 weeks × 7 days and filter ingredients.
  */
-async function processWeek(chunk: string, weekNum: number): Promise<any[] | null> {
-  try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 2048,
-      messages: [{
-        role: 'user',
-        content: `You are a nutrition coach.
+async function parseDocumentToIngredientsAndPlan(cleanedText: string): Promise<{
+  ingredients: string[];
+  weeks: any[][];
+  detected_weeks: number;
+  detected_days_per_week: number;
+}> {
+  const prompt = `You are a nutrition coach. Extract TWO outputs from the Hungarian meal plan text below.
 
-You receive Hungarian TEXT for one WEEK. The text can be:
-- EITHER: an already written weekly meal plan (with days and meals),
-- OR: a NATURAL LANGUAGE REQUEST describing constraints for a weekly plan
-  (for example: "készíts egy szöveget 7 napra reggeli ebéd vacsora, napi 2100 kcal alatt, sok zöldség, kevés hús, heti 3x edzés kb 600 kcal és egyszer úszás").
+OUTPUT 1 — ingredients: A JSON array of ATOMIC ingredient names ONLY. No quantities, no units, no descriptions.
+GOOD: "tojás", "csirkemell", "lazac", "avokádó", "zab", "túró", "brokkoli", "dió", "banán"
+BAD: "3 tojás", "180g lazac", "Protein + egészséges zsír", "Napi összesen", any string with φ ~ } { < > * =
+Each name must be a single base food, max 25 characters, Hungarian.
 
-Your task in BOTH cases:
-1) Produce a 7-day meal plan for that week in JSON format (see schema below).
-2) If the text already contains a structured plan, PARSE it as faithfully as possible.
-3) If the text is only a REQUEST (no explicit per-day menu), then first DESIGN a reasonable 7-day plan that satisfies the constraints, then output it in the JSON format.
+OUTPUT 2 — plan: A JSON array of exactly 30 days. Each day:
+- day: 1..30
+- dayOfWeek: "Hétfő" | "Kedd" | "Szerda" | "Csütörtök" | "Péntek" | "Szombat" | "Vasárnap"
+- type: "edzés" | "pihenő"
+- totalKcal: number (MUST NOT exceed ${DAILY_CALORIE_TARGET} — user's daily target)
+- meals: array of { name: "Reggeli"|"Ebéd"|"Vacsora"|"Edzés utáni", items: string[], kcal: number }
+  - items: strings WITH quantities, e.g. "3 tojás (180g)", "60g tk kenyér", "½ avokádó (70g)", "220g csirkemell"
 
-WEEK ${weekNum} TEXT:
-${chunk}
+Return ONLY valid JSON in this exact shape (no markdown):
+{"ingredients":["tojás","csirkemell",...],"plan":[{"day":1,"dayOfWeek":"Hétfő","type":"edzés","totalKcal":2000,"meals":[{"name":"Reggeli","items":["3 tojás (180g)","60g tk kenyér"],"kcal":520},...]},...]}
 
-Return a JSON array of day objects:
-[
-  {
-    "dayName": "HÉTFŐ",
-    "isTraining": true,
-    "meals": [
-      {
-        "type": "breakfast",
-        "kcal": 520,
-        "items": [
-          { "name": "3 tojás", "kcal": 240 },
-          { "name": "teljes kiőrlésű kenyér", "kcal": 150 },
-          { "name": "avokádó", "kcal": 130 }
-        ]
-      },
-      {
-        "type": "lunch",
-        "kcal": 610,
-        "items": [
-          { "name": "csirkemell", "kcal": 250 },
-          { "name": "krumpli", "kcal": 200 },
-          { "name": "brokkoli", "kcal": 80 },
-          { "name": "olívaolaj", "kcal": 80 }
-        ]
-      },
-      {
-        "type": "dinner",
-        "kcal": 520,
-        "items": [
-          { "name": "lazac", "kcal": 260 },
-          { "name": "saláta", "kcal": 100 },
-          { "name": "olívaolaj", "kcal": 80 },
-          { "name": "kenyér", "kcal": 80 }
-        ]
-      },
-      {
-        "type": "snack",
-        "kcal": 220,
-        "items": [
-          { "name": "fehérjepor", "kcal": 120 },
-          { "name": "banán", "kcal": 100 }
-        ]
-      }
-    ]
-  },
-  {
-    "dayName": "KEDD",
-    "isTraining": false,
-    "meals": [...]
+TEXT:
+${cleanedText.substring(0, 45000)}`;
+
+  const message = await client.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 8192,
+    messages: [{ role: 'user', content: prompt }],
+  });
+
+  const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('No JSON object in LLM response');
   }
-]
 
-Rules:
-- Always include ALL 7 days (HÉTFŐ..VASÁRNAP) even if the original text is shorter.
-- dayName: one of HÉTFŐ, KEDD, SZERDA, CSÜTÖRTÖK, PÉNTEK, SZOMBAT, VASÁRNAP.
-- isTraining: true if the text clearly indicates a training day (edzés/edzőterem/cardio), false otherwise.
-- type: Reggeli→"breakfast", Ebéd→"lunch", Vacsora→"dinner", Edzés után / snack → "snack".
-- Each meal SHOULD have an "items" array where each element is ONE atomic food (e.g. "tojás", "olívaolaj", "barna rizs", "alma") with its own kcal.
-- If the original text already lists foods separately, map each to one item with a reasonable kcal share.
-- kcal on the meal is total kcal for the meal; item kcal values should roughly sum to the meal kcal.
-- Use more vegetables and less meat if the text asks for that.
-- Return ONLY the JSON array, without markdown, without explanation.`
-      }]
-    });
+  const parsed = JSON.parse(jsonMatch[0]) as { ingredients?: string[]; plan?: any[] };
+  const rawIngredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+  const rawPlan = Array.isArray(parsed.plan) ? parsed.plan : [];
 
-    const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+  const ingredients = filterCleanIngredients(rawIngredients);
+  const weeks = convert30DayPlanToWeeks(rawPlan);
 
-    // Extract JSON array from response
-    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      console.error(`[parse-document] Week ${weekNum}: no JSON array in response`);
-      return null;
-    }
+  return {
+    ingredients,
+    weeks,
+    detected_weeks: weeks.length,
+    detected_days_per_week: 7,
+  };
+}
 
-    const days = JSON.parse(jsonMatch[0]);
+/**
+ * REQUIREMENT 1 filter: atomic names only; no quantity prefix, no garbage chars, max 25 chars, no labels.
+ */
+function filterCleanIngredients(names: string[]): string[] {
+  const forbidden = /[φ~{}\[\]<>*=]/;
+  const seen = new Set<string>();
+  const out: string[] = [];
 
-    // Convert to AIParsedNutritionPlan day format
-    return days.map((day: any) => {
-      const dayNum = DAY_NUMBER[day.dayName] || 1;
+  for (const raw of names) {
+    const s = String(raw ?? '').trim();
+    if (!s || s.length > 25) continue;
+    if (forbidden.test(s)) continue;
+    const noQuantity = s.replace(/^\d+\s*/, '').trim();
+    const n = noQuantity.toLowerCase();
+    if (LABEL_PHRASES.some(phrase => n.includes(phrase))) continue;
+    if (n.length < 2) continue;
+    if (seen.has(n)) continue;
+    seen.add(n);
+    out.push(noQuantity.charAt(0).toUpperCase() + noQuantity.slice(1));
+  }
+  return out;
+}
+
+/**
+ * Parse item string like "3 tojás (180g)" or "60g tk kenyér" → { name, quantity_grams }.
+ */
+function parseItemToIngredient(itemStr: string): { name: string; quantity_grams: number } {
+  const s = String(itemStr || '').trim();
+  if (!s) return { name: 'Étel', quantity_grams: 50 };
+
+  const inParens = s.match(/\((\d+)\s*g\)/i) || s.match(/\((\d+)g\)/i);
+  if (inParens) {
+    const grams = parseInt(inParens[1], 10) || 50;
+    const namePart = s.replace(/\s*\(\d+\s*g\)\s*/gi, '').trim();
+    const name = namePart.replace(/^\d+\s+/, '').trim() || 'Étel';
+    return { name: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(), quantity_grams: grams };
+  }
+
+  const leadingG = s.match(/^(\d+)\s*g\s+(.+)$/i);
+  if (leadingG) {
+    const grams = parseInt(leadingG[1], 10) || 50;
+    const name = leadingG[2].trim().charAt(0).toUpperCase() + leadingG[2].trim().slice(1).toLowerCase();
+    return { name, quantity_grams: grams };
+  }
+
+  return { name: s.replace(/^\d+\s+/, '').trim() || 'Étel', quantity_grams: 50 };
+}
+
+/**
+ * Convert 30-day plan to 4 weeks × 7 days (AIParsedNutritionPlan format).
+ * First 28 days used; cap totalKcal at DAILY_CALORIE_TARGET.
+ */
+function convert30DayPlanToWeeks(plan: any[]): any[][] {
+  const days = (plan || []).slice(0, 28);
+  const mealTypeMap: Record<string, string> = {
+    'Reggeli': 'breakfast',
+    'Ebéd': 'lunch',
+    'Vacsora': 'dinner',
+    'Edzés utáni': 'snack',
+  };
+
+  const weeks: any[][] = [[], [], [], []];
+  for (let i = 0; i < days.length; i++) {
+    const d = days[i];
+    const weekIndex = Math.floor(i / 7);
+    const dayInWeek = (i % 7) + 1;
+    const dayName = d?.dayOfWeek || 'Hétfő';
+    const dayNum = DAY_NUMBER[dayName.toUpperCase()] ?? dayInWeek;
+    const totalKcal = Math.min(Number(d?.totalKcal) || DAILY_CALORIE_TARGET, DAILY_CALORIE_TARGET);
+
+    const meals = (d?.meals || []).map((m: any) => {
+      const type = mealTypeMap[m?.name] || 'lunch';
+      const typeKey = type as keyof typeof MACRO_RATIOS;
+      const ratio = MACRO_RATIOS[typeKey] || MACRO_RATIOS.lunch;
+      const mealKcal = typeof m?.kcal === 'number' ? m.kcal : 0;
+      const items = Array.isArray(m?.items) ? m.items : [];
+      const ingredients = items.map((item: string) => {
+        const { name, quantity_grams } = parseItemToIngredient(item);
+        const cal = items.length > 0 ? Math.max(Math.round(mealKcal / items.length), 1) : 100;
+        return {
+          name,
+          quantity_grams,
+          unit: 'g' as const,
+          estimated_calories_per_100g: Math.round((cal / quantity_grams) * 100) || 100,
+          estimated_protein_per_100g: Math.round((cal * ratio.p) / 4),
+          estimated_carbs_per_100g: Math.round((cal * ratio.c) / 4),
+          estimated_fat_per_100g: Math.round((cal * ratio.f) / 9),
+          estimated_category: type === 'breakfast' ? 'Egyéb' : 'Hús & Hal',
+        };
+      });
 
       return {
-        week: weekNum,
-        day: dayNum,
-        day_label: day.dayName || 'HÉTFŐ',
-        is_training_day: day.isTraining || false,
-        meals: (day.meals || []).map((meal: any) => ({
-          meal_type: meal.type || 'lunch',
-          name: getMealName(meal.type),
-          ingredients: buildIngredientsFromMeal(meal),
-        })),
+        meal_type: type,
+        name: m?.name || 'Ebéd',
+        ingredients,
       };
     });
 
-  } catch (err) {
-    console.error(`[parse-document] Week ${weekNum} error:`, err);
-    return null;
-  }
-}
-
-/**
- * Split a free-form meal description into individual food item strings.
- */
-function splitDescriptionIntoItems(description: string): string[] {
-  if (!description) return [];
-  let text = String(description);
-
-  // Normalize separators: "+", ",", ";", "és"
-  text = text
-    .replace(/•/g, ',')
-    .replace(/\s+\+\s+/g, ',')
-    .replace(/\s+és\s+/gi, ',')
-    .replace(/\s+es\s+/gi, ',');
-
-  const rawParts = text.split(/[,;\n]/);
-  return rawParts
-    .map(p => p.trim())
-    .filter(p => p.length > 1);
-}
-
-/**
- * Build a single ingredient entry from a meal description + kcal.
- * Uses quantity_grams=100 so that calories_per_100g = total meal kcal.
- * Estimates protein/carbs/fat from meal type ratios.
- */
-function buildIngredient(description: string, kcal: number, mealType: string) {
-  const cal = Math.max(kcal || 100, 1);
-  const ratio = MACRO_RATIOS[mealType] || MACRO_RATIOS['lunch'];
-
-  // Convert kcal ratios to grams per 100g serving
-  const protein_per_100g = Math.round((cal * ratio.p) / 4);   // protein = 4 kcal/g
-  const carbs_per_100g   = Math.round((cal * ratio.c) / 4);   // carbs = 4 kcal/g
-  const fat_per_100g     = Math.round((cal * ratio.f) / 9);   // fat = 9 kcal/g
-
-  return {
-    name: description || 'Étel',
-    quantity_grams: 100,
-    unit: 'g',
-    estimated_calories_per_100g: cal,
-    estimated_protein_per_100g: protein_per_100g,
-    estimated_carbs_per_100g: carbs_per_100g,
-    estimated_fat_per_100g: fat_per_100g,
-    estimated_category: getCategoryForMealType(mealType),
-  };
-}
-
-/**
- * Build multiple ingredient entries from a meal description.
- * The total kcal is split evenly across all items when no explicit items[] are present.
- */
-function buildIngredients(description: string, kcal: number, mealType: string) {
-  const items = splitDescriptionIntoItems(description);
-  if (items.length === 0) {
-    return [buildIngredient(description, kcal, mealType)];
+    weeks[weekIndex].push({
+      week: weekIndex + 1,
+      day: dayNum,
+      day_label: dayName,
+      is_training_day: String(d?.type).toLowerCase() === 'edzés',
+      meals,
+    });
   }
 
-  const perItemKcal = Math.max(Math.round((kcal || 100) / items.length), 1);
-  return items.map(item => buildIngredient(item, perItemKcal, mealType));
-}
-
-/**
- * Build ingredients from a full meal object.
- * Prefer structured meal.items[] if present, otherwise fall back to description splitting.
- */
-function buildIngredientsFromMeal(meal: any) {
-  const type = meal.type || 'lunch';
-  const baseKcal = meal.kcal;
-
-  // Preferred path: structured items array from the LLM
-  if (Array.isArray(meal.items) && meal.items.length > 0) {
-    const rawItems = meal.items as Array<{ name?: string; kcal?: number }>;
-    const clean = rawItems
-      .map(i => ({
-        name: (i.name || '').trim(),
-        kcal: typeof i.kcal === 'number' ? i.kcal : 0,
-      }))
-      .filter(i => i.name.length > 1);
-
-    if (clean.length > 0) {
-      let totalKcal = clean.reduce((sum, i) => sum + (i.kcal || 0), 0);
-      if (!totalKcal || totalKcal <= 0) {
-        totalKcal = baseKcal || 100;
-      }
-      const fallbackPerItem = Math.max(Math.round(totalKcal / clean.length), 1);
-      return clean.map(i => buildIngredient(i.name, i.kcal || fallbackPerItem, type));
-    }
-  }
-
-  // Fallback: heuristic split of free-form description into items
-  return buildIngredients(meal.description, baseKcal, type);
-}
-
-function getMealName(type: string): string {
-  const names: Record<string, string> = {
-    breakfast: 'Reggeli',
-    lunch: 'Ebéd',
-    dinner: 'Vacsora',
-    snack: 'Edzés utáni snack',
-  };
-  return names[type] || type;
-}
-
-function getCategoryForMealType(type: string): string {
-  const cats: Record<string, string> = {
-    breakfast: 'Egyéb',
-    lunch: 'Hús & Hal',
-    dinner: 'Hús & Hal',
-    snack: 'Tej & Tejtermék',
-  };
-  return cats[type] || 'Egyéb';
-}
-
-/**
- * Split raw text into week chunks.
- * Handles "1. HÉT", "2. hét", etc. and merges duplicate week numbers.
- */
-function splitIntoWeekChunks(text: string): string[] {
-  const parts = text.split(/(?=\d+\.\s*hét)/i).filter(p => p.trim().length > 50);
-
-  if (parts.length >= 2) {
-    const weekMap = new Map<number, string>();
-    for (const part of parts) {
-      const numMatch = part.match(/^(\d+)\./);
-      if (numMatch) {
-        const weekNum = parseInt(numMatch[1]);
-        weekMap.set(weekNum, (weekMap.get(weekNum) || '') + '\n' + part);
-      }
-    }
-    return Array.from(weekMap.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([, chunk]) => chunk);
-  }
-
-  return [text];
+  return weeks.filter(w => w.length > 0);
 }
