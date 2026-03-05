@@ -166,6 +166,10 @@ export function normalizeIngredientName(raw: string): string {
   let n = String(raw).toLowerCase().trim();
   if (!n) return '';
 
+  // Strip leading quantity (e.g. "3 tojás" -> "tojás") so isCleanFoodName and DB pipeline accept it
+  n = n.replace(/^\d+\s+/, '').trim();
+  if (!n) return '';
+
   // Remove leading/trailing punctuation
   n = n.replace(/^[-•–—:.,;()\[\]]+\s*/, '').replace(/\s*[-•–—:.,;()\[\]]+$/, '');
 

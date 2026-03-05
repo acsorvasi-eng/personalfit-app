@@ -6,11 +6,14 @@
 
 import type {
   AIParsedNutritionPlan,
+  AIParsedDay,
+  AIParsedMeal,
   AIParsedMeasurement,
   AIParsedTrainingDay,
 } from '../models';
 import type { AIParsedUserProfile, AIParsedDocument } from './AIParserService';
 import { parseDocumentText, isCleanFoodName } from './AIParserService';
+import { normalizeIngredientName } from './FoodCatalogService';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-haiku-4-5';
@@ -132,9 +135,21 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
     userProfile.bmi = Math.round((userProfile.weight / (h * h)) * 10) / 10;
   }
 
-  // Filter garbage: only keep ingredients with clean, human-readable names
-  let nutritionPlan: AIParsedNutritionPlan | null =
-    llmOutput.nutritionPlan?.weeks?.length ? llmOutput.nutritionPlan : null;
+  // Support top-level plan (e.g. dev LLM returns { weeks, detected_weeks } without nutritionPlan wrapper)
+  let planSource: AIParsedNutritionPlan | null = llmOutput.nutritionPlan?.weeks?.length
+    ? llmOutput.nutritionPlan
+    : null;
+  if (!planSource && Array.isArray((llmOutput as { weeks?: unknown[] }).weeks) && (llmOutput as { weeks: unknown[] }).weeks.length > 0) {
+    const raw = llmOutput as { weeks: AIParsedDay[][]; detected_weeks?: number; detected_days_per_week?: number };
+    planSource = {
+      weeks: raw.weeks,
+      detected_weeks: raw.detected_weeks ?? raw.weeks.length,
+      detected_days_per_week: raw.detected_days_per_week ?? (Array.isArray(raw.weeks[0]) ? raw.weeks[0].length : 7),
+    };
+  }
+
+  // Filter garbage: keep only ingredients with clean names; normalize first so "3 tojás" -> "tojás" passes
+  let nutritionPlan: AIParsedNutritionPlan | null = planSource;
   if (nutritionPlan) {
     const weeksFiltered = nutritionPlan.weeks
       .map(w => w
@@ -143,9 +158,23 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
           meals: d.meals
             .map(m => ({
               ...m,
-              ingredients: (m.ingredients || []).filter(
-                (ing: { name?: string }) => ing?.name && isCleanFoodName(String(ing.name).trim())
-              ),
+              ingredients: (m.ingredients || [])
+                .map((ing: Partial<AIParsedMeal['ingredients'][0]> & { name?: string }) => {
+                  const rawName = String(ing?.name ?? '').trim();
+                  const name = normalizeIngredientName(rawName) || rawName;
+                  return {
+                    name,
+                    quantity_grams: ing.quantity_grams ?? 0,
+                    unit: (ing.unit as 'g' | 'ml' | 'db') ?? 'g',
+                    ...(ing.matched_food_id && { matched_food_id: ing.matched_food_id }),
+                    ...(ing.estimated_calories_per_100g != null && { estimated_calories_per_100g: ing.estimated_calories_per_100g }),
+                    ...(ing.estimated_protein_per_100g != null && { estimated_protein_per_100g: ing.estimated_protein_per_100g }),
+                    ...(ing.estimated_carbs_per_100g != null && { estimated_carbs_per_100g: ing.estimated_carbs_per_100g }),
+                    ...(ing.estimated_fat_per_100g != null && { estimated_fat_per_100g: ing.estimated_fat_per_100g }),
+                    ...(ing.estimated_category && { estimated_category: ing.estimated_category }),
+                  };
+                })
+                .filter((ing): ing is AIParsedMeal['ingredients'][0] => Boolean(ing.name && isCleanFoodName(ing.name))),
             }))
             .filter(m => m.ingredients.length > 0),
         }))
