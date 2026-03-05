@@ -763,10 +763,13 @@ export function useDataUpload() {
 
       try {
         if (isPdf) {
-          parsed = await AIParser.parseUploadedFile(file);
+          // PDF: extract text, then try LLM first, fallback to local parser
+          const rawText = await extractTextFromPDF(file);
+          parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
         } else {
+          // Text/Word: read raw text, try LLM first, fallback to local parser
           const rawText = await file.text();
-          parsed = await AIParser.parseDocumentText(rawText);
+          parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
         }
       } catch (extractionError) {
         console.warn('[Upload/FoodsOnly] File extraction failed:', extractionError);
@@ -802,7 +805,7 @@ export function useDataUpload() {
         result: null,
       });
 
-      const parsed = await AIParser.parseDocumentText(text);
+      const parsed = await parseWithLLM(text).catch(() => AIParser.parseDocumentText(text));
       const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
 
       if (!hasNutritionPlan) {

@@ -66,7 +66,17 @@ async function processWeek(chunk: string, weekNum: number): Promise<any[] | null
       max_tokens: 2048,
       messages: [{
         role: 'user',
-        content: `Parse this Hungarian meal plan week. Return ONLY valid JSON array, no markdown, no explanation.
+        content: `You are a nutrition coach.
+
+You receive Hungarian TEXT for one WEEK. The text can be:
+- EITHER: an already written weekly meal plan (with days and meals),
+- OR: a NATURAL LANGUAGE REQUEST describing constraints for a weekly plan
+  (for example: "készíts egy szöveget 7 napra reggeli ebéd vacsora, napi 2100 kcal alatt, sok zöldség, kevés hús, heti 3x edzés kb 600 kcal és egyszer úszás").
+
+Your task in BOTH cases:
+1) Produce a 7-day meal plan for that week in JSON format (see schema below).
+2) If the text already contains a structured plan, PARSE it as faithfully as possible.
+3) If the text is only a REQUEST (no explicit per-day menu), then first DESIGN a reasonable 7-day plan that satisfies the constraints, then output it in the JSON format.
 
 WEEK ${weekNum} TEXT:
 ${chunk}
@@ -77,10 +87,43 @@ Return a JSON array of day objects:
     "dayName": "HÉTFŐ",
     "isTraining": true,
     "meals": [
-      { "type": "breakfast", "description": "3 tojás + tk kenyér + avokádó", "kcal": 520 },
-      { "type": "lunch", "description": "csirkemell + krumpli + brokkoli", "kcal": 610 },
-      { "type": "dinner", "description": "lazac + saláta + olivaolaj", "kcal": 520 },
-      { "type": "snack", "description": "fehérjepor + banán", "kcal": 220 }
+      {
+        "type": "breakfast",
+        "kcal": 520,
+        "items": [
+          { "name": "3 tojás", "kcal": 240 },
+          { "name": "teljes kiőrlésű kenyér", "kcal": 150 },
+          { "name": "avokádó", "kcal": 130 }
+        ]
+      },
+      {
+        "type": "lunch",
+        "kcal": 610,
+        "items": [
+          { "name": "csirkemell", "kcal": 250 },
+          { "name": "krumpli", "kcal": 200 },
+          { "name": "brokkoli", "kcal": 80 },
+          { "name": "olívaolaj", "kcal": 80 }
+        ]
+      },
+      {
+        "type": "dinner",
+        "kcal": 520,
+        "items": [
+          { "name": "lazac", "kcal": 260 },
+          { "name": "saláta", "kcal": 100 },
+          { "name": "olívaolaj", "kcal": 80 },
+          { "name": "kenyér", "kcal": 80 }
+        ]
+      },
+      {
+        "type": "snack",
+        "kcal": 220,
+        "items": [
+          { "name": "fehérjepor", "kcal": 120 },
+          { "name": "banán", "kcal": 100 }
+        ]
+      }
     ]
   },
   {
@@ -91,13 +134,15 @@ Return a JSON array of day objects:
 ]
 
 Rules:
-- dayName: one of HÉTFŐ, KEDD, SZERDA, CSÜTÖRTÖK, PÉNTEK, SZOMBAT, VASÁRNAP
-- isTraining: true if "(EDZÉS)" in that day, false if "(PIHENŐ)"
-- type: Reggeli→"breakfast", Ebéd→"lunch", Vacsora→"dinner", Edzés után→"snack"
-- description: food items text, NO kcal numbers
-- kcal: integer number only
-- Include all 7 days
-- Return ONLY the JSON array`
+- Always include ALL 7 days (HÉTFŐ..VASÁRNAP) even if the original text is shorter.
+- dayName: one of HÉTFŐ, KEDD, SZERDA, CSÜTÖRTÖK, PÉNTEK, SZOMBAT, VASÁRNAP.
+- isTraining: true if the text clearly indicates a training day (edzés/edzőterem/cardio), false otherwise.
+- type: Reggeli→"breakfast", Ebéd→"lunch", Vacsora→"dinner", Edzés után / snack → "snack".
+- Each meal SHOULD have an "items" array where each element is ONE atomic food (e.g. "tojás", "olívaolaj", "barna rizs", "alma") with its own kcal.
+- If the original text already lists foods separately, map each to one item with a reasonable kcal share.
+- kcal on the meal is total kcal for the meal; item kcal values should roughly sum to the meal kcal.
+- Use more vegetables and less meat if the text asks for that.
+- Return ONLY the JSON array, without markdown, without explanation.`
       }]
     });
 
@@ -124,7 +169,7 @@ Rules:
         meals: (day.meals || []).map((meal: any) => ({
           meal_type: meal.type || 'lunch',
           name: getMealName(meal.type),
-          ingredients: [buildIngredient(meal.description, meal.kcal, meal.type)],
+          ingredients: buildIngredientsFromMeal(meal),
         })),
       };
     });
@@ -133,6 +178,26 @@ Rules:
     console.error(`[parse-document] Week ${weekNum} error:`, err);
     return null;
   }
+}
+
+/**
+ * Split a free-form meal description into individual food item strings.
+ */
+function splitDescriptionIntoItems(description: string): string[] {
+  if (!description) return [];
+  let text = String(description);
+
+  // Normalize separators: "+", ",", ";", "és"
+  text = text
+    .replace(/•/g, ',')
+    .replace(/\s+\+\s+/g, ',')
+    .replace(/\s+és\s+/gi, ',')
+    .replace(/\s+es\s+/gi, ',');
+
+  const rawParts = text.split(/[,;\n]/);
+  return rawParts
+    .map(p => p.trim())
+    .filter(p => p.length > 1);
 }
 
 /**
@@ -159,6 +224,52 @@ function buildIngredient(description: string, kcal: number, mealType: string) {
     estimated_fat_per_100g: fat_per_100g,
     estimated_category: getCategoryForMealType(mealType),
   };
+}
+
+/**
+ * Build multiple ingredient entries from a meal description.
+ * The total kcal is split evenly across all items when no explicit items[] are present.
+ */
+function buildIngredients(description: string, kcal: number, mealType: string) {
+  const items = splitDescriptionIntoItems(description);
+  if (items.length === 0) {
+    return [buildIngredient(description, kcal, mealType)];
+  }
+
+  const perItemKcal = Math.max(Math.round((kcal || 100) / items.length), 1);
+  return items.map(item => buildIngredient(item, perItemKcal, mealType));
+}
+
+/**
+ * Build ingredients from a full meal object.
+ * Prefer structured meal.items[] if present, otherwise fall back to description splitting.
+ */
+function buildIngredientsFromMeal(meal: any) {
+  const type = meal.type || 'lunch';
+  const baseKcal = meal.kcal;
+
+  // Preferred path: structured items array from the LLM
+  if (Array.isArray(meal.items) && meal.items.length > 0) {
+    const rawItems = meal.items as Array<{ name?: string; kcal?: number }>;
+    const clean = rawItems
+      .map(i => ({
+        name: (i.name || '').trim(),
+        kcal: typeof i.kcal === 'number' ? i.kcal : 0,
+      }))
+      .filter(i => i.name.length > 1);
+
+    if (clean.length > 0) {
+      let totalKcal = clean.reduce((sum, i) => sum + (i.kcal || 0), 0);
+      if (!totalKcal || totalKcal <= 0) {
+        totalKcal = baseKcal || 100;
+      }
+      const fallbackPerItem = Math.max(Math.round(totalKcal / clean.length), 1);
+      return clean.map(i => buildIngredient(i.name, i.kcal || fallbackPerItem, type));
+    }
+  }
+
+  // Fallback: heuristic split of free-form description into items
+  return buildIngredients(meal.description, baseKcal, type);
 }
 
 function getMealName(type: string): string {
