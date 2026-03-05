@@ -17,6 +17,7 @@
  */
 
 import { getDB } from '../db';
+import { legacyGetItem, legacySetItem } from '../../../storage/legacyLocalStorage';
 
 // ═══════════════════════════════════════════════════════════════
 // KEY DERIVATION
@@ -27,12 +28,12 @@ const KEY_ITERATIONS = 100000;
 const KEY_LENGTH = 256;
 
 async function getSalt(): Promise<Uint8Array> {
-  const stored = localStorage.getItem(SALT_KEY);
+  const stored = legacyGetItem(SALT_KEY);
   if (stored) {
     return new Uint8Array(JSON.parse(stored));
   }
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  localStorage.setItem(SALT_KEY, JSON.stringify(Array.from(salt)));
+  legacySetItem(SALT_KEY, JSON.stringify(Array.from(salt)));
   return salt;
 }
 
@@ -50,7 +51,7 @@ export async function deriveKey(passphrase: string): Promise<CryptoKey> {
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt as unknown as BufferSource,
       iterations: KEY_ITERATIONS,
       hash: 'SHA-256',
     },
@@ -147,10 +148,10 @@ export async function exportAllData(): Promise<string> {
       daily_history: await db.getAll('daily_history'),
     },
     local_storage: {
-      userProfile: localStorage.getItem('userProfile'),
-      weightHistory: localStorage.getItem('weightHistory'),
-      dailyHistory: localStorage.getItem('dailyHistory'),
-      themeMode: localStorage.getItem('themeMode'),
+      userProfile: legacyGetItem('userProfile'),
+      weightHistory: legacyGetItem('weightHistory'),
+      dailyHistory: legacyGetItem('dailyHistory'),
+      themeMode: legacyGetItem('themeMode'),
     },
   };
 

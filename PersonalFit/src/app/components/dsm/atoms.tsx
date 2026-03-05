@@ -15,7 +15,7 @@
  * ====================================================================
  */
 
-import { ReactNode } from "react";
+import type { ReactNode, ElementType } from "react";
 import type { LucideIcon } from "lucide-react";
 
 // ─── DSMText ────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ interface DSMTextProps {
   weight?: 400 | 500 | 600 | 700 | 800 | 900;
   className?: string;
   children: ReactNode;
-  as?: keyof JSX.IntrinsicElements;
+  as?: ElementType;
 }
 
 const TEXT_VARIANT_MAP: Record<TextVariant, string> = {
@@ -59,15 +59,16 @@ export function DSMText({
   weight,
   className = "",
   children,
-  as: Tag = "span",
+  as: Tag = "span" as ElementType,
 }: DSMTextProps) {
+  const Component = Tag;
   return (
-    <Tag
+    <Component
       className={`${TEXT_VARIANT_MAP[variant]} ${TEXT_COLOR_MAP[color]} ${className}`}
       style={weight ? { fontWeight: weight } : undefined}
     >
       {children}
-    </Tag>
+    </Component>
   );
 }
 

@@ -148,7 +148,7 @@ export async function verifyBiometric(): Promise<boolean> {
         allowCredentials: [
           {
             type: 'public-key',
-            id: credentialId,
+            id: credentialId as BufferSource,
             transports: ['internal'],
           },
         ],

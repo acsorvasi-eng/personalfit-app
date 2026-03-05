@@ -31,7 +31,7 @@ export async function getActiveVersion(
 ): Promise<VersionRecord | undefined> {
   const db = await getDB();
   const results = await db.getAllFromIndex<VersionRecord>(
-    'versions', 'by-type-active', [entityType, true]
+    'versions', 'by-type-active', [entityType, true] as IDBValidKey[]
   );
   return results[0];
 }

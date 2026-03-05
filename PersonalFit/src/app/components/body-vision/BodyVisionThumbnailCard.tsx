@@ -35,7 +35,7 @@ export function BodyVisionThumbnailCard({
   const startPress = () => {
     if (!hasImage) return;
     longPressTimer.current = setTimeout(() => {
-      if (navigator.vibrate) navigator.vibrate(DSM_TOKENS.haptics.longPress as number[]);
+      if (navigator.vibrate) navigator.vibrate([...DSM_TOKENS.haptics.longPress]);
       onLongPressStart();
     }, 400);
   };

@@ -1252,7 +1252,7 @@ interface MealCardWithAlternativesProps {
   isCurrent: boolean; isFocus: boolean; isPassed: boolean;
   canCheck: boolean; isToday: boolean; canEdit: boolean;
   isTrainingDay: boolean; dayLabel: string; calorieTarget: number;
-  mealRef?: React.RefObject<HTMLDivElement>;
+  mealRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {

@@ -43,6 +43,7 @@ import * as ActivitySvc from '../backend/services/ActivityService';
 import * as MeasurementSvc from '../backend/services/MeasurementService';
 import * as VersionControlSvc from '../backend/services/VersionControlService';
 import * as FoodCatalogSvc from '../backend/services/FoodCatalogService';
+import { parseBaseIngredients, normalizeIngredientName, isSingleBaseIngredientName } from '../backend/services/FoodCatalogService';
 import { getDB, nowISO } from '../backend/db';
 // REMOVED: import { mealPlan } from '../data/mealData'; — no more hardcoded demo data
 import type { MealType } from '../backend/models';
@@ -660,26 +661,41 @@ export function useDataUpload() {
               const cleanedName = AIParser.cleanFoodName(rawName);
               if (!AIParser.isCleanFoodName(cleanedName)) continue;
 
-              const key = cleanedName.toLowerCase();
-              if (seen.has(key)) continue;
-              seen.add(key);
+              // Base-ingredient pipeline for foods-only upload:
+              // 1) split composite names, 2) normalize, 3) ensure single base ingredient.
+              const atomicNames = new Set<string>();
+              for (const part of parseBaseIngredients(cleanedName)) {
+                const normalized = normalizeIngredientName(part);
+                if (!normalized) continue;
+                const lower = normalized.toLowerCase();
+                if (!isSingleBaseIngredientName(normalized)) continue;
+                atomicNames.add(lower);
+              }
+              if (atomicNames.size === 0) continue;
 
-              const category = mapAICategoryToFoodCategory(ing.estimated_category);
-              const calories = ing.estimated_calories_per_100g ?? 100;
-              const protein = ing.estimated_protein_per_100g ?? 0;
-              const carbs = ing.estimated_carbs_per_100g ?? 0;
-              const fat = ing.estimated_fat_per_100g ?? 0;
+              for (const lower of atomicNames) {
+                if (seen.has(lower)) continue;
+                seen.add(lower);
 
-              foodInputs.push({
-                name: cleanedName,
-                description: 'AI-ból kinyert étel az étrend dokumentumból',
-                category,
-                calories_per_100g: calories,
-                protein_per_100g: protein,
-                carbs_per_100g: carbs,
-                fat_per_100g: fat,
-                source: 'ai_generated',
-              });
+                const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
+
+                const category = mapAICategoryToFoodCategory(ing.estimated_category);
+                const calories = ing.estimated_calories_per_100g ?? 100;
+                const protein = ing.estimated_protein_per_100g ?? 0;
+                const carbs = ing.estimated_carbs_per_100g ?? 0;
+                const fat = ing.estimated_fat_per_100g ?? 0;
+
+                foodInputs.push({
+                  name: displayName,
+                  description: 'AI-ból kinyert étel az étrend dokumentumból',
+                  category,
+                  calories_per_100g: calories,
+                  protein_per_100g: protein,
+                  carbs_per_100g: carbs,
+                  fat_per_100g: fat,
+                  source: 'ai_generated',
+                });
+              }
             }
           }
         }

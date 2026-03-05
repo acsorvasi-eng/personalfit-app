@@ -18,19 +18,19 @@ interface Props {
 
 export function BodyVisionArchiveViewer({ session, onClose }: Props) {
   const { locale } = useLanguage();
-  const [currentView, setCurrentView] = useState<'front' | 'back'>('front');
+  const [currentView, setCurrentView] = useState<ViewType>('front');
   const touchStartX = useRef<number | null>(null);
   const d = new Date(session.date);
 
-  const currentImage = session.bodyImages[activeView];
+  const currentImage = session.bodyImages[currentView];
 
   const rotateLeft = () => {
-    const idx = POSITIONS.indexOf(activeView);
-    setActiveView(POSITIONS[(idx - 1 + POSITIONS.length) % POSITIONS.length]);
+    const idx = POSITIONS.indexOf(currentView);
+    setCurrentView(POSITIONS[(idx - 1 + POSITIONS.length) % POSITIONS.length]);
   };
   const rotateRight = () => {
-    const idx = POSITIONS.indexOf(activeView);
-    setActiveView(POSITIONS[(idx + 1) % POSITIONS.length]);
+    const idx = POSITIONS.indexOf(currentView);
+    setCurrentView(POSITIONS[(idx + 1) % POSITIONS.length]);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -72,7 +72,7 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
           <div className="w-full h-full max-w-lg relative">
             <img
               src={currentImage}
-              alt={POSITION_LABELS[activeView]}
+              alt={POSITION_LABELS[currentView]}
               className="w-full h-full object-cover"
               draggable={false}
             />
@@ -88,7 +88,7 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
         {/* View label */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
           <div className="bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-            <span className="text-[10px] text-white/80 font-medium">{POSITION_LABELS[activeView]}</span>
+            <span className="text-[10px] text-white/80 font-medium">{POSITION_LABELS[currentView]}</span>
           </div>
         </div>
 
@@ -107,13 +107,13 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
           {POSITIONS.map((pos) => (
             <button
               key={pos}
-              onClick={() => setActiveView(pos)}
+              onClick={() => setCurrentView(pos)}
               className={`w-14 h-[72px] rounded-lg overflow-hidden border-2 transition-all ${
-                activeView === pos ? 'border-amber-400 scale-105' : 'border-white/10 opacity-60'
+                currentView === pos ? 'border-amber-400 scale-105' : 'border-white/10 opacity-60'
               }`}
             >
-              {session.bodyImages[pos] ? (
-                <img src={session.bodyImages[pos]} alt={pos} className="w-full h-full object-cover" />
+              {session.bodyImages[pos as keyof typeof session.bodyImages] ? (
+                <img src={session.bodyImages[pos as keyof typeof session.bodyImages]} alt={pos} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                   <Camera className="w-3 h-3 text-gray-600" />

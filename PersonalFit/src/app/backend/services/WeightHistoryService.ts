@@ -1,4 +1,5 @@
 import { getDB, generateId, nowISO } from '../db';
+import { legacyGetItem, legacyRemoveItem } from '../../../storage/legacyLocalStorage';
 
 export interface WeightEntry {
   id: string;
@@ -60,9 +61,7 @@ export class WeightHistoryService {
   // ------- MIGRÁCIÓ localStorage → IndexedDB -------
 
   static async migrateFromLocalStorage(): Promise<void> {
-    const raw = typeof localStorage !== 'undefined'
-      ? localStorage.getItem('weightHistory')
-      : null;
+    const raw = legacyGetItem('weightHistory');
     if (!raw) return;
 
     try {
@@ -72,7 +71,7 @@ export class WeightHistoryService {
 
       // Csak akkor migráljuk ha IndexedDB még üres
       if (existing.length > 0) {
-        localStorage.removeItem('weightHistory');
+        legacyRemoveItem('weightHistory');
         return;
       }
 
@@ -90,7 +89,7 @@ export class WeightHistoryService {
       }
 
       // Sikeres migráció után localStorage törlése
-      localStorage.removeItem('weightHistory');
+      legacyRemoveItem('weightHistory');
       console.log(
         `[WeightHistoryService] Migrated ${(entries as any[]).length} entries from localStorage`
       );
@@ -104,9 +103,7 @@ export class WeightHistoryService {
   static async clearAll(): Promise<void> {
     const db = await getDB();
     await db.clear(this.STORE as any);
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('weightHistory'); // cleanup legacy
-    }
+    legacyRemoveItem('weightHistory'); // cleanup legacy
   }
 }
 

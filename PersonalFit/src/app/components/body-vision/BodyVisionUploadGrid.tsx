@@ -40,7 +40,7 @@ export function BodyVisionUploadGrid({
   const backRef = useRef<HTMLInputElement>(null);
   const sideAltRef = useRef<HTMLInputElement>(null);
 
-  const inputRefs: Record<keyof BodyImages, React.RefObject<HTMLInputElement | null>> = {
+  const inputRefs: Record<keyof BodyImages, React.RefObject<HTMLInputElement>> = {
     front: frontRef, side: sideRef, back: backRef, sideAlt: sideAltRef,
   };
 

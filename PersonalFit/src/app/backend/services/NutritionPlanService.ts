@@ -27,6 +27,7 @@ import type {
 } from '../models';
 import * as FoodCatalogService from './FoodCatalogService';
 import { isCleanFoodName } from './AIParserService';
+import { legacyGetItem, legacyRemoveItem } from '../../../storage/legacyLocalStorage';
 
 // ═══════════════════════════════════════════════════════════════
 // NORMALIZE TO 4 WEEKS (for import from 1–3 week documents)
@@ -81,11 +82,9 @@ export async function getActivePlan(): Promise<NutritionPlanEntity | undefined> 
   // somehow survived in IndexedDB. The flag is cleared whenever a new
   // plan is explicitly activated.
   try {
-    if (typeof localStorage !== 'undefined') {
-      const forceNoPlan = localStorage.getItem('forceNoActivePlan');
-      if (forceNoPlan === '1') {
-        return undefined;
-      }
+    const forceNoPlan = legacyGetItem('forceNoActivePlan');
+    if (forceNoPlan === '1') {
+      return undefined;
     }
   } catch {
     // localStorage not available – ignore and fall back to DB
@@ -153,9 +152,7 @@ export async function activatePlan(planId: string): Promise<void> {
 
   // Any explicit activation means we're out of "reset" mode.
   try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('forceNoActivePlan');
-    }
+    legacyRemoveItem('forceNoActivePlan');
   } catch {
     // ignore
   }
@@ -427,6 +424,40 @@ export function mapAICategoryToFoodCategory(aiCategory?: string): FoodCategory {
 }
 
 /**
+ * Normalize a raw ingredient/meal name into one or more canonical base
+ * ingredient names, enforcing the strict "single base ingredient" rule.
+ *
+ * Pipeline:
+ *   1. FoodCatalogService.parseBaseIngredients (split by connectors)
+ *   2. FoodCatalogService.normalizeIngredientName (strip cooking verbs, endings)
+ *   3. isValidIngredientName (reject PDF garbage)
+ *   4. isCleanFoodName (deep corruption check)
+ *   5. FoodCatalogService.isSingleBaseIngredientName (reject meal names)
+ */
+function getAtomicIngredientNames(rawName: string): string[] {
+  const bases = FoodCatalogService.parseBaseIngredients(rawName);
+  const unique = new Set<string>();
+  const result: string[] = [];
+
+  for (const part of bases) {
+    const normalized = FoodCatalogService.normalizeIngredientName(part);
+    if (!normalized) continue;
+
+    const lower = normalized.toLowerCase();
+    if (!isValidIngredientName(lower)) continue;
+    if (!isCleanFoodName(normalized)) continue;
+    if (!FoodCatalogService.isSingleBaseIngredientName(normalized)) continue;
+
+    if (!unique.has(lower)) {
+      unique.add(lower);
+      result.push(normalized);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Import from AI parse results — v2 (robust).
  *
  * CRITICAL FIX: Creates food entries for ALL ingredients, not just matched ones.
@@ -465,8 +496,8 @@ export async function importFromAIParse(
 
   console.log(`[NutritionPlanSvc] Importing plan: "${label}", ${parsed.detected_weeks} weeks, ${parsed.weeks.length} week groups`);
 
-  // ─── Step 2: Collect all unique ingredients & resolve/create foods ─────
-  const foodIdCache = new Map<string, string>(); // ingredientName → food_id
+  // ─── Step 2: Collect all unique base ingredients & resolve/create foods ─────
+  const foodIdCache = new Map<string, string>(); // canonicalIngredientName → food_id
   const foodDataCache = new Map<string, {
     calories_per_100g: number;
     protein_per_100g: number;
@@ -478,87 +509,78 @@ export async function importFromAIParse(
     for (const dayData of weekDays) {
       for (const mealData of dayData.meals) {
         for (const ingData of mealData.ingredients) {
-          const normName = ingData.name.toLowerCase().trim();
-          if (!normName || normName.length < 2 || !isValidIngredientName(normName) || !isCleanFoodName(ingData.name)) continue;
-          if (foodIdCache.has(normName)) continue;
+          const atomicNames = getAtomicIngredientNames(ingData.name);
+          if (atomicNames.length === 0) continue;
 
-          stats.totalIngredients++;
+          for (const displayName of atomicNames) {
+            const key = displayName.toLowerCase();
+            if (foodIdCache.has(key)) continue;
 
-          // Try matched_food_id first
-          if (ingData.matched_food_id) {
-            const existingFood = await db.get<any>('foods', ingData.matched_food_id);
-            if (existingFood) {
-              foodIdCache.set(normName, existingFood.id);
-              foodDataCache.set(normName, {
-                calories_per_100g: existingFood.calories_per_100g,
-                protein_per_100g: existingFood.protein_per_100g,
-                carbs_per_100g: existingFood.carbs_per_100g,
-                fat_per_100g: existingFood.fat_per_100g,
+            stats.totalIngredients++;
+
+            // Search IndexedDB by normalized base name
+            const searchResults = await FoodCatalogService.searchFoods(displayName);
+            if (searchResults.length > 0) {
+              const found = searchResults[0];
+              foodIdCache.set(key, found.id);
+              foodDataCache.set(key, {
+                calories_per_100g: found.calories_per_100g,
+                protein_per_100g: found.protein_per_100g,
+                carbs_per_100g: found.carbs_per_100g,
+                fat_per_100g: found.fat_per_100g,
               });
               stats.matchedExisting++;
               continue;
             }
-          }
 
-          // Search IndexedDB by name (fuzzy)
-          const searchResults = await FoodCatalogService.searchFoods(ingData.name);
-          if (searchResults.length > 0) {
-            const found = searchResults[0];
-            foodIdCache.set(normName, found.id);
-            foodDataCache.set(normName, {
-              calories_per_100g: found.calories_per_100g,
-              protein_per_100g: found.protein_per_100g,
-              carbs_per_100g: found.carbs_per_100g,
-              fat_per_100g: found.fat_per_100g,
-            });
-            stats.matchedExisting++;
-            continue;
-          }
+            // ─── CREATE NEW FOOD from estimated data ─────
+            const cal = ingData.estimated_calories_per_100g ?? 100;
+            const pro = ingData.estimated_protein_per_100g ?? 5;
+            const carb = ingData.estimated_carbs_per_100g ?? 15;
+            const fat = ingData.estimated_fat_per_100g ?? 3;
 
-          // ─── CREATE NEW FOOD from estimated data ─────
-          const cal = ingData.estimated_calories_per_100g ?? 100;
-          const pro = ingData.estimated_protein_per_100g ?? 5;
-          const carb = ingData.estimated_carbs_per_100g ?? 15;
-          const fat = ingData.estimated_fat_per_100g ?? 3;
-          const cat = mapAICategoryToFoodCategory(ingData.estimated_category);
+            // Pipeline step 3+4: name → semantic → FoodCategory
+            const semanticCat = FoodCatalogService.inferSemanticCategoryFromName(displayName);
+            const cat = FoodCatalogService.semanticCategoryToFoodCategory(semanticCat);
 
-          try {
-            const newFood = await FoodCatalogService.createFood({
-              name: ingData.name.charAt(0).toUpperCase() + ingData.name.slice(1),
-              description: `AI parser által kinyert összetevő`,
-              category: cat,
-              calories_per_100g: cal,
-              protein_per_100g: pro,
-              carbs_per_100g: carb,
-              fat_per_100g: fat,
-              source: 'ai_generated',
-            });
-            foodIdCache.set(normName, newFood.id);
-            foodDataCache.set(normName, {
-              calories_per_100g: cal,
-              protein_per_100g: pro,
-              carbs_per_100g: carb,
-              fat_per_100g: fat,
-            });
-            stats.createdNew++;
-            console.log(`[NutritionPlanSvc] Created food: "${ingData.name}" (${cal} kcal, ${pro}g P, ${carb}g C, ${fat}g F)`);
-          } catch (err: any) {
-            // Duplicate name error — try to find by name again
-            if (err?.message?.includes('Duplikált')) {
-              const retrySearch = await FoodCatalogService.searchFoods(ingData.name);
-              if (retrySearch.length > 0) {
-                foodIdCache.set(normName, retrySearch[0].id);
-                foodDataCache.set(normName, {
-                  calories_per_100g: retrySearch[0].calories_per_100g,
-                  protein_per_100g: retrySearch[0].protein_per_100g,
-                  carbs_per_100g: retrySearch[0].carbs_per_100g,
-                  fat_per_100g: retrySearch[0].fat_per_100g,
-                });
-                stats.matchedExisting++;
+            try {
+              const newFood = await FoodCatalogService.createFood({
+                name: displayName,
+                description: `AI parser által kinyert összetevő`,
+                category: cat,
+                calories_per_100g: cal,
+                protein_per_100g: pro,
+                carbs_per_100g: carb,
+                fat_per_100g: fat,
+                source: 'ai_generated',
+              });
+              foodIdCache.set(key, newFood.id);
+              foodDataCache.set(key, {
+                calories_per_100g: cal,
+                protein_per_100g: pro,
+                carbs_per_100g: carb,
+                fat_per_100g: fat,
+              });
+              stats.createdNew++;
+              console.log(`[NutritionPlanSvc] Created food: "${displayName}" (${cal} kcal, ${pro}g P, ${carb}g C, ${fat}g F)`);
+            } catch (err: any) {
+              // Duplicate name error — try to find by name again
+              if (err?.message?.includes('Duplikált')) {
+                const retrySearch = await FoodCatalogService.searchFoods(displayName);
+                if (retrySearch.length > 0) {
+                  foodIdCache.set(key, retrySearch[0].id);
+                  foodDataCache.set(key, {
+                    calories_per_100g: retrySearch[0].calories_per_100g,
+                    protein_per_100g: retrySearch[0].protein_per_100g,
+                    carbs_per_100g: retrySearch[0].carbs_per_100g,
+                    fat_per_100g: retrySearch[0].fat_per_100g,
+                  });
+                  stats.matchedExisting++;
+                }
+              } else {
+                stats.errors.push(`Hiba "${displayName}" létrehozásakor: ${err?.message || err}`);
+                console.warn(`[NutritionPlanSvc] Error creating food "${displayName}":`, err);
               }
-            } else {
-              stats.errors.push(`Hiba "${ingData.name}" létrehozásakor: ${err?.message || err}`);
-              console.warn(`[NutritionPlanSvc] Error creating food "${ingData.name}":`, err);
             }
           }
         }
@@ -598,35 +620,41 @@ export async function importFromAIParse(
         mealsToRecalc.add(meal.id);
 
         for (const ingData of mealData.ingredients) {
-          const normName = ingData.name.toLowerCase().trim();
+          const atomicNames = getAtomicIngredientNames(ingData.name);
+          if (atomicNames.length === 0) continue;
 
-          // Skip invalid ingredient names (symbols, punctuation, too short)
-          if (!normName || normName.length < 2 || !isValidIngredientName(normName) || !isCleanFoodName(ingData.name)) {
-            continue;
+          // If one original ingredient name contains multiple foods,
+          // split the quantity evenly between them.
+          const perQuantity =
+            atomicNames.length > 1 && ingData.quantity_grams > 0
+              ? Math.max(Math.round(ingData.quantity_grams / atomicNames.length), 1)
+              : ingData.quantity_grams;
+
+          for (const displayName of atomicNames) {
+            const key = displayName.toLowerCase();
+            const foodId = foodIdCache.get(key);
+            const foodData = foodDataCache.get(key);
+
+            if (!foodId || !foodData) {
+              // This shouldn't happen after Step 2, but log if it does
+              stats.skippedEmpty++;
+              console.warn(`[NutritionPlanSvc] No food resolved for ingredient: "${displayName}" (from "${ingData.name}")`);
+              continue;
+            }
+
+            await addMealItemBare({
+              meal_id: meal.id,
+              food_id: foodId,
+              food_name: displayName,
+              quantity_grams: perQuantity,
+              unit: ingData.unit,
+              calories_per_100g: foodData.calories_per_100g,
+              protein_per_100g: foodData.protein_per_100g,
+              carbs_per_100g: foodData.carbs_per_100g,
+              fat_per_100g: foodData.fat_per_100g,
+            });
+            stats.totalMealItems++;
           }
-
-          const foodId = foodIdCache.get(normName);
-          const foodData = foodDataCache.get(normName);
-
-          if (!foodId || !foodData) {
-            // This shouldn't happen after Step 2, but log if it does
-            stats.skippedEmpty++;
-            console.warn(`[NutritionPlanSvc] No food resolved for ingredient: "${ingData.name}"`);
-            continue;
-          }
-
-          await addMealItemBare({
-            meal_id: meal.id,
-            food_id: foodId,
-            food_name: ingData.name,
-            quantity_grams: ingData.quantity_grams,
-            unit: ingData.unit,
-            calories_per_100g: foodData.calories_per_100g,
-            protein_per_100g: foodData.protein_per_100g,
-            carbs_per_100g: foodData.carbs_per_100g,
-            fat_per_100g: foodData.fat_per_100g,
-          });
-          stats.totalMealItems++;
         }
       }
     }

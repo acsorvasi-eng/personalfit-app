@@ -52,6 +52,7 @@ import type {
 import { todayDate, nowISO, getDB } from '../db';
 import { getUserProfile } from './UserProfileService';
 import * as ActivityService from './ActivityService';
+import { legacyGetItem } from '../../../storage/legacyLocalStorage';
 
 // ═══════════════════════════════════════════════════════════════
 // BMR & TDEE CALCULATIONS
@@ -156,7 +157,7 @@ async function readConsumedToday(): Promise<number> {
       .filter((md: any) => md.date === today)
       .map((md: any) => md.id);
     if (todayMealDayIds.length === 0) {
-      const raw = localStorage.getItem('totalConsumedCalories');
+      const raw = legacyGetItem('totalConsumedCalories');
       return raw ? parseInt(raw) || 0 : 0;
     }
     let total = 0;
@@ -171,7 +172,7 @@ async function readConsumedToday(): Promise<number> {
     }
     return total;
   } catch {
-    const raw = localStorage.getItem('totalConsumedCalories');
+    const raw = legacyGetItem('totalConsumedCalories');
     return raw ? parseInt(raw) || 0 : 0;
   }
 }

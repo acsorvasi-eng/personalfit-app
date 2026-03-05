@@ -1,4 +1,5 @@
 import { getDB } from '../db';
+import { legacyGetItem, legacySetItem } from '../../../storage/legacyLocalStorage';
 
 export interface StoredUserProfile {
   id: string;
@@ -50,9 +51,7 @@ export async function getUserProfile(): Promise<StoredUserProfile> {
 
   // Ha nincs a DB-ben, de van localStorage-ban, migráljuk át
   try {
-    const saved = typeof localStorage !== 'undefined'
-      ? localStorage.getItem('userProfile')
-      : null;
+    const saved = legacyGetItem('userProfile');
     if (saved) {
       const parsed = JSON.parse(saved);
       const migrated: StoredUserProfile = {
@@ -85,22 +84,20 @@ export async function saveUserProfile(partial: Partial<StoredUserProfile>): Prom
 
   // Átmeneti kompatibilitás: tartsuk szinkronban a localStorage-ot is.
   try {
-    if (typeof localStorage !== 'undefined') {
-      const legacy = {
-        name: updated.name,
-        age: updated.age,
-        weight: updated.weight,
-        height: updated.height,
-        bloodPressure: updated.bloodPressure,
-        activityLevel: updated.activityLevel,
-        goal: updated.goal,
-        allergies: updated.allergies,
-        dietaryPreferences: updated.dietaryPreferences,
-        avatar: updated.avatar,
-        calorieTarget: updated.calorieTarget,
-      };
-      localStorage.setItem('userProfile', JSON.stringify(legacy));
-    }
+    const legacy = {
+      name: updated.name,
+      age: updated.age,
+      weight: updated.weight,
+      height: updated.height,
+      bloodPressure: updated.bloodPressure,
+      activityLevel: updated.activityLevel,
+      goal: updated.goal,
+      allergies: updated.allergies,
+      dietaryPreferences: updated.dietaryPreferences,
+      avatar: updated.avatar,
+      calorieTarget: updated.calorieTarget,
+    };
+    legacySetItem('userProfile', JSON.stringify(legacy));
   } catch {
     // ignore localStorage issues
   }

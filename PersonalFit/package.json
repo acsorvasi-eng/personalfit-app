@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -70,9 +71,12 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
     "@vercel/node": "^3.2.0",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
+    "typescript": "^5.7.2",
     "vite": "6.3.5"
   },
   "peerDependencies": {

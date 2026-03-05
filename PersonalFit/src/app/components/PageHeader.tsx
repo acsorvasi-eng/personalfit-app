@@ -82,8 +82,8 @@ export function PageHeader({
       {/* Extra decorative circle for desktop */}
       <div className="absolute top-1/2 left-1/3 w-56 h-56 bg-white/3 rounded-full hidden lg:block" aria-hidden="true" />
 
-      {/* Inner content – full-bleed header (no side padding) */}
-      <div className="relative z-10 pt-6 pb-4 sm:pt-8 sm:pb-5 lg:pt-10 lg:pb-6">
+      {/* Inner content: 16px side padding on mobile, full-bleed background */}
+      <div className="relative z-10 px-4 pt-6 pb-4 sm:px-6 sm:pt-8 sm:pb-5 lg:px-8 lg:pt-10 lg:pb-6">
         {/* Top row: Icon + Title + Action */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-3 sm:gap-4">

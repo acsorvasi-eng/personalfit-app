@@ -85,15 +85,18 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
     const productResults: QuickLogItem[] = productDatabase
       .filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q))
       .slice(0, 5)
-      .map(p => ({
-        id: `prod-${p.id}`,
-        name: p.name,
-        type: "product" as const,
-        calories: Math.round(p.calories),
-        protein: Math.round(p.protein),
-        carbs: Math.round(p.carbs),
-        fat: Math.round(p.fat),
-      }));
+      .map(p => {
+        const nut = calculateNutrition(p, p.defaultQuantity);
+        return {
+          id: `prod-${p.id}`,
+          name: p.name,
+          type: "product" as const,
+          calories: nut.calories,
+          protein: Math.round(nut.protein),
+          carbs: Math.round(nut.carbs),
+          fat: Math.round(nut.fat),
+        };
+      });
 
     // Search recipes
     const recipeResults: QuickLogItem[] = recipeDatabase
@@ -117,7 +120,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
     const aiItems: QuickLogItem[] = aiResult && aiResult.components.length > 0
       ? aiResult.components.slice(0, 2).map((comp, i) => ({
           id: `ai-${i}`,
-          name: comp.food.name,
+          name: comp.food.names?.[0] ?? 'Etel',
           type: "ai" as const,
           calories: Math.round(comp.nutrition.calories),
           protein: Math.round(comp.nutrition.protein),

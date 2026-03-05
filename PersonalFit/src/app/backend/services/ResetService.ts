@@ -15,6 +15,7 @@
 
 import { destroyDatabase, getDB, type StoreName } from '../db';
 import { seedDatabase } from '../seed';
+import { legacyGetItem, legacyRemoveItem, legacyListKeys, legacySetItem } from '../../../storage/legacyLocalStorage';
 
 // ═══════════════════════════════════════════════════════════════
 // RESET TOKENS
@@ -58,26 +59,26 @@ export async function clearAllStores(): Promise<void> {
 
 export function clearLocalStorage(): void {
   for (const key of LOCAL_STORAGE_KEYS_TO_CLEAR) {
-    localStorage.removeItem(key);
+    legacyRemoveItem(key);
   }
 
   // Clear dynamically named keys
   const keysToRemove: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && (
+  const allKeys = legacyListKeys();
+  for (const key of allKeys) {
+    if (
       key.startsWith('loggedMeals_') ||
       key.startsWith('snacks_') ||
       key.startsWith('water_') ||
       key.startsWith('meal_') ||
       key.startsWith('day-')
       // NOTE: 'workout_' prefix intentionally excluded — sport data preserved
-    )) {
+    ) {
       keysToRemove.push(key);
     }
   }
   for (const key of keysToRemove) {
-    localStorage.removeItem(key);
+    legacyRemoveItem(key);
   }
 }
 
@@ -116,19 +117,17 @@ export async function performFullReset(
       console.warn('[Reset] Failed to clear object stores:', err);
     }
 
-    // Step 2: Clear localStorage
+    // Step 2: Clear localStorage (via legacy adapter)
     clearLocalStorage();
     if (options.clearTheme) {
-      localStorage.removeItem('themeMode');
+      legacyRemoveItem('themeMode');
     }
     console.log('[Reset] localStorage cleared.');
 
     // Step 2b: Set a flag so the UI/plan loader knows we're in a
     // "no active plan" state until a new plan is explicitly activated.
     try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('forceNoActivePlan', '1');
-      }
+      legacySetItem('forceNoActivePlan', '1');
     } catch {
       // ignore
     }

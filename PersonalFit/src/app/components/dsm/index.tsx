@@ -807,12 +807,13 @@ interface DSMNotificationProps {
   onConfirm?: () => void;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmVariant?: "danger" | "default";
+  confirmVariant?: "danger" | "default" | "warning";
+  children?: React.ReactNode;
 }
 
 export function DSMNotification({
   open, onClose, variant = "success", position = "top", icon: Icon,
-  title, message, onConfirm, confirmLabel = "OK", cancelLabel = "Mégse", confirmVariant = "default",
+  title, message, onConfirm, confirmLabel = "OK", cancelLabel = "Mégse", confirmVariant = "default", children,
 }: DSMNotificationProps) {
   if (!open) return null;
 
@@ -841,6 +842,7 @@ export function DSMNotification({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white">{title}</p>
               {message && <p className="text-xs text-white/70 mt-0.5">{message}</p>}
+              {children}
             </div>
             {!onConfirm && (
               <button onClick={onClose} className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
@@ -859,7 +861,7 @@ export function DSMNotification({
               <button
                 onClick={() => { onConfirm(); onClose(); }}
                 className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold text-white ${
-                  confirmVariant === "danger" ? "bg-red-500" : "bg-[var(--primary)]"
+                  confirmVariant === "danger" ? "bg-red-500" : confirmVariant === "warning" ? "bg-amber-500" : "bg-[var(--primary)]"
                 }`}
               >
                 {confirmLabel}
