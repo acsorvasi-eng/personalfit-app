@@ -50,7 +50,22 @@ async function callClaudeAPI(text: string): Promise<string> {
     if (!response.ok) throw new Error(`Proxy hiba: ${response.status}`);
     const data = await response.json();
     if (!data.result && !data.foods) throw new Error('Üres válasz a proxytól');
-    return data.result ?? JSON.stringify(data.foods);
+
+    // The proxy returns an AIParsedNutritionPlan-like object stringified in result.
+    // Wrap it into an LLMParserOutput shape so safeParseJSON() + convertToAIParsedDocument()
+    // can treat it as { nutritionPlan }.
+    if (data.result) {
+      try {
+        const plan = JSON.parse(data.result);
+        return JSON.stringify({ nutritionPlan: plan });
+      } catch {
+        // If parsing fails, fall back to raw result
+        return String(data.result);
+      }
+    }
+
+    // Fallback: foods-only shape (not currently used by parser, but keep for safety)
+    return JSON.stringify({ nutritionPlan: data.foods ?? null });
   }
 
   // Development fallback: direct API call
