@@ -24,11 +24,19 @@ const MACRO_RATIOS: Record<string, { p: number; c: number; f: number }> = {
 // Garbage patterns: merged table cells, PDF noise, label text (not food)
 const GARBAGE_PATTERNS = [
   /\([A-Za-z0-9*φ~{}\[\]<>=\\]+\)/g,           // (AVk*FhA8φNI...
-  /[φ~{}\[\]<>*=]/g,                             // single forbidden chars
+  /[φ~{}\[\]<>*=]/g,                           // single forbidden chars
   /\bNapi összesen\b/gi,
   /\bProtein\s*\+\s*egészséges zsír\b/gi,
 ];
 const LABEL_PHRASES = ['napi összesen', 'protein + egészséges zsír', 'összesen'];
+
+function removeAccents(s: string): string {
+  try {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  } catch {
+    return s;
+  }
+}
 
 /**
  * Clean PDF-extracted text: remove merged cell garbage, label lines, forbidden chars.
@@ -155,25 +163,79 @@ ${cleanedText.substring(0, 45000)}`;
 }
 
 /**
- * REQUIREMENT 1 filter: atomic names only; no quantity prefix, no garbage chars, max 25 chars, no labels.
+ * REQUIREMENT 1 filter: atomic names only; split compounds, strip labels/measurements,
+ * accent-insensitive dedup, max ~60–80 unique clean Hungarian ingredients.
  */
 function filterCleanIngredients(names: string[]): string[] {
   const forbidden = /[φ~{}\[\]<>*=]/;
-  const seen = new Set<string>();
+  const categoryWords = [
+    'sovány','sovany','komplex','zsíros','zsírosabb','magas','vegyes',
+    'extra','light','protein','fehérje','feherje','ch'
+  ];
+  const measurementWords = [
+    'g','gramm','gram','kg','db','ml','dl','evőkanál','evokanal','ek',
+    'teáskanál','teaskanal','tk','csésze','csesze','adag','adagok'
+  ];
+  const synonymMap: Record<string, string> = {
+    'fehérje por': 'fehérjepor',
+    'feherje por': 'fehérjepor',
+    'fehérjepor': 'fehérjepor',
+    'feherjepor': 'fehérjepor',
+  };
+
+  const seen = new Set<string>(); // accent-insensitive key
   const out: string[] = [];
 
   for (const raw of names) {
     const s = String(raw ?? '').trim();
-    if (!s || s.length > 25) continue;
+    if (!s) continue;
     if (forbidden.test(s)) continue;
-    const noQuantity = s.replace(/^\d+\s*/, '').trim();
-    const n = noQuantity.toLowerCase();
-    if (LABEL_PHRASES.some(phrase => n.includes(phrase))) continue;
-    if (n.length < 2) continue;
-    if (seen.has(n)) continue;
-    seen.add(n);
-    out.push(noQuantity.charAt(0).toUpperCase() + noQuantity.slice(1));
+
+    // Strip leading quantity (e.g. "220g csirkemell" -> "csirkemell")
+    let base = s.replace(/^\d+[.,]?\d*\s*[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ]*\s+/, '').trim();
+    if (!base) continue;
+
+    // Split on commas, slashes, plus and dashes into candidate tokens
+    const parts = base
+      .split(/[,/+\-]/)
+      .map(p => p.trim())
+      .filter(p => p.length > 0 && p.length <= 40);
+
+    for (let part of parts) {
+      let n = part.toLowerCase();
+
+      // Remove category words
+      for (const w of categoryWords) {
+        n = n.replace(new RegExp(`\\b${w}\\b`, 'gi'), '').trim();
+      }
+
+      // Remove standalone measurement tokens
+      for (const w of measurementWords) {
+        n = n.replace(new RegExp(`\\b${w}\\b`, 'gi'), '').trim();
+      }
+
+      // Collapse whitespace
+      n = n.replace(/\s+/g, ' ').trim();
+      if (!n) continue;
+
+      // Length and label checks
+      if (n.length < 2 || n.length > 25) continue;
+      if (LABEL_PHRASES.some(phrase => n.includes(phrase))) continue;
+
+      // Apply simple synonym normalization
+      if (synonymMap[n]) {
+        n = synonymMap[n];
+      }
+
+      const accentless = removeAccents(n);
+      if (seen.has(accentless)) continue;
+      seen.add(accentless);
+
+      const display = n.charAt(0).toUpperCase() + n.slice(1);
+      out.push(display);
+    }
   }
+
   return out;
 }
 
