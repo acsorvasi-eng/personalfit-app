@@ -22,8 +22,14 @@ Every task MUST go through all 4 steps before marking done:
 ### 4. REVIEWER + DEPLOY
 - Code review: check MISSION.md rules
 - Run: npm run typecheck && npm run build
-- Only if both pass: git add -A && git commit -m "..." && git push
-- Then: vercel --prod --force
+- Only if both pass, from the **inner PersonalFit app directory**:
+
+  ```bash
+  cd "/Users/attilacsorvasi/Desktop/Sajat Dolgok_Desktop 2025 Szept 23-ig/Desktop - ROMS0374MACNB/Works/PersonalFit/PersonalFit"
+  git add -A && git commit -m "..." && git push
+  vercel --prod --force
+  ```
+
 - Wait 2 minutes, verify on personalfit-app.vercel.app
 - If Vercel shows wrong version → run vercel --prod --force again
 
