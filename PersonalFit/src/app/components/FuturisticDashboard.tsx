@@ -1102,6 +1102,15 @@ export function FuturisticDashboard() {
     };
   }, []);
 
+  // Open panel from outside (e.g. RestTimerCard tap on My Menu)
+  useEffect(() => {
+    const handler = () => {
+      if (!isOpen) handleOpen();
+    };
+    window.addEventListener("openAIPanel", handler);
+    return () => window.removeEventListener("openAIPanel", handler);
+  }, [isOpen, handleOpen]);
+
   // ─── Derived states ───
   const isListeningNow = micActive && !isProcessing && !isTyping;
   const isSpeakingNow = isListeningNow && interimText.length > 0;

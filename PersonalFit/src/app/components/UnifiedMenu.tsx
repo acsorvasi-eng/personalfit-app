@@ -1099,27 +1099,36 @@ function RestTimerCard({ restingTimeMinutes, currentMeal, t, consumedSnacks, onS
   onWaterTap: () => void;
   waterIntakeMl: number;
 }) {
-  // Timer screen: no clock, no label, no progress bar — only CTA to open voice assistant (Brain icon above)
+  // FIX 1: Sport timer panel — ONLY CTA to open fullscreen (no clock, progress, ALLOWED, NEXT MEAL, water).
+  // Tapping opens AI panel (dark fullscreen with star, live voice text, mic, X).
+  const openAIPanel = () => {
+    window.dispatchEvent(new CustomEvent("openAIPanel"));
+  };
+
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      onClick={openAIPanel}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-      className="relative overflow-hidden rounded-2xl bg-slate-900 dark:bg-slate-950 border border-slate-700/50 dark:border-slate-800 p-6 shadow-xl"
+      className="relative overflow-hidden rounded-2xl bg-slate-900 dark:bg-slate-950 border border-slate-700/50 dark:border-slate-800 p-6 shadow-xl w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
+      aria-label={t("dashboard.openAssistant")}
     >
       <div className="relative z-10 flex flex-col items-center justify-center gap-3 py-2">
+        {/* FIX 2: Subtle pulsing star — more inviting */}
         <motion.div
-          animate={{ opacity: [0.7, 1, 0.7], scale: [1, 1.05, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.08, 1] }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
           className="text-4xl"
         >
           <Sparkles className="w-10 h-10 text-cyan-400/90" />
         </motion.div>
-        <p className="text-center text-sm text-white/70 font-medium">
-          {t("dashboard.tapMicPrompt")}
+        <p className="text-center text-sm text-white/80 font-medium">
+          {t("dashboard.menuPanelPrompt")}
         </p>
       </div>
-    </motion.div>
+    </motion.button>
   );
 }
 
