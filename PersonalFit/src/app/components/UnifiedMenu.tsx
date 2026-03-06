@@ -789,7 +789,7 @@ export function UnifiedMenu() {
           onComplete={() => appData.refresh()}
         />
 
-        {/* Floating Water Tracker — My Menu only (empty plan layout) */}
+        {/* Water widget ONLY on My Menu (empty plan layout); hidden when AI panel open */}
         <AnimatePresence>
           {!aiPanelOpen && (
             <motion.div
@@ -1061,7 +1061,8 @@ export function UnifiedMenu() {
         }}
       />
 
-      {/* Floating Water Tracker — My Menu only, fixed bottom-right above bottom nav; hidden when AI panel open */}
+      {/* CRITICAL: Water widget (+250ml) ONLY on My Menu — must NOT appear on Sport/timer or any other screen */}
+      {/* Floating Water Tracker — fixed bottom-right above bottom nav; hidden when AI panel (timer) open */}
       <AnimatePresence>
         {!aiPanelOpen && (
           <motion.div
