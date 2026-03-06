@@ -85,7 +85,10 @@ const PIPELINE_STEPS: Array<{ step: UploadStep; icon: React.ElementType; label: 
 
 export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetProps) {
   const [mode, setMode] = useState<'choose' | 'text' | 'processing' | 'result'>('choose');
-  const [strategy, setStrategy] = useState<'foodsOnly' | 'full'>('foodsOnly');
+  // Default to FULL plan import so uploaded PDFs go through the complete
+  // pipeline (plan + meals + shopping list + measurements + training),
+  // which also enables auto-publish after processing.
+  const [strategy, setStrategy] = useState<'foodsOnly' | 'full'>('full');
   const [textInput, setTextInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
