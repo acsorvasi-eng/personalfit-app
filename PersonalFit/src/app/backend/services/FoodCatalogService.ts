@@ -228,6 +228,34 @@ export function splitHungarianCompoundDish(raw: string): string[] {
 // ═══════════════════════════════════════════════════════════════
 
 /**
+ * Hungarian ingredient synonym normalization.
+ * Maps common variant names from PDFs to canonical single-ingredient names.
+ */
+const INGREDIENT_SYNONYMS: Record<string, string> = {
+  // Fehérje por → fehérjepor
+  'fehérje por': 'fehérjepor',
+  'feherje por': 'fehérjepor',
+  // Tehéntúró / Fogarasi túró → túró
+  'tehéntúró': 'túró',
+  'tehenturo': 'túró',
+  'fogarasi túró': 'túró',
+  'fogarasi turo': 'túró',
+  // Zöldség saláta → saláta
+  'zöldség saláta': 'saláta',
+  'zoldseg salata': 'saláta',
+  // Tejföl (keep canonical with accents)
+  'tejföl': 'tejföl',
+  'tejfol': 'tejföl',
+  // Kefir (already base form, but kept for completeness)
+  'kefir': 'kefir',
+  // Juhsajt
+  'juhsajt': 'juhsajt',
+  // Tökmagolaj
+  'tökmagolaj': 'tökmagolaj',
+  'tokmagolaj': 'tökmagolaj',
+};
+
+/**
  * Step 1 – Split a raw ingredient/meal string into candidate base ingredients.
  *
  * This is a conservative splitter: it handles obvious textual connectors
@@ -316,6 +344,12 @@ export function normalizeIngredientName(raw: string): string {
   // Collapse extra whitespace
   n = n.replace(/\s+/g, ' ').trim();
   if (!n) return '';
+
+  // Apply synonym normalization if we have a known mapping
+  const synonym = INGREDIENT_SYNONYMS[n];
+  if (synonym) {
+    n = synonym;
+  }
 
   // Capitalize first letter for display/storage
   return n.charAt(0).toUpperCase() + n.slice(1);

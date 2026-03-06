@@ -292,6 +292,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
                     ) : (
                       <StagedSuccessView
                         planLabel={upload.result?.planLabel}
+                        autoPublished={upload.result?.autoPublished}
                         warnings={upload.warnings}
                         onDone={handleDone}
                       />
@@ -620,9 +621,10 @@ function ProcessingView({ step, progress, fileName }: {
   );
 }
 
-/** Mode 4a: Staged success — CLEAN (no raw data preview) */
-function StagedSuccessView({ planLabel, warnings, onDone }: {
+/** Mode 4a: Success — CLEAN (no raw data preview) */
+function StagedSuccessView({ planLabel, autoPublished, warnings, onDone }: {
   planLabel?: string;
+  autoPublished?: boolean;
   warnings: string[];
   onDone: () => void;
 }) {
@@ -641,7 +643,7 @@ function StagedSuccessView({ planLabel, warnings, onDone }: {
         </div>
         <div className="text-center">
           <p className="text-gray-900 dark:text-gray-100" style={{ fontSize: '1.15rem', fontWeight: 700 }}>
-            {t("upload.processingDone")}
+            {autoPublished ? t("profile.planPublished") : t("upload.processingDone")}
           </p>
           {planLabel && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -650,20 +652,36 @@ function StagedSuccessView({ planLabel, warnings, onDone }: {
           )}
         </div>
 
-        {/* Staged badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20" style={{ fontWeight: 600 }}>
-          <Layers className="w-3 h-3" />
-          {t("upload.stagingBadge")}
-        </div>
+        {/* Status badge */}
+        {autoPublished ? (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20" style={{ fontWeight: 600 }}>
+            <Layers className="w-3 h-3" />
+            {t("profile.planPublished")}
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20" style={{ fontWeight: 600 }}>
+            <Layers className="w-3 h-3" />
+            {t("upload.stagingBadge")}
+          </div>
+        )}
       </motion.div>
 
       {/* Info hint */}
-      <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200/50 dark:border-blue-500/20">
-        <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-        <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
-          {t("upload.stagingHint")}
-        </p>
-      </div>
+      {autoPublished ? (
+        <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200/50 dark:border-blue-500/20">
+          <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
+            {t("profile.planPublished")} · {t("profile.active")}
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 px-3 py-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200/50 dark:border-blue-500/20">
+          <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed">
+            {t("upload.stagingHint")}
+          </p>
+        </div>
+      )}
 
       {/* Warnings */}
       {warnings.length > 0 && (

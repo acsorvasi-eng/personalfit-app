@@ -108,6 +108,8 @@ export interface UploadResult {
   /** New: extracted personal data summary */
   personalDataExtracted: boolean;
   extractedFields: string[];
+  /** Whether staging was successfully auto-published after import */
+  autoPublished?: boolean;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -562,8 +564,11 @@ export function useDataUpload() {
         confidence: parsed.confidence,
         extractedFields,
       });
-      if (setStagingActive()) {
+      const autoPublished = setStagingActive();
+      if (autoPublished) {
         console.log('[Upload] Auto-published plan:', label);
+      } else {
+        console.warn('[Upload] Auto-publish: no staging data found after stagePlan');
       }
 
       // ── Complete ──
@@ -582,6 +587,7 @@ export function useDataUpload() {
         confidence: parsed.confidence,
         personalDataExtracted: extractedFields.length > 0,
         extractedFields,
+        autoPublished,
       };
 
       setState(prev => ({
