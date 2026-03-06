@@ -43,13 +43,11 @@
 - **Hungarian (HU)** and **Romanian (RO)** as first-class locales.
 - Copy and UX patterns should support both; parser and LLM prompts handle both languages where relevant.
 
-## Workflow — 4-agent cycle
+## Workflow — 4-agent process
 
-The project is maintained using a lightweight 4-agent loop:
+All work on this project follows the 4-agent process defined in `AGENTS.md`.
 
-1. **Architect** — Picks the next unchecked task from `TASKS.md`, defines clear acceptance criteria aligned with this mission.
-2. **Coder** — Implements only what is needed to satisfy the criteria, following the stack and rules above.
-3. **Tester** — Verifies each acceptance criterion (build, grep, manual checks) and reports pass/fail.
-4. **Reviewer** — Audits the changes against MISSION.md, then marks the task as done (`[x]` + \"Done: ...\" line in `TASKS.md`) or sends it back for fixes.
-
-This loop repeats until all tasks in `TASKS.md` are completed; new tasks are then appended as needed.
+1. **Architect** — Chooses the next task from `TASKS.md` and defines acceptance criteria aligned with this mission.
+2. **Coder** — Implements changes strictly following the stack and rules above.
+3. **Tester** — Verifies behavior against the acceptance criteria on a local build.
+4. **Reviewer + Deploy** — Audits changes against this mission and performs the deployment workflow in `AGENTS.md`.

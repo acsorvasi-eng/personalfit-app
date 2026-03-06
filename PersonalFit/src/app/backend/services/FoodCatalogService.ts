@@ -550,15 +550,25 @@ export async function createFoodsBatch(inputs: CreateFoodInput[]): Promise<{ cre
   const created: FoodEntity[] = [];
   const skipped: string[] = [];
 
+  console.log('[FoodCatalog] createFoodsBatch start', {
+    totalInputs: inputs.length,
+    names: inputs.map(i => i.name),
+  });
+
   for (const input of inputs) {
+    const isUserUploaded = input.source === 'user_uploaded';
+
     // Final gate: reject corrupted names before they ever reach the DB
-    if (isCorruptedFoodName(input.name)) {
-      console.warn(`[FoodCatalog] createFoodsBatch gate rejected: "${input.name}"`);
+    // For user-uploaded foods we trust the chip pipeline and skip this
+    // aggressive corruption filter so ALL chips can be saved.
+    if (!isUserUploaded && isCorruptedFoodName(input.name)) {
+      console.warn(`[FoodCatalog] createFoodsBatch gate rejected: "${input.name}" (source: ${input.source})`);
       skipped.push(input.name);
       continue;
     }
 
     if (existingNames.has(input.name.toLowerCase())) {
+      console.log('[FoodCatalog] createFoodsBatch skipped duplicate name:', input.name);
       skipped.push(input.name);
       continue;
     }
@@ -590,6 +600,13 @@ export async function createFoodsBatch(inputs: CreateFoodInput[]): Promise<{ cre
   if (created.length > 0) {
     notifyDBChange({ store: 'foods', action: 'put' });
   }
+
+  console.log('[FoodCatalog] createFoodsBatch done', {
+    requested: inputs.length,
+    created: created.length,
+    skipped,
+  });
+
   return { created, skipped };
 }
 

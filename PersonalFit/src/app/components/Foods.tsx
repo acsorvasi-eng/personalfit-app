@@ -57,8 +57,6 @@ import { PageHeader } from "./PageHeader";
 import { TabFilter } from "./TabFilter";
 import { translateFoodName } from "../utils/foodTranslations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
-import { Textarea } from "./ui/textarea";
 import { DSMButton } from "./dsm";
 import type { FoodCategory, FoodSource } from "../backend/models";
 import { toast } from "sonner";
@@ -245,7 +243,6 @@ export function Foods() {
 
   // Add Food dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [addMode, setAddMode] = useState<"type" | "voice">("type");
   const [typedFoods, setTypedFoods] = useState("");
   const [voiceFoods, setVoiceFoods] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -614,138 +611,161 @@ export function Foods() {
           <DialogHeader>
             <DialogTitle>Étel hozzáadása</DialogTitle>
             <DialogDescription>
-              Írd be vagy mondd be az ételek nevét (pl. &quot;csuka, pisztráng, süllő, lazac&quot;). A rendszer lekéri a valós tápértékeket 100g-ra.
+              Írd be vagy mondd be az ételek nevét (pl. pisztráng, dió, jégsaláta...).{" "}
+              A rendszer lekéri a valós tápértékeket 100g-ra.
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={addMode} onValueChange={(v) => setAddMode(v as "type" | "voice")}>
-            <TabsList className="flex w-full mb-4 rounded-full bg-gray-100 dark:bg-[#1E1E1E] p-1">
-              <TabsTrigger
-                value="type"
-                className="flex-1 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:dark:bg-[#252525] data-[state=active]:text-gray-900 data-[state=active]:dark:text-gray-100 data-[state=active]:shadow-sm transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Type className="w-3.5 h-3.5" />
-                Szöveg
-              </TabsTrigger>
-              <TabsTrigger
-                value="voice"
-                className="flex-1 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:dark:bg-[#252525] data-[state=active]:text-gray-900 data-[state=active]:dark:text-gray-100 data-[state=active]:shadow-sm transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Mic className="w-3.5 h-3.5" />
-                Hang
-              </TabsTrigger>
-            </TabsList>
+          {/* CHIP INPUT AREA – the whole container behaves as an input */}
+          <div
+            className="mt-3 min-h-[72px] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1E1E1E] px-3 py-2 flex flex-wrap items-center gap-2 cursor-text"
+            onClick={() => {
+              if (hiddenTextInputRef.current) {
+                hiddenTextInputRef.current.focus();
+              }
+            }}
+          >
+            {chips.map((chip) => {
+              const isValid = chip.status === "valid";
+              const isPending = chip.status === "pending";
+              const isInvalid = chip.status === "invalid";
+              const baseClasses =
+                "px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 border";
+              const styleClasses = isValid
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : isInvalid
+                ? "bg-red-50 border-red-200 text-red-700"
+                : "bg-gray-50 border-gray-200 text-gray-700";
+              return (
+                <div key={chip.id} className={`${baseClasses} ${styleClasses}`}>
+                  <span className="font-semibold max-w-[140px] truncate">
+                    {chip.name}
+                  </span>
+                  {isPending && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setChips(prev => prev.filter(c => c.id !== chip.id))
+                    }
+                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-[10px]"
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+            <input
+              ref={hiddenTextInputRef}
+              autoFocus
+              value={typedFoods}
+              onChange={(e) => setTypedFoods(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  const value = typedFoods.trim();
+                  if (!value) return;
+                  value
+                    .split(/[,;\n]+/)
+                    .map((t: string) => t.trim())
+                    .filter(Boolean)
+                    .forEach((token: string) => addTokenAsChip(token));
+                  setTypedFoods("");
+                }
+              }}
+              className="bg-transparent border-none outline-none text-sm min-w-[40px]"
+              placeholder={chips.length === 0 ? "pl. pisztráng, dió, jégsaláta..." : ""}
+            />
+          </div>
 
-            <TabsContent value="type" className="space-y-3">
-              <Textarea
-                autoFocus
-                value={typedFoods}
-                onChange={(e) => setTypedFoods(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === ",") {
-                    e.preventDefault();
-                    const value = typedFoods.trim();
-                    if (!value) return;
-                    // Osszuk fel az eddigi szöveget ételnevekre
-                    value
-                      .split(/[,;\n]+/)
-                      .map((t: string) => t.trim())
-                      .filter(Boolean)
-                      .forEach((token: string) => addTokenAsChip(token));
-                    setTypedFoods("");
+          {/* MICROPHONE BUTTON – primary input below chips */}
+          <div className="mt-4 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                console.log("[AddFood][Voice] Mic button tapped. isListening =", isListening);
+                if (isListening && recognitionRef.current) {
+                  console.log("[AddFood][Voice] Stopping existing recognition session");
+                  recognitionRef.current.stop();
+                  setIsListening(false);
+                  return;
+                }
+                if (typeof window === "undefined") return;
+                const SR: any =
+                  (window as any).webkitSpeechRecognition ||
+                  (window as any).SpeechRecognition;
+                if (!SR) {
+                  setLookupError("A böngésződ nem támogatja a hangfelismerést.");
+                  console.warn("[AddFood][Voice] SpeechRecognition not supported in this browser");
+                  return;
+                }
+                console.log("[AddFood][Voice] Initializing SpeechRecognition");
+                const rec = new SR();
+                recognitionRef.current = rec;
+                rec.lang = "hu-HU";
+                rec.continuous = true;
+                rec.interimResults = true;
+                rec.onresult = (event: any) => {
+                  console.log("[AddFood][Voice] onresult fired", {
+                    resultCount: event.results.length,
+                  });
+                  // Építsük fel a teljes szöveget referenciaként (későbbi bővítéshez)
+                  let combined = "";
+                  for (let i = 0; i < event.results.length; i++) {
+                    combined += event.results[i][0].transcript + " ";
                   }
-                }}
-                rows={3}
-                placeholder="csuka, pisztráng, süllő, lazac"
-                className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
-              />
-            </TabsContent>
+                  const newText = combined.trim();
+                  setVoiceFoods(newText);
 
-            <TabsContent value="voice" className="space-y-4">
-              <div className="flex flex-col items-center gap-3">
-                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  Mondd be az ételek nevét magyarul
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isListening && recognitionRef.current) {
-                      recognitionRef.current.stop();
-                      setIsListening(false);
-                      return;
+                  // Minden végleges rész-eredményből chip-eket készítünk
+                  for (let i = 0; i < event.results.length; i++) {
+                    const res = event.results[i];
+                    if (res.isFinal) {
+                      const phrase = res[0].transcript || "";
+                      console.log("[AddFood][Voice] Final result phrase:", phrase);
+                      phrase
+                        .split(/[,;\n\s]+/)
+                        .map((t: string) => t.trim())
+                        .filter(Boolean)
+                        .forEach((token: string) => {
+                          console.log("[AddFood][Voice] Creating chip from token:", token);
+                          addTokenAsChip(token);
+                        });
                     }
-                    if (typeof window === "undefined") return;
-                    const SR: any =
-                      (window as any).SpeechRecognition ||
-                      (window as any).webkitSpeechRecognition;
-                    if (!SR) {
-                      setLookupError("A böngésződ nem támogatja a hangfelismerést.");
-                      return;
-                    }
-                    const rec = new SR();
-                    recognitionRef.current = rec;
-                    rec.lang = "hu-HU";
-                    rec.continuous = true;
-                    rec.interimResults = true;
-                    rec.onresult = (event: any) => {
-                      // Mutassuk a teljes szöveget referenciaként
-                      let combined = "";
-                      for (let i = 0; i < event.results.length; i++) {
-                        combined += event.results[i][0].transcript + " ";
-                      }
-                      const newText = combined.trim();
-                      setVoiceFoods(newText);
+                  }
 
-                      // Minden végleges rész-eredményből chip-eket készítünk
-                      for (let i = 0; i < event.results.length; i++) {
-                        const res = event.results[i];
-                        if (res.isFinal) {
-                          const phrase = res[0].transcript || "";
-                          phrase
-                            .split(/[,;\n\s]+/)
-                            .map((t: string) => t.trim())
-                            .filter(Boolean)
-                            .forEach((token: string) => addTokenAsChip(token));
-                        }
-                      }
+                  const last = event.results[event.results.length - 1];
+                  if (last.isFinal) {
+                    setIsListening(false);
+                  }
+                };
+                rec.onerror = (err: any) => {
+                  console.error("[AddFood][Voice] SpeechRecognition error:", err);
+                  setIsListening(false);
+                };
+                rec.onend = () => {
+                  console.log("[AddFood][Voice] SpeechRecognition ended");
+                  setIsListening(false);
+                };
+                setIsListening(true);
+                console.log("[AddFood][Voice] Starting SpeechRecognition");
+                rec.start();
+              }}
+              className={`flex items-center justify-center w-16 h-16 rounded-full border-4 ${
+                isListening
+                  ? "border-red-400 bg-red-500/90 animate-pulse"
+                  : "border-blue-300 bg-blue-500/90"
+              } shadow-lg text-white`}
+            >
+              <Mic className="w-7 h-7" />
+            </button>
+            <span className="text-[11px] text-gray-500 dark:text-gray-400">
+              {isListening ? "Felvétel folyamatban..." : "Koppints a mikrofonra, és mondd be az ételeket"}
+            </span>
+          </div>
 
-                      const last = event.results[event.results.length - 1];
-                      if (last.isFinal) {
-                        setIsListening(false);
-                      }
-                    };
-                    rec.onerror = () => {
-                      setIsListening(false);
-                    };
-                    rec.onend = () => {
-                      setIsListening(false);
-                    };
-                    setIsListening(true);
-                    rec.start();
-                  }}
-                  className={`flex items-center justify-center w-16 h-16 rounded-full border-4 ${
-                    isListening
-                      ? "border-red-400 bg-red-500/90 animate-pulse"
-                      : "border-blue-300 bg-blue-500/90"
-                  } shadow-lg text-white`}
-                >
-                  <Mic className="w-7 h-7" />
-                </button>
-                <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                  {isListening ? "Felvétel folyamatban..." : "Koppints a mikrofonra a felvételhez"}
-                </span>
-              </div>
-              <Textarea
-                value={voiceFoods}
-                onChange={(e) => setVoiceFoods(e.target.value)}
-                rows={4}
-                placeholder="(felismert szöveg itt jelenik meg)"
-                className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
-              />
-            </TabsContent>
-          </Tabs>
-
-          <div className="space-y-2 mt-2">
+          <div className="space-y-2 mt-3">
             {lookupError && (
               <p className="text-xs text-red-500">{lookupError}</p>
             )}
@@ -805,16 +825,18 @@ export function Foods() {
               variant="gradient"
               size="sm"
               fullWidth
-              disabled={!chips.some(c => c.status === "valid")}
+              disabled={!chips.some(c => c.status === "valid" || c.status === "pending")}
               loading={addingFoods}
               onClick={async () => {
-                const validChips = chips.filter(c => c.status === "valid");
-                if (validChips.length === 0) return;
+                // Mentsük az összes érvényes vagy még feldolgozás alatt lévő chipet.
+                // A piros (invalid) chipeket kihagyjuk.
+                const chipsToSave = chips.filter(c => c.status === "valid" || c.status === "pending");
+                if (chipsToSave.length === 0) return;
                 try {
                   setAddingFoods(true);
                   setAddResultMessage(null);
-                  console.log("[AddFood] Saving valid chips:", validChips);
-                  const inputs = validChips.map((chip) => {
+                  console.log("[AddFood] Saving chips (valid + pending):", chipsToSave);
+                  const inputs = chipsToSave.map((chip) => {
                     const semantic = inferSemanticCategoryFromName(chip.name);
                     const cat: FoodCategory = semanticCategoryToFoodCategory(semantic);
                     const source: FoodSource = "user_uploaded";
@@ -822,10 +844,12 @@ export function Foods() {
                       name: chip.name,
                       description: "Felhasználó által hozzáadott étel",
                       category: cat,
-                      calories_per_100g: chip.calories_per_100g ?? 100,
-                      protein_per_100g: chip.protein_g ?? 5,
-                      carbs_per_100g: chip.carbs_g ?? 15,
-                      fat_per_100g: chip.fat_g ?? 3,
+                      // Zöld (valid) chipek a valós tápértékeket kapják,
+                      // szürke (pending) chipek 0 értékkel mentődnek (később frissíthető).
+                      calories_per_100g: chip.calories_per_100g ?? 0,
+                      protein_per_100g: chip.protein_g ?? 0,
+                      carbs_per_100g: chip.carbs_g ?? 0,
+                      fat_per_100g: chip.fat_g ?? 0,
                       source,
                     };
                   });
