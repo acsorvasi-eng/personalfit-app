@@ -71,8 +71,16 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
         : '';
 
     let cleaned = rawText.trim();
+    // Strip common markdown fences
     cleaned = cleaned.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
     cleaned = cleaned.replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+    // If response still contains extra text around JSON, try to extract first JSON array
+    if (!/^\s*[\[\{]/.test(cleaned)) {
+      const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+      if (arrayMatch) {
+        cleaned = arrayMatch[0].trim();
+      }
+    }
     console.log('[lookup-foods] Raw LLM response (first 200 chars):', rawText.slice(0, 200));
     console.log('[lookup-foods] Cleaned JSON candidate (first 200 chars):', cleaned.slice(0, 200));
 
@@ -80,7 +88,7 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
     try {
       parsed = JSON.parse(cleaned);
     } catch (e) {
-      console.error('[lookup-foods] Failed to parse JSON from Claude:', cleaned);
+      console.error('[lookup-foods] Failed to parse JSON from Claude after cleaning:', cleaned);
       return res
         .status(500)
         .json({ error: 'LLM response was not valid JSON', raw: cleaned });

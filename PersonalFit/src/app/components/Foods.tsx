@@ -276,6 +276,14 @@ export function Foods() {
     });
   }, []);
 
+  const removeAccents = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const normalizeNameForMatch = (s: string) =>
+    removeAccents(String(s || "").toLowerCase().trim());
+
   // Background nutrition lookup for pending chips
   useEffect(() => {
     const pending = chips.filter(c => c.status === "pending");
@@ -293,19 +301,23 @@ export function Foods() {
         });
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({}));
-          throw new Error(err.error || "Ismeretlen hiba a tápérték lekérésnél.");
+          console.warn("[AddFood] Nutrition lookup HTTP error, leaving chips pending:", err);
+          return; // keep chips grey (pending)
         }
-        const data = await resp.json();
+        const data = await resp.json().catch(() => null);
         console.log("[AddFood] Nutrition lookup response:", data);
-        const foods = data.result || data.foods || [];
+        const foods = data && (data.result || data.foods || []);
+        if (!Array.isArray(foods) || foods.length === 0) {
+          console.warn("[AddFood] Nutrition lookup returned no foods array, leaving chips pending");
+          return;
+        }
         setChips(prev =>
           prev.map(chip => {
             if (chip.status !== "pending") return chip;
             const match = foods.find(
               (f: any) =>
-                String(f.name || f.name_hu || "")
-                  .toLowerCase()
-                  .trim() === chip.raw.toLowerCase().trim()
+                normalizeNameForMatch(f.name || f.name_hu) ===
+                normalizeNameForMatch(chip.raw)
             );
             if (!match) {
               return { ...chip, status: "invalid" };
@@ -322,13 +334,8 @@ export function Foods() {
           })
         );
       } catch (e: any) {
-        console.error("[AddFood] Nutrition lookup error:", e);
-        setLookupError(e.message || "Nem sikerült tápérték adatot lekérni.");
-        setChips(prev =>
-          prev.map(chip =>
-            chip.status === "pending" ? { ...chip, status: "invalid" } : chip
-          )
-        );
+        console.error("[AddFood] Nutrition lookup error, leaving chips pending:", e);
+        // Do not change chip status or show error; stay grey/pending
       } finally {
         setLookupLoading(false);
       }
@@ -616,71 +623,8 @@ export function Foods() {
             </DialogDescription>
           </DialogHeader>
 
-          {/* CHIP INPUT AREA – the whole container behaves as an input */}
-          <div
-            className="mt-3 min-h-[72px] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1E1E1E] px-3 py-2 flex flex-wrap items-center gap-2 cursor-text"
-            onClick={() => {
-              if (hiddenTextInputRef.current) {
-                hiddenTextInputRef.current.focus();
-              }
-            }}
-          >
-            {chips.map((chip) => {
-              const isValid = chip.status === "valid";
-              const isPending = chip.status === "pending";
-              const isInvalid = chip.status === "invalid";
-              const baseClasses =
-                "px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 border";
-              const styleClasses = isValid
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                : isInvalid
-                ? "bg-red-50 border-red-200 text-red-700"
-                : "bg-gray-50 border-gray-200 text-gray-700";
-              return (
-                <div key={chip.id} className={`${baseClasses} ${styleClasses}`}>
-                  <span className="font-semibold max-w-[140px] truncate">
-                    {chip.name}
-                  </span>
-                  {isPending && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setChips(prev => prev.filter(c => c.id !== chip.id))
-                    }
-                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-[10px]"
-                  >
-                    ×
-                  </button>
-                </div>
-              );
-            })}
-            <input
-              ref={hiddenTextInputRef}
-              autoFocus
-              value={typedFoods}
-              onChange={(e) => setTypedFoods(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === ",") {
-                  e.preventDefault();
-                  const value = typedFoods.trim();
-                  if (!value) return;
-                  value
-                    .split(/[,;\n]+/)
-                    .map((t: string) => t.trim())
-                    .filter(Boolean)
-                    .forEach((token: string) => addTokenAsChip(token));
-                  setTypedFoods("");
-                }
-              }}
-              className="bg-transparent border-none outline-none text-sm min-w-[40px]"
-              placeholder={chips.length === 0 ? "pl. pisztráng, dió, jégsaláta..." : ""}
-            />
-          </div>
-
-          {/* MICROPHONE BUTTON – primary input below chips */}
-          <div className="mt-4 flex flex-col items-center gap-3">
+          {/* MICROPHONE BUTTON – primary input ABOVE chips */}
+          <div className="mt-2 flex flex-col items-center gap-3">
             <button
               type="button"
               onClick={() => {
@@ -765,6 +709,69 @@ export function Foods() {
             </span>
           </div>
 
+          {/* CHIP INPUT AREA – the whole container behaves as an input */}
+          <div
+            className="mt-3 min-h-[72px] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1E1E1E] px-3 py-2 flex flex-wrap items-center gap-2 cursor-text"
+            onClick={() => {
+              if (hiddenTextInputRef.current) {
+                hiddenTextInputRef.current.focus();
+              }
+            }}
+          >
+            {chips.map((chip) => {
+              const isValid = chip.status === "valid";
+              const isPending = chip.status === "pending";
+              const isInvalid = chip.status === "invalid";
+              const baseClasses =
+                "px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 border";
+              const styleClasses = isValid
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                : isInvalid
+                ? "bg-red-50 border-red-200 text-red-700"
+                : "bg-gray-50 border-gray-200 text-gray-700";
+              return (
+                <div key={chip.id} className={`${baseClasses} ${styleClasses}`}>
+                  <span className="font-semibold max-w-[140px] truncate">
+                    {chip.name}
+                  </span>
+                  {isPending && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setChips(prev => prev.filter(c => c.id !== chip.id))
+                    }
+                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-[10px]"
+                  >
+                    ×
+                  </button>
+                </div>
+              );
+            })}
+            <input
+              ref={hiddenTextInputRef}
+              autoFocus
+              value={typedFoods}
+              onChange={(e) => setTypedFoods(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  const value = typedFoods.trim();
+                  if (!value) return;
+                  value
+                    .split(/[,;\n]+/)
+                    .map((t: string) => t.trim())
+                    .filter(Boolean)
+                    .forEach((token: string) => addTokenAsChip(token));
+                  setTypedFoods("");
+                }
+              }}
+              className="bg-transparent border-none outline-none text-sm min-w-[40px]"
+              placeholder={chips.length === 0 ? "pl. pisztráng, dió, jégsaláta..." : ""}
+            />
+          </div>
+
           <div className="space-y-2 mt-3">
             {lookupError && (
               <p className="text-xs text-red-500">{lookupError}</p>
@@ -773,52 +780,6 @@ export function Foods() {
               <p className="text-xs text-emerald-500">{addResultMessage}</p>
             )}
           </div>
-
-          {/* Chips list */}
-          {chips.length > 0 && (
-            <div className="mt-3 space-y-2 max-h-64 overflow-y-auto border-t border-gray-100 dark:border-[#2a2a2a] pt-3">
-              <div className="flex flex-wrap gap-2">
-                {chips.map((chip) => {
-                  const isValid = chip.status === "valid";
-                  const isPending = chip.status === "pending";
-                  const isInvalid = chip.status === "invalid";
-                  const baseClasses =
-                    "px-3 py-1.5 rounded-full text-xs flex items-center gap-2 border";
-                  const styleClasses = isValid
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : isInvalid
-                    ? "bg-red-50 border-red-200 text-red-700"
-                    : "bg-gray-50 border-gray-200 text-gray-700";
-                  return (
-                    <div key={chip.id} className={`${baseClasses} ${styleClasses}`}>
-                      <div className="flex flex-col leading-tight">
-                        <span className="font-semibold truncate max-w-[120px]">
-                          {chip.name}
-                        </span>
-                        {isValid && typeof chip.calories_per_100g === "number" && (
-                          <span className="text-[10px]">
-                            {Math.round(chip.calories_per_100g)} kcal / 100g
-                          </span>
-                        )}
-                        {isPending && (
-                          <span className="text-[10px] animate-pulse">...</span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setChips(prev => prev.filter(c => c.id !== chip.id))
-                        }
-                        className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-[10px]"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           <div className="mt-3">
             <DSMButton
