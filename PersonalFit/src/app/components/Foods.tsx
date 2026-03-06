@@ -632,30 +632,28 @@ export function Foods() {
             </TabsList>
 
             <TabsContent value="type" className="space-y-3">
-              <div
-                className="w-full h-20 border-2 border-dashed border-gray-200 dark:border-[#2a2a2a] rounded-2xl flex items-center justify-center text-[11px] text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1E1E1E] cursor-text"
-                onClick={() => hiddenTextInputRef.current?.focus()}
-              >
-                <span>
-                  Gépelj ide ételeket. Enter vagy vessző után chip készül.
-                </span>
-                <input
-                  ref={hiddenTextInputRef}
-                  type="text"
-                  value={typedFoods}
-                  onChange={(e) => setTypedFoods(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === ",") {
-                      e.preventDefault();
-                      if (typedFoods.trim()) {
-                        addTokenAsChip(typedFoods);
-                        setTypedFoods("");
-                      }
-                    }
-                  }}
-                  className="absolute w-px h-px opacity-0 pointer-events-none"
-                />
-              </div>
+              <Textarea
+                autoFocus
+                value={typedFoods}
+                onChange={(e) => setTypedFoods(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    const value = typedFoods.trim();
+                    if (!value) return;
+                    // Osszuk fel az eddigi szöveget ételnevekre
+                    value
+                      .split(/[,;\n]+/)
+                      .map((t) => t.trim())
+                      .filter(Boolean)
+                      .forEach((token) => addTokenAsChip(token));
+                    setTypedFoods("");
+                  }
+                }}
+                rows={3}
+                placeholder="csuka, pisztráng, süllő, lazac"
+                className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
+              />
             </TabsContent>
 
             <TabsContent value="voice" className="space-y-4">
@@ -685,26 +683,27 @@ export function Foods() {
                     rec.continuous = true;
                     rec.interimResults = true;
                     rec.onresult = (event: SpeechRecognitionEvent) => {
+                      // Mutassuk a teljes szöveget referenciaként
                       let combined = "";
                       for (let i = 0; i < event.results.length; i++) {
                         combined += event.results[i][0].transcript + " ";
                       }
                       const newText = combined.trim();
-                      const prev = lastVoiceTextRef.current || "";
-                      lastVoiceTextRef.current = newText;
                       setVoiceFoods(newText);
 
-                      // Extract new segment since last update and create chips
-                      if (newText.length > prev.length) {
-                        const diff = newText.slice(prev.length);
-                        diff
-                          .split(/[,;\n\s]+/)
-                          .map(t => t.trim())
-                          .filter(Boolean)
-                          .forEach(token => addTokenAsChip(token));
+                      // Minden végleges rész-eredményből chip-eket készítünk
+                      for (let i = 0; i < event.results.length; i++) {
+                        const res = event.results[i];
+                        if (res.isFinal) {
+                          const phrase = res[0].transcript || "";
+                          phrase
+                            .split(/[,;\n\s]+/)
+                            .map((t) => t.trim())
+                            .filter(Boolean)
+                            .forEach((token) => addTokenAsChip(token));
+                        }
                       }
 
-                      // Ha az utolsó eredmény végleges, állítsuk le
                       const last = event.results[event.results.length - 1];
                       if (last.isFinal) {
                         setIsListening(false);
@@ -753,9 +752,6 @@ export function Foods() {
           {/* Chips list */}
           {chips.length > 0 && (
             <div className="mt-3 space-y-2 max-h-64 overflow-y-auto border-t border-gray-100 dark:border-[#2a2a2a] pt-3">
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Felismert ételek:
-              </p>
               <div className="flex flex-wrap gap-2">
                 {chips.map((chip) => {
                   const isValid = chip.status === "valid";
