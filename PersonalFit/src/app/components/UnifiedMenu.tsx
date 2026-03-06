@@ -1035,9 +1035,6 @@ function RestTimerCard({ restingTimeMinutes, currentMeal, t, consumedSnacks, onS
   const minutes = restingTimeMinutes % 60;
   const maxRestMinutes = 720;
   const elapsedFraction = Math.max(0, Math.min(1, (maxRestMinutes - restingTimeMinutes) / maxRestMinutes));
-  const remainingPercent = Math.round((restingTimeMinutes / maxRestMinutes) * 100);
-  const waterLiters = (waterIntakeMl / 1000).toFixed(1);
-  const waterFillPct = Math.min(100, (waterIntakeMl / 3000) * 100);
 
   return (
     <motion.div
@@ -1074,7 +1071,7 @@ function RestTimerCard({ restingTimeMinutes, currentMeal, t, consumedSnacks, onS
           </motion.div>
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar only — no side labels (timer screen is clean) */}
         <div className="space-y-1.5">
           <div className="h-2.5 bg-white/60 dark:bg-white/10 rounded-full overflow-hidden border border-cyan-200/50 dark:border-cyan-700/30 shadow-inner">
             <motion.div
@@ -1084,132 +1081,7 @@ function RestTimerCard({ restingTimeMinutes, currentMeal, t, consumedSnacks, onS
               transition={{ duration: 1, ease: "easeOut" }}
             />
           </div>
-          <div className="flex justify-between items-center text-[13px] text-cyan-700/70 dark:text-cyan-400/70 font-medium">
-            <span>{t("menu.restPeriodLabel")}</span>
-            <span>{remainingPercent}% {t("menu.percentRemaining")}</span>
-          </div>
         </div>
-
-        {/* Tappable snack buttons */}
-        <div className="space-y-2">
-          <span className="text-[11px] font-bold text-cyan-700/60 dark:text-cyan-400/60 uppercase tracking-wider">{t("menu.allowedSnacks")}:</span>
-          <div className="flex items-center gap-2">
-            {/* Apple button */}
-            <motion.button
-              onClick={() => onSnackConsume('apple')}
-              whileTap={{ scale: 0.92 }}
-              aria-pressed={consumedSnacks.apple}
-              aria-label={`${t("menu.apple")} snack (95 kcal)${consumedSnacks.apple ? ` — ${t("mealDetail.consumed")}` : ''}`}
-              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all ${
-                consumedSnacks.apple
-                  ? 'bg-green-100 dark:bg-green-500/15 border-green-400 dark:border-green-500/40 shadow-sm'
-                  : 'bg-white/70 dark:bg-card/70 border-emerald-200/70 dark:border-emerald-500/30 hover:border-emerald-400 shadow-sm'
-              }`}
-            >
-              <span className="text-lg">🍎</span>
-              <div className="flex-1 text-left">
-                <span className={`text-[13px] font-semibold ${consumedSnacks.apple ? 'text-green-700 dark:text-green-400 line-through' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {t("menu.apple")}
-                </span>
-                <span className="text-[11px] text-gray-400 block">95 kcal</span>
-              </div>
-              {consumedSnacks.apple && (
-                <motion.div
-                  initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500 }}
-                  className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
-                >
-                  <Check className="w-3 h-3 text-white" />
-                </motion.div>
-              )}
-            </motion.button>
-
-            {/* Walnut button */}
-            <motion.button
-              onClick={() => onSnackConsume('walnut')}
-              whileTap={{ scale: 0.92 }}
-              aria-pressed={consumedSnacks.walnut}
-              aria-label={`${t("menu.walnut")} snack (185 kcal)${consumedSnacks.walnut ? ` — ${t("mealDetail.consumed")}` : ''}`}
-              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all ${
-                consumedSnacks.walnut
-                  ? 'bg-green-100 dark:bg-green-500/15 border-green-400 dark:border-green-500/40 shadow-sm'
-                  : 'bg-white/70 dark:bg-card/70 border-emerald-200/70 dark:border-emerald-500/30 hover:border-emerald-400 shadow-sm'
-              }`}
-            >
-              <span className="text-lg">🥜</span>
-              <div className="flex-1 text-left">
-                <span className={`text-[13px] font-semibold ${consumedSnacks.walnut ? 'text-green-700 dark:text-green-400 line-through' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {t("menu.walnut")}
-                </span>
-                <span className="text-[11px] text-gray-400 block">185 kcal</span>
-              </div>
-              {consumedSnacks.walnut && (
-                <motion.div
-                  initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500 }}
-                  className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
-                >
-                  <Check className="w-3 h-3 text-white" />
-                </motion.div>
-              )}
-            </motion.button>
-
-            {/* Water button — synced with floating tracker */}
-            <motion.button
-              onClick={onWaterTap}
-              whileTap={{ scale: 0.92 }}
-              aria-label={`${t("mealDetail.addWater")} (+250ml). ${t("mealDetail.current")}: ${waterIntakeMl > 0 ? `${(waterIntakeMl / 1000).toFixed(1)}L` : '0L'} / 3L`}
-              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 transition-all ${
-                waterIntakeMl > 0
-                  ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700/40 shadow-sm'
-                  : 'bg-white/70 dark:bg-card/70 border-cyan-200/70 dark:border-cyan-500/30 hover:border-cyan-400 shadow-sm'
-              }`}
-            >
-              {/* Mini water glass SVG — mirrors the floating tracker */}
-              <div className="relative w-6 h-7 flex-shrink-0">
-                <svg viewBox="0 0 24 30" className="w-full h-full">
-                  <defs>
-                    <linearGradient id="miniWaterG" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: "#60A5FA", stopOpacity: 0.9 }} />
-                      <stop offset="100%" style={{ stopColor: "#3B82F6", stopOpacity: 1 }} />
-                    </linearGradient>
-                    <clipPath id="miniGlassClip"><path d="M 5 2 L 19 2 L 20 28 L 4 28 Z" /></clipPath>
-                  </defs>
-                  <g clipPath="url(#miniGlassClip)">
-                    <rect x="4" y={30 - waterFillPct * 0.26} width="16" height={waterFillPct * 0.26} fill="url(#miniWaterG)" className="transition-all duration-500" />
-                  </g>
-                  <path d="M 5 2 L 19 2 L 20 28 L 4 28 Z" fill="none" stroke="#60A5FA" strokeWidth="1.5" opacity="0.7" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <span className="text-[13px] font-semibold text-cyan-700 dark:text-cyan-400">{t("menu.waterLabel")}</span>
-                <span className="text-[11px] text-blue-500 block font-bold">
-                  {waterIntakeMl > 0 ? `${waterLiters}L` : '+250ml'}
-                </span>
-              </div>
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Next meal — transparent, no background */}
-        <motion.div
-          className="flex items-center justify-center gap-3 px-5 py-3"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-full flex items-center justify-center shadow-lg">
-            <Utensils className="w-4 h-4 text-white" />
-          </div>
-          <div className="text-left">
-            <div className="text-[12px] text-cyan-600/70 dark:text-cyan-400/70 font-medium uppercase tracking-wide">{t("menu.nextMeal").toUpperCase()}</div>
-            <div className="text-[16px] font-bold text-cyan-900 dark:text-cyan-200">
-              {currentMeal === "breakfast" && `06:00 (${t("menu.breakfast")})`}
-              {currentMeal === "lunch" && `12:30 (${t("menu.lunch")})`}
-              {currentMeal === "dinner" && `17:30 (${t("menu.dinner")})`}
-            </div>
-          </div>
-        </motion.div>
       </div>
     </motion.div>
   );

@@ -1177,11 +1177,11 @@ export function FuturisticDashboard() {
             onClick={handleClose}
           />
 
-          {/* Panel — static, no slide-up animation */}
-          <div className="fixed inset-0 z-[61] flex flex-col md:items-center">
-            <div className="flex-1 relative flex flex-col overflow-hidden">
-              {/* Base bg with smooth dark gradient so the top animation isn't cut or transparent */}
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900" />
+          {/* Panel — fullscreen edge-to-edge dark (no centering that leaves light strips) */}
+          <div className="fixed inset-0 z-[61] flex flex-col w-full min-w-full">
+            <div className="flex-1 relative flex flex-col overflow-hidden w-full">
+              {/* Base bg full bleed dark gradient */}
+              <div className="absolute inset-0 w-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900" />
 
               {/* ── Close button ── */}
               <div className="relative z-20 flex justify-end px-5" style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 16px))" }}>
