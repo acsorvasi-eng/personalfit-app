@@ -56,6 +56,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import { Textarea } from "./ui/textarea";
 import { DSMButton } from "./dsm";
 import type { FoodCategory, FoodSource } from "../backend/models";
+import { toast } from "sonner";
 
 // ═══════════════════════════════════════════════════════════════
 // CATEGORY MAPPING
@@ -355,11 +356,14 @@ export function Foods() {
         onComplete={() => appData.refresh()}
       />
 
-      {/* ═══ Header — uses shared PageHeader DSM component ═══ */}
-      <div className="flex-shrink-0">
+      {/* ═══ Header — full-bleed gradient, shared PageHeader DSM component ═══ */}
+      <div className="flex-shrink-0 sm:-mx-4 md:-mx-6 lg:-mx-8">
         <PageHeader
           title={t("foods.title")}
           subtitle={t("foods.foodCount").replace("{n}", String(foods.length))}
+          gradientFrom="from-blue-400"
+          gradientVia="via-emerald-400"
+          gradientTo="to-teal-500"
           stats={[
             { label: t("foods.all"), value: foods.length },
             {
@@ -507,7 +511,7 @@ export function Foods() {
           }
         }
       }}>
-        <DialogContent>
+        <DialogContent className="max-w-md sm:max-w-lg bg-white dark:bg-[#121212] rounded-2xl shadow-xl border border-gray-100 dark:border-[#2a2a2a] p-5 sm:p-6 space-y-4">
           <DialogHeader>
             <DialogTitle>Étel hozzáadása</DialogTitle>
             <DialogDescription>
@@ -516,12 +520,18 @@ export function Foods() {
           </DialogHeader>
 
           <Tabs value={addMode} onValueChange={(v) => setAddMode(v as "type" | "voice")}>
-            <TabsList className="grid grid-cols-2 w-full mb-3">
-              <TabsTrigger value="type" className="flex items-center gap-2 justify-center text-xs">
+            <TabsList className="flex w-full mb-4 rounded-full bg-gray-100 dark:bg-[#1E1E1E] p-1">
+              <TabsTrigger
+                value="type"
+                className="flex-1 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:dark:bg-[#252525] data-[state=active]:text-gray-900 data-[state=active]:dark:text-gray-100 data-[state=active]:shadow-sm transition-colors flex items-center justify-center gap-1.5"
+              >
                 <Type className="w-3.5 h-3.5" />
                 Szöveg
               </TabsTrigger>
-              <TabsTrigger value="voice" className="flex items-center gap-2 justify-center text-xs">
+              <TabsTrigger
+                value="voice"
+                className="flex-1 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 data-[state=active]:bg-white data-[state=active]:dark:bg-[#252525] data-[state=active]:text-gray-900 data-[state=active]:dark:text-gray-100 data-[state=active]:shadow-sm transition-colors flex items-center justify-center gap-1.5"
+              >
                 <Mic className="w-3.5 h-3.5" />
                 Hang
               </TabsTrigger>
@@ -536,18 +546,17 @@ export function Foods() {
                 onChange={(e) => setTypedFoods(e.target.value)}
                 rows={4}
                 placeholder="csuka, pisztráng, süllő, lazac"
+                className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
               />
             </TabsContent>
 
-            <TabsContent value="voice" className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <TabsContent value="voice" className="space-y-4">
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Mondd be az ételek nevét magyarul
-                </span>
-                <DSMButton
-                  variant={isListening ? "outline" : "primary"}
-                  size="sm"
-                  icon={Mic}
+                </p>
+                <button
+                  type="button"
                   onClick={() => {
                     if (isListening && recognitionRef.current) {
                       recognitionRef.current.stop();
@@ -565,12 +574,19 @@ export function Foods() {
                     const rec = new SR();
                     recognitionRef.current = rec;
                     rec.lang = "hu-HU";
-                    rec.continuous = false;
-                    rec.interimResults = false;
+                    rec.continuous = true;
+                    rec.interimResults = true;
                     rec.onresult = (event: SpeechRecognitionEvent) => {
-                      const text = event.results[0][0].transcript || "";
-                      setVoiceFoods(text);
-                      setIsListening(false);
+                      let combined = "";
+                      for (let i = 0; i < event.results.length; i++) {
+                        combined += event.results[i][0].transcript + " ";
+                      }
+                      setVoiceFoods(combined.trim());
+                      // Ha az utolsó eredmény végleges, állítsuk le
+                      const last = event.results[event.results.length - 1];
+                      if (last.isFinal) {
+                        setIsListening(false);
+                      }
                     };
                     rec.onerror = () => {
                       setIsListening(false);
@@ -581,15 +597,24 @@ export function Foods() {
                     setIsListening(true);
                     rec.start();
                   }}
+                  className={`flex items-center justify-center w-16 h-16 rounded-full border-4 ${
+                    isListening
+                      ? "border-red-400 bg-red-500/90 animate-pulse"
+                      : "border-blue-300 bg-blue-500/90"
+                  } shadow-lg text-white`}
                 >
-                  {isListening ? "Leállítás" : "Felvétel indítása"}
-                </DSMButton>
+                  <Mic className="w-7 h-7" />
+                </button>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                  {isListening ? "Felvétel folyamatban..." : "Koppints a mikrofonra a felvételhez"}
+                </span>
               </div>
               <Textarea
                 value={voiceFoods}
                 onChange={(e) => setVoiceFoods(e.target.value)}
                 rows={4}
                 placeholder="(felismert szöveg itt jelenik meg)"
+                className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
               />
             </TabsContent>
           </Tabs>
@@ -611,17 +636,23 @@ export function Foods() {
               onClick={async () => {
                 setLookupError(null);
                 setAddResultMessage(null);
+                const fillerWords = ["ennyi", "ott", "hozzá", "hozza", "add", "hozzád", "hozzad"];
                 const sourceText = addMode === "type" ? typedFoods : voiceFoods;
                 const items = sourceText
                   .split(/[,;\n]/)
                   .map((s) => s.trim())
-                  .filter((s) => s.length > 0);
+                  .filter((s) => {
+                    if (!s) return false;
+                    const lower = s.toLowerCase();
+                    return !fillerWords.includes(lower);
+                  });
                 if (items.length === 0) {
                   setLookupError("Adj meg legalább egy ételt.");
                   return;
                 }
                 try {
                   setLookupLoading(true);
+                  console.log('[AddFood] Lookup foods request items:', items);
                   const resp = await fetch("/api/lookup-foods", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -632,11 +663,14 @@ export function Foods() {
                     throw new Error(err.error || "Ismeretlen hiba a tápérték lekérésnél.");
                   }
                   const data = await resp.json();
-                  setPreviewFoods(data.foods || []);
-                  if (!data.foods || data.foods.length === 0) {
+                  console.log('[AddFood] Lookup foods response:', data);
+                  const foods = data.result || data.foods || [];
+                  setPreviewFoods(foods);
+                  if (!foods || foods.length === 0) {
                     setLookupError("Nem sikerült tápérték adatot lekérni.");
                   }
                 } catch (e: any) {
+                  console.error('[AddFood] Lookup foods error:', e);
                   setLookupError(e.message || "Nem sikerült tápérték adatot lekérni.");
                 } finally {
                   setLookupLoading(false);
@@ -647,7 +681,7 @@ export function Foods() {
               Előnézet
             </DSMButton>
             <DSMButton
-              variant="primary"
+              variant="gradient"
               size="sm"
               fullWidth
               disabled={previewFoods.length === 0}
@@ -676,6 +710,9 @@ export function Foods() {
                   const createdCount = result.created.length;
                   setAddResultMessage(`${createdCount} étel hozzáadva`);
                   if (createdCount > 0) {
+                    toast.success(`${createdCount} étel hozzáadva ✓`);
+                  }
+                  if (createdCount > 0) {
                     appData.refresh();
                   }
                 } catch (e: any) {
@@ -690,28 +727,30 @@ export function Foods() {
           </div>
 
           {previewFoods.length > 0 && (
-            <div className="mt-4 space-y-2 max-h-56 overflow-y-auto border-t pt-3">
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <div className="mt-4 space-y-2 max-h-64 overflow-y-auto border-t border-gray-100 dark:border-[#2a2a2a] pt-3">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
                 Felismert ételek és tápérték 100g-ra:
               </p>
-              {previewFoods.map((f, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between text-xs py-1.5 border-b last:border-b-0 border-gray-100 dark:border-[#2a2a2a]"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                      {f.name}
-                    </p>
+              <div className="space-y-2">
+                {previewFoods.map((f, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl bg-gray-50 dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2a2a2a] px-3 py-2 flex items-center justify-between text-xs"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {f.name}
+                      </p>
+                    </div>
+                    <div className="ml-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600 dark:text-gray-300">
+                      <span>{Math.round(f.calories_per_100g)} kcal</span>
+                      <span>Feh.: {Math.round(f.protein_g)} g</span>
+                      <span>Zsír: {Math.round(f.fat_g)} g</span>
+                      <span>Ch.: {Math.round(f.carbs_g)} g</span>
+                    </div>
                   </div>
-                  <div className="ml-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600 dark:text-gray-300">
-                    <span>{Math.round(f.calories_per_100g)} kcal</span>
-                    <span>Feh.: {Math.round(f.protein_g)} g</span>
-                    <span>Zsír: {Math.round(f.fat_g)} g</span>
-                    <span>Ch.: {Math.round(f.carbs_g)} g</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </DialogContent>

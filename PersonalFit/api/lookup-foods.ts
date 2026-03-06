@@ -3,11 +3,13 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 type LookupFood = {
+  /** Hungarian display name (name_hu from the LLM) */
   name: string;
   calories_per_100g: number;
   protein_g: number;
   fat_g: number;
   carbs_g: number;
+  /** Hungarian category label from LLM: Fehérje, Zsír, Szénhidrát, Tejtermék, Zöldség, Gyümölcs */
   category?: string;
 };
 
@@ -30,37 +32,27 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    console.log('[lookup-foods] Incoming foods:', cleanedFoods);
     const listBlock = cleanedFoods.map(f => `- ${f}`).join('\n');
 
     const prompt = `
 You are a nutrition expert with access to a reliable nutrition database.
 
-For each Hungarian food in the list below, return JSON with:
-- name: Hungarian food name (short, singular form)
-- calories_per_100g: kilocalories per 100g (number)
-- protein_g: grams of protein per 100g (number)
-- fat_g: grams of fat per 100g (number)
-- carbs_g: grams of carbohydrates per 100g (number)
-- category: one of ["protein","carbs","vegetable","fruit","fat","dairy","grain","other"]
-
-If a food is very generic (e.g. "hal"), choose the most typical nutritional profile for that item.
-If you are unsure, make a best-effort estimate based on similar foods.
+For each food in this list, return ONLY a JSON array with no markdown, no explanation.
+Each item MUST have this exact shape:
+{
+  "name_hu": string,                       // Hungarian name, short, singular
+  "calories_per_100g": number,            // kcal per 100g
+  "protein_g": number,                    // grams of protein per 100g
+  "fat_g": number,                        // grams of fat per 100g
+  "carbs_g": number,                      // grams of carbohydrates per 100g
+  "category": "Fehérje" | "Zsír" | "Szénhidrát" | "Tejtermék" | "Zöldség" | "Gyümölcs"
+}
 
 Foods:
 ${listBlock}
 
-Respond ONLY with strict JSON, no markdown, in this shape:
-[
-  {
-    "name": "csuka",
-    "calories_per_100g": 110,
-    "protein_g": 22,
-    "fat_g": 2,
-    "carbs_g": 0,
-    "category": "protein"
-  }
-]
-`;
+Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`;
 
     const message = await client.messages.create({
       model: 'claude-haiku-4-5',
@@ -81,6 +73,8 @@ Respond ONLY with strict JSON, no markdown, in this shape:
     let cleaned = rawText.trim();
     cleaned = cleaned.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
     cleaned = cleaned.replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+    console.log('[lookup-foods] Raw LLM response (first 200 chars):', rawText.slice(0, 200));
+    console.log('[lookup-foods] Cleaned JSON candidate (first 200 chars):', cleaned.slice(0, 200));
 
     let parsed: any;
     try {
@@ -93,34 +87,40 @@ Respond ONLY with strict JSON, no markdown, in this shape:
     }
 
     if (!Array.isArray(parsed)) {
+      console.error('[lookup-foods] Parsed payload is not an array:', parsed);
       return res.status(500).json({ error: 'Invalid payload shape', raw: parsed });
     }
 
     const foodsOut: LookupFood[] = parsed
       .map((item: any) => {
         if (!item) return null;
-        const name = String(item.name || '').trim();
+        const name = String(item.name_hu || item.name || '').trim();
         if (!name) return null;
         const toNum = (v: any, fallback: number) => {
           const n = Number(v);
           return Number.isFinite(n) && n > 0 ? n : fallback;
         };
+        const category = typeof item.category === 'string' ? String(item.category).trim() : undefined;
         return {
           name,
           calories_per_100g: toNum(item.calories_per_100g, 100),
           protein_g: toNum(item.protein_g, 5),
           fat_g: toNum(item.fat_g, 3),
           carbs_g: toNum(item.carbs_g, 15),
-          category: typeof item.category === 'string' ? item.category : undefined,
+          category,
         } as LookupFood;
       })
       .filter(Boolean);
 
     if (foodsOut.length === 0) {
+      console.error('[lookup-foods] Empty foodsOut after mapping:', parsed);
       return res.status(500).json({ error: 'No valid foods returned from LLM', raw: parsed });
     }
 
-    return res.status(200).json({ foods: foodsOut });
+    console.log('[lookup-foods] Final foodsOut:', foodsOut);
+
+    // Match parse-document.ts pattern: wrap result array
+    return res.status(200).json({ result: foodsOut });
   } catch (error: any) {
     console.error('[lookup-foods] Error:', error);
     return res

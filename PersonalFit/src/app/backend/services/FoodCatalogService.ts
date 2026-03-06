@@ -243,6 +243,8 @@ const INGREDIENT_SYNONYMS: Record<string, string> = {
   // Zöldség saláta → saláta
   'zöldség saláta': 'saláta',
   'zoldseg salata': 'saláta',
+  // Angol "salad" → saláta
+  'salad': 'saláta',
   // Tejföl (keep canonical with accents)
   'tejföl': 'tejföl',
   'tejfol': 'tejföl',
@@ -253,6 +255,9 @@ const INGREDIENT_SYNONYMS: Record<string, string> = {
   // Tökmagolaj
   'tökmagolaj': 'tökmagolaj',
   'tokmagolaj': 'tökmagolaj',
+  // Pumpkin seed variants → tökmag
+  'pumpkin seed': 'tökmag',
+  'pumpkin seed(hántott': 'tökmag',
 };
 
 /**
@@ -449,6 +454,7 @@ export function inferSemanticCategoryFromName(name: string): FoodSemanticCategor
     'saláta', 'salata', 'uborka', 'paradicsom', 'paprika', 'brokkoli', 'karfiol',
     'cékla', 'cekla', 'répa', 'repa', 'sárgarépa', 'sargarepa', 'cukkini', 'zöldség', 'zoldseg',
     'spenót', 'spenot', 'kelbimbó', 'kel', 'padlizsán', 'padlizsan', 'hagyma', 'fokhagyma',
+    'petrezselyem', 'petrezelyem',
   ];
   if (vegKeywords.some(k => n.includes(k))) return 'vegetable';
 

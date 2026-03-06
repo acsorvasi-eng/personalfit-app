@@ -697,9 +697,12 @@ export interface ImportStats {
  * Strictly rejects PDF artifacts, binary data, XML metadata, and other parser garbage.
  */
 function isValidIngredientName(name: string): boolean {
-  if (!name || name.length < 2) return false;
-
+  if (!name) return false;
   const n = name.trim();
+
+  // Fogadjuk el a 2–25 karakter közötti, "normális" szavakat; a cél az,
+  // hogy ne dobjunk ki valódi alapanyagokat.
+  if (n.length < 2 || n.length > 25) return false;
 
   // ── PDF / binary token blacklist ──────────────────────────────
   const PDF_TOKENS = [
@@ -721,24 +724,15 @@ function isValidIngredientName(name: string): boolean {
     if (lower.includes(token)) return false;
   }
 
-  // ── Must start with a normal letter (latin) ───────────────────
-  if (!/^[a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]/u.test(n)) return false;
+  // Legalább egy latin/HU betű
+  if (!/[a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]/u.test(n)) return false;
 
-  // ── Reject if contains too many non-latin / symbol characters ─
-  const latinLetters = (n.match(/[a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]/g) || []).length;
-  const ratio = latinLetters / n.length;
-  if (ratio < 0.6) return false;
-
-  // ── Reject if contains suspicious symbol clusters ─────────────
+  // Durva szimbólum-szűrés: nyers PDF zaj ne menjen át
   if (/[<>{}[\]\\|@#$%^*~`]/.test(n)) return false;
-  if (/[^\x00-\x7F\u00C0-\u024F\u0400-\u04FF]/.test(n) && latinLetters < 3) return false;
 
-  // ── Reject if it's just a number / date / code ────────────────
+  // Csak szám / dátum / kód → nem alapanyag
   if (/^\d[\d\s:./-]*$/.test(n)) return false;
   if (/^\d{2}:\d{2}/.test(n)) return false;
-
-  // ── Minimum real word length ───────────────────────────────────
-  if (latinLetters < 3) return false;
 
   return true;
 }

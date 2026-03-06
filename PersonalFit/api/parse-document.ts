@@ -101,18 +101,25 @@ async function parseDocumentToIngredientsAndPlan(cleanedText: string): Promise<{
 }> {
   const prompt = `You are a nutrition coach. Extract TWO outputs from the Hungarian meal plan text below.
 
-OUTPUT 1 — ingredients: A JSON array of ATOMIC ingredient names ONLY. No quantities, no units, no descriptions.
-GOOD: "tojás", "csirkemell", "lazac", "avokádó", "zab", "túró", "brokkoli", "dió", "banán"
-BAD: "3 tojás", "180g lazac", "Protein + egészséges zsír", "Napi összesen", any string with φ ~ } { < > * =
-Each name must be a single base food, max 25 characters, Hungarian.
+OUTPUT 1 — ingredients:
+- Extract EVERY individual food ingredient from the entire text (expected roughly 50–80 unique ingredients for a full 4-week plan).
+- The text may contain multi-column tables; ingredients can appear in ANY column or cell. Scan ALL columns and ALL lines, not just the first column.
+- Return a JSON array of ATOMIC base ingredient names ONLY. No quantities, no units, no descriptions.
+- Names MUST be in Hungarian. If the source uses English names (e.g. "walnut"), translate to the correct Hungarian base ingredient (e.g. "dió").
+- Include meats, fish, vegetables, fruits, dairy, grains, nuts, seeds, legumes, oils, and other real foods. Do NOT skip anything that looks like an ingredient.
+- Each name must be a single base food, max 25 characters.
 
-OUTPUT 2 — plan: A JSON array of exactly 30 days. Each day:
-- day: 1..30
-- dayOfWeek: "Hétfő" | "Kedd" | "Szerda" | "Csütörtök" | "Péntek" | "Szombat" | "Vasárnap"
-- type: "edzés" | "pihenő"
-- totalKcal: number (MUST NOT exceed ${DAILY_CALORIE_TARGET} — user's daily target)
-- meals: array of { name: "Reggeli"|"Ebéd"|"Vacsora"|"Edzés utáni", items: string[], kcal: number }
-  - items: strings WITH quantities, e.g. "3 tojás (180g)", "60g tk kenyér", "½ avokádó (70g)", "220g csirkemell"
+GOOD: "tojás", "csirkemell", "lazac", "avokádó", "zab", "túró", "brokkoli", "dió", "banán", "olívaolaj", "kesudió"
+BAD: "3 tojás", "180g lazac", "Protein + egészséges zsír", "Napi összesen", any string with φ ~ } { < > * =
+
+OUTPUT 2 — plan:
+- A JSON array of exactly 30 days. Each day:
+  - day: 1..30
+  - dayOfWeek: "Hétfő" | "Kedd" | "Szerda" | "Csütörtök" | "Péntek" | "Szombat" | "Vasárnap"
+  - type: "edzés" | "pihenő"
+  - totalKcal: number (MUST NOT exceed ${DAILY_CALORIE_TARGET} — user's daily target)
+  - meals: array of { name: "Reggeli"|"Ebéd"|"Vacsora"|"Edzés utáni", items: string[], kcal: number }
+    - items: strings WITH quantities, e.g. "3 tojás (180g)", "60g tk kenyér", "½ avokádó (70g)", "220g csirkemell"
 
 Return ONLY valid JSON in this exact shape (no markdown):
 {"ingredients":["tojás","csirkemell",...],"plan":[{"day":1,"dayOfWeek":"Hétfő","type":"edzés","totalKcal":2000,"meals":[{"name":"Reggeli","items":["3 tojás (180g)","60g tk kenyér"],"kcal":520},...]},...]}
