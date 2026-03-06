@@ -13,6 +13,14 @@ type LookupFood = {
   category?: string;
 };
 
+function removeAccents(s: string): string {
+  try {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  } catch {
+    return s;
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -74,24 +82,45 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
     // Strip common markdown fences
     cleaned = cleaned.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
     cleaned = cleaned.replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-    // If response still contains extra text around JSON, try to extract first JSON array
-    if (!/^\s*[\[\{]/.test(cleaned)) {
+
+    console.log('[lookup-foods] Raw LLM response (first 200 chars):', rawText.slice(0, 200));
+
+    let parsed: any = null;
+
+    const tryParse = (candidate: string): any | null => {
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        return null;
+      }
+    };
+
+    // 1) Try direct parse
+    parsed = tryParse(cleaned);
+
+    // 2) If that fails, try to extract the first JSON array anywhere in the text
+    if (!parsed) {
       const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
       if (arrayMatch) {
-        cleaned = arrayMatch[0].trim();
+        parsed = tryParse(arrayMatch[0]);
       }
     }
-    console.log('[lookup-foods] Raw LLM response (first 200 chars):', rawText.slice(0, 200));
+
+    // 3) As a last resort, try to extract a JSON object
+    if (!parsed) {
+      const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (objectMatch) {
+        parsed = tryParse(objectMatch[0]);
+      }
+    }
+
     console.log('[lookup-foods] Cleaned JSON candidate (first 200 chars):', cleaned.slice(0, 200));
 
-    let parsed: any;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch (e) {
-      console.error('[lookup-foods] Failed to parse JSON from Claude after cleaning:', cleaned);
+    if (!parsed) {
+      console.error('[lookup-foods] Failed to parse JSON from Claude after multiple cleaning attempts');
       return res
         .status(500)
-        .json({ error: 'LLM response was not valid JSON', raw: cleaned });
+        .json({ error: 'LLM response was not valid JSON' });
     }
 
     if (!Array.isArray(parsed)) {

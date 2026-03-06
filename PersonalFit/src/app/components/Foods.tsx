@@ -71,6 +71,8 @@ type AddFoodChip = {
   protein_g?: number;
   fat_g?: number;
   carbs_g?: number;
+  // whether a lookup attempt failed; used to avoid infinite retry loops
+  lookupFailed?: boolean;
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -271,6 +273,7 @@ export function Foods() {
         raw: value,
         name: value,
         status: "pending",
+        lookupFailed: false,
       };
       return [...prev, newChip];
     });
@@ -286,7 +289,7 @@ export function Foods() {
 
   // Background nutrition lookup for pending chips
   useEffect(() => {
-    const pending = chips.filter(c => c.status === "pending");
+    const pending = chips.filter(c => c.status === "pending" && !c.lookupFailed);
     if (pending.length === 0 || lookupLoading) return;
 
     const fetchNutrition = async () => {
@@ -302,13 +305,28 @@ export function Foods() {
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({}));
           console.warn("[AddFood] Nutrition lookup HTTP error, leaving chips pending:", err);
-          return; // keep chips grey (pending)
+          // Mark these chips as attempted so we don't loop, but keep them grey
+          setChips(prev =>
+            prev.map(chip =>
+              chip.status === "pending"
+                ? { ...chip, lookupFailed: true }
+                : chip
+            )
+          );
+          return;
         }
         const data = await resp.json().catch(() => null);
         console.log("[AddFood] Nutrition lookup response:", data);
         const foods = data && (data.result || data.foods || []);
         if (!Array.isArray(foods) || foods.length === 0) {
           console.warn("[AddFood] Nutrition lookup returned no foods array, leaving chips pending");
+          setChips(prev =>
+            prev.map(chip =>
+              chip.status === "pending"
+                ? { ...chip, lookupFailed: true }
+                : chip
+            )
+          );
           return;
         }
         setChips(prev =>
@@ -320,11 +338,12 @@ export function Foods() {
                 normalizeNameForMatch(chip.raw)
             );
             if (!match) {
-              return { ...chip, status: "invalid" };
+              return { ...chip, status: "invalid", lookupFailed: true };
             }
             return {
               ...chip,
               status: "valid",
+              lookupFailed: false,
               name: match.name || match.name_hu || chip.raw,
               calories_per_100g: match.calories_per_100g,
               protein_g: match.protein_g,
@@ -335,7 +354,14 @@ export function Foods() {
         );
       } catch (e: any) {
         console.error("[AddFood] Nutrition lookup error, leaving chips pending:", e);
-        // Do not change chip status or show error; stay grey/pending
+        // Mark as attempted; stay grey/pending visually
+        setChips(prev =>
+          prev.map(chip =>
+            chip.status === "pending"
+              ? { ...chip, lookupFailed: true }
+              : chip
+          )
+        );
       } finally {
         setLookupLoading(false);
       }
