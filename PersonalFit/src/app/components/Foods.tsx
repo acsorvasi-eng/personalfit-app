@@ -246,6 +246,7 @@ export function Foods() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const lastVoiceTextRef = useRef<string>("");
+  const hiddenTextInputRef = useRef<HTMLInputElement | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [chips, setChips] = useState<AddFoodChip[]>([]);
@@ -631,25 +632,30 @@ export function Foods() {
             </TabsList>
 
             <TabsContent value="type" className="space-y-3">
-              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                Ételek vesszővel vagy soronként elválasztva
-              </label>
-              <Textarea
-                value={typedFoods}
-                onChange={(e) => setTypedFoods(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === ",") {
-                    e.preventDefault();
-                    if (typedFoods.trim()) {
-                      addTokenAsChip(typedFoods);
-                      setTypedFoods("");
+              <div
+                className="w-full h-20 border-2 border-dashed border-gray-200 dark:border-[#2a2a2a] rounded-2xl flex items-center justify-center text-[11px] text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1E1E1E] cursor-text"
+                onClick={() => hiddenTextInputRef.current?.focus()}
+              >
+                <span>
+                  Gépelj ide ételeket. Enter vagy vessző után chip készül.
+                </span>
+                <input
+                  ref={hiddenTextInputRef}
+                  type="text"
+                  value={typedFoods}
+                  onChange={(e) => setTypedFoods(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      if (typedFoods.trim()) {
+                        addTokenAsChip(typedFoods);
+                        setTypedFoods("");
+                      }
                     }
-                  }
-                }}
-                rows={4}
-                placeholder="csuka, pisztráng, süllő, lazac"
-                className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
-              />
+                  }}
+                  className="absolute w-px h-px opacity-0 pointer-events-none"
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="voice" className="space-y-4">
@@ -806,6 +812,7 @@ export function Foods() {
                 try {
                   setAddingFoods(true);
                   setAddResultMessage(null);
+                  console.log("[AddFood] Saving valid chips:", validChips);
                   const inputs = validChips.map((chip) => {
                     const semantic = inferSemanticCategoryFromName(chip.name);
                     const cat: FoodCategory = semanticCategoryToFoodCategory(semantic);
@@ -823,10 +830,14 @@ export function Foods() {
                   });
                   const result = await createFoodsBatch(inputs as any);
                   const createdCount = result.created.length;
+                  console.log("[AddFood] createFoodsBatch result:", result);
                   setAddResultMessage(`${createdCount} étel hozzáadva`);
                   if (createdCount > 0) {
                     toast.success(`${createdCount} étel hozzáadva ✓`);
+                    // Frissítsük a Foods listát azonnal
                     appData.refresh();
+                    setAddDialogOpen(false);
+                    setChips([]);
                   }
                 } catch (e: any) {
                   setLookupError(e.message || "Nem sikerült elmenteni az ételeket.");
