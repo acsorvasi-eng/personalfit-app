@@ -19,6 +19,11 @@
  *   - Localized (HU/EN/RO) via t() calls
  */
 
+// Web Speech API globals (runtime-provided in the browser)
+declare var SpeechRecognition: any;
+declare var webkitSpeechRecognition: any;
+declare var SpeechRecognitionEvent: any;
+
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   Search,
@@ -244,7 +249,7 @@ export function Foods() {
   const [typedFoods, setTypedFoods] = useState("");
   const [voiceFoods, setVoiceFoods] = useState("");
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const lastVoiceTextRef = useRef<string>("");
   const hiddenTextInputRef = useRef<HTMLInputElement | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -644,9 +649,9 @@ export function Foods() {
                     // Osszuk fel az eddigi szöveget ételnevekre
                     value
                       .split(/[,;\n]+/)
-                      .map((t) => t.trim())
+                      .map((t: string) => t.trim())
                       .filter(Boolean)
-                      .forEach((token) => addTokenAsChip(token));
+                      .forEach((token: string) => addTokenAsChip(token));
                     setTypedFoods("");
                   }
                 }}
@@ -682,7 +687,7 @@ export function Foods() {
                     rec.lang = "hu-HU";
                     rec.continuous = true;
                     rec.interimResults = true;
-                    rec.onresult = (event: SpeechRecognitionEvent) => {
+                    rec.onresult = (event: any) => {
                       // Mutassuk a teljes szöveget referenciaként
                       let combined = "";
                       for (let i = 0; i < event.results.length; i++) {
@@ -698,9 +703,9 @@ export function Foods() {
                           const phrase = res[0].transcript || "";
                           phrase
                             .split(/[,;\n\s]+/)
-                            .map((t) => t.trim())
+                            .map((t: string) => t.trim())
                             .filter(Boolean)
-                            .forEach((token) => addTokenAsChip(token));
+                            .forEach((token: string) => addTokenAsChip(token));
                         }
                       }
 
@@ -812,7 +817,7 @@ export function Foods() {
                   const inputs = validChips.map((chip) => {
                     const semantic = inferSemanticCategoryFromName(chip.name);
                     const cat: FoodCategory = semanticCategoryToFoodCategory(semantic);
-                    const source: FoodSource = "user_upload";
+                    const source: FoodSource = "user_uploaded";
                     return {
                       name: chip.name,
                       description: "Felhasználó által hozzáadott étel",

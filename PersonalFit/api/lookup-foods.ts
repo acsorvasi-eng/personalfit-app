@@ -91,8 +91,8 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
       return res.status(500).json({ error: 'Invalid payload shape', raw: parsed });
     }
 
-    const foodsOut: LookupFood[] = parsed
-      .map((item: any) => {
+    const foodsOut = parsed
+      .map((item: any): LookupFood | null => {
         if (!item) return null;
         const name = String(item.name_hu || item.name || '').trim();
         if (!name) return null;
@@ -108,9 +108,9 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
           fat_g: toNum(item.fat_g, 3),
           carbs_g: toNum(item.carbs_g, 15),
           category,
-        } as LookupFood;
+        };
       })
-      .filter(Boolean);
+      .filter((f): f is LookupFood => f !== null);
 
     if (foodsOut.length === 0) {
       console.error('[lookup-foods] Empty foodsOut after mapping:', parsed);
