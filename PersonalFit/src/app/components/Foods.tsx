@@ -58,6 +58,18 @@ import { DSMButton } from "./dsm";
 import type { FoodCategory, FoodSource } from "../backend/models";
 import { toast } from "sonner";
 
+type AddFoodChipStatus = "pending" | "valid" | "invalid";
+type AddFoodChip = {
+  id: string;
+  raw: string;
+  name: string;
+  status: AddFoodChipStatus;
+  calories_per_100g?: number;
+  protein_g?: number;
+  fat_g?: number;
+  carbs_g?: number;
+};
+
 // ═══════════════════════════════════════════════════════════════
 // CATEGORY MAPPING
 // ═══════════════════════════════════════════════════════════════
@@ -233,13 +245,94 @@ export function Foods() {
   const [voiceFoods, setVoiceFoods] = useState("");
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const lastVoiceTextRef = useRef<string>("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
-  const [previewFoods, setPreviewFoods] = useState<
-    { name: string; calories_per_100g: number; protein_g: number; fat_g: number; carbs_g: number }[]
-  >([]);
+  const [chips, setChips] = useState<AddFoodChip[]>([]);
   const [addingFoods, setAddingFoods] = useState(false);
   const [addResultMessage, setAddResultMessage] = useState<string | null>(null);
+
+  const addTokenAsChip = useCallback((token: string) => {
+    const value = token.trim();
+    if (!value) return;
+    const lower = value.toLowerCase();
+    const fillerWords = ["ennyi", "ott", "hozzá", "hozza", "add", "hozzád", "hozzad"];
+    if (fillerWords.includes(lower)) return;
+    setChips(prev => {
+      if (prev.some(c => c.raw.toLowerCase() === lower)) return prev;
+      const id = typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? (crypto as any).randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const newChip: AddFoodChip = {
+        id,
+        raw: value,
+        name: value,
+        status: "pending",
+      };
+      return [...prev, newChip];
+    });
+  }, []);
+
+  // Background nutrition lookup for pending chips
+  useEffect(() => {
+    const pending = chips.filter(c => c.status === "pending");
+    if (pending.length === 0 || lookupLoading) return;
+
+    const fetchNutrition = async () => {
+      try {
+        setLookupLoading(true);
+        const names = pending.map(c => c.raw);
+        console.log("[AddFood] Nutrition lookup for chips:", names);
+        const resp = await fetch("/api/lookup-foods", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ foods: names }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.error || "Ismeretlen hiba a tápérték lekérésnél.");
+        }
+        const data = await resp.json();
+        console.log("[AddFood] Nutrition lookup response:", data);
+        const foods = data.result || data.foods || [];
+        setChips(prev =>
+          prev.map(chip => {
+            if (chip.status !== "pending") return chip;
+            const match = foods.find(
+              (f: any) =>
+                String(f.name || f.name_hu || "")
+                  .toLowerCase()
+                  .trim() === chip.raw.toLowerCase().trim()
+            );
+            if (!match) {
+              return { ...chip, status: "invalid" };
+            }
+            return {
+              ...chip,
+              status: "valid",
+              name: match.name || match.name_hu || chip.raw,
+              calories_per_100g: match.calories_per_100g,
+              protein_g: match.protein_g,
+              fat_g: match.fat_g,
+              carbs_g: match.carbs_g,
+            };
+          })
+        );
+      } catch (e: any) {
+        console.error("[AddFood] Nutrition lookup error:", e);
+        setLookupError(e.message || "Nem sikerült tápérték adatot lekérni.");
+        setChips(prev =>
+          prev.map(chip =>
+            chip.status === "pending" ? { ...chip, status: "invalid" } : chip
+          )
+        );
+      } finally {
+        setLookupLoading(false);
+      }
+    };
+
+    fetchNutrition();
+  }, [chips, lookupLoading]);
 
   // Egyszeri tisztítás: távolítsuk el a korábban betöltött, teljesen
   // értelmetlen AI ételeket (korrupt nevek a PDF-ből).
@@ -544,6 +637,15 @@ export function Foods() {
               <Textarea
                 value={typedFoods}
                 onChange={(e) => setTypedFoods(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    if (typedFoods.trim()) {
+                      addTokenAsChip(typedFoods);
+                      setTypedFoods("");
+                    }
+                  }
+                }}
                 rows={4}
                 placeholder="csuka, pisztráng, süllő, lazac"
                 className="border-2 border-gray-200 dark:border-[#2a2a2a] rounded-2xl text-sm bg-white dark:bg-[#1E1E1E]"
@@ -581,7 +683,21 @@ export function Foods() {
                       for (let i = 0; i < event.results.length; i++) {
                         combined += event.results[i][0].transcript + " ";
                       }
-                      setVoiceFoods(combined.trim());
+                      const newText = combined.trim();
+                      const prev = lastVoiceTextRef.current || "";
+                      lastVoiceTextRef.current = newText;
+                      setVoiceFoods(newText);
+
+                      // Extract new segment since last update and create chips
+                      if (newText.length > prev.length) {
+                        const diff = newText.slice(prev.length);
+                        diff
+                          .split(/[,;\n\s]+/)
+                          .map(t => t.trim())
+                          .filter(Boolean)
+                          .forEach(token => addTokenAsChip(token));
+                      }
+
                       // Ha az utolsó eredmény végleges, állítsuk le
                       const last = event.results[event.results.length - 1];
                       if (last.isFinal) {
@@ -628,81 +744,80 @@ export function Foods() {
             )}
           </div>
 
-          <div className="flex gap-2 mt-3">
-            <DSMButton
-              variant="outline"
-              size="sm"
-              fullWidth
-              onClick={async () => {
-                setLookupError(null);
-                setAddResultMessage(null);
-                const fillerWords = ["ennyi", "ott", "hozzá", "hozza", "add", "hozzád", "hozzad"];
-                const sourceText = addMode === "type" ? typedFoods : voiceFoods;
-                const items = sourceText
-                  .split(/[,;\n]/)
-                  .map((s) => s.trim())
-                  .filter((s) => {
-                    if (!s) return false;
-                    const lower = s.toLowerCase();
-                    return !fillerWords.includes(lower);
-                  });
-                if (items.length === 0) {
-                  setLookupError("Adj meg legalább egy ételt.");
-                  return;
-                }
-                try {
-                  setLookupLoading(true);
-                  console.log('[AddFood] Lookup foods request items:', items);
-                  const resp = await fetch("/api/lookup-foods", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ foods: items }),
-                  });
-                  if (!resp.ok) {
-                    const err = await resp.json().catch(() => ({}));
-                    throw new Error(err.error || "Ismeretlen hiba a tápérték lekérésnél.");
-                  }
-                  const data = await resp.json();
-                  console.log('[AddFood] Lookup foods response:', data);
-                  const foods = data.result || data.foods || [];
-                  setPreviewFoods(foods);
-                  if (!foods || foods.length === 0) {
-                    setLookupError("Nem sikerült tápérték adatot lekérni.");
-                  }
-                } catch (e: any) {
-                  console.error('[AddFood] Lookup foods error:', e);
-                  setLookupError(e.message || "Nem sikerült tápérték adatot lekérni.");
-                } finally {
-                  setLookupLoading(false);
-                }
-              }}
-              loading={lookupLoading}
-            >
-              Előnézet
-            </DSMButton>
+          {/* Chips list */}
+          {chips.length > 0 && (
+            <div className="mt-3 space-y-2 max-h-64 overflow-y-auto border-t border-gray-100 dark:border-[#2a2a2a] pt-3">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Felismert ételek:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {chips.map((chip) => {
+                  const isValid = chip.status === "valid";
+                  const isPending = chip.status === "pending";
+                  const isInvalid = chip.status === "invalid";
+                  const baseClasses =
+                    "px-3 py-1.5 rounded-full text-xs flex items-center gap-2 border";
+                  const styleClasses = isValid
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : isInvalid
+                    ? "bg-red-50 border-red-200 text-red-700"
+                    : "bg-gray-50 border-gray-200 text-gray-700";
+                  return (
+                    <div key={chip.id} className={`${baseClasses} ${styleClasses}`}>
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-semibold truncate max-w-[120px]">
+                          {chip.name}
+                        </span>
+                        {isValid && typeof chip.calories_per_100g === "number" && (
+                          <span className="text-[10px]">
+                            {Math.round(chip.calories_per_100g)} kcal / 100g
+                          </span>
+                        )}
+                        {isPending && (
+                          <span className="text-[10px] animate-pulse">...</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setChips(prev => prev.filter(c => c.id !== chip.id))
+                        }
+                        className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-[10px]"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3">
             <DSMButton
               variant="gradient"
               size="sm"
               fullWidth
-              disabled={previewFoods.length === 0}
+              disabled={!chips.some(c => c.status === "valid")}
               loading={addingFoods}
               onClick={async () => {
-                if (previewFoods.length === 0) return;
+                const validChips = chips.filter(c => c.status === "valid");
+                if (validChips.length === 0) return;
                 try {
                   setAddingFoods(true);
                   setAddResultMessage(null);
-                  const inputs = previewFoods.map((f) => {
-                    const semantic = inferSemanticCategoryFromName(f.name);
+                  const inputs = validChips.map((chip) => {
+                    const semantic = inferSemanticCategoryFromName(chip.name);
                     const cat: FoodCategory = semanticCategoryToFoodCategory(semantic);
                     const source: FoodSource = "user_upload";
                     return {
-                      name: f.name,
+                      name: chip.name,
                       description: "Felhasználó által hozzáadott étel",
                       category: cat,
-                      calories_per_100g: f.calories_per_100g,
-                      protein_per_100g: f.protein_g,
-                      carbs_per_100g: f.carbs_g,
-                      fat_per_100g: f.fat_g,
+                      calories_per_100g: chip.calories_per_100g ?? 100,
+                      protein_per_100g: chip.protein_g ?? 5,
+                      carbs_per_100g: chip.carbs_g ?? 15,
+                      fat_per_100g: chip.fat_g ?? 3,
                       source,
                     };
                   });
@@ -711,8 +826,6 @@ export function Foods() {
                   setAddResultMessage(`${createdCount} étel hozzáadva`);
                   if (createdCount > 0) {
                     toast.success(`${createdCount} étel hozzáadva ✓`);
-                  }
-                  if (createdCount > 0) {
                     appData.refresh();
                   }
                 } catch (e: any) {
@@ -725,34 +838,6 @@ export function Foods() {
               Hozzáadás
             </DSMButton>
           </div>
-
-          {previewFoods.length > 0 && (
-            <div className="mt-4 space-y-2 max-h-64 overflow-y-auto border-t border-gray-100 dark:border-[#2a2a2a] pt-3">
-              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                Felismert ételek és tápérték 100g-ra:
-              </p>
-              <div className="space-y-2">
-                {previewFoods.map((f, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-xl bg-gray-50 dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2a2a2a] px-3 py-2 flex items-center justify-between text-xs"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                        {f.name}
-                      </p>
-                    </div>
-                    <div className="ml-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600 dark:text-gray-300">
-                      <span>{Math.round(f.calories_per_100g)} kcal</span>
-                      <span>Feh.: {Math.round(f.protein_g)} g</span>
-                      <span>Zsír: {Math.round(f.fat_g)} g</span>
-                      <span>Ch.: {Math.round(f.carbs_g)} g</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
