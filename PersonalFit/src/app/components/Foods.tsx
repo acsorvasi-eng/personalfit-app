@@ -30,6 +30,9 @@ import {
   Flame,
   UtensilsCrossed,
   Apple,
+  Plus,
+  Mic,
+  Type,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlanFoods, type PlanFood } from "../hooks/usePlanData";
@@ -39,10 +42,20 @@ import { DataUploadSheet } from "./DataUploadSheet";
 import { useLanguage, type LanguageCode } from "../contexts/LanguageContext";
 import { foodDatabase, type Food } from "../data/mealData";
 import { useFavoriteFoods } from "../hooks/useFavoriteFoods";
-import { cleanupCorruptedAIFoods } from "../backend/services/FoodCatalogService";
+import {
+  cleanupCorruptedAIFoods,
+  createFoodsBatch,
+  inferSemanticCategoryFromName,
+  semanticCategoryToFoodCategory,
+} from "../backend/services/FoodCatalogService";
 import { PageHeader } from "./PageHeader";
 import { TabFilter } from "./TabFilter";
 import { translateFoodName } from "../utils/foodTranslations";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { Textarea } from "./ui/textarea";
+import { DSMButton } from "./dsm";
+import type { FoodCategory, FoodSource } from "../backend/models";
 
 // ═══════════════════════════════════════════════════════════════
 // CATEGORY MAPPING
@@ -212,6 +225,21 @@ export function Foods() {
   const [activeTab, setActiveTab] = useState("Osszes");
   const [selectedFood, setSelectedFood] = useState<PlanFood | null>(null);
 
+  // Add Food dialog state
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addMode, setAddMode] = useState<"type" | "voice">("type");
+  const [typedFoods, setTypedFoods] = useState("");
+  const [voiceFoods, setVoiceFoods] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [previewFoods, setPreviewFoods] = useState<
+    { name: string; calories_per_100g: number; protein_g: number; fat_g: number; carbs_g: number }[]
+  >([]);
+  const [addingFoods, setAddingFoods] = useState(false);
+  const [addResultMessage, setAddResultMessage] = useState<string | null>(null);
+
   // Egyszeri tisztítás: távolítsuk el a korábban betöltött, teljesen
   // értelmetlen AI ételeket (korrupt nevek a PDF-ből).
   useEffect(() => {
@@ -334,7 +362,16 @@ export function Foods() {
           subtitle={t("foods.foodCount").replace("{n}", String(foods.length))}
           stats={[
             { label: t("foods.all"), value: foods.length },
-            { label: t("foods.favorites"), value: favoriteCount },
+            {
+              label: "Étel hozzáadása",
+              value: "+",
+              isAction: true,
+              onClick: () => {
+                setAddDialogOpen(true);
+                setAddResultMessage(null);
+                setLookupError(null);
+              },
+            },
           ]}
         />
       </div>
@@ -459,6 +496,226 @@ export function Foods() {
           />
         )}
       </AnimatePresence>
+
+      {/* ═══ Add Food Dialog ═══ */}
+      <Dialog open={addDialogOpen} onOpenChange={(open) => {
+        setAddDialogOpen(open);
+        if (!open) {
+          setIsListening(false);
+          if (recognitionRef.current) {
+            recognitionRef.current.stop();
+          }
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Étel hozzáadása</DialogTitle>
+            <DialogDescription>
+              Írd be vagy mondd be az ételek nevét (pl. &quot;csuka, pisztráng, süllő, lazac&quot;). A rendszer lekéri a valós tápértékeket 100g-ra.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Tabs value={addMode} onValueChange={(v) => setAddMode(v as "type" | "voice")}>
+            <TabsList className="grid grid-cols-2 w-full mb-3">
+              <TabsTrigger value="type" className="flex items-center gap-2 justify-center text-xs">
+                <Type className="w-3.5 h-3.5" />
+                Szöveg
+              </TabsTrigger>
+              <TabsTrigger value="voice" className="flex items-center gap-2 justify-center text-xs">
+                <Mic className="w-3.5 h-3.5" />
+                Hang
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="type" className="space-y-3">
+              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Ételek vesszővel vagy soronként elválasztva
+              </label>
+              <Textarea
+                value={typedFoods}
+                onChange={(e) => setTypedFoods(e.target.value)}
+                rows={4}
+                placeholder="csuka, pisztráng, süllő, lazac"
+              />
+            </TabsContent>
+
+            <TabsContent value="voice" className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Mondd be az ételek nevét magyarul
+                </span>
+                <DSMButton
+                  variant={isListening ? "outline" : "primary"}
+                  size="sm"
+                  icon={Mic}
+                  onClick={() => {
+                    if (isListening && recognitionRef.current) {
+                      recognitionRef.current.stop();
+                      setIsListening(false);
+                      return;
+                    }
+                    if (typeof window === "undefined") return;
+                    const SR: any =
+                      (window as any).SpeechRecognition ||
+                      (window as any).webkitSpeechRecognition;
+                    if (!SR) {
+                      setLookupError("A böngésződ nem támogatja a hangfelismerést.");
+                      return;
+                    }
+                    const rec = new SR();
+                    recognitionRef.current = rec;
+                    rec.lang = "hu-HU";
+                    rec.continuous = false;
+                    rec.interimResults = false;
+                    rec.onresult = (event: SpeechRecognitionEvent) => {
+                      const text = event.results[0][0].transcript || "";
+                      setVoiceFoods(text);
+                      setIsListening(false);
+                    };
+                    rec.onerror = () => {
+                      setIsListening(false);
+                    };
+                    rec.onend = () => {
+                      setIsListening(false);
+                    };
+                    setIsListening(true);
+                    rec.start();
+                  }}
+                >
+                  {isListening ? "Leállítás" : "Felvétel indítása"}
+                </DSMButton>
+              </div>
+              <Textarea
+                value={voiceFoods}
+                onChange={(e) => setVoiceFoods(e.target.value)}
+                rows={4}
+                placeholder="(felismert szöveg itt jelenik meg)"
+              />
+            </TabsContent>
+          </Tabs>
+
+          <div className="space-y-2 mt-2">
+            {lookupError && (
+              <p className="text-xs text-red-500">{lookupError}</p>
+            )}
+            {addResultMessage && (
+              <p className="text-xs text-emerald-500">{addResultMessage}</p>
+            )}
+          </div>
+
+          <div className="flex gap-2 mt-3">
+            <DSMButton
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={async () => {
+                setLookupError(null);
+                setAddResultMessage(null);
+                const sourceText = addMode === "type" ? typedFoods : voiceFoods;
+                const items = sourceText
+                  .split(/[,;\n]/)
+                  .map((s) => s.trim())
+                  .filter((s) => s.length > 0);
+                if (items.length === 0) {
+                  setLookupError("Adj meg legalább egy ételt.");
+                  return;
+                }
+                try {
+                  setLookupLoading(true);
+                  const resp = await fetch("/api/lookup-foods", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ foods: items }),
+                  });
+                  if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.error || "Ismeretlen hiba a tápérték lekérésnél.");
+                  }
+                  const data = await resp.json();
+                  setPreviewFoods(data.foods || []);
+                  if (!data.foods || data.foods.length === 0) {
+                    setLookupError("Nem sikerült tápérték adatot lekérni.");
+                  }
+                } catch (e: any) {
+                  setLookupError(e.message || "Nem sikerült tápérték adatot lekérni.");
+                } finally {
+                  setLookupLoading(false);
+                }
+              }}
+              loading={lookupLoading}
+            >
+              Előnézet
+            </DSMButton>
+            <DSMButton
+              variant="primary"
+              size="sm"
+              fullWidth
+              disabled={previewFoods.length === 0}
+              loading={addingFoods}
+              onClick={async () => {
+                if (previewFoods.length === 0) return;
+                try {
+                  setAddingFoods(true);
+                  setAddResultMessage(null);
+                  const inputs = previewFoods.map((f) => {
+                    const semantic = inferSemanticCategoryFromName(f.name);
+                    const cat: FoodCategory = semanticCategoryToFoodCategory(semantic);
+                    const source: FoodSource = "user_upload";
+                    return {
+                      name: f.name,
+                      description: "Felhasználó által hozzáadott étel",
+                      category: cat,
+                      calories_per_100g: f.calories_per_100g,
+                      protein_per_100g: f.protein_g,
+                      carbs_per_100g: f.carbs_g,
+                      fat_per_100g: f.fat_g,
+                      source,
+                    };
+                  });
+                  const result = await createFoodsBatch(inputs as any);
+                  const createdCount = result.created.length;
+                  setAddResultMessage(`${createdCount} étel hozzáadva`);
+                  if (createdCount > 0) {
+                    appData.refresh();
+                  }
+                } catch (e: any) {
+                  setLookupError(e.message || "Nem sikerült elmenteni az ételeket.");
+                } finally {
+                  setAddingFoods(false);
+                }
+              }}
+            >
+              Hozzáadás
+            </DSMButton>
+          </div>
+
+          {previewFoods.length > 0 && (
+            <div className="mt-4 space-y-2 max-h-56 overflow-y-auto border-t pt-3">
+              <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                Felismert ételek és tápérték 100g-ra:
+              </p>
+              {previewFoods.map((f, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between text-xs py-1.5 border-b last:border-b-0 border-gray-100 dark:border-[#2a2a2a]"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      {f.name}
+                    </p>
+                  </div>
+                  <div className="ml-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600 dark:text-gray-300">
+                    <span>{Math.round(f.calories_per_100g)} kcal</span>
+                    <span>Feh.: {Math.round(f.protein_g)} g</span>
+                    <span>Zsír: {Math.round(f.fat_g)} g</span>
+                    <span>Ch.: {Math.round(f.carbs_g)} g</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
