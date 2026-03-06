@@ -10,6 +10,7 @@ import { useCalorieTracker } from "../hooks/useCalorieTracker";
 // getMealAlternatives removed — all data comes from uploaded plans only
 import { motion, AnimatePresence } from "framer-motion";
 import { FuturisticDashboard } from "./FuturisticDashboard";
+import { WaterTracker } from "./dsm";
 import { useAppData } from "../hooks/useAppData";
 import { EmptyState } from "./EmptyState";
 import { DataUploadSheet } from "./DataUploadSheet";
@@ -259,16 +260,40 @@ export function UnifiedMenu() {
     });
   }, [todayDateStr]);
 
+  const MAX_WATER_ML = 3000;
+
   const handleWaterTap = useCallback(() => {
     const waterData = localStorage.getItem('waterTracking');
     const data = waterData ? JSON.parse(waterData) : {};
     const current = data[todayDateStr] || 0;
-    const newAmount = current < 3000 ? Math.min(current + 250, 3000) : 0;
+    const newAmount = current < MAX_WATER_ML ? Math.min(current + 250, MAX_WATER_ML) : 0;
     data[todayDateStr] = newAmount;
     localStorage.setItem('waterTracking', JSON.stringify(data));
+    setWaterIntakeMl(newAmount);
     if (navigator.vibrate) navigator.vibrate(10);
     window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('waterTrackerSync'));
   }, [todayDateStr]);
+
+  const handleWaterReset = useCallback(() => {
+    const waterData = localStorage.getItem('waterTracking');
+    const data = waterData ? JSON.parse(waterData) : {};
+    data[todayDateStr] = 0;
+    localStorage.setItem('waterTracking', JSON.stringify(data));
+    setWaterIntakeMl(0);
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('waterTrackerSync'));
+  }, [todayDateStr]);
+
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ open: boolean }>).detail;
+      setAiPanelOpen(detail.open);
+    };
+    window.addEventListener('aiPanelStateChange', handler);
+    return () => window.removeEventListener('aiPanelStateChange', handler);
+  }, []);
 
   // Swipe state
   const [swipeDir, setSwipeDir] = useState<'left' | 'right' | null>(null);
@@ -763,6 +788,27 @@ export function UnifiedMenu() {
           onClose={() => setUploadSheetOpen(false)}
           onComplete={() => appData.refresh()}
         />
+
+        {/* Floating Water Tracker — My Menu only (empty plan layout) */}
+        <AnimatePresence>
+          {!aiPanelOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
+            >
+              <WaterTracker
+                current={waterIntakeMl}
+                goal={MAX_WATER_ML}
+                onAdd={() => handleWaterTap()}
+                onReset={handleWaterReset}
+                waterLabel={t('ui.water')}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
@@ -1014,6 +1060,27 @@ export function UnifiedMenu() {
           localStorage.setItem(`loggedMeals_${today}`, JSON.stringify(meals));
         }}
       />
+
+      {/* Floating Water Tracker — My Menu only, fixed bottom-right above bottom nav; hidden when AI panel open */}
+      <AnimatePresence>
+        {!aiPanelOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
+          >
+            <WaterTracker
+              current={waterIntakeMl}
+              goal={MAX_WATER_ML}
+              onAdd={() => handleWaterTap()}
+              onReset={handleWaterReset}
+              waterLabel={t('ui.water')}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
