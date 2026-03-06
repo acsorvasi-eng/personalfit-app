@@ -41,51 +41,8 @@ const TTS_LANG_MAP: Record<string, string> = {
   ro: 'ro-RO',
 };
 
-const ELEVEN_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel – natural female voice
-
-async function speakWithElevenLabs(text: string): Promise<boolean> {
-  const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined;
-  if (!apiKey || !text.trim()) return false;
-
-  try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE_ID}`, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-        Accept: 'audio/mpeg',
-      },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.4,
-          similarity_boost: 0.85,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      console.warn('[TTS] ElevenLabs request failed:', res.status, await res.text());
-      return false;
-    }
-
-    const audioData = await res.arrayBuffer();
-    const blob = new Blob([audioData], { type: 'audio/mpeg' });
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.onended = () => URL.revokeObjectURL(url);
-    audio.play().catch((err) => {
-      console.warn('[TTS] Failed to play ElevenLabs audio:', err);
-    });
-    return true;
-  } catch (err) {
-    console.warn('[TTS] ElevenLabs error, falling back to Web Speech:', err);
-    return false;
-  }
-}
-
-function speakWithWebSpeech(text: string, language: string) {
+// ─── TTS: FREE Web Speech API (SpeechSynthesis) — no API key, works offline, native HU voice
+function speakText(text: string, language: string) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text.trim()) return;
   try {
     const synth = window.speechSynthesis;
@@ -94,39 +51,29 @@ function speakWithWebSpeech(text: string, language: string) {
     const pickVoice = () => {
       const voices = synth.getVoices() || [];
       if (!voices.length) return undefined;
-
-      const langMatches = voices.filter((v) => v.lang?.toLowerCase().startsWith(targetLang.toLowerCase()));
+      // Prefer Hungarian female voice (native on Mac/iOS/Chrome)
+      const huVoice =
+        voices.find((v) => v.lang === 'hu-HU' && v.name.toLowerCase().includes('female')) ??
+        voices.find((v) => v.lang === 'hu-HU') ??
+        voices.find((v) => v.lang?.startsWith('hu'));
+      if (huVoice) return huVoice;
+      const langMatches = voices.filter((v) => v.lang?.toLowerCase().startsWith(targetLang.split('-')[0]));
       const byLang = langMatches.length ? langMatches : voices;
-
-      const preferredNameHints = [
-        'female',
-        'woman',
-        'Samantha',
-        'Zira',
-        'Google magyar',
-        'Google UK English Female',
-        'Google US English',
-      ];
-
-      for (const hint of preferredNameHints) {
+      const preferred = ['female', 'woman', 'Samantha', 'Zira', 'Google magyar', 'Google UK English Female'];
+      for (const hint of preferred) {
         const v = byLang.find((voice) => voice.name.toLowerCase().includes(hint.toLowerCase()));
         if (v) return v;
       }
-
       return byLang[0];
     };
 
     const startSpeaking = () => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = targetLang;
-      utterance.rate = 0.98;
-      utterance.pitch = 1.05;
-
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
       const voice = pickVoice();
-      if (voice) {
-        utterance.voice = voice;
-      }
-
+      if (voice) utterance.voice = voice;
       synth.cancel();
       synth.speak(utterance);
     };
@@ -142,14 +89,6 @@ function speakWithWebSpeech(text: string, language: string) {
     }
   } catch {
     // Fail silently if TTS is not available
-  }
-}
-
-async function speakText(text: string, language: string) {
-  if (!text.trim()) return;
-  const usedEleven = await speakWithElevenLabs(text);
-  if (!usedEleven) {
-    speakWithWebSpeech(text, language);
   }
 }
 
@@ -906,10 +845,23 @@ export function FuturisticDashboard() {
   // Keep micActiveRef in sync
   useEffect(() => { micActiveRef.current = micActive; }, [micActive]);
 
-  // Auto-scroll messages
+  // Auto-scroll messages (kept for any list UI; central panel has no scroll)
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, currentAiText, interimText]);
+
+  // ─── Learning engine: utolsó cserék naplózása (a munkasok keressék/fejlesszék a legjobb megoldást)
+  const AI_LEARNING_LOG_KEY = 'aiConversationLog';
+  const MAX_LOG_ENTRIES = 20;
+  useEffect(() => {
+    if (messages.length === 0) return;
+    try {
+      const toStore = messages.slice(-MAX_LOG_ENTRIES).map(m => ({ role: m.role, text: m.text, ts: Date.now() }));
+      localStorage.setItem(AI_LEARNING_LOG_KEY, JSON.stringify(toStore));
+    } catch {
+      // ignore
+    }
+  }, [messages]);
 
   // ─── processRef kept fresh ───
   useEffect(() => {
@@ -1112,7 +1064,7 @@ export function FuturisticDashboard() {
     activeFlowRef.current = null;
     msgIdRef.current = 0;
 
-    // Greeting after panel animation
+    // Greeting after panel animation — szó szerint megjelenik és megszólal
     setTimeout(() => {
       const greeting = buildGreeting(ctx, t);
       msgIdRef.current++;
@@ -1121,8 +1073,9 @@ export function FuturisticDashboard() {
       setStatusLabel(t('dashboard.responding'));
       setCurrentAiText(greeting);
       pendingAiRef.current = { id: msgIdRef.current, text: greeting };
+      speakText(greeting, language);
     }, 450);
-  }, [ctx, t]);
+  }, [ctx, t, language]);
 
   const handleClose = useCallback(() => {
     shouldRestartRef.current = false;
@@ -1194,10 +1147,24 @@ export function FuturisticDashboard() {
                 </button>
               </div>
 
-              {/* ── Central area: ONLY Orb (no additional cards/messages) ── */}
-              <div className="relative flex-1 flex flex-col items-center px-4 md:px-8 overflow-hidden z-10">
-                <div className="flex-shrink-0 pt-6 pb-3 md:pt-8">
+              {/* ── Central area: Orb + élő szöveg (nincs óra, nincs scroll) ── */}
+              <div className="relative flex-1 flex flex-col items-center justify-center px-4 md:px-8 overflow-hidden z-10 min-h-0">
+                <div className="flex-shrink-0 pb-3">
                   <VoiceOrb state={orbState} />
+                </div>
+                {/* Amit mond az AI / amit te mondasz — szó szerint jelenik meg */}
+                <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[4rem] max-h-[40vh] overflow-hidden px-2">
+                  {isTyping && currentAiText ? (
+                    <p className="text-center text-white/95 text-lg md:text-xl leading-relaxed max-w-2xl">
+                      <TypewriterText text={currentAiText} onComplete={handleTypewriterComplete} />
+                    </p>
+                  ) : micActive && !isProcessing ? (
+                    <p className="text-center text-cyan-200/90 text-lg md:text-xl leading-relaxed max-w-2xl">
+                      {interimText.trim() ? interimText : t('dashboard.hearYou')}
+                    </p>
+                  ) : isProcessing ? (
+                    <p className="text-center text-white/50 text-base">{statusLabel}</p>
+                  ) : null}
                 </div>
               </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { usePlanData, type MealOption } from "../hooks/usePlanData";
-import { ChevronDown, Check, Clock, ChevronRight, ChevronLeft, UtensilsCrossed, Utensils, Trash2, Dumbbell, Moon, Waves, X, Flame, Zap, ArrowRightLeft } from "lucide-react";
+import { ChevronDown, Check, Clock, ChevronRight, ChevronLeft, UtensilsCrossed, Utensils, Trash2, Dumbbell, Moon, Waves, X, Flame, Zap, ArrowRightLeft, Sparkles } from "lucide-react";
 import { PageHeader } from "./PageHeader";
 // DSMCoachMark removed — hints no longer used on this screen
 import { DSMQuickLogSheet } from "./dsm/QuickLogSheet";
@@ -1031,57 +1031,25 @@ function RestTimerCard({ restingTimeMinutes, currentMeal, t, consumedSnacks, onS
   onWaterTap: () => void;
   waterIntakeMl: number;
 }) {
-  const hours = Math.floor(restingTimeMinutes / 60);
-  const minutes = restingTimeMinutes % 60;
-  const maxRestMinutes = 720;
-  const elapsedFraction = Math.max(0, Math.min(1, (maxRestMinutes - restingTimeMinutes) / maxRestMinutes));
-
+  // Timer screen: no clock, no label, no progress bar — only CTA to open voice assistant (Brain icon above)
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 via-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-sky-950/30 border-2 border-cyan-200/70 dark:border-cyan-700/40 p-5 shadow-xl"
+      className="relative overflow-hidden rounded-2xl bg-slate-900 dark:bg-slate-950 border border-slate-700/50 dark:border-slate-800 p-6 shadow-xl"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-200/30 to-transparent rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-teal-200/30 to-transparent rounded-full blur-3xl" />
-
-      <div className="relative z-10 space-y-4">
-        {/* Countdown — no background box, clean floating text */}
-        <div className="flex items-center justify-center">
-          <motion.div className="relative"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 250 }}
-          >
-            <div className="flex flex-col items-center gap-1 py-4">
-              <motion.div
-                className="text-5xl font-black bg-gradient-to-r from-cyan-600 via-teal-600 to-sky-600 dark:from-cyan-400 dark:via-teal-400 dark:to-sky-400 bg-clip-text text-transparent tracking-tight"
-                key={`${hours}:${minutes}`}
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                {hours}:{String(minutes).padStart(2, '0')}
-              </motion.div>
-              <div className="text-[13px] uppercase tracking-widest font-bold text-cyan-600/80 dark:text-cyan-400/80">
-                {t("menu.restingTime").toUpperCase()}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Progress bar only — no side labels (timer screen is clean) */}
-        <div className="space-y-1.5">
-          <div className="h-2.5 bg-white/60 dark:bg-white/10 rounded-full overflow-hidden border border-cyan-200/50 dark:border-cyan-700/30 shadow-inner">
-            <motion.div
-              className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 rounded-full shadow-lg"
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.max(0, Math.min(100, elapsedFraction * 100))}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-            />
-          </div>
-        </div>
+      <div className="relative z-10 flex flex-col items-center justify-center gap-3 py-2">
+        <motion.div
+          animate={{ opacity: [0.7, 1, 0.7], scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="text-4xl"
+        >
+          <Sparkles className="w-10 h-10 text-cyan-400/90" />
+        </motion.div>
+        <p className="text-center text-sm text-white/70 font-medium">
+          {t("dashboard.tapMicPrompt")}
+        </p>
       </div>
     </motion.div>
   );
