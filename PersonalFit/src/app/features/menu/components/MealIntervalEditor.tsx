@@ -5,8 +5,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { X, Check, UtensilsCrossed } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import {
   getMealSettings,
@@ -117,8 +118,9 @@ export function MealIntervalEditor() {
         mealModel,
       };
       await saveMealSettings(payload);
-      window.dispatchEvent(new CustomEvent("mealSettingsUpdated"));
+      window.dispatchEvent(new Event("mealSettingsUpdated"));
       if (navigator.vibrate) navigator.vibrate([10, 20]);
+      toast.success("Beállítások mentve ✓");
       navigate(-1);
     } finally {
       setSaving(false);
@@ -145,39 +147,51 @@ export function MealIntervalEditor() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#121212]">
-      {/* Header — full width, no border radius (edge-to-edge) */}
+      {/* Header — fixed, full width, no border radius */}
       <div
-        className="flex-shrink-0 w-full rounded-none m-0 bg-gradient-to-br from-blue-500 via-emerald-500 to-teal-500 pt-4 pb-4 shadow-lg"
         style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
           width: "100%",
           borderRadius: 0,
-          margin: 0,
-          paddingLeft: "1rem",
-          paddingRight: "1rem",
+          padding: "1rem",
           paddingTop: "max(1rem, env(safe-area-inset-top, 16px))",
+          borderBottom: "1px solid #e5e7eb",
+          zIndex: 50,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
+        className="bg-white dark:bg-[#1E1E1E] dark:border-[#2a2a2a]"
       >
-        <div className="flex items-center justify-between pt-2">
-          <div>
-            <h1 className="text-xl font-bold text-white">
-              {t("mealInterval.title")}
-            </h1>
-            <p className="text-sm text-white/80 mt-0.5">
-              {t("mealInterval.subtitle")}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white"
-            aria-label={t("mealDetail.close")}
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }} className="text-gray-900 dark:text-gray-100">
+            {t("mealInterval.title")}
+          </h1>
+          <p style={{ margin: 0, fontSize: "0.875rem", marginTop: "0.25rem" }} className="text-gray-500 dark:text-gray-400">
+            {t("mealInterval.subtitle")}
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          aria-label={t("mealDetail.close")}
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      {/* Body — padding so content is not hidden behind fixed header and footer */}
+      <div
+        className="flex-1 overflow-y-auto px-4 space-y-6"
+        style={{
+          paddingTop: "calc(5rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         {/* Section 1: Meal model dropdown */}
         <section className="bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-[#2a2a2a] p-4 shadow-sm">
           <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">
@@ -295,29 +309,42 @@ export function MealIntervalEditor() {
         </section>
       </div>
 
-      {/* Footer: Save — validates, saves to IndexedDB, dispatches event, navigates back */}
+      {/* Footer — fixed, full width, no border radius */}
       <div
-        className="flex-shrink-0 p-4 pt-2"
         style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          width: "100%",
+          borderRadius: 0,
+          padding: "1rem",
           paddingBottom: "max(1rem, env(safe-area-inset-bottom, 16px))",
+          background: "white",
+          borderTop: "1px solid #e5e7eb",
+          zIndex: 50,
         }}
+        className="dark:bg-[#1E1E1E] dark:border-[#2a2a2a]"
       >
-        <motion.button
+        <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-500 via-emerald-500 to-teal-500 text-white font-bold text-base shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
-          whileTap={{ scale: 0.98 }}
+          style={{
+            width: "100%",
+            padding: "1rem",
+            borderRadius: "0.75rem",
+            background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
+            color: "white",
+            fontSize: "1rem",
+            fontWeight: 600,
+            border: "none",
+            cursor: saving ? "not-allowed" : "pointer",
+            opacity: saving ? 0.6 : 1,
+          }}
         >
-          {saving ? (
-            <span>{t("mealInterval.saving")}</span>
-          ) : (
-            <>
-              <UtensilsCrossed className="w-5 h-5" />
-              {t("mealInterval.save")}
-            </>
-          )}
-        </motion.button>
+          {saving ? t("mealInterval.saving") : t("mealInterval.save")}
+        </button>
       </div>
     </div>
   );

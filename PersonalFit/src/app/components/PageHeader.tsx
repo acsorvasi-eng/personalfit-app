@@ -75,7 +75,7 @@ export function PageHeader({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={`w-full rounded-none m-0 ${gradientClasses} ${roundedBottom ? 'rounded-b-3xl' : ''} shadow-lg text-white relative overflow-hidden`}
+    <div className={`w-full rounded-none m-0 ${gradientClasses} shadow-lg text-white relative overflow-hidden`}
       style={{ width: '100%', borderRadius: 0, margin: 0 }}>
       {/* Subtle decorative circles */}
       <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" aria-hidden="true" />
