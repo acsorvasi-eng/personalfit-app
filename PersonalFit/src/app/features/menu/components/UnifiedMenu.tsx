@@ -15,6 +15,7 @@ import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
+import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
 
 interface LoggedMeal {
   id: string;
@@ -31,13 +32,25 @@ interface LoggedMeal {
 
 // Day/month names are now locale-aware via getLocaleDayNarrow / getLocaleMonth from LanguageContext
 
-// Meal time windows (in minutes from midnight)
-const BREAKFAST_START = 6 * 60;
-const BREAKFAST_END = 8 * 60;
-const LUNCH_START = 12 * 60 + 30;
-const LUNCH_END = 13 * 60 + 30;
-const DINNER_START = 17 * 60 + 30;
-const DINNER_END = 18 * 60 + 30;
+// Default meal time windows (in minutes from midnight) — used when no meal settings
+const DEFAULT_BREAKFAST_START = 6 * 60;
+const DEFAULT_BREAKFAST_END = 8 * 60;
+const DEFAULT_LUNCH_START = 12 * 60 + 30;
+const DEFAULT_LUNCH_END = 13 * 60 + 30;
+const DEFAULT_DINNER_START = 17 * 60 + 30;
+const DEFAULT_DINNER_END = 18 * 60 + 30;
+
+const BREAKFAST_START = DEFAULT_BREAKFAST_START;
+const BREAKFAST_END = DEFAULT_BREAKFAST_END;
+const LUNCH_START = DEFAULT_LUNCH_START;
+const LUNCH_END = DEFAULT_LUNCH_END;
+const DINNER_START = DEFAULT_DINNER_START;
+const DINNER_END = DEFAULT_DINNER_END;
+
+function parseTimeToMinutes(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+}
 
 // ═══════════════════════════════════════════════════════════
 // CalendarStrip: Compact elegant 7-day centered view
@@ -295,6 +308,14 @@ export function UnifiedMenu() {
     return () => window.removeEventListener('aiPanelStateChange', handler);
   }, []);
 
+  const [mealSettings, setMealSettings] = useState<MealSettings | null>(null);
+  useEffect(() => {
+    getMealSettings().then(setMealSettings);
+    const onUpdated = () => getMealSettings().then(setMealSettings);
+    window.addEventListener("mealSettingsUpdated", onUpdated);
+    return () => window.removeEventListener("mealSettingsUpdated", onUpdated);
+  }, []);
+
   // Swipe state
   const [swipeDir, setSwipeDir] = useState<'left' | 'right' | null>(null);
   const touchStartX = useRef(0);
@@ -436,6 +457,14 @@ export function UnifiedMenu() {
     const currentHour = currentTime.getHours();
     const currentMinutes = currentTime.getMinutes();
     const currentTimeInMinutes = currentHour * 60 + currentMinutes;
+
+    const useSettings = mealSettings?.mealCount === 3 && mealSettings.meals.length >= 3;
+    const BREAKFAST_START = useSettings ? parseTimeToMinutes(mealSettings!.meals[0].startTime) : DEFAULT_BREAKFAST_START;
+    const BREAKFAST_END = useSettings ? parseTimeToMinutes(mealSettings!.meals[0].endTime) : DEFAULT_BREAKFAST_END;
+    const LUNCH_START = useSettings ? parseTimeToMinutes(mealSettings!.meals[1].startTime) : DEFAULT_LUNCH_START;
+    const LUNCH_END = useSettings ? parseTimeToMinutes(mealSettings!.meals[1].endTime) : DEFAULT_LUNCH_END;
+    const DINNER_START = useSettings ? parseTimeToMinutes(mealSettings!.meals[2].startTime) : DEFAULT_DINNER_START;
+    const DINNER_END = useSettings ? parseTimeToMinutes(mealSettings!.meals[2].endTime) : DEFAULT_DINNER_END;
 
     const breakfastPassed = currentTimeInMinutes > BREAKFAST_END;
     const lunchPassed = currentTimeInMinutes > LUNCH_END;
@@ -664,10 +693,20 @@ export function UnifiedMenu() {
   const lunchConsumed = selectedLunch && checkedMeals.has(selectedLunch.id);
   const dinnerConsumed = selectedDinner && checkedMeals.has(selectedDinner.id);
 
+  const breakfastTimeStr = mealSettings?.mealCount === 3 && mealSettings.meals[0]
+    ? `${mealSettings.meals[0].startTime} - ${mealSettings.meals[0].endTime}`
+    : "06:00 - 08:00";
+  const lunchTimeStr = mealSettings?.mealCount === 3 && mealSettings.meals[1]
+    ? `${mealSettings.meals[1].startTime} - ${mealSettings.meals[1].endTime}`
+    : "12:30 - 13:30";
+  const dinnerTimeStr = mealSettings?.mealCount === 3 && mealSettings.meals[2]
+    ? `${mealSettings.meals[2].startTime} - ${mealSettings.meals[2].endTime}`
+    : "17:30 - 18:30";
+
   const mealSlots = [
-    { type: 'breakfast' as const, title: t("menu.breakfast"), time: "06:00 - 08:00", icon: "🌅", meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed },
-    { type: 'lunch' as const, title: t("menu.lunch"), time: "12:30 - 13:30", icon: "☀️", meals: dayMeals?.lunch || [], selected: selectedLunch, alternatives: lunchAlternatives, primary: dayMeals?.lunch[0], consumed: lunchConsumed, canEdit: canEditLunch, canCheck: status.canCheckLunch, isPassed: status.lunchPassed },
-    { type: 'dinner' as const, title: t("menu.dinner"), time: "17:30 - 18:30", icon: "🌙", meals: dayMeals?.dinner || [], selected: selectedDinner, alternatives: dinnerAlternatives, primary: dayMeals?.dinner[0], consumed: dinnerConsumed, canEdit: canEditDinner, canCheck: status.canCheckDinner, isPassed: status.dinnerPassed },
+    { type: 'breakfast' as const, title: t("menu.breakfast"), time: breakfastTimeStr, icon: "🌅", meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed },
+    { type: 'lunch' as const, title: t("menu.lunch"), time: lunchTimeStr, icon: "☀️", meals: dayMeals?.lunch || [], selected: selectedLunch, alternatives: lunchAlternatives, primary: dayMeals?.lunch[0], consumed: lunchConsumed, canEdit: canEditLunch, canCheck: status.canCheckLunch, isPassed: status.lunchPassed },
+    { type: 'dinner' as const, title: t("menu.dinner"), time: dinnerTimeStr, icon: "🌙", meals: dayMeals?.dinner || [], selected: selectedDinner, alternatives: dinnerAlternatives, primary: dayMeals?.dinner[0], consumed: dinnerConsumed, canEdit: canEditDinner, canCheck: status.canCheckDinner, isPassed: status.dinnerPassed },
   ];
 
   const loggedSlotMap = { breakfast: 'after-breakfast' as const, lunch: 'after-lunch' as const, dinner: 'after-dinner' as const };
@@ -773,6 +812,7 @@ export function UnifiedMenu() {
                   onWaterTap={handleWaterTap}
                   onWaterReset={handleWaterReset}
                   waterIntakeMl={waterIntakeMl}
+                  onOpenEditor={() => navigate("/meal-intervals")}
                 />
               </div>
             )}
@@ -962,6 +1002,7 @@ export function UnifiedMenu() {
                 onWaterTap={handleWaterTap}
                 onWaterReset={handleWaterReset}
                 waterIntakeMl={waterIntakeMl}
+                onOpenEditor={() => navigate("/meal-intervals")}
               />
               </div>
             )}
@@ -1125,6 +1166,7 @@ function RestTimerCard({
   onWaterTap,
   onWaterReset,
   waterIntakeMl,
+  onOpenEditor,
 }: {
   restingTimeMinutes: number;
   currentMeal: string | null;
@@ -1138,8 +1180,9 @@ function RestTimerCard({
   onWaterTap: () => void;
   onWaterReset?: () => void;
   waterIntakeMl: number;
+  onOpenEditor?: () => void;
 }) {
-  const [intervalEditorOpen, setIntervalEditorOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onWaterResetFn = onWaterReset ?? (() => {});
 
@@ -1155,7 +1198,7 @@ function RestTimerCard({
     longPressTimerRef.current = setTimeout(() => {
       longPressTimerRef.current = null;
       if (navigator.vibrate) navigator.vibrate(30);
-      setIntervalEditorOpen(true);
+      setConfirmOpen(true);
     }, 500);
   }, []);
 
@@ -1165,6 +1208,11 @@ function RestTimerCard({
       longPressTimerRef.current = null;
     }
   }, []);
+
+  const handleEdit = useCallback(() => {
+    setConfirmOpen(false);
+    onOpenEditor?.();
+  }, [onOpenEditor]);
 
   return (
     <>
@@ -1181,10 +1229,10 @@ function RestTimerCard({
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-teal-200/30 to-transparent rounded-full blur-3xl" />
 
         <div className="relative z-10 space-y-4">
-          {/* Label: HÁTRALÉVŐ IDŐ A KÖVETKEZŐ ÉTKEZÉSIG */}
+          {/* Label: HÁTRALÉVŐ IDŐ */}
           <div className="text-center">
             <p className="text-[11px] uppercase tracking-widest font-bold text-cyan-600/90 dark:text-cyan-400/90">
-              {t("menu.restTimeLabel")}
+              {t("menu.restTimeLabelShort")}
             </p>
           </div>
 
@@ -1210,8 +1258,12 @@ function RestTimerCard({
             </motion.div>
           </div>
 
-          {/* Progress bar — % remaining in rest period */}
+          {/* Progress bar — Pihenési időszak left | X% hátra right */}
           <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] text-cyan-600/80 dark:text-cyan-400/80 font-medium">
+              <span>{t("menu.restPeriodLabel")}</span>
+              <span>{Math.round(percentRemaining)}% {t("menu.percentRemaining")}</span>
+            </div>
             <div className="h-2.5 bg-white/60 dark:bg-white/10 rounded-full overflow-hidden border border-cyan-200/50 dark:border-cyan-700/30 shadow-inner">
               <motion.div
                 className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 rounded-full shadow-lg"
@@ -1220,9 +1272,6 @@ function RestTimerCard({
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
-            <p className="text-[10px] text-center text-cyan-600/80 dark:text-cyan-400/80 font-medium">
-              {Math.round(percentRemaining)}% {t("menu.percentRemaining")}
-            </p>
           </div>
 
           {/* ENGEDÉLYEZETT: low-calorie snacks */}
@@ -1284,15 +1333,15 @@ function RestTimerCard({
         </div>
       </motion.div>
 
-      {/* Meal interval editor dialog — long-press to open */}
+      {/* Long-press confirmation: Étkezési intervallumok → Szerkesztés / Mégsem */}
       <AnimatePresence>
-        {intervalEditorOpen && (
+        {confirmOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
-            onClick={() => setIntervalEditorOpen(false)}
+            onClick={() => setConfirmOpen(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -1301,25 +1350,28 @@ function RestTimerCard({
               onClick={(e) => e.stopPropagation()}
               className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 max-w-sm w-full"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                  {t("menu.restPeriodLabel")}
-                </h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+                {t("mealInterval.dialogTitle")}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                {t("mealInterval.dialogMessage")}
+              </p>
+              <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setIntervalEditorOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
-                  aria-label={t("mealDetail.close")}
+                  onClick={() => setConfirmOpen(false)}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium"
                 >
-                  <X className="w-4 h-4" />
+                  {t("mealInterval.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 text-white font-semibold"
+                >
+                  {t("mealInterval.edit")}
                 </button>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {t("menu.longPressHint")} → {t("menu.restPeriodLabel")}
-              </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Reggeli 06:00–08:00 · Ebéd 12:30–13:30 · Vacsora 17:30–18:30
-              </p>
             </motion.div>
           </motion.div>
         )}

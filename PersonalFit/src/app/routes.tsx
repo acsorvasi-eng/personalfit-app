@@ -10,6 +10,7 @@ import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
 import { Layout } from "./shared/layouts/Layout";
 import { UnifiedMenu } from "./features/menu/components/UnifiedMenu";
+import { MealIntervalEditor } from "./features/menu/components/MealIntervalEditor";
 import { Foods } from "./features/nutrition/components/Foods";
 import { MealDetail } from "./features/menu/components/MealDetail";
 import { ShoppingList } from "./features/shopping/components/ShoppingList";
@@ -134,6 +135,7 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, Component: UnifiedMenu },
+          { path: "meal-intervals", Component: MealIntervalEditor },
           { path: "foods", Component: Foods },
           { path: "meals/:mealType", Component: MealDetail },
           { path: "shopping", Component: ShoppingList },
