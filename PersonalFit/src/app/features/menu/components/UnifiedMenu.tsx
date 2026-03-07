@@ -1135,26 +1135,11 @@ export function UnifiedMenu() {
                         calorieTarget={calorieTarget}
                         mealRef={isFocusMeal ? currentMealRef : (status.isToday && status.currentMeal === slot.type ? currentMealRef : undefined)}
                       />
-                      {/* Water badge on dinner card */}
+                      {/* Water: only 💧 +250ml button — tap = +250ml, no text, no scroll */}
                       {slot.type === 'dinner' && status.isToday && (
-                        <motion.button
-                          onClick={handleWaterTap}
-                          whileTap={{ scale: 0.9 }}
-                          className="absolute -bottom-2 -right-1 flex items-center gap-1 px-2 py-1 bg-white dark:bg-card rounded-lg border border-blue-200 dark:border-blue-500/30 shadow-sm"
-                        >
-                          <div className="relative w-4 h-5 flex-shrink-0">
-                            <svg viewBox="0 0 24 30" className="w-full h-full">
-                              <defs><clipPath id="dinnerWaterClip"><path d="M 5 2 L 19 2 L 20 28 L 4 28 Z" /></clipPath></defs>
-                              <g clipPath="url(#dinnerWaterClip)">
-                                <rect x="4" y={30 - Math.min(100, (waterIntakeMl / 3000) * 100) * 0.26} width="16" height={Math.min(100, (waterIntakeMl / 3000) * 100) * 0.26} fill="#60A5FA" className="transition-all duration-500" />
-                              </g>
-                              <path d="M 5 2 L 19 2 L 20 28 L 4 28 Z" fill="none" stroke="#60A5FA" strokeWidth="1.5" opacity="0.7" />
-                            </svg>
-                          </div>
-                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                            {t("menu.waterLabel")}{waterIntakeMl > 0 ? ` ${(waterIntakeMl / 1000).toFixed(1)}L` : ' 0.5L'}
-                          </span>
-                        </motion.button>
+                        <div className="absolute -bottom-2 -right-1">
+                          <WaterButton onClick={handleWaterTap} className="!px-3 !py-2 !text-sm" />
+                        </div>
                       )}
                     </div>
                     {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type]).map(meal => (
@@ -1331,9 +1316,6 @@ function RestTimerCard({
     : "--:--";
   const nextMealTitle = nextMealLabel ? t(`meal.${nextMealLabel}`) : "";
 
-  const waterPercent = waterGoalMl > 0 ? Math.min(100, (waterCurrentMl / waterGoalMl) * 100) : 0;
-  const waterGoalReached = waterCurrentMl >= waterGoalMl && waterGoalMl > 0;
-
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: BORDER_PULSE_CSS }} />
@@ -1439,30 +1421,13 @@ function RestTimerCard({
             </>
           )}
 
-          {/* 5. Water progress bar + 6. 💧 +250ml full-width pill (tap only, no scroll) */}
-          <div className="space-y-1.5 pt-1.5 border-t border-white/20">
-            <p className="text-center text-xs font-semibold" style={{ color: waterGoalReached ? "#059669" : "#1e3a5f" }}>
-              {waterGoalReached ? t("water.goalReached") : `💧 ${waterCurrentMl}ml / ${waterGoalMl}ml`}
-            </p>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: waterGoalReached ? "rgba(5,150,105,0.2)" : "rgba(59,130,246,0.2)" }}>
-              <motion.div
-                className="h-full rounded-full"
-                style={{
-                  background: waterGoalReached ? "linear-gradient(90deg, #059669, #10b981)" : "linear-gradient(90deg, #3b82f6, #06b6d4)",
-                  borderRadius: 9999,
-                }}
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.max(waterPercent, waterGoalReached ? 100 : 0)}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-            </div>
-            <div className="w-full flex justify-center">
-              <WaterButton
-                onClick={onWaterTap}
-                onLongPress={onOpenEditor}
-                className="animate-pulse w-full max-w-[200px] justify-center"
-              />
-            </div>
+          {/* 5. Water: only 💧 +250ml button — tap = +250ml, no scroll, no extra text */}
+          <div className="pt-1.5 border-t border-white/20 flex justify-center">
+            <WaterButton
+              onClick={onWaterTap}
+              onLongPress={onOpenEditor}
+              className="animate-pulse w-full max-w-[200px] justify-center"
+            />
           </div>
 
           {/* 7. Next meal */}
