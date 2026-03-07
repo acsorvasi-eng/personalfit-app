@@ -232,13 +232,29 @@ export function UnifiedMenu() {
   const currentMealRef = useRef<HTMLDivElement>(null);
   const restTimerRef = useRef<HTMLDivElement>(null);
 
-  // ─── Snack consumption state (1 apple/day, 1 walnut/day) ──
+  // ─── Snack consumption state (keyed by saved snack id: alma, dio, mandula, kivi, sargarepa) ──
   const todayDateStr = useMemo(() => new Date().toISOString().split('T')[0], []);
-  const [consumedSnacks, setConsumedSnacks] = useState<{ apple: boolean; walnut: boolean }>(() => {
+  const [consumedSnacks, setConsumedSnacks] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem(`snacks_${todayDateStr}`);
-    if (saved) { try { return JSON.parse(saved); } catch { return { apple: false, walnut: false }; } }
-    return { apple: false, walnut: false };
+    if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
+    return {};
   });
+
+  // Labels and kcal for rest-period snacks (must match MealIntervalEditor SNACK_OPTIONS)
+  const REST_SNACK_LABELS: Record<string, string> = {
+    alma: "Alma",
+    dio: "Dió",
+    mandula: "Mandula",
+    kivi: "Kivi",
+    sargarepa: "Sárgarépa",
+  };
+  const REST_SNACK_KCAL: Record<string, number> = {
+    alma: 42,
+    dio: 65,
+    mandula: 58,
+    kivi: 43,
+    sargarepa: 33,
+  };
 
   // ─── Water intake state (synced with Layout's floating tracker) ──
   const [waterIntakeMl, setWaterIntakeMl] = useState(0);
@@ -254,21 +270,19 @@ export function UnifiedMenu() {
     return () => { window.removeEventListener('storage', loadWater); clearInterval(iv); };
   }, [todayDateStr]);
 
-  const APPLE_KCAL = 95;
-  const WALNUT_KCAL = 185;
-
   const snackCalories = useMemo(() => {
     let total = 0;
-    if (consumedSnacks.apple) total += APPLE_KCAL;
-    if (consumedSnacks.walnut) total += WALNUT_KCAL;
+    for (const [id, consumed] of Object.entries(consumedSnacks)) {
+      if (consumed && REST_SNACK_KCAL[id] != null) total += REST_SNACK_KCAL[id];
+    }
     return total;
   }, [consumedSnacks]);
 
-  const handleSnackConsume = useCallback((type: 'apple' | 'walnut') => {
+  const handleSnackConsume = useCallback((snackId: string) => {
     setConsumedSnacks(prev => {
-      const updated = { ...prev, [type]: !prev[type] };
+      const updated = { ...prev, [snackId]: !prev[snackId] };
       localStorage.setItem(`snacks_${todayDateStr}`, JSON.stringify(updated));
-      if (navigator.vibrate) navigator.vibrate(updated[type] ? [10, 20] : 8);
+      if (navigator.vibrate) navigator.vibrate(updated[snackId] ? [10, 20] : 8);
       return updated;
     });
   }, [todayDateStr]);
@@ -310,8 +324,15 @@ export function UnifiedMenu() {
 
   const [mealSettings, setMealSettings] = useState<MealSettings | null>(null);
   useEffect(() => {
-    getMealSettings().then(setMealSettings);
-    const onUpdated = () => getMealSettings().then(setMealSettings);
+    getMealSettings().then((settings) => {
+      console.log("[UnifiedMenu] loaded mealSettings:", settings);
+      setMealSettings(settings);
+    });
+    const onUpdated = () =>
+      getMealSettings().then((settings) => {
+        console.log("[UnifiedMenu] reloaded mealSettings (after save):", settings);
+        setMealSettings(settings);
+      });
     window.addEventListener("mealSettingsUpdated", onUpdated);
     return () => window.removeEventListener("mealSettingsUpdated", onUpdated);
   }, []);
@@ -836,6 +857,8 @@ export function UnifiedMenu() {
                   totalRestMinutes={status.totalRestMinutes}
                   waterGoalMl={MAX_WATER_ML}
                   t={t}
+                  allowedSnackIds={mealSettings?.allowedSnacks ?? ["alma"]}
+                  snackLabels={REST_SNACK_LABELS}
                   consumedSnacks={consumedSnacks}
                   onSnackConsume={handleSnackConsume}
                   onWaterTap={handleWaterTap}
@@ -1026,6 +1049,8 @@ export function UnifiedMenu() {
                 totalRestMinutes={status.totalRestMinutes}
                 waterGoalMl={MAX_WATER_ML}
                 t={t}
+                allowedSnackIds={mealSettings?.allowedSnacks ?? ["alma"]}
+                snackLabels={REST_SNACK_LABELS}
                 consumedSnacks={consumedSnacks}
                 onSnackConsume={handleSnackConsume}
                 onWaterTap={handleWaterTap}
@@ -1189,6 +1214,8 @@ function RestTimerCard({
   totalRestMinutes,
   waterGoalMl,
   t,
+  allowedSnackIds,
+  snackLabels,
   consumedSnacks,
   onSnackConsume,
   onWaterTap,
@@ -1203,8 +1230,10 @@ function RestTimerCard({
   totalRestMinutes: number;
   waterGoalMl: number;
   t: (key: string) => string;
-  consumedSnacks: { apple: boolean; walnut: boolean };
-  onSnackConsume: (type: 'apple' | 'walnut') => void;
+  allowedSnackIds: string[];
+  snackLabels: Record<string, string>;
+  consumedSnacks: Record<string, boolean>;
+  onSnackConsume: (snackId: string) => void;
   onWaterTap: () => void;
   onWaterReset?: () => void;
   waterIntakeMl: number;
@@ -1343,7 +1372,7 @@ function RestTimerCard({
             </div>
           </div>
 
-          {/* ENGEDÉLYEZETT: low-calorie snacks */}
+          {/* ENGEDÉLYEZETT: saved snack(s) from meal settings */}
           <div className="rounded-xl bg-white/50 dark:bg-white/5 border border-cyan-200/50 dark:border-cyan-700/30 p-3">
             <p className="text-[11px] font-bold text-cyan-700 dark:text-cyan-300 mb-2 uppercase tracking-wide">
               {t("menu.allowedSnacks")}:
@@ -1352,30 +1381,25 @@ function RestTimerCard({
               {t("menu.allowed")}
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => onSnackConsume("apple")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  consumedSnacks.apple
-                    ? "bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-800 dark:text-green-300"
-                    : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                {consumedSnacks.apple && <Check className="w-4 h-4" />}
-                {t("menu.apple")}
-              </button>
-              <button
-                type="button"
-                onClick={() => onSnackConsume("walnut")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  consumedSnacks.walnut
-                    ? "bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-800 dark:text-green-300"
-                    : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                {consumedSnacks.walnut && <Check className="w-4 h-4" />}
-                {t("menu.walnut")}
-              </button>
+              {allowedSnackIds.map((snackId) => {
+                const consumed = !!consumedSnacks[snackId];
+                const label = snackLabels[snackId] ?? snackId;
+                return (
+                  <button
+                    key={snackId}
+                    type="button"
+                    onClick={() => onSnackConsume(snackId)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      consumed
+                        ? "bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-800 dark:text-green-300"
+                        : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {consumed && <Check className="w-4 h-4" />}
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

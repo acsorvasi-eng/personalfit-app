@@ -59,9 +59,9 @@ export function PageHeader({
   title,
   titleElement,
   subtitle,
-  gradientFrom = 'from-[#3366FF]',
-  gradientVia,
-  gradientTo = 'to-[#12CFA6]',
+  gradientFrom = 'from-[#3b82f6]',
+  gradientVia = 'via-[#06b6d4]',
+  gradientTo = 'to-[#14b8a6]',
   action,
   stats,
   children,
@@ -75,8 +75,15 @@ export function PageHeader({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={`w-full rounded-none m-0 ${gradientClasses} shadow-lg text-white relative overflow-hidden`}
-      style={{ width: '100%', borderRadius: 0, margin: 0 }}>
+    <div
+      className={`w-full rounded-none m-0 ${gradientClasses} shadow-lg text-white relative overflow-hidden`}
+      style={{
+        width: '100%',
+        borderRadius: 0,
+        margin: 0,
+        background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)',
+      }}
+    >
       {/* Subtle decorative circles */}
       <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" aria-hidden="true" />
       <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-white/5 rounded-full" aria-hidden="true" />

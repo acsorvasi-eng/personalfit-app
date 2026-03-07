@@ -201,6 +201,8 @@ export async function getMealSettings(): Promise<MealSettings> {
 }
 
 export async function saveMealSettings(settings: MealSettings): Promise<void> {
-  await saveUserProfile({ mealSettings: settings });
+  console.log("[UserProfileService] saveMealSettings called with:", settings);
+  const result = await saveUserProfile({ mealSettings: settings });
+  console.log("[UserProfileService] saved result (profile):", result?.mealSettings);
 }
 

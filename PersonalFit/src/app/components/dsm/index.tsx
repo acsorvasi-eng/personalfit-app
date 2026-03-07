@@ -892,14 +892,14 @@ export function DSMSubPageHeader({
   const { t } = useLanguage();
   return (
     <div
-      className={`w-full rounded-none m-0 bg-gradient-to-r ${gradientFrom} ${gradientTo} text-white py-4`}
+      className="w-full rounded-none m-0 text-white py-4"
       style={{
         width: '100%',
         borderRadius: 0,
         margin: 0,
-        paddingLeft: '1rem',
-        paddingRight: '1rem',
+        padding: '1rem',
         paddingTop: 'max(1rem, env(safe-area-inset-top, 16px))',
+        background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)',
       }}
     >
       <div className="w-full">

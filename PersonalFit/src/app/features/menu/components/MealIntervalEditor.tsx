@@ -111,12 +111,19 @@ export function MealIntervalEditor() {
     setSaving(true);
     try {
       const mealCount = getMealCountForModel(mealModel);
+      const allowedSnacks = isIFModel(mealModel) ? [] : [selectedSnackId];
       const payload: MealSettings = {
         mealCount,
         meals,
-        allowedSnacks: isIFModel(mealModel) ? [] : [selectedSnackId],
+        allowedSnacks,
         mealModel,
       };
+      console.log("[MealEditor] saving settings:", {
+        mealCount,
+        meals,
+        allowedSnacks,
+        selectedSnack: selectedSnackId,
+      });
       await saveMealSettings(payload);
       window.dispatchEvent(new Event("mealSettingsUpdated"));
       if (navigator.vibrate) navigator.vibrate([10, 20]);
@@ -147,7 +154,7 @@ export function MealIntervalEditor() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#121212]">
-      {/* Header — fixed, full width, no border radius */}
+      {/* Header — fixed, full width, no border radius, app gradient */}
       <div
         style={{
           position: "fixed",
@@ -158,26 +165,26 @@ export function MealIntervalEditor() {
           borderRadius: 0,
           padding: "1rem",
           paddingTop: "max(1rem, env(safe-area-inset-top, 16px))",
-          borderBottom: "1px solid #e5e7eb",
           zIndex: 50,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          background: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)",
+          color: "white",
         }}
-        className="bg-white dark:bg-[#1E1E1E] dark:border-[#2a2a2a]"
       >
         <div>
-          <h1 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }} className="text-gray-900 dark:text-gray-100">
+          <h1 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700, color: "white" }}>
             {t("mealInterval.title")}
           </h1>
-          <p style={{ margin: 0, fontSize: "0.875rem", marginTop: "0.25rem" }} className="text-gray-500 dark:text-gray-400">
+          <p style={{ margin: 0, fontSize: "0.875rem", marginTop: "0.25rem", color: "rgba(255,255,255,0.9)" }}>
             {t("mealInterval.subtitle")}
           </p>
         </div>
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="w-10 h-10 flex items-center justify-center text-white/90 hover:text-white bg-white/20 rounded-full"
           aria-label={t("mealDetail.close")}
         >
           <X className="w-5 h-5" />
