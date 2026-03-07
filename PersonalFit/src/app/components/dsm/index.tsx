@@ -724,6 +724,7 @@ export function WaterButton({ onClick, onLongPress, label, className = "", varia
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
+  const didTouchTap = useRef(false);
 
   const clearTimers = useCallback(() => {
     if (longPressTimer.current) {
@@ -738,6 +739,7 @@ export function WaterButton({ onClick, onLongPress, label, className = "", varia
   }, []);
 
   const handleTouchStart = useCallback(() => {
+    didTouchTap.current = false;
     if (!onLongPress) return;
     isLongPress.current = false;
     clearTimers();
@@ -751,8 +753,14 @@ export function WaterButton({ onClick, onLongPress, label, className = "", varia
   }, [onLongPress, clearTimers]);
 
   const handleTouchEnd = useCallback(() => {
+    const wasLongPress = isLongPress.current;
     clearTimers();
-  }, [clearTimers]);
+    if (!wasLongPress) {
+      didTouchTap.current = true;
+      setClickKey((k) => k + 1);
+      onClick();
+    }
+  }, [clearTimers, onClick]);
 
   const handleMouseDown = useCallback(() => {
     if (!onLongPress) return;
@@ -772,6 +780,10 @@ export function WaterButton({ onClick, onLongPress, label, className = "", varia
   }, [clearTimers]);
 
   const handleClick = useCallback(() => {
+    if (didTouchTap.current) {
+      didTouchTap.current = false;
+      return;
+    }
     if (isLongPress.current) {
       isLongPress.current = false;
       return;
