@@ -1349,12 +1349,12 @@ function RestTimerCard({
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
           border: borderHighlight ? "2px solid rgba(59,130,246,0.9)" : "1px solid rgba(59,130,246,0.3)",
-          borderRadius: "1.5rem",
-          padding: "1.5rem",
+          borderRadius: "1.25rem",
+          padding: "1rem",
           boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)",
           animation: borderHighlight ? "none" : "restCardBorderPulse 3s infinite",
         }}
-        className="relative overflow-hidden"
+        className="relative overflow-visible"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchEnd}
@@ -1362,25 +1362,25 @@ function RestTimerCard({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <div className="relative z-10 space-y-4">
-          {/* Day info (optional) */}
+        <div className="relative z-10 flex flex-col gap-2">
+          {/* 1. Day info (optional) */}
           {dayInfoLabel && (
-            <p className="text-center text-sm font-medium" style={{ color: "rgba(30,58,95,0.7)" }}>
+            <p className="text-center text-xs font-medium" style={{ color: "rgba(30,58,95,0.7)" }}>
               {dayInfoLabel}
             </p>
           )}
 
-          {/* Countdown + label */}
+          {/* 2. Countdown + label */}
           <p
             className="text-center uppercase font-bold"
-            style={{ fontSize: "0.7rem", letterSpacing: "0.15em", color: "rgba(30,58,95,0.6)" }}
+            style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(30,58,95,0.6)" }}
           >
             {t("rest.timeRemaining")}
           </p>
           <div className="flex justify-center">
             <motion.div
               className="font-extrabold tracking-tight"
-              style={{ fontSize: "3.5rem", fontWeight: 800, color: "#1e3a5f" }}
+              style={{ fontSize: "3rem", fontWeight: 800, color: "#1e3a5f" }}
               key={`${hours}:${minutes}`}
               initial={{ scale: 1.1 }}
               animate={{ scale: 1 }}
@@ -1390,9 +1390,9 @@ function RestTimerCard({
             </motion.div>
           </div>
 
-          {/* Rest progress bar + % remaining */}
-          <div className="space-y-1">
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(59,130,246,0.15)" }}>
+          {/* 3. Rest progress bar + % remaining (4px height) */}
+          <div className="space-y-0.5">
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(59,130,246,0.15)" }}>
               <motion.div
                 className="h-full rounded-full"
                 style={{ background: "linear-gradient(90deg, #3b82f6, #14b8a6)", borderRadius: 9999 }}
@@ -1401,18 +1401,18 @@ function RestTimerCard({
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
-            <p className="text-center text-xs font-medium" style={{ color: "rgba(30,58,95,0.6)" }}>
+            <p className="text-center text-[0.65rem] font-medium" style={{ color: "rgba(30,58,95,0.6)" }}>
               {Math.round(percentRemaining)}% {t("rest.remaining")}
             </p>
           </div>
 
-          {/* Snacks */}
+          {/* 4. Snacks — compact chips */}
           {allowedSnackIds.length > 0 && (
             <>
-              <p className="text-center uppercase text-[0.65rem] font-bold" style={{ letterSpacing: "0.1em", color: "rgba(30,58,95,0.5)" }}>
+              <p className="text-center uppercase text-[0.6rem] font-bold" style={{ letterSpacing: "0.08em", color: "rgba(30,58,95,0.5)" }}>
                 {t("rest.allowed")}
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-1.5 justify-center">
                 {allowedSnackIds.map((snackId) => {
                   const consumed = !!consumedSnacks[snackId];
                   const label = snackLabels[snackId] ?? snackId;
@@ -1423,14 +1423,14 @@ function RestTimerCard({
                       key={snackId}
                       type="button"
                       onClick={() => onSnackConsume(snackId)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/30 text-sm font-medium transition-colors"
+                      className="flex items-center gap-1 rounded-full border border-white/30 text-xs font-medium transition-colors py-1 px-3"
                       style={{
                         background: "rgba(255,255,255,0.2)",
                         backdropFilter: "blur(10px)",
                         WebkitBackdropFilter: "blur(10px)",
                       }}
                     >
-                      {consumed && <Check className="w-4 h-4 text-[#1e3a5f]" />}
+                      {consumed && <Check className="w-3 h-3 text-[#1e3a5f]" />}
                       <span style={{ color: "#1e3a5f" }}>{emoji} {label} · {kcal} kcal</span>
                     </button>
                   );
@@ -1439,12 +1439,12 @@ function RestTimerCard({
             </>
           )}
 
-          {/* Water: progress text + bar (blue or green when goal) + prominent button */}
-          <div className="space-y-2 pt-2 border-t border-white/20">
-            <p className="text-center text-sm font-semibold" style={{ color: waterGoalReached ? "#059669" : "#1e3a5f" }}>
+          {/* 5. Water progress bar + 6. 💧 +250ml full-width pill (tap only, no scroll) */}
+          <div className="space-y-1.5 pt-1.5 border-t border-white/20">
+            <p className="text-center text-xs font-semibold" style={{ color: waterGoalReached ? "#059669" : "#1e3a5f" }}>
               {waterGoalReached ? t("water.goalReached") : `💧 ${waterCurrentMl}ml / ${waterGoalMl}ml`}
             </p>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: waterGoalReached ? "rgba(5,150,105,0.2)" : "rgba(59,130,246,0.2)" }}>
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: waterGoalReached ? "rgba(5,150,105,0.2)" : "rgba(59,130,246,0.2)" }}>
               <motion.div
                 className="h-full rounded-full"
                 style={{
@@ -1456,30 +1456,30 @@ function RestTimerCard({
                 transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
-            <div className="flex justify-center pt-1">
+            <div className="w-full flex justify-center">
               <WaterButton
                 onClick={onWaterTap}
                 onLongPress={onOpenEditor}
-                className="animate-pulse"
+                className="animate-pulse w-full max-w-[200px] justify-center"
               />
             </div>
           </div>
 
-          {/* Next meal */}
-          <div className="flex items-center justify-center gap-2 py-2">
-            <Clock className="w-4 h-4" style={{ color: "#1e3a5f" }} />
-            <span className="font-bold text-[13px]" style={{ color: "#1e3a5f" }}>
+          {/* 7. Next meal */}
+          <div className="flex items-center justify-center gap-1.5 py-1">
+            <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1e3a5f" }} />
+            <span className="font-bold text-[12px]" style={{ color: "#1e3a5f" }}>
               {t("rest.nextMeal")}: {nextMealTimeStr} {nextMealTitle ? `(${nextMealTitle})` : ""}
             </span>
           </div>
 
-          {/* Long press hint */}
+          {/* 8. Long press hint — smallest text */}
           <p
             style={{
               textAlign: "center",
-              fontSize: "0.7rem",
+              fontSize: "0.6rem",
               color: "rgba(30,58,95,0.4)",
-              marginTop: "0.75rem",
+              marginTop: "0.25rem",
               letterSpacing: "0.05em",
             }}
           >
