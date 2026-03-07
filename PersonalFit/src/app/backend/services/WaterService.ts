@@ -45,10 +45,9 @@ function dispatchWaterEvents(total: number): void {
 }
 
 export class WaterService {
+  /** Add ml to TODAY's total only. Key = 'YYYY-MM-DD'; each day starts fresh. */
   static async addWater(ml: number = 250): Promise<number> {
-    console.log('[WaterService] addWater called:', ml);
     const today = getTodayStr();
-
     try {
       const db = await getDB();
       let existing: WaterLog | undefined;
@@ -57,15 +56,9 @@ export class WaterService {
       } catch {
         existing = undefined;
       }
-
       const current = existing?.total ?? 0;
-      console.log('[Water] current total before:', current);
       const newTotal = current + ml;
-      console.log('[Water] saving new total:', newTotal);
-
       await db.put('water_log', { date: today, total: newTotal });
-      console.log('[WaterService] saved total:', newTotal, 'ml');
-      console.log('[WaterService] dispatching waterUpdated:', newTotal);
       dispatchWaterEvents(newTotal);
       return newTotal;
     } catch (e) {
@@ -78,10 +71,11 @@ export class WaterService {
     }
   }
 
+  /** Return TODAY's total only. Key = 'YYYY-MM-DD'; if no record for today, return 0. Old days' data is not shown. */
   static async getTodayTotal(): Promise<number> {
+    const today = getTodayStr();
     try {
       const db = await getDB();
-      const today = getTodayStr();
       const log = await db.get<WaterLog>('water_log', today);
       return log?.total ?? 0;
     } catch {

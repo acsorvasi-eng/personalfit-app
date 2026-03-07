@@ -860,19 +860,12 @@ export function UnifiedMenu() {
           onComplete={() => appData.refresh()}
         />
 
-        {/* Water widget ONLY during rest period (not in active meal window); hidden when AI panel open */}
+        {/* Exactly ONE water button: rest = inside rest card; meal = floating. Never both. */}
         <AnimatePresence>
-          {/* Floating water widget — only during meal time; during rest period water is inside rest card */}
           {!aiPanelOpen && status.isInEatingWindow && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
-              className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
-            >
+            <div style={{ position: 'fixed', bottom: '5rem', right: '1rem', zIndex: 40 }}>
               <WaterButton className="max-w-[200px]" />
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>
       </div>
@@ -1074,12 +1067,7 @@ export function UnifiedMenu() {
                         calorieTarget={calorieTarget}
                         mealRef={isFocusMeal ? currentMealRef : (status.isToday && status.currentMeal === slot.type ? currentMealRef : undefined)}
                       />
-                      {/* Water: only 💧 +250ml button — tap = +250ml, no text, no scroll */}
-                      {slot.type === 'dinner' && status.isToday && (
-                        <div className="absolute -bottom-2 -right-1">
-                          <WaterButton className="!min-w-0 !px-3 text-sm" />
-                        </div>
-                      )}
+                      {/* Water: shown ONLY as floating during meal time; never on dinner card to avoid duplicate */}
                     </div>
                     {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type]).map(meal => (
                       <LoggedMealAsCard key={meal.id} meal={meal} onRemove={() => removeLoggedMeal(meal.id)} />
@@ -1118,19 +1106,12 @@ export function UnifiedMenu() {
         }}
       />
 
-      {/* Water widget (+250ml) ONLY during rest period — hidden when in active meal window or AI panel open */}
+      {/* Exactly ONE water button: rest = inside rest card; meal = floating. Never both. */}
       <AnimatePresence>
-        {/* Floating water widget — only during meal time; during rest period water is inside rest card */}
         {!aiPanelOpen && status.isInEatingWindow && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.2 }}
-            className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
-          >
+          <div style={{ position: 'fixed', bottom: '5rem', right: '1rem', zIndex: 40 }}>
             <WaterButton className="max-w-[200px]" />
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
