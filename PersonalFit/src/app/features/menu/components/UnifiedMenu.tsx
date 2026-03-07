@@ -428,7 +428,7 @@ export function UnifiedMenu() {
       return {
         currentMeal: null, canCheckBreakfast: false, canCheckLunch: false, canCheckDinner: false,
         breakfastPassed: isPast, lunchPassed: isPast, dinnerPassed: isPast,
-        isInEatingWindow: false, nextMealTime: null, restingTimeMinutes: 0,
+        isInEatingWindow: false, nextMealTime: null, restingTimeMinutes: 0, nextMealLabel: null, totalRestMinutes: 0,
         isToday: false, isPast, isFuture: !isPast
       };
     }
@@ -458,9 +458,20 @@ export function UnifiedMenu() {
     else if (!dinnerPassed) { currentMeal = "dinner"; nextMealTime = DINNER_START; restingTimeMinutes = DINNER_START - currentTimeInMinutes; }
     else { restingTimeMinutes = (24 * 60 - currentTimeInMinutes) + BREAKFAST_START; currentMeal = "breakfast"; nextMealTime = BREAKFAST_START; }
 
+    const totalRestMinutes =
+      currentMeal === "breakfast" ? LUNCH_START - BREAKFAST_END
+      : currentMeal === "lunch" ? DINNER_START - LUNCH_END
+      : currentMeal === "dinner" ? 24 * 60 - DINNER_END + BREAKFAST_START
+      : 0;
+    const nextMealLabel =
+      currentMeal === "breakfast" ? "lunch"
+      : currentMeal === "lunch" ? "dinner"
+      : currentMeal === "dinner" ? "breakfast"
+      : null;
+
     return {
       currentMeal, canCheckBreakfast: inBreakfastWindow, canCheckLunch: inLunchWindow, canCheckDinner: inDinnerWindow,
-      breakfastPassed, lunchPassed, dinnerPassed, isInEatingWindow, nextMealTime, restingTimeMinutes,
+      breakfastPassed, lunchPassed, dinnerPassed, isInEatingWindow, nextMealTime, restingTimeMinutes, nextMealLabel, totalRestMinutes,
       isToday: true, isPast: false, isFuture: false
     };
   };
@@ -752,10 +763,15 @@ export function UnifiedMenu() {
                 <RestTimerCard
                   restingTimeMinutes={status.restingTimeMinutes}
                   currentMeal={status.currentMeal}
+                  nextMealTime={status.nextMealTime}
+                  nextMealLabel={status.nextMealLabel}
+                  totalRestMinutes={status.totalRestMinutes}
+                  waterGoalMl={MAX_WATER_ML}
                   t={t}
                   consumedSnacks={consumedSnacks}
                   onSnackConsume={handleSnackConsume}
                   onWaterTap={handleWaterTap}
+                  onWaterReset={handleWaterReset}
                   waterIntakeMl={waterIntakeMl}
                 />
               </div>
@@ -936,10 +952,15 @@ export function UnifiedMenu() {
               <RestTimerCard
                 restingTimeMinutes={status.restingTimeMinutes}
                 currentMeal={status.currentMeal}
+                nextMealTime={status.nextMealTime}
+                nextMealLabel={status.nextMealLabel}
+                totalRestMinutes={status.totalRestMinutes}
+                waterGoalMl={MAX_WATER_ML}
                 t={t}
                 consumedSnacks={consumedSnacks}
                 onSnackConsume={handleSnackConsume}
                 onWaterTap={handleWaterTap}
+                onWaterReset={handleWaterReset}
                 waterIntakeMl={waterIntakeMl}
               />
               </div>
@@ -1087,48 +1108,223 @@ export function UnifiedMenu() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// RestTimerCard
+// RestTimerCard — rest period between meals: countdown, progress, snacks, next meal, water
+// Long-press opens meal interval editor dialog.
 // ══════════════════════════════════════════════════════════════
 
-function RestTimerCard({ restingTimeMinutes, currentMeal, t, consumedSnacks, onSnackConsume, onWaterTap, waterIntakeMl }: {
+function RestTimerCard({
+  restingTimeMinutes,
+  currentMeal,
+  nextMealTime,
+  nextMealLabel,
+  totalRestMinutes,
+  waterGoalMl,
+  t,
+  consumedSnacks,
+  onSnackConsume,
+  onWaterTap,
+  onWaterReset,
+  waterIntakeMl,
+}: {
   restingTimeMinutes: number;
   currentMeal: string | null;
+  nextMealTime: number | null;
+  nextMealLabel: string | null;
+  totalRestMinutes: number;
+  waterGoalMl: number;
   t: (key: string) => string;
   consumedSnacks: { apple: boolean; walnut: boolean };
   onSnackConsume: (type: 'apple' | 'walnut') => void;
   onWaterTap: () => void;
+  onWaterReset?: () => void;
   waterIntakeMl: number;
 }) {
-  // FIX 1: Sport timer panel — ONLY CTA to open fullscreen (no clock, progress, ALLOWED, NEXT MEAL, water).
-  // Tapping opens AI panel (dark fullscreen with star, live voice text, mic, X).
-  const openAIPanel = () => {
-    window.dispatchEvent(new CustomEvent("openAIPanel"));
-  };
+  const [intervalEditorOpen, setIntervalEditorOpen] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onWaterResetFn = onWaterReset ?? (() => {});
+
+  const hours = Math.floor(restingTimeMinutes / 60);
+  const minutes = restingTimeMinutes % 60;
+  const percentRemaining = totalRestMinutes > 0 ? Math.max(0, Math.min(100, (restingTimeMinutes / totalRestMinutes) * 100)) : 0;
+  const nextMealTimeStr = nextMealTime != null
+    ? `${String(Math.floor(nextMealTime / 60) % 24).padStart(2, "0")}:${String(nextMealTime % 60).padStart(2, "0")}`
+    : "--:--";
+  const nextMealTitle = nextMealLabel ? t(`menu.${nextMealLabel}`) : "";
+
+  const handleTouchStart = useCallback(() => {
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTimerRef.current = null;
+      if (navigator.vibrate) navigator.vibrate(30);
+      setIntervalEditorOpen(true);
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
 
   return (
-    <motion.button
-      type="button"
-      onClick={openAIPanel}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-      className="relative overflow-hidden rounded-2xl bg-slate-900 dark:bg-slate-950 border border-slate-700/50 dark:border-slate-800 p-6 shadow-xl w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50"
-      aria-label={t("dashboard.openAssistant")}
-    >
-      <div className="relative z-10 flex flex-col items-center justify-center gap-3 py-2">
-        {/* FIX 2: Subtle pulsing star — more inviting */}
-        <motion.div
-          animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.08, 1] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-          className="text-4xl"
-        >
-          <Sparkles className="w-10 h-10 text-cyan-400/90" />
-        </motion.div>
-        <p className="text-center text-sm text-white/80 font-medium">
-          {t("dashboard.menuPanelPrompt")}
-        </p>
-      </div>
-    </motion.button>
+    <>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 via-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-sky-950/30 border-2 border-cyan-200/70 dark:border-cyan-700/40 p-5 shadow-xl"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-200/30 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-teal-200/30 to-transparent rounded-full blur-3xl" />
+
+        <div className="relative z-10 space-y-4">
+          {/* Label: HÁTRALÉVŐ IDŐ A KÖVETKEZŐ ÉTKEZÉSIG */}
+          <div className="text-center">
+            <p className="text-[11px] uppercase tracking-widest font-bold text-cyan-600/90 dark:text-cyan-400/90">
+              {t("menu.restTimeLabel")}
+            </p>
+          </div>
+
+          {/* Large countdown timer */}
+          <div className="flex items-center justify-center">
+            <motion.div
+              className="relative"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 250 }}
+            >
+              <div className="flex flex-col items-center gap-1 py-2">
+                <motion.div
+                  className="text-5xl font-black bg-gradient-to-r from-cyan-600 via-teal-600 to-sky-600 dark:from-cyan-400 dark:via-teal-400 dark:to-sky-400 bg-clip-text text-transparent tracking-tight"
+                  key={`${hours}:${minutes}`}
+                  initial={{ scale: 1.1 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {hours}:{String(minutes).padStart(2, "0")}
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Progress bar — % remaining in rest period */}
+          <div className="space-y-1.5">
+            <div className="h-2.5 bg-white/60 dark:bg-white/10 rounded-full overflow-hidden border border-cyan-200/50 dark:border-cyan-700/30 shadow-inner">
+              <motion.div
+                className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 rounded-full shadow-lg"
+                initial={{ width: 0 }}
+                animate={{ width: `${percentRemaining}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              />
+            </div>
+            <p className="text-[10px] text-center text-cyan-600/80 dark:text-cyan-400/80 font-medium">
+              {Math.round(percentRemaining)}% {t("menu.percentRemaining")}
+            </p>
+          </div>
+
+          {/* ENGEDÉLYEZETT: low-calorie snacks */}
+          <div className="rounded-xl bg-white/50 dark:bg-white/5 border border-cyan-200/50 dark:border-cyan-700/30 p-3">
+            <p className="text-[11px] font-bold text-cyan-700 dark:text-cyan-300 mb-2 uppercase tracking-wide">
+              {t("menu.allowedSnacks")}:
+            </p>
+            <p className="text-[12px] text-gray-700 dark:text-gray-300 mb-2">
+              {t("menu.allowed")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => onSnackConsume("apple")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  consumedSnacks.apple
+                    ? "bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-800 dark:text-green-300"
+                    : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {consumedSnacks.apple && <Check className="w-4 h-4" />}
+                {t("menu.apple")}
+              </button>
+              <button
+                type="button"
+                onClick={() => onSnackConsume("walnut")}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  consumedSnacks.walnut
+                    ? "bg-green-100 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-800 dark:text-green-300"
+                    : "bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                }`}
+              >
+                {consumedSnacks.walnut && <Check className="w-4 h-4" />}
+                {t("menu.walnut")}
+              </button>
+            </div>
+          </div>
+
+          {/* KÖVETKEZŐ ÉTKEZÉS: 12:30 (Ebéd) */}
+          <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-cyan-100/50 dark:bg-cyan-900/20 border border-cyan-200/50 dark:border-cyan-700/30">
+            <Clock className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            <span className="text-[13px] font-bold text-cyan-800 dark:text-cyan-200">
+              {t("menu.nextMealAt")}: {nextMealTimeStr} ({nextMealTitle})
+            </span>
+          </div>
+
+          {/* Water widget inside card */}
+          <div className="flex justify-center">
+            <div className="scale-90 origin-center">
+              <WaterTracker
+                current={waterIntakeMl}
+                goal={waterGoalMl}
+                onAdd={onWaterTap}
+                onReset={onWaterResetFn}
+                waterLabel={t("ui.water")}
+              />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Meal interval editor dialog — long-press to open */}
+      <AnimatePresence>
+        {intervalEditorOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setIntervalEditorOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 max-w-sm w-full"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                  {t("menu.restPeriodLabel")}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIntervalEditorOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+                  aria-label={t("mealDetail.close")}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {t("menu.longPressHint")} → {t("menu.restPeriodLabel")}
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Reggeli 06:00–08:00 · Ebéd 12:30–13:30 · Vacsora 17:30–18:30
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
