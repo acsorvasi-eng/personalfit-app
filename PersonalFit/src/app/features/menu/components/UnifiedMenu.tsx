@@ -306,8 +306,8 @@ export function UnifiedMenu() {
     });
   }, [todayDateStr]);
 
+  /** One tap/click = +250ml; updates state and persists via WaterService. */
   const handleWaterTap = useCallback(async () => {
-    console.log("[Water] button clicked");
     try {
       const total = await WaterService.addWater(250);
       setWaterIntakeMl(total);
@@ -926,6 +926,7 @@ export function UnifiedMenu() {
               className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
             >
               <WaterButton
+                label="+250ml"
                 onClick={handleWaterTap}
                 onLongPress={() => navigate("/meal-intervals")}
                 variant="floating"
@@ -1138,7 +1139,7 @@ export function UnifiedMenu() {
                       {/* Water: only 💧 +250ml button — tap = +250ml, no text, no scroll */}
                       {slot.type === 'dinner' && status.isToday && (
                         <div className="absolute -bottom-2 -right-1">
-                          <WaterButton onClick={handleWaterTap} className="!px-3 !py-2 !text-sm" />
+                          <WaterButton label="+250ml" onClick={handleWaterTap} className="!px-3 !py-2 !text-sm" />
                         </div>
                       )}
                     </div>
@@ -1421,9 +1422,10 @@ function RestTimerCard({
             </>
           )}
 
-          {/* 5. Water: only 💧 +250ml button — tap = +250ml, no scroll, no extra text */}
+          {/* 5. Water: only 💧 +250ml button — every tap/click adds 250ml */}
           <div className="pt-1.5 border-t border-white/20 flex justify-center">
             <WaterButton
+              label="+250ml"
               onClick={onWaterTap}
               onLongPress={onOpenEditor}
               className="animate-pulse w-full max-w-[200px] justify-center"
