@@ -20,6 +20,7 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'rest.remaining': 'hátra',
     'rest.allowed': 'ENGEDÉLYEZETT:',
     'rest.nextMeal': 'Következő étkezés',
+    'rest.longPressHint': 'Hosszan nyomva: étkezési beállítások',
 
     'meal.breakfast': 'Reggeli',
     'meal.morningSnack': 'Tízórai',
@@ -53,6 +54,9 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'water.added': '💧 +250ml víz hozzáadva',
     'water.saveFailed': 'Víz mentése sikertelen',
     'water.longPressHint': 'Hosszan nyomva: beállítások',
+    'water.goal': 'Napi vízszükséglet',
+    'water.goalReached': '🎉 Elérted a napi célt!',
+    'water.progress': 'ml / {goal}ml',
 
     'menu.title': 'Menüm',
     'menu.subtitle': '28 napos terv',
@@ -72,6 +76,7 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'rest.remaining': 'rămas',
     'rest.allowed': 'PERMIS:',
     'rest.nextMeal': 'Masa următoare',
+    'rest.longPressHint': 'Apăsare lungă: setări mese',
 
     'meal.breakfast': 'Mic dejun',
     'meal.morningSnack': 'Gustare dimineață',
@@ -105,6 +110,9 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'water.added': '💧 +250ml apă adăugată',
     'water.saveFailed': 'Salvare apă eșuată',
     'water.longPressHint': 'Apăsare lungă: setări',
+    'water.goal': 'Necesar zilnic de apă',
+    'water.goalReached': '🎉 Ai atins obiectivul zilnic!',
+    'water.progress': 'ml / {goal}ml',
 
     'menu.title': 'Meniul meu',
     'menu.subtitle': 'Plan 28 zile',
@@ -124,6 +132,7 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'rest.remaining': 'remaining',
     'rest.allowed': 'ALLOWED:',
     'rest.nextMeal': 'Next meal',
+    'rest.longPressHint': 'Long press: meal settings',
 
     'meal.breakfast': 'Breakfast',
     'meal.morningSnack': 'Morning snack',
@@ -157,6 +166,9 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'water.added': '💧 +250ml water added',
     'water.saveFailed': 'Failed to save water',
     'water.longPressHint': 'Long press: settings',
+    'water.goal': 'Daily water goal',
+    'water.goalReached': '🎉 Daily goal reached!',
+    'water.progress': 'ml / {goal}ml',
 
     'menu.title': 'My Menu',
     'menu.subtitle': '28 day plan',

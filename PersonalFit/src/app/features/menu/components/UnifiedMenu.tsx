@@ -15,7 +15,7 @@ import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
-import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
+import { getMealSettings, getUserProfile, type MealSettings } from "../../../backend/services/UserProfileService";
 import { WaterService } from "../../../backend/services/WaterService";
 import { toast } from "sonner";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
@@ -264,6 +264,7 @@ export function UnifiedMenu() {
 
   // ─── Water intake state (synced with Layout's floating tracker) ──
   const [waterIntakeMl, setWaterIntakeMl] = useState(0);
+  const [waterGoalMl, setWaterGoalMl] = useState(2500);
 
   useEffect(() => {
     const loadWater = () => {
@@ -280,6 +281,13 @@ export function UnifiedMenu() {
       window.removeEventListener('storage', onWaterUpdated);
     };
   }, [todayDateStr]);
+
+  useEffect(() => {
+    getUserProfile().then((p) => {
+      const goal = p.weight > 0 ? Math.round(p.weight * 35) : 2500;
+      setWaterGoalMl(goal);
+    }).catch(() => {});
+  }, []);
 
   const snackCalories = useMemo(() => {
     let total = 0;
@@ -870,6 +878,8 @@ export function UnifiedMenu() {
                   snackEmoji={REST_SNACK_EMOJI}
                   consumedSnacks={consumedSnacks}
                   onSnackConsume={handleSnackConsume}
+                  waterGoalMl={waterGoalMl}
+                  waterCurrentMl={waterIntakeMl}
                   onWaterTap={handleWaterTap}
                   onOpenEditor={() => navigate("/meal-intervals")}
                 />
@@ -1060,6 +1070,8 @@ export function UnifiedMenu() {
                 snackEmoji={REST_SNACK_EMOJI}
                 consumedSnacks={consumedSnacks}
                 onSnackConsume={handleSnackConsume}
+                waterGoalMl={waterGoalMl}
+                waterCurrentMl={waterIntakeMl}
                 onWaterTap={handleWaterTap}
                 onOpenEditor={() => navigate("/meal-intervals")}
               />
@@ -1206,9 +1218,16 @@ export function UnifiedMenu() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// RestTimerCard — rest period between meals: countdown, progress, snacks, next meal, water
-// Long-press opens meal interval editor dialog.
+// RestTimerCard — rest period: countdown, rest bar, snacks, water tracking, next meal
+// Long-press: pulsing border + hint; at 300ms scale 1.01 + solid blue; at 500ms dialog.
 // ══════════════════════════════════════════════════════════════
+
+const BORDER_PULSE_CSS = `
+@keyframes restCardBorderPulse {
+  0%, 100% { border-color: rgba(59,130,246,0.3); }
+  50% { border-color: rgba(59,130,246,0.7); }
+}
+`;
 
 function RestTimerCard({
   restingTimeMinutes,
@@ -1223,8 +1242,11 @@ function RestTimerCard({
   snackEmoji,
   consumedSnacks,
   onSnackConsume,
+  waterGoalMl,
+  waterCurrentMl,
   onWaterTap,
   onOpenEditor,
+  dayInfoLabel,
 }: {
   restingTimeMinutes: number;
   currentMeal: string | null;
@@ -1238,8 +1260,11 @@ function RestTimerCard({
   snackEmoji: Record<string, string>;
   consumedSnacks: Record<string, boolean>;
   onSnackConsume: (snackId: string) => void;
+  waterGoalMl: number;
+  waterCurrentMl: number;
   onWaterTap: () => void;
   onOpenEditor?: () => void;
+  dayInfoLabel?: string;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [borderHighlight, setBorderHighlight] = useState(false);
@@ -1261,7 +1286,6 @@ function RestTimerCard({
   const handleTouchStart = useCallback(() => {
     borderTimerRef.current = setTimeout(() => setBorderHighlight(true), 300);
     longPressTimerRef.current = setTimeout(() => {
-      console.log("[RestCard] long press triggered");
       longPressTimerRef.current = null;
       if (borderTimerRef.current) {
         clearTimeout(borderTimerRef.current);
@@ -1280,7 +1304,6 @@ function RestTimerCard({
   const handleMouseDown = useCallback(() => {
     borderTimerRef.current = setTimeout(() => setBorderHighlight(true), 300);
     longPressTimerRef.current = setTimeout(() => {
-      console.log("[RestCard] long press triggered");
       longPressTimerRef.current = null;
       if (borderTimerRef.current) {
         clearTimeout(borderTimerRef.current);
@@ -1308,20 +1331,28 @@ function RestTimerCard({
     : "--:--";
   const nextMealTitle = nextMealLabel ? t(`meal.${nextMealLabel}`) : "";
 
+  const waterPercent = waterGoalMl > 0 ? Math.min(100, (waterCurrentMl / waterGoalMl) * 100) : 0;
+  const waterGoalReached = waterCurrentMl >= waterGoalMl && waterGoalMl > 0;
+
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: BORDER_PULSE_CSS }} />
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+        animate={{
+          opacity: 1,
+          scale: borderHighlight ? 1.01 : 1,
+        }}
+        transition={{ duration: 0.2 }}
         style={{
           background: "linear-gradient(135deg, rgba(59,130,246,0.12), rgba(20,184,166,0.12))",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
-          border: borderHighlight ? "1px solid rgba(59,130,246,0.6)" : "1px solid rgba(255,255,255,0.3)",
+          border: borderHighlight ? "2px solid rgba(59,130,246,0.9)" : "1px solid rgba(59,130,246,0.3)",
           borderRadius: "1.5rem",
           padding: "1.5rem",
           boxShadow: "0 8px 32px rgba(31, 38, 135, 0.15)",
+          animation: borderHighlight ? "none" : "restCardBorderPulse 3s infinite",
         }}
         className="relative overflow-hidden"
         onTouchStart={handleTouchStart}
@@ -1332,15 +1363,20 @@ function RestTimerCard({
         onMouseLeave={handleMouseUp}
       >
         <div className="relative z-10 space-y-4">
-          {/* Label: HÁTRALÉVŐ IDŐ */}
+          {/* Day info (optional) */}
+          {dayInfoLabel && (
+            <p className="text-center text-sm font-medium" style={{ color: "rgba(30,58,95,0.7)" }}>
+              {dayInfoLabel}
+            </p>
+          )}
+
+          {/* Countdown + label */}
           <p
             className="text-center uppercase font-bold"
             style={{ fontSize: "0.7rem", letterSpacing: "0.15em", color: "rgba(30,58,95,0.6)" }}
           >
             {t("rest.timeRemaining")}
           </p>
-
-          {/* Countdown — very large, bold */}
           <div className="flex justify-center">
             <motion.div
               className="font-extrabold tracking-tight"
@@ -1354,70 +1390,101 @@ function RestTimerCard({
             </motion.div>
           </div>
 
-          {/* Progress bar */}
-          <div className="space-y-1.5">
-            <div
-              className="h-1.5 rounded-full overflow-hidden"
-              style={{ background: "rgba(59,130,246,0.15)" }}
-            >
+          {/* Rest progress bar + % remaining */}
+          <div className="space-y-1">
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(59,130,246,0.15)" }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{
-                  background: "linear-gradient(90deg, #3b82f6, #14b8a6)",
-                  borderRadius: 9999,
-                }}
+                style={{ background: "linear-gradient(90deg, #3b82f6, #14b8a6)", borderRadius: 9999 }}
                 initial={{ width: 0 }}
                 animate={{ width: `${percentRemaining}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
+            <p className="text-center text-xs font-medium" style={{ color: "rgba(30,58,95,0.6)" }}>
+              {Math.round(percentRemaining)}% {t("rest.remaining")}
+            </p>
           </div>
 
-          {/* Snack chip(s) — frosted pill: emoji + name + kcal */}
+          {/* Snacks */}
           {allowedSnackIds.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center">
-              {allowedSnackIds.map((snackId) => {
-                const consumed = !!consumedSnacks[snackId];
-                const label = snackLabels[snackId] ?? snackId;
-                const kcal = snackKcal[snackId] ?? 0;
-                const emoji = snackEmoji[snackId] ?? "•";
-                return (
-                  <button
-                    key={snackId}
-                    type="button"
-                    onClick={() => onSnackConsume(snackId)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/30 text-sm font-medium transition-colors"
-                    style={{
-                      background: "rgba(255,255,255,0.2)",
-                      backdropFilter: "blur(10px)",
-                      WebkitBackdropFilter: "blur(10px)",
-                    }}
-                  >
-                    {consumed && <Check className="w-4 h-4 text-[#1e3a5f]" />}
-                    <span style={{ color: "#1e3a5f" }}>
-                      {emoji} {label} · {kcal} kcal
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <>
+              <p className="text-center uppercase text-[0.65rem] font-bold" style={{ letterSpacing: "0.1em", color: "rgba(30,58,95,0.5)" }}>
+                {t("rest.allowed")}
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {allowedSnackIds.map((snackId) => {
+                  const consumed = !!consumedSnacks[snackId];
+                  const label = snackLabels[snackId] ?? snackId;
+                  const kcal = snackKcal[snackId] ?? 0;
+                  const emoji = snackEmoji[snackId] ?? "•";
+                  return (
+                    <button
+                      key={snackId}
+                      type="button"
+                      onClick={() => onSnackConsume(snackId)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/30 text-sm font-medium transition-colors"
+                      style={{
+                        background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(10px)",
+                        WebkitBackdropFilter: "blur(10px)",
+                      }}
+                    >
+                      {consumed && <Check className="w-4 h-4 text-[#1e3a5f]" />}
+                      <span style={{ color: "#1e3a5f" }}>{emoji} {label} · {kcal} kcal</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
 
-          {/* Next meal row: icon + bold time + meal name */}
+          {/* Water: progress text + bar (blue or green when goal) + prominent button */}
+          <div className="space-y-2 pt-2 border-t border-white/20">
+            <p className="text-center text-sm font-semibold" style={{ color: waterGoalReached ? "#059669" : "#1e3a5f" }}>
+              {waterGoalReached ? t("water.goalReached") : `💧 ${waterCurrentMl}ml / ${waterGoalMl}ml`}
+            </p>
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: waterGoalReached ? "rgba(5,150,105,0.2)" : "rgba(59,130,246,0.2)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background: waterGoalReached ? "linear-gradient(90deg, #059669, #10b981)" : "linear-gradient(90deg, #3b82f6, #06b6d4)",
+                  borderRadius: 9999,
+                }}
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.max(waterPercent, waterGoalReached ? 100 : 0)}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              />
+            </div>
+            <div className="flex justify-center pt-1">
+              <WaterButton
+                onClick={onWaterTap}
+                onLongPress={onOpenEditor}
+                className="animate-pulse"
+              />
+            </div>
+          </div>
+
+          {/* Next meal */}
           <div className="flex items-center justify-center gap-2 py-2">
             <Clock className="w-4 h-4" style={{ color: "#1e3a5f" }} />
             <span className="font-bold text-[13px]" style={{ color: "#1e3a5f" }}>
-              {t("rest.nextMeal")}: {nextMealTimeStr} ({nextMealTitle})
+              {t("rest.nextMeal")}: {nextMealTimeStr} {nextMealTitle ? `(${nextMealTitle})` : ""}
             </span>
           </div>
 
-          {/* Water button — same style as floating; long press opens meal settings */}
-          <div className="flex justify-center">
-            <WaterButton
-              onClick={onWaterTap}
-              onLongPress={onOpenEditor}
-            />
-          </div>
+          {/* Long press hint */}
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: "0.7rem",
+              color: "rgba(30,58,95,0.4)",
+              marginTop: "0.75rem",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {t("rest.longPressHint")}
+          </p>
         </div>
       </motion.div>
 
