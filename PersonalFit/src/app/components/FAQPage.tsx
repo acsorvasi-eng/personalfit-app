@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { HelpCircle, ChevronDown } from "lucide-react";
-import { DSMSubPageHeader } from "./dsm";
+import { PageHeader } from "../shared/components/PageHeader";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export function FAQPage() {
@@ -62,12 +62,10 @@ export function FAQPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-shrink-0">
-        <DSMSubPageHeader
+        <PageHeader
           title={t("faq.title")}
           subtitle={t("faq.subtitle")}
           onBack={() => navigate('/profile')}
-          gradientFrom="from-emerald-500"
-          gradientTo="to-teal-600"
         />
       </div>
 

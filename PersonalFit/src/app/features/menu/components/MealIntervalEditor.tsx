@@ -6,10 +6,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { X, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { PageHeader } from "../../../shared/components/PageHeader";
+import { PageFooter, PageFooterPrimaryButton } from "../../../shared/components/PageFooter";
 import { SNACKS, snackLabel, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
 import {
@@ -175,8 +177,8 @@ export function MealIntervalEditor() {
     );
   }
 
-  const headerHeightPx = 80;
-  const footerHeightPx = 100;
+  const headerHeightPx = 120;
+  const footerHeightPx = 88;
 
   return (
     <div
@@ -189,44 +191,12 @@ export function MealIntervalEditor() {
       }}
       className="bg-gray-50 dark:bg-[#121212]"
     >
-      {/* Fixed header */}
-      <div
-        style={{
-          flexShrink: 0,
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          width: "100%",
-          height: headerHeightPx,
-          minHeight: headerHeightPx,
-          borderRadius: 0,
-          padding: `0 ${PAGE_PX}px`,
-          paddingTop: "env(safe-area-inset-top, 0px)",
-          zIndex: 50,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)",
-          color: "white",
-        }}
-      >
-        <div>
-          <h1 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700, color: "white" }}>
-            {t("mealEditor.title")}
-          </h1>
-          <p style={{ margin: 0, fontSize: "0.875rem", marginTop: 2, color: "rgba(255,255,255,0.9)" }}>
-            {t("mealEditor.subtitle")}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center text-white/90 hover:text-white bg-white/20 rounded-full"
-          aria-label={t("mealDetail.close")}
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="flex-shrink-0">
+        <PageHeader
+          title={t("mealEditor.title")}
+          subtitle={t("mealEditor.subtitle")}
+          onBack={() => navigate(-1)}
+        />
       </div>
 
       {/* Scrollable body */}
@@ -234,7 +204,6 @@ export function MealIntervalEditor() {
         style={{
           flex: 1,
           overflowY: "auto",
-          paddingTop: headerHeightPx,
           paddingBottom: footerHeightPx,
           paddingLeft: PAGE_PX,
           paddingRight: PAGE_PX,
@@ -450,46 +419,11 @@ export function MealIntervalEditor() {
         </div>
       </div>
 
-      {/* Fixed footer */}
-      <div
-        style={{
-          flexShrink: 0,
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          width: "100%",
-          minHeight: footerHeightPx,
-          borderRadius: 0,
-          padding: 16,
-          paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))",
-          background: "white",
-          borderTop: "1px solid #e5e7eb",
-          zIndex: 50,
-        }}
-        className="dark:bg-[#1E1E1E] dark:border-[#2a2a2a]"
-      >
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            width: "100%",
-            height: 48,
-            padding: "0 1rem",
-            borderRadius: 12,
-            background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
-            color: "white",
-            fontSize: 16,
-            fontWeight: 600,
-            border: "none",
-            cursor: saving ? "not-allowed" : "pointer",
-            opacity: saving ? 0.6 : 1,
-          }}
-        >
+      <PageFooter>
+        <PageFooterPrimaryButton onClick={handleSave} disabled={saving}>
           {saving ? t("mealInterval.saving") : t("mealEditor.save")}
-        </button>
-      </div>
+        </PageFooterPrimaryButton>
+      </PageFooter>
     </div>
   );
 }

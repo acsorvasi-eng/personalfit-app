@@ -5,7 +5,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Mail, MessageCircle, MapPin, Clock, Send, CheckCircle } from "lucide-react";
-import { DSMSubPageHeader, DSMCard, DSMSectionTitle, DSMButton } from "./dsm";
+import { PageHeader } from "../shared/components/PageHeader";
+import { DSMCard, DSMSectionTitle, DSMButton } from "./dsm";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export function ContactPage() {
@@ -25,12 +26,10 @@ export function ContactPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-shrink-0">
-        <DSMSubPageHeader
+        <PageHeader
           title={t('contact.title')}
           subtitle={t('contact.subtitle')}
           onBack={() => navigate('/profile')}
-          gradientFrom="from-blue-500"
-          gradientTo="to-emerald-500"
         />
       </div>
 

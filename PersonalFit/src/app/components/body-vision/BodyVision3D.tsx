@@ -18,7 +18,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Archive, ShieldAlert } from "lucide-react";
-import { DSMSubPageHeader, DSMCard, DSMNotification, DSMInput } from "../dsm";
+import { PageHeader } from "../../shared/components/PageHeader";
+import { DSMCard, DSMNotification, DSMInput } from "../dsm";
 import { BodyVisionUploadGrid } from "./BodyVisionUploadGrid";
 import { BodyVisionARViewer } from "./BodyVisionARViewer";
 import { BodyVisionFullscreen } from "./BodyVisionFullscreen";
@@ -317,13 +318,14 @@ export function BodyVision3D() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50/30 pb-24">
       {/* Header */}
-      <DSMSubPageHeader
+      <PageHeader
         title="AR Test Vizio"
         onBack={() => navigate('/profile')}
         action={archivedSessions.length > 0 ? (
           <button
+            type="button"
             onClick={() => setShowArchive(!showArchive)}
-            className="relative w-9 h-9 bg-white/15 rounded-full flex items-center justify-center hover:bg-white/25 transition-all"
+            className="relative w-9 h-9 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-all text-white border-none cursor-pointer"
           >
             <Archive className="w-4.5 h-4.5" />
             <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-amber-400 text-[8px] font-bold text-gray-900 rounded-full flex items-center justify-center">

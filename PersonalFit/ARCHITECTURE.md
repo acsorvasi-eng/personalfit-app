@@ -461,6 +461,32 @@ const config: CapacitorConfig = {
 
 ---
 
+## Design System Rules
+
+**Applies to every page in the entire app.** No exceptions.
+
+### Universal Header Standard (Rule 1)
+
+- Every page header uses the shared **PageHeader** component from `src/app/shared/components/PageHeader.tsx`.
+- Spec: full viewport width (edge to edge), `border-radius: 0`, `padding-top: 48px`, `padding-bottom: 1rem`, `padding-left/right: 1rem`, background `linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)`, color white, `position: sticky`, `top: 0`, `z-index: 50`.
+- Title: `font-size: 1.25rem`, `font-weight: 700`, color white.
+- Subtitle: `font-size: 0.875rem`, color `rgba(255,255,255,0.8)`.
+- Close/back button (subpages): `position: absolute`, `top: 1rem`, `right: 1rem`, 2rem×2rem, `background: rgba(255,255,255,0.2)`, `border-radius: 50%`, white, no border.
+- **Zero custom header implementations** — always use `<PageHeader title={...} subtitle={...} onClose={...} | onBack={...} />`. Optional extra content (e.g. stat cards) via `children`.
+
+### Universal Footer Standard (Rule 2)
+
+- Every page footer (primary action area) uses the shared **PageFooter** component or the same visual spec.
+- Spec: full width, `border-radius: 0`, `padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom))`, background white, `border-top: 2px solid #e5e7eb`, `box-shadow: 0 -4px 16px rgba(0,0,0,0.08)`, `position: fixed`, `bottom: 0`, `left: 0`, `right: 0`, `z-index: 50`.
+- Primary button: full width, `padding: 1rem`, `border-radius: 0.75rem`, background `linear-gradient(135deg, #3b82f6, #14b8a6)`, color white, `font-size: 1rem`, `font-weight: 700`, `box-shadow: 0 4px 12px rgba(59,130,246,0.35)`.
+- **Zero custom footer implementations** for action bars — use shared PageFooter or match this spec exactly.
+
+### Rule 3 — Meal names
+
+- Meal names (Reggeli, Ebéd, Vacsora, etc.) use the existing translation keys; no typo changes required.
+
+---
+
 ## Cursor-ban való használat
 
 ```

@@ -4,7 +4,8 @@
 
 import { useNavigate } from "react-router";
 import { Heart, Shield, Leaf, Users, Sparkles } from "lucide-react";
-import { DSMSubPageHeader, DSMCard, DSMSectionTitle } from "./dsm";
+import { PageHeader } from "../shared/components/PageHeader";
+import { DSMCard, DSMSectionTitle } from "./dsm";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export function AboutPage() {
@@ -45,12 +46,10 @@ export function AboutPage() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-shrink-0">
-        <DSMSubPageHeader
+        <PageHeader
           title={t('about.title')}
           subtitle={t('about.subtitle')}
           onBack={() => navigate('/profile')}
-          gradientFrom="from-teal-500"
-          gradientTo="to-emerald-600"
         />
       </div>
 
