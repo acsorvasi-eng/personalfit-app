@@ -8,11 +8,21 @@ export interface MealWindow {
   endTime: string;
 }
 
+/** Named meal model — editor dropdown and My Menu rest period logic */
+export type MealModel =
+  | '3meals'   // Reggeli / Ebéd / Vacsora (default)
+  | '5meals'   // Reggeli / Tízórai / Ebéd / Uzsonna / Vacsora
+  | '2meals'   // Reggeli / Vacsora
+  | 'if16_8'   // 12:00 - 20:00 eating window
+  | 'if18_6';  // 13:00 - 19:00 eating window
+
 /** User meal interval settings — saved in profile, used by My Menu and rest period card */
 export interface MealSettings {
   mealCount: number;
   meals: MealWindow[];
-  allowedSnacks: string[]; // food ids
+  allowedSnacks: string[]; // snack ids (single for non-IF: one selected snack)
+  /** When set, editor and getMealStatus use this; otherwise derived from mealCount for backward compat */
+  mealModel?: MealModel;
 }
 
 export interface StoredUserProfile {
@@ -121,7 +131,7 @@ export async function saveUserProfile(partial: Partial<StoredUserProfile>): Prom
 }
 
 const DEFAULT_MEAL_WINDOWS: Record<number, MealWindow[]> = {
-  1: [{ name: 'Főétkezés', startTime: '13:00', endTime: '14:00' }],
+  1: [{ name: 'Eating window', startTime: '12:00', endTime: '20:00' }],
   2: [
     { name: 'Reggeli', startTime: '08:00', endTime: '09:00' },
     { name: 'Vacsora', startTime: '18:00', endTime: '19:00' },
@@ -146,23 +156,45 @@ const DEFAULT_MEAL_WINDOWS: Record<number, MealWindow[]> = {
   ],
 };
 
+const DEFAULT_MEALS_BY_MODEL: Record<MealModel, MealWindow[]> = {
+  '3meals': DEFAULT_MEAL_WINDOWS[3].map(m => ({ ...m })),
+  '5meals': DEFAULT_MEAL_WINDOWS[5].map(m => ({ ...m })),
+  '2meals': DEFAULT_MEAL_WINDOWS[2].map(m => ({ ...m })),
+  'if16_8': [{ name: 'Eating window', startTime: '12:00', endTime: '20:00' }],
+  'if18_6': [{ name: 'Eating window', startTime: '13:00', endTime: '19:00' }],
+};
+
 export function getDefaultMealSettings(): MealSettings {
   return {
     mealCount: 3,
     meals: DEFAULT_MEAL_WINDOWS[3].map(m => ({ ...m })),
-    allowedSnacks: [],
+    allowedSnacks: ['alma'],
+    mealModel: '3meals',
   };
 }
 
-/** Default meal windows for a given count (1–5). Used by MealIntervalEditor when changing count. */
+/** Default meal windows for a given count (1–5). Used for backward compat. */
 export function getDefaultMealsForCount(count: number): MealWindow[] {
   const c = Math.max(1, Math.min(5, count));
   return DEFAULT_MEAL_WINDOWS[c].map(m => ({ ...m }));
 }
 
+/** Default meal windows for a named model. Used by MealIntervalEditor. */
+export function getDefaultMealsForModel(model: MealModel): MealWindow[] {
+  return DEFAULT_MEALS_BY_MODEL[model].map(m => ({ ...m }));
+}
+
+/** Returns mealCount for a model (1 for IF, 2/3/5 for others). */
+export function getMealCountForModel(model: MealModel): number {
+  if (model === 'if16_8' || model === 'if18_6') return 1;
+  if (model === '2meals') return 2;
+  if (model === '3meals') return 3;
+  return 5;
+}
+
 export async function getMealSettings(): Promise<MealSettings> {
   const profile = await getUserProfile();
-  if (profile.mealSettings && profile.mealSettings.mealCount >= 1 && profile.mealSettings.mealCount <= 5) {
+  if (profile.mealSettings && profile.mealSettings.meals && profile.mealSettings.meals.length >= 1) {
     return profile.mealSettings;
   }
   return getDefaultMealSettings();

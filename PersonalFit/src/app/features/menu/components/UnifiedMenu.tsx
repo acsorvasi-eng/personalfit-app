@@ -458,21 +458,52 @@ export function UnifiedMenu() {
     const currentMinutes = currentTime.getMinutes();
     const currentTimeInMinutes = currentHour * 60 + currentMinutes;
 
-    const useSettings = mealSettings?.mealCount === 3 && mealSettings.meals.length >= 3;
-    const BREAKFAST_START = useSettings ? parseTimeToMinutes(mealSettings!.meals[0].startTime) : DEFAULT_BREAKFAST_START;
-    const BREAKFAST_END = useSettings ? parseTimeToMinutes(mealSettings!.meals[0].endTime) : DEFAULT_BREAKFAST_END;
-    const LUNCH_START = useSettings ? parseTimeToMinutes(mealSettings!.meals[1].startTime) : DEFAULT_LUNCH_START;
-    const LUNCH_END = useSettings ? parseTimeToMinutes(mealSettings!.meals[1].endTime) : DEFAULT_LUNCH_END;
-    const DINNER_START = useSettings ? parseTimeToMinutes(mealSettings!.meals[2].startTime) : DEFAULT_DINNER_START;
-    const DINNER_END = useSettings ? parseTimeToMinutes(mealSettings!.meals[2].endTime) : DEFAULT_DINNER_END;
+    const count = mealSettings?.mealCount ?? 3;
+    const mealsList = mealSettings?.meals?.length ? mealSettings.meals : [
+      { name: 'Reggeli', startTime: '06:00', endTime: '08:00' },
+      { name: 'Ebéd', startTime: '12:30', endTime: '13:30' },
+      { name: 'Vacsora', startTime: '17:30', endTime: '18:30' },
+    ];
+    let BREAKFAST_START: number, BREAKFAST_END: number, LUNCH_START: number, LUNCH_END: number, DINNER_START: number, DINNER_END: number;
+    if (count === 1 && mealsList.length >= 1) {
+      const m = mealsList[0];
+      BREAKFAST_START = parseTimeToMinutes(m.startTime);
+      BREAKFAST_END = parseTimeToMinutes(m.endTime);
+      LUNCH_START = BREAKFAST_END; LUNCH_END = BREAKFAST_END;
+      DINNER_START = BREAKFAST_END; DINNER_END = BREAKFAST_END;
+    } else if (count === 2 && mealsList.length >= 2) {
+      BREAKFAST_START = parseTimeToMinutes(mealsList[0].startTime);
+      BREAKFAST_END = parseTimeToMinutes(mealsList[0].endTime);
+      LUNCH_START = BREAKFAST_END; LUNCH_END = BREAKFAST_END;
+      DINNER_START = parseTimeToMinutes(mealsList[1].startTime);
+      DINNER_END = parseTimeToMinutes(mealsList[1].endTime);
+    } else if (count >= 3 && mealsList.length >= 3) {
+      BREAKFAST_START = parseTimeToMinutes(mealsList[0].startTime);
+      BREAKFAST_END = parseTimeToMinutes(mealsList[0].endTime);
+      LUNCH_START = parseTimeToMinutes(mealsList[1].startTime);
+      LUNCH_END = parseTimeToMinutes(mealsList[1].endTime);
+      DINNER_START = parseTimeToMinutes(mealsList[2].startTime);
+      DINNER_END = parseTimeToMinutes(mealsList[2].endTime);
+    } else if (count === 5 && mealsList.length >= 5) {
+      BREAKFAST_START = parseTimeToMinutes(mealsList[0].startTime);
+      BREAKFAST_END = parseTimeToMinutes(mealsList[0].endTime);
+      LUNCH_START = parseTimeToMinutes(mealsList[2].startTime);
+      LUNCH_END = parseTimeToMinutes(mealsList[2].endTime);
+      DINNER_START = parseTimeToMinutes(mealsList[4].startTime);
+      DINNER_END = parseTimeToMinutes(mealsList[4].endTime);
+    } else {
+      BREAKFAST_START = DEFAULT_BREAKFAST_START; BREAKFAST_END = DEFAULT_BREAKFAST_END;
+      LUNCH_START = DEFAULT_LUNCH_START; LUNCH_END = DEFAULT_LUNCH_END;
+      DINNER_START = DEFAULT_DINNER_START; DINNER_END = DEFAULT_DINNER_END;
+    }
 
     const breakfastPassed = currentTimeInMinutes > BREAKFAST_END;
     const lunchPassed = currentTimeInMinutes > LUNCH_END;
     const dinnerPassed = currentTimeInMinutes > DINNER_END;
 
     const inBreakfastWindow = currentTimeInMinutes >= BREAKFAST_START && currentTimeInMinutes <= BREAKFAST_END;
-    const inLunchWindow = currentTimeInMinutes >= LUNCH_START && currentTimeInMinutes <= LUNCH_END;
-    const inDinnerWindow = currentTimeInMinutes >= DINNER_START && currentTimeInMinutes <= DINNER_END;
+    const inLunchWindow = count !== 1 && count !== 2 && currentTimeInMinutes >= LUNCH_START && currentTimeInMinutes <= LUNCH_END;
+    const inDinnerWindow = count !== 1 && currentTimeInMinutes >= DINNER_START && currentTimeInMinutes <= DINNER_END;
     const isInEatingWindow = inBreakfastWindow || inLunchWindow || inDinnerWindow;
 
     let currentMeal: string | null = null;
@@ -483,12 +514,12 @@ export function UnifiedMenu() {
     else if (inLunchWindow) currentMeal = "lunch";
     else if (inDinnerWindow) currentMeal = "dinner";
     else if (!breakfastPassed) { currentMeal = "breakfast"; nextMealTime = BREAKFAST_START; restingTimeMinutes = BREAKFAST_START - currentTimeInMinutes; }
-    else if (!lunchPassed) { currentMeal = "lunch"; nextMealTime = LUNCH_START; restingTimeMinutes = LUNCH_START - currentTimeInMinutes; }
+    else if (count !== 1 && count !== 2 && !lunchPassed) { currentMeal = "lunch"; nextMealTime = LUNCH_START; restingTimeMinutes = LUNCH_START - currentTimeInMinutes; }
     else if (!dinnerPassed) { currentMeal = "dinner"; nextMealTime = DINNER_START; restingTimeMinutes = DINNER_START - currentTimeInMinutes; }
     else { restingTimeMinutes = (24 * 60 - currentTimeInMinutes) + BREAKFAST_START; currentMeal = "breakfast"; nextMealTime = BREAKFAST_START; }
 
     const totalRestMinutes =
-      currentMeal === "breakfast" ? LUNCH_START - BREAKFAST_END
+      currentMeal === "breakfast" ? (count === 1 ? 24 * 60 - (BREAKFAST_END - BREAKFAST_START) : LUNCH_START - BREAKFAST_END)
       : currentMeal === "lunch" ? DINNER_START - LUNCH_END
       : currentMeal === "dinner" ? 24 * 60 - DINNER_END + BREAKFAST_START
       : 0;
@@ -693,15 +724,13 @@ export function UnifiedMenu() {
   const lunchConsumed = selectedLunch && checkedMeals.has(selectedLunch.id);
   const dinnerConsumed = selectedDinner && checkedMeals.has(selectedDinner.id);
 
-  const breakfastTimeStr = mealSettings?.mealCount === 3 && mealSettings.meals[0]
-    ? `${mealSettings.meals[0].startTime} - ${mealSettings.meals[0].endTime}`
-    : "06:00 - 08:00";
-  const lunchTimeStr = mealSettings?.mealCount === 3 && mealSettings.meals[1]
-    ? `${mealSettings.meals[1].startTime} - ${mealSettings.meals[1].endTime}`
-    : "12:30 - 13:30";
-  const dinnerTimeStr = mealSettings?.mealCount === 3 && mealSettings.meals[2]
-    ? `${mealSettings.meals[2].startTime} - ${mealSettings.meals[2].endTime}`
-    : "17:30 - 18:30";
+  const mc = mealSettings?.mealCount ?? 3;
+  const ms = mealSettings?.meals ?? [];
+  const breakfastTimeStr = ms[0] ? `${ms[0].startTime} - ${ms[0].endTime}` : "06:00 - 08:00";
+  const lunchTimeStr = mc === 1 ? "–" : (mc === 3 && ms[1]) || (mc === 5 && ms[2])
+    ? `${(mc === 3 ? ms[1] : ms[2])!.startTime} - ${(mc === 3 ? ms[1] : ms[2])!.endTime}` : "12:30 - 13:30";
+  const dinnerTimeStr = mc === 1 ? "–" : (mc === 2 && ms[1]) ? `${ms[1].startTime} - ${ms[1].endTime}` : (mc >= 3 && (mc === 3 ? ms[2] : ms[4]))
+    ? `${(mc === 3 ? ms[2] : ms[4])!.startTime} - ${(mc === 3 ? ms[2] : ms[4])!.endTime}` : "17:30 - 18:30";
 
   const mealSlots = [
     { type: 'breakfast' as const, title: t("menu.breakfast"), time: breakfastTimeStr, icon: "🌅", meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed },
