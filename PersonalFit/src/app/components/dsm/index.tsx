@@ -706,6 +706,48 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
   );
 }
 
+// --- WaterButton ---
+// Single pill CTA: "+250ml", same style in rest card and floating. Pulse + click ripple.
+export interface WaterButtonProps {
+  onClick: () => void;
+  className?: string;
+  variant?: "default" | "floating";
+}
+
+export function WaterButton({ onClick, className = "", variant = "default" }: WaterButtonProps) {
+  const [clickKey, setClickKey] = useState(0);
+  const handleClick = useCallback(() => {
+    setClickKey((k) => k + 1);
+    onClick();
+  }, [onClick]);
+
+  return (
+    <motion.button
+      key={clickKey}
+      type="button"
+      onClick={handleClick}
+      className={`
+        flex items-center gap-2 rounded-full border border-white/30 font-bold text-white cursor-pointer select-none
+        bg-gradient-to-br from-[#3b82f6] to-[#06b6d4]
+        shadow-[0_4px_15px_rgba(59,130,246,0.4)]
+        px-6 py-3 text-base
+        ${variant === "floating" ? "shadow-[0_6px_20px_rgba(59,130,246,0.5)]" : ""}
+        ${className}
+      `}
+      style={{
+        animation: "water-button-pulse 2s infinite",
+      }}
+      initial={{ scale: 0.95 }}
+      animate={{ scale: [1.05, 1] }}
+      transition={{ duration: 0.3 }}
+      aria-label="Víz hozzáadása +250ml"
+    >
+      <span>💧</span>
+      <span>+250ml</span>
+    </motion.button>
+  );
+}
+
 // ====================================================================
 // 4. COMPOSITE COMPONENTS
 // ====================================================================

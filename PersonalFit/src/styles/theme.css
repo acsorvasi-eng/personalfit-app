@@ -352,3 +352,9 @@
   --color-green-100: #143020;
   --color-green-200: #1c4a2e;
 }
+
+/* Water button pulse — prominent CTA */
+@keyframes water-button-pulse {
+  0%, 100% { box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 4px 25px rgba(59, 130, 246, 0.7), 0 0 0 6px rgba(59, 130, 246, 0.1); }
+}
