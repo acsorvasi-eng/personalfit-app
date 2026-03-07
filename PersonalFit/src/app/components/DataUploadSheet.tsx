@@ -197,8 +197,8 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
             className="fixed inset-x-0 bottom-0 z-50 max-h-[92vh] bg-white dark:bg-[#1E1E1E] rounded-t-3xl shadow-2xl overflow-hidden flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            {/* Handle + Header */}
-            <div className="flex-shrink-0 pt-3 pb-2 px-5">
+            {/* Handle + Header — full width, no border radius */}
+            <div className="flex-shrink-0 w-full rounded-none m-0 pt-3 pb-2 px-4" style={{ width: '100%', borderRadius: 0, margin: 0 }}>
               <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-3" />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">

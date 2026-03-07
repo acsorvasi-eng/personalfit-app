@@ -891,10 +891,18 @@ export function DSMSubPageHeader({
 }: DSMSubPageHeaderProps) {
   const { t } = useLanguage();
   return (
-    <div className={`bg-gradient-to-r ${gradientFrom} ${gradientTo} text-white px-4 py-4`}
-      style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 16px))" }}
+    <div
+      className={`w-full rounded-none m-0 bg-gradient-to-r ${gradientFrom} ${gradientTo} text-white py-4`}
+      style={{
+        width: '100%',
+        borderRadius: 0,
+        margin: 0,
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+        paddingTop: 'max(1rem, env(safe-area-inset-top, 16px))',
+      }}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button

@@ -18,8 +18,9 @@ import {
 import { getAllFoods } from "../../../backend/services/FoodCatalogService";
 import type { FoodEntity } from "../../../backend/models";
 
-const LOW_CALORIE_THRESHOLD = 150;
-const DEFAULT_SNACKS_COUNT = 3;
+/** Only foods with calories_per_100g < this are shown as snack options (strict filter). */
+const SNACK_MAX_CALORIES_PER_100G = 100;
+const MAX_ALLOWED_SNACKS = 2;
 
 export function MealIntervalEditor() {
   const { t } = useLanguage();
@@ -29,8 +30,9 @@ export function MealIntervalEditor() {
   const [mealCount, setMealCount] = useState(3);
   const [meals, setMeals] = useState<MealWindow[]>([]);
   const [allowedSnacks, setAllowedSnacks] = useState<string[]>([]);
-  const [lowCalorieFoods, setLowCalorieFoods] = useState<FoodEntity[]>([]);
+  const [snackOptions, setSnackOptions] = useState<FoodEntity[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [snackLimitMessage, setSnackLimitMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,14 +40,14 @@ export function MealIntervalEditor() {
       const [settings, allFoods] = await Promise.all([getMealSettings(), getAllFoods()]);
       setMealCount(settings.mealCount);
       setMeals(settings.meals.length ? settings.meals : getDefaultMealsForCount(settings.mealCount));
-      const lowCal = allFoods
-        .filter((f) => f.calories_per_100g < LOW_CALORIE_THRESHOLD)
+      const options = allFoods
+        .filter((f) => f.calories_per_100g < SNACK_MAX_CALORIES_PER_100G)
         .sort((a, b) => a.calories_per_100g - b.calories_per_100g);
-      setLowCalorieFoods(lowCal);
+      setSnackOptions(options);
       if (settings.allowedSnacks.length > 0) {
-        setAllowedSnacks(settings.allowedSnacks);
+        setAllowedSnacks(settings.allowedSnacks.slice(0, MAX_ALLOWED_SNACKS));
       } else {
-        setAllowedSnacks(lowCal.slice(0, DEFAULT_SNACKS_COUNT).map((f) => f.id));
+        setAllowedSnacks(options.slice(0, MAX_ALLOWED_SNACKS).map((f) => f.id));
       }
     } finally {
       setLoading(false);
@@ -72,9 +74,15 @@ export function MealIntervalEditor() {
   };
 
   const toggleSnack = (foodId: string) => {
-    setAllowedSnacks((prev) =>
-      prev.includes(foodId) ? prev.filter((id) => id !== foodId) : [...prev, foodId]
-    );
+    setSnackLimitMessage(null);
+    setAllowedSnacks((prev) => {
+      if (prev.includes(foodId)) return prev.filter((id) => id !== foodId);
+      if (prev.length >= MAX_ALLOWED_SNACKS) {
+        setSnackLimitMessage(t("mealInterval.maxSnacksMessage") || "Maximum 2 étel engedélyezett pihenési időszakban");
+        return prev;
+      }
+      return [...prev, foodId];
+    });
   };
 
   const timeToMinutes = (hhmm: string): number => {
@@ -124,9 +132,18 @@ export function MealIntervalEditor() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#121212]">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-gradient-to-br from-blue-500 via-emerald-500 to-teal-500 px-4 pt-4 pb-4 rounded-b-3xl shadow-lg"
-            style={{ paddingTop: "max(1rem, env(safe-area-inset-top, 16px))" }}>
+      {/* Header — full width, no border radius (edge-to-edge) */}
+      <div
+        className="flex-shrink-0 w-full rounded-none m-0 bg-gradient-to-br from-blue-500 via-emerald-500 to-teal-500 pt-4 pb-4 shadow-lg"
+        style={{
+          width: '100%',
+          borderRadius: 0,
+          margin: 0,
+          paddingLeft: '1rem',
+          paddingRight: '1rem',
+          paddingTop: 'max(1rem, env(safe-area-inset-top, 16px))',
+        }}
+      >
         <div className="flex items-center justify-between pt-2">
           <div>
             <h1 className="text-xl font-bold text-white">
@@ -209,7 +226,7 @@ export function MealIntervalEditor() {
           )}
         </section>
 
-        {/* Section 3: Allowed snacks */}
+        {/* Section 3: Allowed snacks — max 2, only options with calories_per_100g < 100 */}
         <section className="bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-[#2a2a2a] p-4 shadow-sm">
           <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
             {t("mealInterval.allowedSnacksSection")}
@@ -217,8 +234,13 @@ export function MealIntervalEditor() {
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
             {t("mealInterval.allowedSnacksHint")}
           </p>
+          {snackLimitMessage && (
+            <p className="text-sm text-amber-600 dark:text-amber-400 mb-2" role="alert">
+              {snackLimitMessage}
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
-            {lowCalorieFoods.map((food) => {
+            {snackOptions.map((food) => {
               const enabled = allowedSnacks.includes(food.id);
               return (
                 <button
@@ -237,7 +259,7 @@ export function MealIntervalEditor() {
               );
             })}
           </div>
-          {lowCalorieFoods.length === 0 && (
+          {snackOptions.length === 0 && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {t("mealInterval.noLowCalorieFoods")}
             </p>
