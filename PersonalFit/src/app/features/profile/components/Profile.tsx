@@ -41,6 +41,14 @@ interface ProfileData {
   allergies: string;
   dietaryPreferences: string;
   avatar: string;
+  birthDate?: string;
+  gender?: string;
+  calorieTarget?: number;
+  waterGoalMl?: number;
+  weeklyWorkoutGoal?: number;
+  macroProteinPct?: number;
+  macroCarbsPct?: number;
+  macroFatPct?: number;
 }
 
 interface WeightEntry {
@@ -104,6 +112,14 @@ export function Profile() {
           allergies: stored.allergies,
           dietaryPreferences: stored.dietaryPreferences,
           avatar: stored.avatar,
+          birthDate: stored.birthDate,
+          gender: stored.gender,
+          calorieTarget: stored.calorieTarget,
+          waterGoalMl: stored.waterGoalMl,
+          weeklyWorkoutGoal: stored.weeklyWorkoutGoal,
+          macroProteinPct: stored.macroProteinPct,
+          macroCarbsPct: stored.macroCarbsPct,
+          macroFatPct: stored.macroFatPct,
         }));
       } catch {
         // ha hiba van, marad a localStorage alap
@@ -171,6 +187,14 @@ export function Profile() {
           allergies: stored.allergies,
           dietaryPreferences: stored.dietaryPreferences,
           avatar: stored.avatar,
+          birthDate: stored.birthDate,
+          gender: stored.gender,
+          calorieTarget: stored.calorieTarget,
+          waterGoalMl: stored.waterGoalMl,
+          weeklyWorkoutGoal: stored.weeklyWorkoutGoal,
+          macroProteinPct: stored.macroProteinPct,
+          macroCarbsPct: stored.macroCarbsPct,
+          macroFatPct: stored.macroFatPct,
         }));
       } catch {
         const saved = localStorage.getItem('userProfile');
@@ -232,8 +256,10 @@ export function Profile() {
     if (data[today]) workoutCalories = data[today].totalCalories || 0;
   }
 
-  const targetCalories = profile.goal === "Fogyás" ? dailyCalories - 500 :
-    profile.goal === "Súlygyarapodás" ? dailyCalories + 500 : dailyCalories;
+  const targetCalories = profile.calorieTarget ?? (
+    profile.goal === "Fogyás" ? dailyCalories - 500 :
+    profile.goal === "Súlygyarapodás" ? dailyCalories + 500 : dailyCalories
+  );
 
   // Chart data
   const getChartData = () => {
@@ -432,6 +458,7 @@ export function Profile() {
           dailyTarget={targetCalories}
           workoutCalories={workoutCalories}
           avatar={profile.avatar}
+          subtitle={`${t('profile.appVersion')} 0.0.1`}
           onNavigateBodyVision={() => navigate('/body-vision')}
           onNameSave={(name) => {
             const updated = { ...profile, name };
@@ -456,86 +483,76 @@ export function Profile() {
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-6 py-4 space-y-4">
 
-        <DSMProfileTabs tabs={[
-          { id: "data", label: t('profile.personalData'), icon: "📊" },
-          { id: "settings", label: t('profile.dailyGoals'), icon: "⚙️" },
-        ]} defaultTab="data" ariaLabel={t('ui.profileSections')}>
+        <DSMProfileTabs
+          tabs={[
+            { id: "me", label: t('profile.tabMe') },
+            { id: "goals", label: t('profile.tabGoals') },
+            { id: "settings", label: t('profile.tabSettings') },
+          ]}
+          defaultTab="me"
+          variant="pill"
+          ariaLabel={t('ui.profileSections')}
+        >
           {(activeTab) => (
             <div className="space-y-4">
-              {/* DATA TAB */}
-              {activeTab === "data" && (
+              {/* TAB 1 — Én / Me */}
+              {activeTab === "me" && (
                 <>
-        {/* Személyes adatok */}
+        {/* Tab 1 — Personal data */}
         <DSMCard>
-          <DSMSectionTitle icon={User} iconColor="text-blue-600" title={t('profile.personalData')} className="mb-3" />
-
-            <div className="space-y-3">
-              {/* Weight — prominent, on top */}
-              <InlineEditStat
-                label={t('profile.weight')}
-                value={profile.weight}
-                unit="kg"
-                type="number"
-                prominent
-                onSave={(v) => {
-                  const numVal = Number(v);
-                  if (numVal !== profile.weight && numVal > 0) {
-                    logWeight(numVal);
-                  }
-                }}
-              />
-
-              {/* 4 smaller stats in a 2x2 grid */}
-              <div className="grid grid-cols-2 gap-2">
-                <InlineEditStat
-                  label={t('profile.height')}
-                  value={profile.height}
-                  unit="cm"
-                  type="number"
-                  onSave={(v) => {
-                    const updated = { ...profile, height: Number(v) };
-                    setProfile(updated);
-                    localStorage.setItem('userProfile', JSON.stringify(updated));
-                    saveUserProfile({ height: Number(v) }).then(() => {
-                      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-                    });
-                  }}
-                />
-                <div className="bg-gray-50 dark:bg-[#252525] rounded-xl px-2 py-3 text-center border border-gray-100 dark:border-[#2a2a2a]">
-                  <div className="text-lg text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
-                    {bmi === '0' ? '–' : bmi}
-                  </div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">BMI</div>
-                </div>
-                <InlineEditStat
-                  label={t('profile.realAge')}
-                  value={profile.age}
-                  unit={t('profileExtra.yearUnit')}
-                  type="number"
-                  onSave={(v) => {
-                    const updated = { ...profile, age: Number(v) };
-                    setProfile(updated);
-                    localStorage.setItem('userProfile', JSON.stringify(updated));
-                    window.dispatchEvent(new Event('profileUpdated'));
-                  }}
-                />
-                <MetabolicAgeTile
-                  realAge={profile.age}
-                  metabolicAge={profile.metabolicAge || 0}
-                  onSave={(v) => {
-                    const updated = { ...profile, metabolicAge: Number(v) };
-                    setProfile(updated);
-                    localStorage.setItem('userProfile', JSON.stringify(updated));
-                    saveUserProfile({ metabolicAge: Number(v) } as any).then(() => {
-                      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-                    });
-                  }}
-                />
+          <DSMSectionTitle icon={User} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.personalData')} className="mb-3" />
+          <div className="space-y-3">
+            <EditableFieldRow label={t('profile.birthDate')} value={profile.birthDate || ''} type="date" onSave={(v) => { setProfile((p) => ({ ...p, birthDate: v })); saveUserProfile({ birthDate: v || undefined }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+            <div className="pt-2 pb-1">
+              <label className="text-[10px] text-gray-500 dark:text-gray-400 block mb-1.5">{t('profile.gender')}</label>
+              <div className="flex flex-wrap gap-2">
+                {(['male', 'female', 'other'] as const).map((g) => (
+                  <button key={g} type="button" onClick={() => { setProfile((p) => ({ ...p, gender: g })); saveUserProfile({ gender: g }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.gender === g ? '#f3f4f6' : 'transparent', color: profile.gender === g ? '#111827' : '#6b7280', fontWeight: profile.gender === g ? 600 : 400, fontSize: '0.8125rem' }}>{t(`profile.gender${g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other'}`)}</button>
+                ))}
               </div>
             </div>
+          </div>
+        </DSMCard>
 
-          {/* ── Súly haladás ── */}
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2a2a2a]">
+        {/* Body metrics + BMI bar */}
+        <DSMCard>
+          <DSMSectionTitle icon={Activity} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.bodyMetrics')} className="mb-3" />
+            <div className="space-y-3">
+              <InlineEditStat label={t('profile.weight')} value={profile.weight} unit="kg" type="number" prominent onSave={(v) => { const numVal = Number(v); if (numVal > 0) logWeight(numVal); }} />
+              <div className="grid grid-cols-2 gap-2">
+                <InlineEditStat label={t('profile.height')} value={profile.height} unit="cm" type="number" onSave={(v) => { const updated = { ...profile, height: Number(v) }; setProfile(updated); saveUserProfile({ height: Number(v) }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+                <InlineEditStat label={t('profile.targetWeight')} value={weightGoal.targetKg} unit="kg" type="number" onSave={(v) => { const kg = Number(v); setWeightGoal((g) => ({ ...g, targetKg: kg })); localStorage.setItem('weightGoal', JSON.stringify({ ...weightGoal, targetKg: kg })); }} />
+              </div>
+              {/* BMI with color bar */}
+              <div className="pt-2 border-t border-gray-100 dark:border-[#2a2a2a]">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">BMI</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{bmi === '0' ? '–' : bmi}</span>
+                </div>
+                <BMIBar value={Number(bmi)} t={t} />
+                <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{getBMILabel(Number(bmi), t)}</div>
+              </div>
+            </div>
+        </DSMCard>
+
+        {/* Activity level — 5 pills */}
+        <DSMCard>
+          <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">{t('profile.activityLevel')}</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: 'Alacsony', labelKey: 'profile.activitySedentary' },
+              { key: 'Konnyu', labelKey: 'profile.activityLight' },
+              { key: 'Kozepes', labelKey: 'profile.activityModerate' },
+              { key: 'Magas', labelKey: 'profile.activityActive' },
+              { key: 'Nagyon magas', labelKey: 'profile.activityVeryActive' },
+            ].map(({ key, labelKey }) => (
+              <button key={key} type="button" onClick={() => { setProfile((p) => ({ ...p, activityLevel: key })); saveUserProfile({ activityLevel: key }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.activityLevel === key ? '#f3f4f6' : 'transparent', color: profile.activityLevel === key ? '#111827' : '#6b7280', fontWeight: profile.activityLevel === key ? 600 : 400, fontSize: '0.8125rem' }}>{t(labelKey)}</button>
+            ))}
+          </div>
+        </DSMCard>
+
+        {/* Weight progress chart */}
+        <DSMCard>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -728,9 +745,9 @@ export function Profile() {
 
           {/* Saved goal summary — shown when not editing and goal exists */}
           {!isGoalEditing && weightGoal.targetKg > 0 && (
-            <div className="mt-2.5 flex items-center justify-between px-2 py-1.5 bg-blue-50/50 dark:bg-blue-500/5 rounded-lg">
+            <div className="mt-2.5 flex items-center justify-between px-2 py-1.5 bg-gray-50 dark:bg-[#252525] rounded-lg">
               <div className="flex items-center gap-1.5">
-                <Target className="w-3 h-3 text-blue-500" />
+                <Target className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                 <span className="text-[10px] text-gray-600 dark:text-gray-400">
                   {t('profile.goalLabel')}: <span style={{ fontWeight: 600 }}>{weightGoal.targetKg} kg</span>
                 </span>
@@ -742,12 +759,25 @@ export function Profile() {
               )}
             </div>
           )}
-        </div>
         </DSMCard>
                 </>
               )}
 
-              {/* SETTINGS TAB */}
+              {/* TAB 2 — Célok / Goals */}
+              {activeTab === "goals" && (
+                <ProfileGoalsTab
+                  profile={profile}
+                  targetCalories={targetCalories}
+                  dailyCalories={dailyCalories}
+                  onProfileUpdate={(partial) => {
+                    setProfile((p) => ({ ...p, ...partial }));
+                    saveUserProfile(partial as any).then(() => { try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ } });
+                  }}
+                  t={t}
+                />
+              )}
+
+              {/* TAB 3 — Beállítások / Settings */}
               {activeTab === "settings" && (
                 <>
         {/* ★ UPLOAD MY PLAN — Primary entry point ★ */}
@@ -899,79 +929,66 @@ export function Profile() {
           </div>
         </DSMCard>
 
-        {/* ★ DATA RESET ★ */}
-        <DSMCard>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center flex-shrink-0">
-              <Trash2 className="w-5 h-5 text-red-500 dark:text-red-400" />
+        {/* Danger zone — subtle grey link */}
+        <div className="pt-4 border-t border-gray-100 dark:border-[#2a2a2a]">
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">{t('profile.dangerZone')}</p>
+          <button
+            type="button"
+            onClick={() => setShowResetConfirm(true)}
+            className="text-xs text-gray-500 dark:text-gray-400 underline hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            {t('profile.deleteAllData')}
+          </button>
+        </div>
+        {showResetConfirm && !showResetFinal && (
+          <div className="mt-3 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <span className="text-xs text-red-800 dark:text-red-300" style={{ fontWeight: 600 }}>{t('ui.confirm')}?</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
-                {t('profile.deleteData')}
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                {t('profile.deleteDataDesc')}
-              </p>
+            <p className="text-[11px] text-red-600 dark:text-red-400 mb-3">
+              {t('profile.deleteWarning')}
+            </p>
+            <div className="flex gap-2">
+              <DSMButton variant="outline" size="sm" fullWidth onClick={() => setShowResetConfirm(false)}>{t('ui.cancel')}</DSMButton>
+              <DSMButton variant="destructive" size="sm" fullWidth icon={AlertTriangle} onClick={() => setShowResetFinal(true)}>{t('ui.confirm')}</DSMButton>
             </div>
-            <DSMButton
-              variant="destructive"
-              size="sm"
-              icon={Trash2}
-              onClick={() => setShowResetConfirm(true)}
-            >
-              {t('profile.deleteBtn')}
-            </DSMButton>
           </div>
-          {showResetConfirm && !showResetFinal && (
-            <div className="mt-3 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-                <span className="text-xs text-red-800 dark:text-red-300" style={{ fontWeight: 600 }}>{t('ui.confirm')}?</span>
-              </div>
-              <p className="text-[11px] text-red-600 dark:text-red-400 mb-3">
-                {t('profile.deleteWarning')}
-              </p>
-              <div className="flex gap-2">
-                <DSMButton variant="outline" size="sm" fullWidth onClick={() => setShowResetConfirm(false)}>{t('ui.cancel')}</DSMButton>
-                <DSMButton variant="destructive" size="sm" fullWidth icon={AlertTriangle} onClick={() => setShowResetFinal(true)}>{t('ui.confirm')}</DSMButton>
-              </div>
+        )}
+        {showResetFinal && (
+          <div className="mt-3 p-3 bg-red-100 dark:bg-red-500/20 border-2 border-red-300 dark:border-red-500/30 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-xs text-red-900 dark:text-red-200" style={{ fontWeight: 700 }}>{t('profile.finalConfirmation')}</span>
             </div>
-          )}
-          {showResetFinal && (
-            <div className="mt-3 p-3 bg-red-100 dark:bg-red-500/20 border-2 border-red-300 dark:border-red-500/30 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <span className="text-xs text-red-900 dark:text-red-200" style={{ fontWeight: 700 }}>{t('profile.finalConfirmation')}</span>
-              </div>
-              <p className="text-[11px] text-red-700 dark:text-red-300 mb-3">
-                {t('profile.finalDeleteWarning')}
-              </p>
-              <div className="flex gap-2">
-                <DSMButton variant="outline" size="sm" fullWidth onClick={() => { setShowResetFinal(false); setShowResetConfirm(false); }}>{t('ui.cancel')}</DSMButton>
-                <DSMButton
-                  variant="destructive"
-                  size="sm"
-                  fullWidth
-                  icon={Trash2}
-                  loading={isResetting}
-                  onClick={async () => {
-                    setIsResetting(true);
-                    if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
-                    const result = await performFullReset({ clearTheme: false, reseed: false });
-                    setIsResetting(false);
-                    if (result.success) {
-                      setShowResetFinal(false);
-                      setShowResetConfirm(false);
-                      appData.refresh();
-                    }
-                  }}
-                >
-                  {t('profile.irreversibleDelete')}
-                </DSMButton>
-              </div>
+            <p className="text-[11px] text-red-700 dark:text-red-300 mb-3">
+              {t('profile.finalDeleteWarning')}
+            </p>
+            <div className="flex gap-2">
+              <DSMButton variant="outline" size="sm" fullWidth onClick={() => { setShowResetFinal(false); setShowResetConfirm(false); }}>{t('ui.cancel')}</DSMButton>
+              <DSMButton
+                variant="destructive"
+                size="sm"
+                fullWidth
+                icon={Trash2}
+                loading={isResetting}
+                onClick={async () => {
+                  setIsResetting(true);
+                  if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
+                  const result = await performFullReset({ clearTheme: false, reseed: false });
+                  setIsResetting(false);
+                  if (result.success) {
+                    setShowResetFinal(false);
+                    setShowResetConfirm(false);
+                    appData.refresh();
+                  }
+                }}
+              >
+                {t('profile.irreversibleDelete')}
+              </DSMButton>
             </div>
-          )}
-        </DSMCard>
+          </div>
+        )}
 
         {/* Subscription */}
         <SubscriptionManagement />
@@ -1007,6 +1024,173 @@ export function Profile() {
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────
+
+/** Inline editable row: label on top, value or input below. */
+function EditableFieldRow({ label, value, type = 'text', onSave }: { label: string; value: string; type?: string; onSave: (v: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  useEffect(() => { if (!editing) setDraft(value); }, [value, editing]);
+  const save = () => { onSave(draft); setEditing(false); };
+  return (
+    <div style={{ padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
+      <label className="block text-[0.75rem] text-gray-500 dark:text-gray-400">{label}</label>
+      {editing ? (
+        <input
+          autoFocus
+          type={type}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => { if (e.key === 'Enter') save(); }}
+          className="mt-0.5 w-full text-base font-semibold border-none border-b-2 border-blue-500 outline-none bg-transparent py-0.5 text-gray-900 dark:text-gray-100"
+        />
+      ) : (
+        <div onClick={() => setEditing(true)} className="mt-0.5 text-base font-semibold py-0.5 cursor-pointer text-gray-900 dark:text-gray-100" style={{ color: value ? undefined : '#9ca3af' }}>{value || '—'}</div>
+      )}
+    </div>
+  );
+}
+
+function getBMILabel(bmi: number, t: (k: string) => string): string {
+  if (bmi <= 0) return '';
+  if (bmi < 18.5) return t('profile.bmiUnderweight');
+  if (bmi < 25) return t('profile.bmiNormal');
+  if (bmi < 30) return t('profile.bmiOverweight');
+  return t('profile.bmiObese');
+}
+
+/** Visual BMI bar: colored zones &lt;18.5 blue, 18.5-24.9 green, 25-29.9 yellow, 30+ red; marker at value */
+function BMIBar({ value }: { value: number; t: (k: string) => string }) {
+  const maxBmi = 40;
+  const pct = value <= 0 ? 0 : Math.min(100, (value / maxBmi) * 100);
+  const zones = [
+    { end: 18.5 / maxBmi * 100, color: '#3b82f6' },
+    { end: 25 / maxBmi * 100, color: '#22c55e' },
+    { end: 30 / maxBmi * 100, color: '#eab308' },
+    { end: 100, color: '#ef4444' },
+  ];
+  return (
+    <div className="relative h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-[#2a2a2a]" style={{ width: '100%' }}>
+      <div className="absolute inset-0 flex">
+        {zones.map((z, i) => (
+          <div key={i} style={{ width: `${z.end - (zones[i - 1]?.end ?? 0)}%`, background: z.color }} />
+        ))}
+      </div>
+      <div className="absolute top-0 bottom-0 w-1 bg-gray-900 dark:bg-white rounded-full shadow" style={{ left: `${pct}%`, transform: 'translateX(-50%)' }} />
+    </div>
+  );
+}
+
+/** Tab 2 — Goals: calorie target, macros, water, weekly workouts */
+function ProfileGoalsTab({
+  profile,
+  targetCalories,
+  dailyCalories,
+  onProfileUpdate,
+  t,
+}: {
+  profile: ProfileData;
+  targetCalories: number;
+  dailyCalories: number;
+  onProfileUpdate: (partial: Partial<ProfileData>) => void;
+  t: (key: string) => string;
+}) {
+  const kcal = profile.calorieTarget ?? targetCalories;
+  const proteinPct = profile.macroProteinPct ?? 30;
+  const carbsPct = profile.macroCarbsPct ?? 40;
+  const fatPct = profile.macroFatPct ?? 30;
+  const waterGoal = profile.waterGoalMl ?? Math.round((profile.weight || 70) * 35);
+  const workoutGoal = profile.weeklyWorkoutGoal ?? 3;
+
+  const proteinG = Math.round((kcal * (proteinPct / 100)) / 4);
+  const carbsG = Math.round((kcal * (carbsPct / 100)) / 4);
+  const fatG = Math.round((kcal * (fatPct / 100)) / 9);
+
+  const updateMacros = (p: number, c: number, f: number) => {
+    onProfileUpdate({ macroProteinPct: p, macroCarbsPct: c, macroFatPct: f });
+  };
+
+  return (
+    <div className="space-y-6">
+      <DSMCard>
+        <DSMSectionTitle icon={Target} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.dailyGoals')} className="mb-3" />
+        <div className="flex flex-col items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            value={kcal || ''}
+            onChange={(e) => onProfileUpdate({ calorieTarget: e.target.value === '' ? undefined : Number(e.target.value) })}
+            className="w-32 text-center text-2xl font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-gray-200 dark:border-[#2a2a2a] focus:outline-none focus:border-blue-500 py-1"
+          />
+          <span className="text-sm text-gray-500 dark:text-gray-400">{t('profile.kcalPerDay')}</span>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{t('profile.recommendedKcal').replace('{kcal}', String(dailyCalories))}</p>
+        </div>
+      </DSMCard>
+
+      <DSMCard>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">{t('profile.macroProtein')}</span>
+            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 dark:border-[#2a2a2a] focus:outline-none" value={proteinPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(v, carbsPct, 100 - v - carbsPct); }} />% = {proteinG}g</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">{t('profile.macroCarbs')}</span>
+            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 dark:border-[#2a2a2a] focus:outline-none" value={carbsPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(proteinPct, v, 100 - proteinPct - v); }} />% = {carbsG}g</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">{t('profile.macroFat')}</span>
+            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 dark:border-[#2a2a2a] focus:outline-none" value={fatPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(proteinPct, carbsPct, v); }} />% = {fatG}g</span>
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 pt-1">{t('profile.total100')} {proteinPct + carbsPct + fatPct === 100 ? '✓' : ''}</div>
+        </div>
+      </DSMCard>
+
+      <DSMCard>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-500 dark:text-gray-400">{t('water.goal')}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              value={waterGoal || ''}
+              onChange={(e) => onProfileUpdate({ waterGoalMl: e.target.value === '' ? undefined : Number(e.target.value) })}
+              className="flex-1 text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-gray-200 dark:border-[#2a2a2a] focus:outline-none focus:border-blue-500 py-1"
+            />
+            <span className="text-sm text-gray-500 dark:text-gray-400">{t('profile.waterGoalMlPerDay')}</span>
+          </div>
+        </div>
+      </DSMCard>
+
+      <DSMCard>
+        <div className="flex flex-col gap-2">
+          <label className="text-xs text-gray-500 dark:text-gray-400">{t('profile.workoutsPerWeek')}</label>
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onProfileUpdate({ weeklyWorkoutGoal: n })}
+                style={{
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: 999,
+                  border: 'none',
+                  background: workoutGoal === n ? '#f3f4f6' : 'transparent',
+                  boxShadow: workoutGoal === n ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                  color: workoutGoal === n ? '#111827' : '#6b7280',
+                  fontWeight: workoutGoal === n ? 600 : 400,
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </DSMCard>
+    </div>
+  );
+}
 
 /** Map Firebase error codes to i18n keys for account operations */
 function mapAccountError(code: string): string {
@@ -1293,9 +1477,14 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
       )}
 
       {/* Logout button */}
-      <DSMButton variant="destructive" size="sm" fullWidth icon={LogOut} onClick={onLogout}>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-medium transition-colors hover:bg-red-50 dark:hover:bg-red-500/5 bg-white dark:bg-[#1E1E1E] border-2 border-red-500 text-red-500"
+      >
+        <LogOut className="w-4 h-4" />
         {t('profile.logout')}
-      </DSMButton>
+      </button>
     </DSMCard>
   );
 }

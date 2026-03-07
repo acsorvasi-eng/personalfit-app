@@ -39,6 +39,18 @@ export interface StoredUserProfile {
   avatar: string;
   calorieTarget?: number;
   mealSettings?: MealSettings;
+  /** Optional YYYY-MM-DD */
+  birthDate?: string;
+  /** Optional: male | female | other */
+  gender?: string;
+  /** Daily water goal in ml (default weight * 35) */
+  waterGoalMl?: number;
+  /** Weekly workout goal (1-7) */
+  weeklyWorkoutGoal?: number;
+  /** Macro percentages: protein, carbs, fat (default 30/40/30) */
+  macroProteinPct?: number;
+  macroCarbsPct?: number;
+  macroFatPct?: number;
 }
 
 const PROFILE_ID = 'current';

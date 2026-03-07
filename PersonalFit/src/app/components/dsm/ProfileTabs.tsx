@@ -26,17 +26,60 @@ interface DSMProfileTabsProps {
   children: (activeTab: string) => ReactNode;
   className?: string;
   ariaLabel?: string;
+  /** Pill style: light grey container, white active tab, no colors/gradients */
+  variant?: "default" | "pill";
 }
 
-export function DSMProfileTabs({ tabs, defaultTab, children, className = "", ariaLabel }: DSMProfileTabsProps) {
+export function DSMProfileTabs({ tabs, defaultTab, children, className = "", ariaLabel, variant = "default" }: DSMProfileTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id || "");
+
+  const isPill = variant === "pill";
 
   return (
     <div className={className}>
       {/* Tab Strip */}
-      <div className="flex bg-gray-100 dark:bg-[#252525] rounded-xl p-1 mb-4" role="tablist" aria-label={ariaLabel || "Profile sections"}>
+      <div
+        role="tablist"
+        aria-label={ariaLabel || "Profile sections"}
+        style={isPill ? {
+          display: "flex",
+          background: "#f3f4f6",
+          borderRadius: 999,
+          padding: 4,
+          margin: "1rem 0",
+          gap: 2,
+        } : undefined}
+        className={!isPill ? "flex bg-gray-100 dark:bg-[#252525] rounded-xl p-1 mb-4" : ""}
+      >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
+          if (isPill) {
+            return (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`tabpanel-${tab.id}`}
+                id={`tab-${tab.id}`}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  flex: 1,
+                  padding: "0.5rem",
+                  borderRadius: 999,
+                  border: "none",
+                  background: isActive ? "white" : "transparent",
+                  boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+                  color: isActive ? "#111827" : "#6b7280",
+                  fontWeight: isActive ? 600 : 400,
+                  fontSize: "0.875rem",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          }
           return (
             <button
               key={tab.id}

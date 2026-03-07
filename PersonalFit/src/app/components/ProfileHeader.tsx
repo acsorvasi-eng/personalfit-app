@@ -13,6 +13,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { User, Camera } from "lucide-react";
 import { PageHeader } from "./PageHeader";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface ProfileHeaderProps {
   name: string;
@@ -21,6 +22,8 @@ interface ProfileHeaderProps {
   dailyTarget: number;
   workoutCalories: number;
   avatar?: string;
+  /** Subtitle below title (e.g. member since / app version) */
+  subtitle?: string;
   onNavigateBodyVision: () => void;
   onNameSave?: (name: string) => void;
   onAgeSave?: (age: number) => void;
@@ -34,12 +37,15 @@ export function ProfileHeader({
   dailyTarget,
   workoutCalories,
   avatar,
+  subtitle,
   onNavigateBodyVision,
   onNameSave,
   onAgeSave,
   onAvatarClick,
 }: ProfileHeaderProps) {
+  const { t } = useLanguage();
   const adjustedAllowance = dailyTarget + workoutCalories;
+  const defaultName = t("profile.defaultName");
 
   // ─── Avatar element ────────────────────────────────────────────
   const avatarElement = (
@@ -68,8 +74,8 @@ export function ProfileHeader({
   const titleElement = (
     <div className="flex-1 min-w-0">
       <InlineEditableText
-        value={name || "Felhasználó"}
-        placeholder="Felhasználó"
+        value={name || defaultName}
+        placeholder={defaultName}
         onSave={(v) => onNameSave?.(v)}
         className="text-white truncate"
         isTitle
@@ -93,8 +99,9 @@ export function ProfileHeader({
   return (
     <PageHeader
       iconElement={avatarElement}
-      title={name || "Felhasználó"}
+      title={name || defaultName}
       titleElement={titleElement}
+      subtitle={subtitle}
       gradientFrom="from-blue-400"
       gradientVia="via-teal-500"
       gradientTo="to-blue-500"

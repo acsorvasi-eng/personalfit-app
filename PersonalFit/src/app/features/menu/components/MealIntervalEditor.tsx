@@ -42,6 +42,14 @@ function isIFModel(model: MealModel): boolean {
   return model === "if16_8" || model === "if18_6";
 }
 
+/** Translation key for meal by model and index (so UI shows e.g. "Mic dejun" in Romanian, not "Reggeli"). */
+function getMealLabelKey(model: MealModel, index: number): string {
+  if (model === "2meals") return ["breakfast", "dinner"][index] ?? "breakfast";
+  if (model === "3meals") return ["breakfast", "lunch", "dinner"][index] ?? "breakfast";
+  if (model === "5meals") return ["breakfast", "morningSnack", "lunch", "afternoonSnack", "dinner"][index] ?? "breakfast";
+  return "breakfast";
+}
+
 export function MealIntervalEditor() {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -283,28 +291,13 @@ export function MealIntervalEditor() {
                   className="dark:border-[#2a2a2a]"
                 >
                   {!isIFModel(mealModel) && (
-                    <input
-                      type="text"
-                      value={meal.name}
-                      onChange={(e) => updateMeal(index, "name", e.target.value)}
-                      placeholder={t("mealInterval.mealName")}
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        fontSize: 15,
-                        fontWeight: 500,
-                        color: "#111827",
-                        padding: "12px 14px",
-                        borderRadius: 12,
-                        border: "1.5px solid #e5e7eb",
-                        background: "#fff",
-                      }}
-                      className="dark:bg-[#121212] dark:border-[#2a2a2a] dark:text-gray-100"
-                    />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: "#111827" }}>
+                      {t(`meal.${getMealLabelKey(mealModel, index)}`)}
+                    </span>
                   )}
                   {isIFModel(mealModel) && (
                     <span style={{ flex: 1, fontSize: 15, color: "#6b7280" }}>
-                      {meal.name}
+                      {t(`meal.${getMealLabelKey(mealModel, index)}`)}
                     </span>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
