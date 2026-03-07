@@ -250,8 +250,8 @@ export function UnifiedMenu() {
   };
   const REST_SNACK_KCAL: Record<string, number> = {
     alma: 42,
-    dio: 65,
-    mandula: 58,
+    dio: 98,
+    mandula: 87,
     kivi: 43,
     sargarepa: 33,
   };

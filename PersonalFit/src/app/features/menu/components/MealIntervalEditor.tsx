@@ -1,6 +1,7 @@
 /**
- * MealIntervalEditor — full-page settings for meal model, time windows, and rest-period snack.
+ * MealIntervalEditor — full-page settings for meal model, time windows, and rest-period snacks.
  * Opened from My Menu rest period card long-press → "Szerkesztés".
+ * UI: 8px grid, max 2 snacks selectable.
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -19,17 +20,28 @@ import {
   type MealModel,
 } from "../../../backend/services/UserProfileService";
 
-/** Hardcoded snack options — not from food catalog. Exactly one selectable. */
-const SNACK_OPTIONS: Array<{ id: string; name: string; portion: string; kcal: number }> = [
-  { id: "alma", name: "Alma", portion: "1 db ~ 80g", kcal: 42 },
-  { id: "dio", name: "Dió", portion: "3 szem ~ 10g", kcal: 65 },
-  { id: "mandula", name: "Mandula", portion: "5 szem ~ 10g", kcal: 58 },
-  { id: "kivi", name: "Kivi", portion: "1 db ~ 70g", kcal: 43 },
-  { id: "sargarepa", name: "Sárgarépa", portion: "1 közepes ~ 80g", kcal: 33 },
+const MAX_SNACKS = 2;
+
+/** Hardcoded snack options — not from food catalog. Max 2 selectable. */
+const SNACK_OPTIONS: Array<{ id: string; emoji: string; name: string; portion: string; kcal: number }> = [
+  { id: "alma", emoji: "🍎", name: "Alma", portion: "1 db · ~80g · 42 kcal", kcal: 42 },
+  { id: "dio", emoji: "🥜", name: "Dió", portion: "4-5 szem · ~15g · 98 kcal", kcal: 98 },
+  { id: "mandula", emoji: "🌰", name: "Mandula", portion: "6-8 szem · ~15g · 87 kcal", kcal: 87 },
+  { id: "kivi", emoji: "🥝", name: "Kivi", portion: "1 db · ~70g · 43 kcal", kcal: 43 },
+  { id: "sargarepa", emoji: "🥕", name: "Sárgarépa", portion: "1 közepes · ~80g · 33 kcal", kcal: 33 },
 ];
 
-const DEFAULT_SNACK_ID = "alma";
+const DEFAULT_SNACK_IDS = ["alma", "dio"];
 const MEAL_MODELS: MealModel[] = ["3meals", "5meals", "2meals", "if16_8", "if18_6"];
+
+// 8px grid
+const PAGE_PX = 24;
+const SECTION_GAP = 32;
+const CARD_PADDING = 24;
+const ROW_GAP = 16;
+const CHIP_GAP = 12;
+const HEADER_H = 64;
+const FOOTER_H = 80;
 
 function isIFModel(model: MealModel): boolean {
   return model === "if16_8" || model === "if18_6";
@@ -42,8 +54,9 @@ export function MealIntervalEditor() {
   const [saving, setSaving] = useState(false);
   const [mealModel, setMealModel] = useState<MealModel>("3meals");
   const [meals, setMeals] = useState<MealWindow[]>([]);
-  const [selectedSnackId, setSelectedSnackId] = useState<string>(DEFAULT_SNACK_ID);
+  const [selectedSnackIds, setSelectedSnackIds] = useState<string[]>(DEFAULT_SNACK_IDS);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [snackLimitMessage, setSnackLimitMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,11 +69,10 @@ export function MealIntervalEditor() {
           ? settings.meals
           : getDefaultMealsForModel(model)
       );
-      const snackId =
-        settings.allowedSnacks?.[0] && SNACK_OPTIONS.some((s) => s.id === settings.allowedSnacks![0])
-          ? settings.allowedSnacks[0]
-          : DEFAULT_SNACK_ID;
-      setSelectedSnackId(snackId);
+      const ids = (settings.allowedSnacks ?? []).filter((id) =>
+        SNACK_OPTIONS.some((s) => s.id === id)
+      ).slice(0, MAX_SNACKS);
+      setSelectedSnackIds(ids.length > 0 ? ids : DEFAULT_SNACK_IDS);
     } finally {
       setLoading(false);
     }
@@ -74,6 +86,7 @@ export function MealIntervalEditor() {
     setMealModel(model);
     setMeals(getDefaultMealsForModel(model));
     setValidationError(null);
+    setSnackLimitMessage(null);
   };
 
   const updateMeal = (index: number, field: keyof MealWindow, value: string) => {
@@ -83,6 +96,18 @@ export function MealIntervalEditor() {
       return next;
     });
     setValidationError(null);
+  };
+
+  const toggleSnack = (snackId: string) => {
+    setSnackLimitMessage(null);
+    setSelectedSnackIds((prev) => {
+      if (prev.includes(snackId)) return prev.filter((id) => id !== snackId);
+      if (prev.length >= MAX_SNACKS) {
+        setSnackLimitMessage(t("mealInterval.maxTwoSnacksMessage") ?? "Maximum 2 nassolnivaló választható");
+        return prev;
+      }
+      return [...prev, snackId];
+    });
   };
 
   const timeToMinutes = (hhmm: string): number => {
@@ -96,7 +121,7 @@ export function MealIntervalEditor() {
       const end = timeToMinutes(meals[i].endTime);
       if (end <= start) {
         setValidationError(
-          t("mealInterval.validationEndAfterStart") ||
+          t("mealInterval.validationEndAfterStart") ??
             `${meals[i].name}: end time must be after start`
         );
         return false;
@@ -111,7 +136,7 @@ export function MealIntervalEditor() {
     setSaving(true);
     try {
       const mealCount = getMealCountForModel(mealModel);
-      const allowedSnacks = isIFModel(mealModel) ? [] : [selectedSnackId];
+      const allowedSnacks = isIFModel(mealModel) ? [] : selectedSnackIds;
       const payload: MealSettings = {
         mealCount,
         meals,
@@ -122,7 +147,7 @@ export function MealIntervalEditor() {
         mealCount,
         meals,
         allowedSnacks,
-        selectedSnack: selectedSnackId,
+        selectedSnackIds,
       });
       await saveMealSettings(payload);
       window.dispatchEvent(new Event("mealSettingsUpdated"));
@@ -142,6 +167,13 @@ export function MealIntervalEditor() {
     if18_6: "mealInterval.mealModelIf18_6",
   };
 
+  const cardStyle = {
+    background: "white",
+    borderRadius: 16,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+    padding: CARD_PADDING,
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#121212]">
@@ -154,7 +186,7 @@ export function MealIntervalEditor() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#121212]">
-      {/* Header — fixed, full width, no border radius, app gradient */}
+      {/* Header — 64px height, gradient, full width */}
       <div
         style={{
           position: "fixed",
@@ -162,9 +194,11 @@ export function MealIntervalEditor() {
           left: 0,
           right: 0,
           width: "100%",
+          height: HEADER_H,
+          minHeight: HEADER_H,
           borderRadius: 0,
-          padding: "1rem",
-          paddingTop: "max(1rem, env(safe-area-inset-top, 16px))",
+          padding: `0 ${PAGE_PX}px`,
+          paddingTop: "env(safe-area-inset-top, 0px)",
           zIndex: 50,
           display: "flex",
           alignItems: "center",
@@ -177,7 +211,7 @@ export function MealIntervalEditor() {
           <h1 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700, color: "white" }}>
             {t("mealInterval.title")}
           </h1>
-          <p style={{ margin: 0, fontSize: "0.875rem", marginTop: "0.25rem", color: "rgba(255,255,255,0.9)" }}>
+          <p style={{ margin: 0, fontSize: "0.875rem", marginTop: 2, color: "rgba(255,255,255,0.9)" }}>
             {t("mealInterval.subtitle")}
           </p>
         </div>
@@ -191,132 +225,224 @@ export function MealIntervalEditor() {
         </button>
       </div>
 
-      {/* Body — padding so content is not hidden behind fixed header and footer */}
+      {/* Body — 8px grid: page padding 24px, section gap 32px */}
       <div
-        className="flex-1 overflow-y-auto px-4 space-y-6"
+        className="flex-1 overflow-y-auto"
         style={{
-          paddingTop: "calc(5rem + env(safe-area-inset-top, 0px))",
-          paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
+          paddingLeft: PAGE_PX,
+          paddingRight: PAGE_PX,
+          paddingTop: HEADER_H + SECTION_GAP,
+          paddingBottom: FOOTER_H + SECTION_GAP + 24,
         }}
       >
-        {/* Section 1: Meal model dropdown */}
-        <section className="bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-[#2a2a2a] p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">
-            {t("mealInterval.mealCountLabel")}
-          </h2>
-          <select
-            value={mealModel}
-            onChange={(e) => handleModelChange(e.target.value as MealModel)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#1a1a1a] text-gray-900 dark:text-gray-100 font-medium"
-          >
-            {MEAL_MODELS.map((m) => (
-              <option key={m} value={m}>
-                {t(modelLabelKey[m])}
-              </option>
-            ))}
-          </select>
-        </section>
+        <div style={{ display: "flex", flexDirection: "column", gap: SECTION_GAP }}>
+          {/* Section 1: Meal model dropdown */}
+          <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
+            <h2
+              style={{
+                fontSize: 13,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#6b7280",
+                fontWeight: 600,
+                margin: 0,
+                marginBottom: ROW_GAP,
+              }}
+            >
+              {t("mealInterval.mealCountLabel")}
+            </h2>
+            <select
+              value={mealModel}
+              onChange={(e) => handleModelChange(e.target.value as MealModel)}
+              style={{
+                width: "100%",
+                height: 56,
+                borderRadius: 12,
+                border: "1.5px solid #e5e7eb",
+                padding: "0 16px",
+                fontSize: 15,
+                fontWeight: 500,
+                color: "#111827",
+                background: "#fff",
+              }}
+              className="dark:bg-[#252525] dark:border-[#2a2a2a] dark:text-gray-100"
+            >
+              {MEAL_MODELS.map((m) => (
+                <option key={m} value={m}>
+                  {t(modelLabelKey[m])}
+                </option>
+              ))}
+            </select>
+          </section>
 
-        {/* Section 2: Meal time inputs (or single eating window for IF) */}
-        <section className="bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-[#2a2a2a] p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">
-            {t("mealInterval.mealTimesLabel")}
-          </h2>
-          <div className="space-y-4">
-            {meals.map((meal, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-[#1a1a1a]"
-              >
-                {!isIFModel(mealModel) && (
-                  <input
-                    type="text"
-                    value={meal.name}
-                    onChange={(e) =>
-                      updateMeal(index, "name", e.target.value)
-                    }
-                    placeholder={t("mealInterval.mealName")}
-                    className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#121212] text-gray-900 dark:text-gray-100 text-sm"
-                  />
-                )}
-                {isIFModel(mealModel) && (
-                  <span className="text-sm text-gray-600 dark:text-gray-400 flex-1">
-                    {meal.name}
-                  </span>
-                )}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="time"
-                    value={meal.startTime}
-                    onChange={(e) =>
-                      updateMeal(index, "startTime", e.target.value)
-                    }
-                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#121212] text-gray-900 dark:text-gray-100 text-sm"
-                  />
-                  <span className="text-gray-400">–</span>
-                  <input
-                    type="time"
-                    value={meal.endTime}
-                    onChange={(e) =>
-                      updateMeal(index, "endTime", e.target.value)
-                    }
-                    className="px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#121212] text-gray-900 dark:text-gray-100 text-sm"
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          {validationError && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-              {validationError}
-            </p>
-          )}
-        </section>
-
-        {/* Section 3: Snack (single selection) or IF message */}
-        <section className="bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-[#2a2a2a] p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
-            {t("mealInterval.allowedSnacksSection")}
-          </h2>
-          {isIFModel(mealModel) ? (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              {t("mealInterval.ifFastingMessage")}
-            </p>
-          ) : (
-            <>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                {t("mealInterval.allowedSnacksHint")}
+          {/* Section 2: Meal time inputs */}
+          <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
+            <h2
+              style={{
+                fontSize: 13,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#6b7280",
+                fontWeight: 600,
+                margin: 0,
+                marginBottom: ROW_GAP,
+              }}
+            >
+              {t("mealInterval.mealTimesLabel")}
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {meals.map((meal, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 16,
+                    paddingTop: index === 0 ? 0 : ROW_GAP,
+                    paddingBottom: ROW_GAP,
+                    borderBottom: index < meals.length - 1 ? "1px solid #f3f4f6" : "none",
+                  }}
+                  className="dark:border-[#2a2a2a]"
+                >
+                  {!isIFModel(mealModel) && (
+                    <input
+                      type="text"
+                      value={meal.name}
+                      onChange={(e) => updateMeal(index, "name", e.target.value)}
+                      placeholder={t("mealInterval.mealName")}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: "#111827",
+                        padding: "12px 14px",
+                        borderRadius: 12,
+                        border: "1.5px solid #e5e7eb",
+                        background: "#fff",
+                      }}
+                      className="dark:bg-[#121212] dark:border-[#2a2a2a] dark:text-gray-100"
+                    />
+                  )}
+                  {isIFModel(mealModel) && (
+                    <span style={{ flex: 1, fontSize: 15, color: "#6b7280" }}>
+                      {meal.name}
+                    </span>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="time"
+                      value={meal.startTime}
+                      onChange={(e) => updateMeal(index, "startTime", e.target.value)}
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 600,
+                        padding: "10px 12px",
+                        borderRadius: 12,
+                        border: "1.5px solid #e5e7eb",
+                        background: "#fff",
+                        color: "#111827",
+                      }}
+                      className="dark:bg-[#121212] dark:border-[#2a2a2a] dark:text-gray-100"
+                    />
+                    <span style={{ color: "#9ca3af" }}>–</span>
+                    <input
+                      type="time"
+                      value={meal.endTime}
+                      onChange={(e) => updateMeal(index, "endTime", e.target.value)}
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 600,
+                        padding: "10px 12px",
+                        borderRadius: 12,
+                        border: "1.5px solid #e5e7eb",
+                        background: "#fff",
+                        color: "#111827",
+                      }}
+                      className="dark:bg-[#121212] dark:border-[#2a2a2a] dark:text-gray-100"
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {validationError && (
+              <p style={{ marginTop: 12, fontSize: 14, color: "#dc2626" }}>
+                {validationError}
               </p>
-              <div className="flex flex-wrap gap-2">
-                {SNACK_OPTIONS.map((snack) => {
-                  const selected = selectedSnackId === snack.id;
-                  return (
-                    <button
-                      key={snack.id}
-                      type="button"
-                      onClick={() => setSelectedSnackId(snack.id)}
-                      className={`px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                        selected
-                          ? "bg-emerald-100 dark:bg-emerald-500/20 border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
-                          : "bg-gray-100 dark:bg-gray-800/50 border-gray-200 dark:border-[#2a2a2a] text-gray-600 dark:text-gray-400"
-                      }`}
-                    >
-                      {selected && (
-                        <Check className="w-3.5 h-3.5 inline-block mr-1.5 align-middle" />
-                      )}
-                      {snack.name} ({snack.portion}, {snack.kcal} kcal)
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </section>
+            )}
+          </section>
+
+          {/* Section 3: Snacks (max 2) or IF message */}
+          <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
+            <h2
+              style={{
+                fontSize: 13,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#6b7280",
+                fontWeight: 600,
+                margin: 0,
+                marginBottom: 8,
+              }}
+            >
+              {t("mealInterval.allowedSnacksSection")}
+            </h2>
+            {isIFModel(mealModel) ? (
+              <p style={{ fontSize: 15, color: "#6b7280", marginTop: 12 }}>
+                {t("mealInterval.ifFastingMessage")}
+              </p>
+            ) : (
+              <>
+                <p style={{ fontSize: 14, color: "#6b7280", marginBottom: ROW_GAP }}>
+                  {t("mealInterval.allowedSnacksHint")}
+                </p>
+                {snackLimitMessage && (
+                  <p style={{ fontSize: 14, color: "#d97706", marginBottom: 12 }} role="alert">
+                    {snackLimitMessage}
+                  </p>
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: CHIP_GAP }}>
+                  {SNACK_OPTIONS.map((snack) => {
+                    const selected = selectedSnackIds.includes(snack.id);
+                    return (
+                      <button
+                        key={snack.id}
+                        type="button"
+                        onClick={() => toggleSnack(snack.id)}
+                        style={{
+                          height: 48,
+                          padding: "0 16px",
+                          borderRadius: 12,
+                          border: "1.5px solid",
+                          fontSize: 14,
+                          fontWeight: 500,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          background: selected ? "#ecfdf5" : "#f9fafb",
+                          borderColor: selected ? "#10b981" : "#e5e7eb",
+                          color: selected ? "#065f46" : "#374151",
+                        }}
+                        className="dark:bg-[#252525] dark:border-[#2a2a2a] dark:text-gray-200"
+                      >
+                        <span>{snack.emoji}</span>
+                        <span>{snack.name}</span>
+                        <span style={{ opacity: 0.85 }}>{snack.portion}</span>
+                        {selected && <Check className="w-4 h-4 flex-shrink-0" style={{ marginLeft: "auto" }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </section>
+        </div>
       </div>
 
-      {/* Footer — fixed, full width, no border radius */}
+      {/* Footer — 80px height */}
       <div
         style={{
           position: "fixed",
@@ -324,9 +450,10 @@ export function MealIntervalEditor() {
           left: 0,
           right: 0,
           width: "100%",
+          minHeight: FOOTER_H,
           borderRadius: 0,
-          padding: "1rem",
-          paddingBottom: "max(1rem, env(safe-area-inset-bottom, 16px))",
+          padding: 16,
+          paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))",
           background: "white",
           borderTop: "1px solid #e5e7eb",
           zIndex: 50,
@@ -339,11 +466,12 @@ export function MealIntervalEditor() {
           disabled={saving}
           style={{
             width: "100%",
-            padding: "1rem",
-            borderRadius: "0.75rem",
+            height: 48,
+            padding: "0 1rem",
+            borderRadius: 12,
             background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
             color: "white",
-            fontSize: "1rem",
+            fontSize: 16,
             fontWeight: 600,
             border: "none",
             cursor: saving ? "not-allowed" : "pointer",
