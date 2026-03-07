@@ -15,9 +15,7 @@ import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
-import { getMealSettings, getUserProfile, type MealSettings } from "../../../backend/services/UserProfileService";
-import { WaterService } from "../../../backend/services/WaterService";
-import { toast } from "sonner";
+import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
 
@@ -262,43 +260,6 @@ export function UnifiedMenu() {
     [snackList]
   );
 
-  // ─── Water intake state (synced with Layout's floating tracker) ──
-  const [waterIntakeMl, setWaterIntakeMl] = useState(0);
-  const [waterGoalMl, setWaterGoalMl] = useState(2500);
-  const [waterTapping, setWaterTapping] = useState(false);
-
-  useEffect(() => {
-    const loadWater = async () => {
-      const total = await WaterService.getTodayTotal();
-      console.log('[Water] loaded total on mount:', total);
-      setWaterIntakeMl(total);
-    };
-    loadWater();
-
-    const onWaterUpdated = (e: Event) => {
-      const detail = (e as CustomEvent<{ total: number }>).detail;
-      if (detail?.total != null) {
-        console.log('[Water] waterUpdated event received:', detail);
-        setWaterIntakeMl(detail.total);
-      } else {
-        WaterService.getTodayTotal().then(setWaterIntakeMl).catch(() => {});
-      }
-    };
-    window.addEventListener('waterUpdated', onWaterUpdated);
-    window.addEventListener('storage', onWaterUpdated);
-    return () => {
-      window.removeEventListener('waterUpdated', onWaterUpdated);
-      window.removeEventListener('storage', onWaterUpdated);
-    };
-  }, [todayDateStr]);
-
-  useEffect(() => {
-    getUserProfile().then((p) => {
-      const goal = p.weight > 0 ? Math.round(p.weight * 35) : 2500;
-      setWaterGoalMl(goal);
-    }).catch(() => {});
-  }, []);
-
   const snackCalories = useMemo(() => {
     let total = 0;
     for (const [id, consumed] of Object.entries(consumedSnacks)) {
@@ -315,37 +276,6 @@ export function UnifiedMenu() {
       return updated;
     });
   }, [todayDateStr]);
-
-  /** One tap/click = +250ml; optimistic update so display changes immediately; rest card button uses stopPropagation so long-press does not steal tap. */
-  const handleWaterTap = useCallback(async () => {
-    console.log('[Water] TAP - current:', waterIntakeMl);
-    setWaterTapping(true);
-    const optimistic = waterIntakeMl + 250;
-    setWaterIntakeMl(optimistic);
-    console.log('[Water] optimistic update:', optimistic);
-    try {
-      const saved = await WaterService.addWater(250);
-      console.log('[Water] DB saved total:', saved);
-      setWaterIntakeMl(saved);
-      if (navigator.vibrate) navigator.vibrate(10);
-      toast.success(t("water.added"));
-    } catch (e) {
-      console.error('[Water] save failed:', e);
-      setWaterIntakeMl(waterIntakeMl);
-      toast.error(t("water.saveFailed"));
-    } finally {
-      setWaterTapping(false);
-    }
-  }, [t, waterIntakeMl]);
-
-  const handleWaterReset = useCallback(async () => {
-    try {
-      await WaterService.resetToday();
-      setWaterIntakeMl(0);
-    } catch {
-      setWaterIntakeMl(0);
-    }
-  }, []);
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   useEffect(() => {
@@ -897,10 +827,6 @@ export function UnifiedMenu() {
                   snackEmoji={REST_SNACK_EMOJI}
                   consumedSnacks={consumedSnacks}
                   onSnackConsume={handleSnackConsume}
-                  waterGoalMl={waterGoalMl}
-                  waterCurrentMl={waterIntakeMl}
-                  onWaterTap={handleWaterTap}
-                  waterTapping={waterTapping}
                   onOpenEditor={() => navigate("/meal-intervals")}
                 />
               </div>
@@ -945,12 +871,7 @@ export function UnifiedMenu() {
               transition={{ duration: 0.2 }}
               className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
             >
-              <WaterButton
-                label="+250ml"
-                onClick={handleWaterTap}
-                onLongPress={() => navigate("/meal-intervals")}
-                variant="floating"
-              />
+              <WaterButton className="max-w-[200px]" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -1091,10 +1012,6 @@ export function UnifiedMenu() {
                 snackEmoji={REST_SNACK_EMOJI}
                 consumedSnacks={consumedSnacks}
                 onSnackConsume={handleSnackConsume}
-                waterGoalMl={waterGoalMl}
-                waterCurrentMl={waterIntakeMl}
-                onWaterTap={handleWaterTap}
-                waterTapping={waterTapping}
                 onOpenEditor={() => navigate("/meal-intervals")}
               />
               </div>
@@ -1160,7 +1077,7 @@ export function UnifiedMenu() {
                       {/* Water: only 💧 +250ml button — tap = +250ml, no text, no scroll */}
                       {slot.type === 'dinner' && status.isToday && (
                         <div className="absolute -bottom-2 -right-1">
-                          <WaterButton label="+250ml" onClick={handleWaterTap} className="!px-3 !py-2 !text-sm" />
+                          <WaterButton className="!min-w-0 !px-3 text-sm" />
                         </div>
                       )}
                     </div>
@@ -1212,11 +1129,7 @@ export function UnifiedMenu() {
             transition={{ duration: 0.2 }}
             className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
           >
-            <WaterButton
-                onClick={handleWaterTap}
-                onLongPress={() => navigate("/meal-intervals")}
-                variant="floating"
-              />
+            <WaterButton className="max-w-[200px]" />
           </motion.div>
         )}
       </AnimatePresence>
@@ -1249,10 +1162,6 @@ function RestTimerCard({
   snackEmoji,
   consumedSnacks,
   onSnackConsume,
-  waterGoalMl,
-  waterCurrentMl,
-  onWaterTap,
-  waterTapping = false,
   onOpenEditor,
   dayInfoLabel,
 }: {
@@ -1268,10 +1177,6 @@ function RestTimerCard({
   snackEmoji: Record<string, string>;
   consumedSnacks: Record<string, boolean>;
   onSnackConsume: (snackId: string) => void;
-  waterGoalMl: number;
-  waterCurrentMl: number;
-  onWaterTap: () => void;
-  waterTapping?: boolean;
   onOpenEditor?: () => void;
   dayInfoLabel?: string;
 }) {
@@ -1445,63 +1350,9 @@ function RestTimerCard({
             </>
           )}
 
-          {/* 5. Water: progress text + bar above button — tap adds 250ml; plain button with stopPropagation so card long-press does not steal tap */}
-          <div className="pt-1.5 border-t border-white/20" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: '100%', maxWidth: 200 }}>
-              <div style={{ width: '100%', height: 4, background: 'rgba(59,130,246,0.15)', borderRadius: 999, overflow: 'hidden' }}>
-                <motion.div
-                  initial={false}
-                  animate={{ width: `${Math.min(100, waterGoalMl > 0 ? (waterCurrentMl / waterGoalMl) * 100 : 0)}%` }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #3b82f6, #06b6d4)',
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
-              <p style={{ margin: 0, marginTop: 4, fontSize: '0.8rem', color: 'rgba(30,58,95,0.8)', fontWeight: 600, textAlign: 'center' }}>
-                💧 {waterCurrentMl}ml / {waterGoalMl}ml
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onWaterTap();
-              }}
-              onTouchStart={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onWaterTap();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              style={{
-                transform: waterTapping ? 'scale(0.95)' : 'scale(1)',
-                transition: 'transform 0.15s ease',
-                width: '100%',
-                maxWidth: 200,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.5rem',
-                borderRadius: 9999,
-                border: '1px solid rgba(255,255,255,0.3)',
-                background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
-                color: 'white',
-                fontWeight: 700,
-                fontSize: '1rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(59,130,246,0.4)',
-              }}
-              className="animate-pulse"
-              aria-label="+250ml"
-            >
-              <span>💧</span>
-              <span>+250ml</span>
-            </button>
+          {/* 5. Water: simple pill — icon + current ml, tap = +250ml */}
+          <div className="pt-1.5 border-t border-white/20 flex justify-center">
+            <WaterButton className="w-full max-w-[200px]" />
           </div>
 
           {/* 7. Next meal */}

@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "../PageHeader";
+import { WaterService } from "../../backend/services/WaterService";
+import { getUserProfile } from "../../backend/services/UserProfileService";
 
 // ====================================================================
 // 1. DESIGN TOKENS
@@ -707,124 +709,91 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
 }
 
 // --- WaterButton ---
-// Single pill CTA: "+250ml". Quick tap = log water; long press (500ms+) = optional onLongPress (e.g. open meal settings).
+// Simple pill: blue gradient, white outline drop icon, current total in ml. Tap = +250ml. No animation, no progress bar.
 export interface WaterButtonProps {
-  onClick: () => void;
-  onLongPress?: () => void;
-  label?: string;
   className?: string;
-  variant?: "default" | "floating";
 }
 
-export function WaterButton({ onClick, onLongPress, label, className = "", variant = "default" }: WaterButtonProps) {
-  const { t } = useLanguage();
-  const displayLabel = label ?? t("water.add");
-  const [clickKey, setClickKey] = useState(0);
-  const [showLongPressRing, setShowLongPressRing] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLongPress = useRef(false);
-  const didTouchTap = useRef(false);
+export function WaterButton({ className = "" }: WaterButtonProps) {
+  const [total, setTotal] = useState(0);
+  const [goal, setGoal] = useState(2500);
 
-  const clearTimers = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-    if (ringTimer.current) {
-      clearTimeout(ringTimer.current);
-      ringTimer.current = null;
-    }
-    setShowLongPressRing(false);
+  useEffect(() => {
+    WaterService.getTodayTotal().then(setTotal);
+    getUserProfile().then((p) => {
+      if (p?.weight && p.weight > 0) setGoal(Math.round(p.weight * 35));
+    });
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ total: number }>).detail;
+      if (detail?.total != null) setTotal(detail.total);
+    };
+    window.addEventListener("waterUpdated", handler);
+    return () => window.removeEventListener("waterUpdated", handler);
   }, []);
 
-  const handleTouchStart = useCallback(() => {
-    didTouchTap.current = false;
-    if (!onLongPress) return;
-    isLongPress.current = false;
-    clearTimers();
-    ringTimer.current = setTimeout(() => setShowLongPressRing(true), 300);
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      clearTimers();
-      if (navigator.vibrate) navigator.vibrate(30);
-      onLongPress();
-    }, 500);
-  }, [onLongPress, clearTimers]);
+  const handleTap = useCallback(
+    async (e: React.MouseEvent | React.TouchEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const optimistic = total + 250;
+      setTotal(optimistic);
+      try {
+        const saved = await WaterService.addWater(250);
+        setTotal(saved);
+      } catch {
+        setTotal((prev) => prev - 250);
+      }
+    },
+    [total]
+  );
 
-  const handleTouchEnd = useCallback(() => {
-    const wasLongPress = isLongPress.current;
-    clearTimers();
-    if (!wasLongPress) {
-      didTouchTap.current = true;
-      setClickKey((k) => k + 1);
-      onClick();
-    }
-  }, [clearTimers, onClick]);
-
-  const handleMouseDown = useCallback(() => {
-    if (!onLongPress) return;
-    isLongPress.current = false;
-    clearTimers();
-    ringTimer.current = setTimeout(() => setShowLongPressRing(true), 300);
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      clearTimers();
-      if (navigator.vibrate) navigator.vibrate(30);
-      onLongPress();
-    }, 500);
-  }, [onLongPress, clearTimers]);
-
-  const handleMouseUp = useCallback(() => {
-    clearTimers();
-  }, [clearTimers]);
-
-  const handleClick = useCallback(() => {
-    if (didTouchTap.current) {
-      didTouchTap.current = false;
-      return;
-    }
-    if (isLongPress.current) {
-      isLongPress.current = false;
-      return;
-    }
-    setClickKey((k) => k + 1);
-    onClick();
-  }, [onClick]);
+  const goalReached = total >= goal && goal > 0;
 
   return (
-    <motion.button
-      key={clickKey}
+    <button
       type="button"
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchEnd}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      data-action="add-water-250ml"
-      aria-label={displayLabel}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.2 }}
-      className={`
-        relative flex items-center gap-2 rounded-full border font-bold text-white cursor-pointer select-none
-        bg-gradient-to-br from-[#3b82f6] to-[#06b6d4]
-        shadow-[0_4px_15px_rgba(59,130,246,0.4)]
-        px-6 py-3 text-base
-        ${variant === "floating" ? "shadow-[0_6px_20px_rgba(59,130,246,0.5)]" : ""}
-        ${showLongPressRing ? "ring-2 ring-white/50 ring-offset-2 ring-offset-transparent" : "border-white/30"}
-        ${className}
-      `}
+      onClick={handleTap}
+      onTouchEnd={handleTap}
+      onTouchStart={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      aria-label={`Water ${total}ml`}
+      className={className}
       style={{
-        animation: "water-button-pulse 2s infinite",
+        width: "100%",
+        minWidth: "120px",
+        height: "52px",
+        borderRadius: "999px",
+        border: "none",
+        cursor: "pointer",
+        background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.6rem",
+        animation: "none",
+        boxShadow: "none",
       }}
-      initial={{ scale: 0.95 }}
-      animate={{ scale: 1 }}
     >
-      <span>💧</span>
-      <span>{displayLabel.replace(/^💧\s*/, "")}</span>
-    </motion.button>
+      <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path
+          d="M9 1C9 1 2 8.5 2 13.5C2 17.09 5.13 20 9 20C12.87 20 16 17.09 16 13.5C16 8.5 9 1 9 1Z"
+          stroke="white"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </svg>
+      <span
+        style={{
+          color: "white",
+          fontWeight: 700,
+          fontSize: "1.1rem",
+          letterSpacing: "0.01em",
+        }}
+      >
+        {total}ml{goalReached ? " ✓" : ""}
+      </span>
+    </button>
   );
 }
 
