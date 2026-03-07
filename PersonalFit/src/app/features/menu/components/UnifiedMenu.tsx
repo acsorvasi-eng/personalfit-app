@@ -845,9 +845,9 @@ export function UnifiedMenu() {
           onComplete={() => appData.refresh()}
         />
 
-        {/* Water widget ONLY on My Menu (empty plan layout); hidden when AI panel open */}
+        {/* Water widget ONLY during rest period (not in active meal window); hidden when AI panel open */}
         <AnimatePresence>
-          {!aiPanelOpen && (
+          {!aiPanelOpen && !status.isInEatingWindow && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1123,10 +1123,9 @@ export function UnifiedMenu() {
         }}
       />
 
-      {/* CRITICAL: Water widget (+250ml) ONLY on My Menu — must NOT appear on Sport/timer or any other screen */}
-      {/* Floating Water Tracker — fixed bottom-right above bottom nav; hidden when AI panel (timer) open */}
+      {/* Water widget (+250ml) ONLY during rest period — hidden when in active meal window or AI panel open */}
       <AnimatePresence>
-        {!aiPanelOpen && (
+        {!aiPanelOpen && !status.isInEatingWindow && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1183,8 +1182,64 @@ function RestTimerCard({
   onOpenEditor?: () => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [borderHighlight, setBorderHighlight] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const borderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onWaterResetFn = onWaterReset ?? (() => {});
+
+  const clearLongPressTimers = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    if (borderTimerRef.current) {
+      clearTimeout(borderTimerRef.current);
+      borderTimerRef.current = null;
+    }
+    setBorderHighlight(false);
+  }, []);
+
+  const handleTouchStart = useCallback(() => {
+    borderTimerRef.current = setTimeout(() => setBorderHighlight(true), 300);
+    longPressTimerRef.current = setTimeout(() => {
+      console.log("[RestCard] long press triggered");
+      longPressTimerRef.current = null;
+      if (borderTimerRef.current) {
+        clearTimeout(borderTimerRef.current);
+        borderTimerRef.current = null;
+      }
+      if (navigator.vibrate) navigator.vibrate(30);
+      setConfirmOpen(true);
+      setBorderHighlight(false);
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    clearLongPressTimers();
+  }, [clearLongPressTimers]);
+
+  const handleMouseDown = useCallback(() => {
+    borderTimerRef.current = setTimeout(() => setBorderHighlight(true), 300);
+    longPressTimerRef.current = setTimeout(() => {
+      console.log("[RestCard] long press triggered");
+      longPressTimerRef.current = null;
+      if (borderTimerRef.current) {
+        clearTimeout(borderTimerRef.current);
+        borderTimerRef.current = null;
+      }
+      setConfirmOpen(true);
+      setBorderHighlight(false);
+    }, 500);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    clearLongPressTimers();
+  }, [clearLongPressTimers]);
+
+  const handleEdit = useCallback(() => {
+    setConfirmOpen(false);
+    onOpenEditor?.();
+  }, [onOpenEditor]);
 
   const hours = Math.floor(restingTimeMinutes / 60);
   const minutes = restingTimeMinutes % 60;
@@ -1194,36 +1249,21 @@ function RestTimerCard({
     : "--:--";
   const nextMealTitle = nextMealLabel ? t(`menu.${nextMealLabel}`) : "";
 
-  const handleTouchStart = useCallback(() => {
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTimerRef.current = null;
-      if (navigator.vibrate) navigator.vibrate(30);
-      setConfirmOpen(true);
-    }, 500);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-  }, []);
-
-  const handleEdit = useCallback(() => {
-    setConfirmOpen(false);
-    onOpenEditor?.();
-  }, [onOpenEditor]);
-
   return (
     <>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 via-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-sky-950/30 border-2 border-cyan-200/70 dark:border-cyan-700/40 p-5 shadow-xl"
+        className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 via-cyan-50 to-teal-50 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-sky-950/30 border-2 p-5 shadow-xl transition-colors ${
+          borderHighlight ? "border-blue-500 dark:border-blue-400" : "border-cyan-200/70 dark:border-cyan-700/40"
+        }`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
+        onTouchMove={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-200/30 to-transparent rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-teal-200/30 to-transparent rounded-full blur-3xl" />
