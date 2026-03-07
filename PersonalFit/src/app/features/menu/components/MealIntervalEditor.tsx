@@ -23,12 +23,13 @@ import {
 const MAX_SNACKS = 2;
 
 /** Hardcoded snack options — not from food catalog. Max 2 selectable. */
-const SNACK_OPTIONS: Array<{ id: string; emoji: string; name: string; portion: string; kcal: number }> = [
-  { id: "alma", emoji: "🍎", name: "Alma", portion: "1 db · ~80g · 42 kcal", kcal: 42 },
-  { id: "dio", emoji: "🥜", name: "Dió", portion: "4-5 szem · ~15g · 98 kcal", kcal: 98 },
-  { id: "mandula", emoji: "🌰", name: "Mandula", portion: "6-8 szem · ~15g · 87 kcal", kcal: 87 },
-  { id: "kivi", emoji: "🥝", name: "Kivi", portion: "1 db · ~70g · 43 kcal", kcal: 43 },
-  { id: "sargarepa", emoji: "🥕", name: "Sárgarépa", portion: "1 közepes · ~80g · 33 kcal", kcal: 33 },
+const SNACK_OPTIONS: Array<{ id: string; emoji: string; name: string; label: string; kcal: number }> = [
+  { id: "alma", emoji: "🍎", name: "Alma", label: "1 db · 42 kcal", kcal: 42 },
+  { id: "dio", emoji: "🫘", name: "Dió", label: "3 szem · 65 kcal", kcal: 65 },
+  { id: "mandula", emoji: "🥜", name: "Mandula", label: "5 szem · 58 kcal", kcal: 58 },
+  { id: "kivi", emoji: "🥝", name: "Kivi", label: "1 db · 43 kcal", kcal: 43 },
+  { id: "sargarepa", emoji: "🥕", name: "Sárgarépa", label: "1 db · 33 kcal", kcal: 33 },
+  { id: "afonya", emoji: "🫐", name: "Áfonya", label: "1 marék · 40 kcal", kcal: 40 },
 ];
 
 const DEFAULT_SNACK_IDS = ["alma", "dio"];
@@ -184,18 +185,31 @@ export function MealIntervalEditor() {
     );
   }
 
+  const headerHeightPx = 80;
+  const footerHeightPx = 100;
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-[#121212]">
-      {/* Header — 64px height, gradient, full width */}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden",
+        background: "var(--color-gray-50, #f9fafb)",
+      }}
+      className="bg-gray-50 dark:bg-[#121212]"
+    >
+      {/* Fixed header */}
       <div
         style={{
+          flexShrink: 0,
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
           width: "100%",
-          height: HEADER_H,
-          minHeight: HEADER_H,
+          height: headerHeightPx,
+          minHeight: headerHeightPx,
           borderRadius: 0,
           padding: `0 ${PAGE_PX}px`,
           paddingTop: "env(safe-area-inset-top, 0px)",
@@ -225,14 +239,16 @@ export function MealIntervalEditor() {
         </button>
       </div>
 
-      {/* Body — 8px grid: page padding 24px, section gap 32px */}
+      {/* Scrollable body */}
       <div
-        className="flex-1 overflow-y-auto"
         style={{
+          flex: 1,
+          overflowY: "auto",
+          paddingTop: headerHeightPx,
+          paddingBottom: footerHeightPx,
           paddingLeft: PAGE_PX,
           paddingRight: PAGE_PX,
-          paddingTop: HEADER_H + SECTION_GAP,
-          paddingBottom: FOOTER_H + SECTION_GAP + 24,
+          WebkitOverflowScrolling: "touch",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: SECTION_GAP }}>
@@ -422,15 +438,17 @@ export function MealIntervalEditor() {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 8,
-                          background: selected ? "#ecfdf5" : "#f9fafb",
-                          borderColor: selected ? "#10b981" : "#e5e7eb",
-                          color: selected ? "#065f46" : "#374151",
+                          background: selected
+                            ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                            : "#f9fafb",
+                          borderColor: selected ? "#059669" : "#e5e7eb",
+                          color: selected ? "white" : "#374151",
                         }}
                         className="dark:bg-[#252525] dark:border-[#2a2a2a] dark:text-gray-200"
                       >
                         <span>{snack.emoji}</span>
                         <span>{snack.name}</span>
-                        <span style={{ opacity: 0.85 }}>{snack.portion}</span>
+                        <span style={{ opacity: selected ? 0.95 : 0.85 }}>{snack.label}</span>
                         {selected && <Check className="w-4 h-4 flex-shrink-0" style={{ marginLeft: "auto" }} />}
                       </button>
                     );
@@ -442,15 +460,16 @@ export function MealIntervalEditor() {
         </div>
       </div>
 
-      {/* Footer — 80px height */}
+      {/* Fixed footer */}
       <div
         style={{
+          flexShrink: 0,
           position: "fixed",
           bottom: 0,
           left: 0,
           right: 0,
           width: "100%",
-          minHeight: FOOTER_H,
+          minHeight: footerHeightPx,
           borderRadius: 0,
           padding: 16,
           paddingBottom: "max(16px, env(safe-area-inset-bottom, 16px))",

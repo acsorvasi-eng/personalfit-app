@@ -247,20 +247,23 @@ export function UnifiedMenu() {
     mandula: "Mandula",
     kivi: "Kivi",
     sargarepa: "Sárgarépa",
+    afonya: "Áfonya",
   };
   const REST_SNACK_KCAL: Record<string, number> = {
     alma: 42,
-    dio: 98,
-    mandula: 87,
+    dio: 65,
+    mandula: 58,
     kivi: 43,
     sargarepa: 33,
+    afonya: 40,
   };
   const REST_SNACK_EMOJI: Record<string, string> = {
     alma: "🍎",
-    dio: "🥜",
-    mandula: "🌰",
+    dio: "🫘",
+    mandula: "🥜",
     kivi: "🥝",
     sargarepa: "🥕",
+    afonya: "🫐",
   };
 
   // ─── Water intake state (synced with Layout's floating tracker) ──
