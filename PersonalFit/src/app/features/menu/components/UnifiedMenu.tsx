@@ -265,6 +265,7 @@ export function UnifiedMenu() {
   // ─── Water intake state (synced with Layout's floating tracker) ──
   const [waterIntakeMl, setWaterIntakeMl] = useState(0);
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
+  const [waterTapping, setWaterTapping] = useState(false);
 
   useEffect(() => {
     const loadWater = async () => {
@@ -315,20 +316,27 @@ export function UnifiedMenu() {
     });
   }, [todayDateStr]);
 
-  /** One tap/click = +250ml; updates state and persists via WaterService. */
+  /** One tap/click = +250ml; optimistic update so display changes immediately; rest card button uses stopPropagation so long-press does not steal tap. */
   const handleWaterTap = useCallback(async () => {
-    console.log('[Water] button tapped');
+    console.log('[Water] TAP - current:', waterIntakeMl);
+    setWaterTapping(true);
+    const optimistic = waterIntakeMl + 250;
+    setWaterIntakeMl(optimistic);
+    console.log('[Water] optimistic update:', optimistic);
     try {
-      const newTotal = await WaterService.addWater(250);
-      console.log('[Water] new total:', newTotal);
-      setWaterIntakeMl(newTotal);
+      const saved = await WaterService.addWater(250);
+      console.log('[Water] DB saved total:', saved);
+      setWaterIntakeMl(saved);
       if (navigator.vibrate) navigator.vibrate(10);
       toast.success(t("water.added"));
     } catch (e) {
-      console.error('[Water] error:', e);
+      console.error('[Water] save failed:', e);
+      setWaterIntakeMl(waterIntakeMl);
       toast.error(t("water.saveFailed"));
+    } finally {
+      setWaterTapping(false);
     }
-  }, [t]);
+  }, [t, waterIntakeMl]);
 
   const handleWaterReset = useCallback(async () => {
     try {
@@ -892,6 +900,7 @@ export function UnifiedMenu() {
                   waterGoalMl={waterGoalMl}
                   waterCurrentMl={waterIntakeMl}
                   onWaterTap={handleWaterTap}
+                  waterTapping={waterTapping}
                   onOpenEditor={() => navigate("/meal-intervals")}
                 />
               </div>
@@ -1085,6 +1094,7 @@ export function UnifiedMenu() {
                 waterGoalMl={waterGoalMl}
                 waterCurrentMl={waterIntakeMl}
                 onWaterTap={handleWaterTap}
+                waterTapping={waterTapping}
                 onOpenEditor={() => navigate("/meal-intervals")}
               />
               </div>
@@ -1242,6 +1252,7 @@ function RestTimerCard({
   waterGoalMl,
   waterCurrentMl,
   onWaterTap,
+  waterTapping = false,
   onOpenEditor,
   dayInfoLabel,
 }: {
@@ -1260,6 +1271,7 @@ function RestTimerCard({
   waterGoalMl: number;
   waterCurrentMl: number;
   onWaterTap: () => void;
+  waterTapping?: boolean;
   onOpenEditor?: () => void;
   dayInfoLabel?: string;
 }) {
@@ -1433,7 +1445,7 @@ function RestTimerCard({
             </>
           )}
 
-          {/* 5. Water: progress text + bar above button — every tap adds 250ml, display updates instantly */}
+          {/* 5. Water: progress text + bar above button — tap adds 250ml; plain button with stopPropagation so card long-press does not steal tap */}
           <div className="pt-1.5 border-t border-white/20" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '100%', maxWidth: 200 }}>
               <div style={{ width: '100%', height: 4, background: 'rgba(59,130,246,0.15)', borderRadius: 999, overflow: 'hidden' }}>
@@ -1452,12 +1464,44 @@ function RestTimerCard({
                 💧 {waterCurrentMl}ml / {waterGoalMl}ml
               </p>
             </div>
-            <WaterButton
-              label="+250ml"
-              onClick={onWaterTap}
-              onLongPress={onOpenEditor}
-              className="animate-pulse w-full max-w-[200px] justify-center"
-            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onWaterTap();
+              }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onWaterTap();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                transform: waterTapping ? 'scale(0.95)' : 'scale(1)',
+                transition: 'transform 0.15s ease',
+                width: '100%',
+                maxWidth: 200,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                borderRadius: 9999,
+                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '1rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(59,130,246,0.4)',
+              }}
+              className="animate-pulse"
+              aria-label="+250ml"
+            >
+              <span>💧</span>
+              <span>+250ml</span>
+            </button>
           </div>
 
           {/* 7. Next meal */}

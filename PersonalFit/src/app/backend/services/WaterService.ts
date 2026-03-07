@@ -65,6 +65,7 @@ export class WaterService {
 
       await db.put('water_log', { date: today, total: newTotal });
       console.log('[WaterService] saved total:', newTotal, 'ml');
+      console.log('[WaterService] dispatching waterUpdated:', newTotal);
       dispatchWaterEvents(newTotal);
       return newTotal;
     } catch (e) {
