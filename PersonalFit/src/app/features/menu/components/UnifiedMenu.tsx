@@ -267,12 +267,21 @@ export function UnifiedMenu() {
   const [waterGoalMl, setWaterGoalMl] = useState(2500);
 
   useEffect(() => {
-    const loadWater = () => {
-      WaterService.getTodayTotal().then(setWaterIntakeMl).catch(() => {});
+    const loadWater = async () => {
+      const total = await WaterService.getTodayTotal();
+      console.log('[Water] loaded total on mount:', total);
+      setWaterIntakeMl(total);
     };
     loadWater();
-    const onWaterUpdated = () => {
-      WaterService.getTodayTotal().then(setWaterIntakeMl).catch(() => {});
+
+    const onWaterUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ total: number }>).detail;
+      if (detail?.total != null) {
+        console.log('[Water] waterUpdated event received:', detail);
+        setWaterIntakeMl(detail.total);
+      } else {
+        WaterService.getTodayTotal().then(setWaterIntakeMl).catch(() => {});
+      }
     };
     window.addEventListener('waterUpdated', onWaterUpdated);
     window.addEventListener('storage', onWaterUpdated);
@@ -308,13 +317,15 @@ export function UnifiedMenu() {
 
   /** One tap/click = +250ml; updates state and persists via WaterService. */
   const handleWaterTap = useCallback(async () => {
+    console.log('[Water] button tapped');
     try {
-      const total = await WaterService.addWater(250);
-      setWaterIntakeMl(total);
+      const newTotal = await WaterService.addWater(250);
+      console.log('[Water] new total:', newTotal);
+      setWaterIntakeMl(newTotal);
       if (navigator.vibrate) navigator.vibrate(10);
       toast.success(t("water.added"));
     } catch (e) {
-      console.error("[Water] save failed:", e);
+      console.error('[Water] error:', e);
       toast.error(t("water.saveFailed"));
     }
   }, [t]);
@@ -1422,8 +1433,25 @@ function RestTimerCard({
             </>
           )}
 
-          {/* 5. Water: only 💧 +250ml button — every tap/click adds 250ml */}
-          <div className="pt-1.5 border-t border-white/20 flex justify-center">
+          {/* 5. Water: progress text + bar above button — every tap adds 250ml, display updates instantly */}
+          <div className="pt-1.5 border-t border-white/20" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '100%', maxWidth: 200 }}>
+              <div style={{ width: '100%', height: 4, background: 'rgba(59,130,246,0.15)', borderRadius: 999, overflow: 'hidden' }}>
+                <motion.div
+                  initial={false}
+                  animate={{ width: `${Math.min(100, waterGoalMl > 0 ? (waterCurrentMl / waterGoalMl) * 100 : 0)}%` }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  style={{
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #3b82f6, #06b6d4)',
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+              <p style={{ margin: 0, marginTop: 4, fontSize: '0.8rem', color: 'rgba(30,58,95,0.8)', fontWeight: 600, textAlign: 'center' }}>
+                💧 {waterCurrentMl}ml / {waterGoalMl}ml
+              </p>
+            </div>
             <WaterButton
               label="+250ml"
               onClick={onWaterTap}

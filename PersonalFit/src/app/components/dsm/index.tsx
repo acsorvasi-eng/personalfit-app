@@ -805,6 +805,8 @@ export function WaterButton({ onClick, onLongPress, label, className = "", varia
       onMouseLeave={handleMouseUp}
       data-action="add-water-250ml"
       aria-label={displayLabel}
+      whileTap={{ scale: 0.95 }}
+      transition={{ duration: 0.2 }}
       className={`
         relative flex items-center gap-2 rounded-full border font-bold text-white cursor-pointer select-none
         bg-gradient-to-br from-[#3b82f6] to-[#06b6d4]
@@ -818,8 +820,7 @@ export function WaterButton({ onClick, onLongPress, label, className = "", varia
         animation: "water-button-pulse 2s infinite",
       }}
       initial={{ scale: 0.95 }}
-      animate={{ scale: [1.05, 1] }}
-      transition={{ duration: 0.3 }}
+      animate={{ scale: 1 }}
     >
       <span>💧</span>
       <span>{displayLabel.replace(/^💧\s*/, "")}</span>
