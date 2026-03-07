@@ -25,7 +25,60 @@ Csak a UI komponensek különböznek — minden más megosztott.
 
 ---
 
-## Mappastruktúra (cél állapot)
+## Mappastruktúra — jelenlegi (feature-based, src/app)
+
+A UI feature-alapú struktúrában van; a backend és a megosztott elemek külön mappákban.
+
+```
+src/
+├── app/
+│   ├── features/
+│   │   ├── nutrition/
+│   │   │   ├── components/       ← Foods.tsx, stb.
+│   │   │   └── hooks/           ← (üres, később: useFoodCatalog, useNutritionPlan)
+│   │   │
+│   │   ├── workout/
+│   │   │   ├── components/      ← Workout.tsx, WorkoutCalendar.tsx
+│   │   │   └── hooks/          ← (üres, később: useWorkout, useTimer)
+│   │   │
+│   │   ├── menu/
+│   │   │   ├── components/     ← UnifiedMenu.tsx, MealDetail.tsx
+│   │   │   └── hooks/         ← (üres, később: useMenu, useDailyPlan)
+│   │   │
+│   │   ├── coach/              ← (üres, később: AI voice panel, useAICoach)
+│   │   ├── shopping/
+│   │   │   └── components/     ← ShoppingList.tsx
+│   │   │
+│   │   └── profile/
+│   │       └── components/    ← Profile.tsx
+│   │
+│   ├── shared/
+│   │   ├── components/         ← (közös UI elemek, pl. WaterWidget, Toast — opcionális)
+│   │   ├── hooks/              ← (üres, később: useAppData, useDB áthelyezés)
+│   │   └── layouts/            ← Layout.tsx, (BottomNav a components/dsm-ben marad)
+│   │
+│   ├── components/             ← megosztott / legacy: PageHeader, EmptyState, dsm/, ui/, onboarding/, stb.
+│   ├── backend/
+│   │   ├── services/           ← FoodCatalogService, NutritionPlanService, ActivityService, stb.
+│   │   ├── models/
+│   │   └── db.ts               ← IDatabase adapter
+│   ├── hooks/                  ← useAppData, usePlanData, useCalorieTracker, stb.
+│   ├── contexts/
+│   ├── data/
+│   └── utils/
+│
+├── api/                        ← Vercel serverless (változatlan)
+└── capacitor.config.ts
+```
+
+**Szabályok:**  
+- Service-ek a `backend/services/` mappában maradnak (nem kerülnek a feature mappákba).  
+- Csak UI komponensek és (opcionálisan) hook-ok kerülnek a `features/*` alá.  
+- Importok: feature komponensek a `../../../components`, `../../../hooks`, `../../../backend` stb. útvonalakkal hivatkoznak az app rétegre.
+
+---
+
+## Mappastruktúra (cél állapot — packages/core)
 
 ```
 personalfit/

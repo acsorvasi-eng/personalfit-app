@@ -2,6 +2,8 @@
 
 **Offline-first fitness and nutrition app for Hungarian and Romanian markets.**
 
+*Single reference for AI/dev sessions: **[MASTER_PROMPT.md](./MASTER_PROMPT.md)** — read it at session start.*
+
 ## Stack
 
 - **React 18**, **TypeScript**, **Vite**

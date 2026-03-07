@@ -22,7 +22,7 @@ import {
   Dumbbell, Moon, Sparkles, Clock, Flame,
   CalendarDays, CalendarRange, Check
 } from 'lucide-react';
-import { useLanguage, getLocaleDayNarrow, getLocaleMonth } from '../contexts/LanguageContext';
+import { useLanguage, getLocaleDayNarrow, getLocaleMonth } from '../../../contexts/LanguageContext';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES

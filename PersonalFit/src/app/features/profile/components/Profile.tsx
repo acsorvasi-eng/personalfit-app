@@ -9,24 +9,24 @@ import {
   Eye, EyeOff, KeyRound, Globe
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { AvatarEditor } from './AvatarEditor';
+import { AvatarEditor } from "../../../components/AvatarEditor";
 import { useNavigate } from "react-router";
-import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
-import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../utils/currencyConverter";
-import { ProfileHeader } from "./ProfileHeader";
-import { DSMCard, DSMSectionTitle, DSMButton } from "./dsm";
-import { DSMProfileTabs } from "./dsm/ProfileTabs";
-import { useCalorieTracker } from "../hooks/useCalorieTracker";
-import { getTrialInfo, TRIAL_DAYS } from "./onboarding/SubscriptionScreen";
-import { DataUploadSheet } from "./DataUploadSheet";
-import { BodyCompositionUploadSheet } from "./BodyCompositionUploadSheet";
-import { useAppData } from "../hooks/useAppData";
-import { performFullReset } from "../backend/services/ResetService";
-import { useStagingManager } from "../hooks/useStagingManager";
-import { useLanguage, LanguageCode } from "../contexts/LanguageContext";
-import { changeEmail, changePassword, sendPasswordResetEmail } from "../services/authService";
-import { getUserProfile, saveUserProfile } from "../backend/services/UserProfileService";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../../../utils/currencyConverter";
+import { ProfileHeader } from "../../../components/ProfileHeader";
+import { DSMCard, DSMSectionTitle, DSMButton } from "../../../components/dsm";
+import { DSMProfileTabs } from "../../../components/dsm/ProfileTabs";
+import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
+import { getTrialInfo, TRIAL_DAYS } from "../../../components/onboarding/SubscriptionScreen";
+import { DataUploadSheet } from "../../../components/DataUploadSheet";
+import { BodyCompositionUploadSheet } from "../../../components/BodyCompositionUploadSheet";
+import { useAppData } from "../../../hooks/useAppData";
+import { performFullReset } from "../../../backend/services/ResetService";
+import { useStagingManager } from "../../../hooks/useStagingManager";
+import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
+import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
+import { getUserProfile, saveUserProfile } from "../../../backend/services/UserProfileService";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ProfileData {

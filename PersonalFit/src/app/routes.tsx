@@ -8,15 +8,15 @@
 
 import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
-import { Layout } from "./components/Layout";
-import { UnifiedMenu } from "./components/UnifiedMenu";
-import { Foods } from "./components/Foods";
-import { MealDetail } from "./components/MealDetail";
-import { ShoppingList } from "./components/ShoppingList";
-import { Profile } from "./components/Profile";
+import { Layout } from "./shared/layouts/Layout";
+import { UnifiedMenu } from "./features/menu/components/UnifiedMenu";
+import { Foods } from "./features/nutrition/components/Foods";
+import { MealDetail } from "./features/menu/components/MealDetail";
+import { ShoppingList } from "./features/shopping/components/ShoppingList";
+import { Profile } from "./features/profile/components/Profile";
 import { BodyVision3D } from "./components/body-vision/BodyVision3D";
 import { SplashScreen } from "./components/SplashScreen";
-import { Workout } from "./components/Workout";
+import { Workout } from "./features/workout/components/Workout";
 import { LogMeal } from "./components/LogMeal";
 import { Checkout } from "./components/Checkout";
 import { NotFound } from "./components/NotFound";

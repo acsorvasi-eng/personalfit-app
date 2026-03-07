@@ -1,20 +1,20 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
-import { usePlanData, type MealOption } from "../hooks/usePlanData";
+import { usePlanData, type MealOption } from "../../../hooks/usePlanData";
 import { ChevronDown, Check, Clock, ChevronRight, ChevronLeft, UtensilsCrossed, Utensils, Trash2, Dumbbell, Moon, Waves, X, Flame, Zap, ArrowRightLeft, Sparkles } from "lucide-react";
-import { PageHeader } from "./PageHeader";
+import { PageHeader } from "../../../components/PageHeader";
 // DSMCoachMark removed — hints no longer used on this screen
-import { DSMQuickLogSheet } from "./dsm/QuickLogSheet";
-import { useLanguage, getLocaleDayNarrow, getLocaleMonth, getLocale } from "../contexts/LanguageContext";
-import { useCalorieTracker } from "../hooks/useCalorieTracker";
+import { DSMQuickLogSheet } from "../../../components/dsm/QuickLogSheet";
+import { useLanguage, getLocaleDayNarrow, getLocaleMonth, getLocale } from "../../../contexts/LanguageContext";
+import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 // getMealAlternatives removed — all data comes from uploaded plans only
 import { motion, AnimatePresence } from "framer-motion";
-import { FuturisticDashboard } from "./FuturisticDashboard";
-import { WaterTracker } from "./dsm";
-import { useAppData } from "../hooks/useAppData";
-import { EmptyState } from "./EmptyState";
-import { DataUploadSheet } from "./DataUploadSheet";
-import type { WorkoutScheduleMap } from "./WorkoutCalendar";
+import { FuturisticDashboard } from "../../../components/FuturisticDashboard";
+import { WaterTracker } from "../../../components/dsm";
+import { useAppData } from "../../../hooks/useAppData";
+import { EmptyState } from "../../../components/EmptyState";
+import { DataUploadSheet } from "../../../components/DataUploadSheet";
+import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 
 interface LoggedMeal {
   id: string;

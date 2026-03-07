@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Trophy, Clock, Flame, X, Sparkles, Search, TrendingUp, Activity, Check, Plus, SlidersHorizontal, ArrowLeft, Trash2 } from 'lucide-react';
-import { PageHeader } from './PageHeader';
+import { PageHeader } from '../../../components/PageHeader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WorkoutPlannerBanner, WorkoutCalendarSheet } from './WorkoutCalendar';
-import { DSMCoachMark } from './dsm/ux-patterns';
+import { DSMCoachMark } from '../../../components/dsm/ux-patterns';
 // [STORED] AI Meal Recommendation imports — kept for future use
 // import { ChefHat, Zap, RefreshCw } from 'lucide-react';
-// import { recipeDatabase, calculateRecipeNutrition, Recipe } from '../data/recipeDatabase';
-import { useCalorieTracker } from '../hooks/useCalorieTracker';
-import { useLanguage } from '../contexts/LanguageContext';
+// import { recipeDatabase, calculateRecipeNutrition, Recipe } from '../../../data/recipeDatabase';
+import { useCalorieTracker } from '../../../hooks/useCalorieTracker';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 // ═══════════════════════════════════════════════════════════
 // Types

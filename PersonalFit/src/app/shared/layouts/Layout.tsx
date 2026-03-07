@@ -7,9 +7,9 @@
 
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router";
-import { AppInitializer } from "./AppInitializer";
-import { useLanguage } from "../contexts/LanguageContext";
-import { BottomNav } from "./dsm";
+import { AppInitializer } from "../../components/AppInitializer";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { BottomNav } from "../../components/dsm";
 import { AnimatePresence, motion } from "framer-motion";
 
 export function Layout() {

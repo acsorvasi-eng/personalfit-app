@@ -24,8 +24,8 @@ import {
   CalendarDays,
   ListChecks,
 } from "lucide-react";
-import { PageHeader } from "./PageHeader";
-import { DSMSwipeAction, DSMCoachMark } from "./dsm/ux-patterns";
+import { PageHeader } from "../../../components/PageHeader";
+import { DSMSwipeAction, DSMCoachMark } from "../../../components/dsm/ux-patterns";
 import {
   Product,
   productDatabase,
@@ -33,14 +33,14 @@ import {
   localStores,
   StoreInfo,
   loadUserDietProfile,
-} from "../data/productDatabase";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useCalorieTracker } from "../hooks/useCalorieTracker";
-import { generateWeeklyShoppingList, getCurrentDayIndex } from "../utils/mealPlanToShoppingList";
-import { usePlanData } from "../hooks/usePlanData";
-import { useAppData } from "../hooks/useAppData";
-import { EmptyState } from "./EmptyState";
-import { DataUploadSheet } from "./DataUploadSheet";
+} from "../../../data/productDatabase";
+import { useLanguage } from "../../../contexts/LanguageContext";
+import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
+import { generateWeeklyShoppingList, getCurrentDayIndex } from "../../../utils/mealPlanToShoppingList";
+import { usePlanData } from "../../../hooks/usePlanData";
+import { useAppData } from "../../../hooks/useAppData";
+import { EmptyState } from "../../../components/EmptyState";
+import { DataUploadSheet } from "../../../components/DataUploadSheet";
 
 interface ShoppingItem {
   product: Product;

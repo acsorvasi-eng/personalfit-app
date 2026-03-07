@@ -4,7 +4,7 @@ Offline-first fitness and nutrition app for Hungarian and Romanian markets.
 
 ## Stack
 
-See [MISSION.md](./MISSION.md) for full stack (React 18, TypeScript, Vite, Tailwind v4, Radix UI, Framer Motion, IndexedDB via idb) and architecture rules. Development follows the 4-agent cycle; see MISSION.md (Workflow section) and [TASKS.md](./TASKS.md).
+See [MISSION.md](./MISSION.md) for full stack and rules. **AI/dev sessions:** start with [MASTER_PROMPT.md](./MASTER_PROMPT.md). Development follows the 4-agent cycle; see [AGENTS.md](./AGENTS.md) and [TASKS.md](./TASKS.md).
 
 ## Scripts
 

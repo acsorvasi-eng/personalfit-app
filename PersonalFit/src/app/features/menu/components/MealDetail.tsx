@@ -29,9 +29,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { usePlanData, type MealOption, type WeekData } from "../hooks/usePlanData";
-import { mealPlan } from "../data/mealData";
-import { useLanguage } from "../contexts/LanguageContext";
+import { usePlanData, type MealOption, type WeekData } from "../../../hooks/usePlanData";
+import { mealPlan } from "../../../data/mealData";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 // ══════════════════════════════════════════════════════════════
 // TYPES & CONSTANTS

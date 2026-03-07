@@ -40,25 +40,25 @@ import {
   Type,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { usePlanFoods, type PlanFood } from "../hooks/usePlanData";
-import { useAppData } from "../hooks/useAppData";
-import { EmptyState } from "./EmptyState";
-import { DataUploadSheet } from "./DataUploadSheet";
-import { useLanguage, type LanguageCode } from "../contexts/LanguageContext";
-import { foodDatabase, type Food } from "../data/mealData";
-import { useFavoriteFoods } from "../hooks/useFavoriteFoods";
+import { usePlanFoods, type PlanFood } from "../../../hooks/usePlanData";
+import { useAppData } from "../../../hooks/useAppData";
+import { EmptyState } from "../../../components/EmptyState";
+import { DataUploadSheet } from "../../../components/DataUploadSheet";
+import { useLanguage, type LanguageCode } from "../../../contexts/LanguageContext";
+import { foodDatabase, type Food } from "../../../data/mealData";
+import { useFavoriteFoods } from "../../../hooks/useFavoriteFoods";
 import {
   cleanupCorruptedAIFoods,
   createFoodsBatch,
   inferSemanticCategoryFromName,
   semanticCategoryToFoodCategory,
-} from "../backend/services/FoodCatalogService";
-import { PageHeader } from "./PageHeader";
-import { TabFilter } from "./TabFilter";
-import { translateFoodName } from "../utils/foodTranslations";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
-import { DSMButton } from "./dsm";
-import type { FoodCategory, FoodSource } from "../backend/models";
+} from "../../../backend/services/FoodCatalogService";
+import { PageHeader } from "../../../components/PageHeader";
+import { TabFilter } from "../../../components/TabFilter";
+import { translateFoodName } from "../../../utils/foodTranslations";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../../components/ui/dialog";
+import { DSMButton } from "../../../components/dsm";
+import type { FoodCategory, FoodSource } from "../../../backend/models";
 import { toast } from "sonner";
 
 type AddFoodChipStatus = "pending" | "valid" | "invalid";
