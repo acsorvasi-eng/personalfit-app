@@ -899,7 +899,8 @@ export function UnifiedMenu() {
 
         {/* Water widget ONLY during rest period (not in active meal window); hidden when AI panel open */}
         <AnimatePresence>
-          {!aiPanelOpen && !status.isInEatingWindow && (
+          {/* Floating water widget — only during meal time; during rest period water is inside rest card */}
+          {!aiPanelOpen && status.isInEatingWindow && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1179,7 +1180,8 @@ export function UnifiedMenu() {
 
       {/* Water widget (+250ml) ONLY during rest period — hidden when in active meal window or AI panel open */}
       <AnimatePresence>
-        {!aiPanelOpen && !status.isInEatingWindow && (
+        {/* Floating water widget — only during meal time; during rest period water is inside rest card */}
+        {!aiPanelOpen && status.isInEatingWindow && (
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
