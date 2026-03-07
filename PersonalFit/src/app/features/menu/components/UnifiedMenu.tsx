@@ -16,6 +16,7 @@ import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
+import { toast } from "sonner";
 
 interface LoggedMeal {
   id: string;
@@ -300,16 +301,25 @@ export function UnifiedMenu() {
   const MAX_WATER_ML = 3000;
 
   const handleWaterTap = useCallback(() => {
-    const waterData = localStorage.getItem('waterTracking');
-    const data = waterData ? JSON.parse(waterData) : {};
-    const current = data[todayDateStr] || 0;
-    const newAmount = current < MAX_WATER_ML ? Math.min(current + 250, MAX_WATER_ML) : 0;
-    data[todayDateStr] = newAmount;
-    localStorage.setItem('waterTracking', JSON.stringify(data));
-    setWaterIntakeMl(newAmount);
-    if (navigator.vibrate) navigator.vibrate(10);
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new Event('waterTrackerSync'));
+    console.log("[Water] button tapped, logging 250ml");
+    try {
+      const waterData = localStorage.getItem("waterTracking");
+      const data = waterData ? JSON.parse(waterData) : {};
+      const current = data[todayDateStr] ?? 0;
+      const newAmount =
+        current < MAX_WATER_ML ? Math.min(current + 250, MAX_WATER_ML) : 0;
+      data[todayDateStr] = newAmount;
+      localStorage.setItem("waterTracking", JSON.stringify(data));
+      setWaterIntakeMl(newAmount);
+      if (navigator.vibrate) navigator.vibrate(10);
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("waterTrackerSync"));
+      console.log("[Water] saved successfully, total:", newAmount, "ml");
+      toast.success("💧 +250ml víz hozzáadva");
+    } catch (e) {
+      console.error("[Water] save failed:", e);
+      toast.error("Víz mentése sikertelen");
+    }
   }, [todayDateStr]);
 
   const handleWaterReset = useCallback(() => {
@@ -917,7 +927,11 @@ export function UnifiedMenu() {
               transition={{ duration: 0.2 }}
               className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
             >
-              <WaterButton onClick={handleWaterTap} variant="floating" />
+              <WaterButton
+                onClick={handleWaterTap}
+                onLongPress={() => navigate("/meal-intervals")}
+                variant="floating"
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -1191,7 +1205,11 @@ export function UnifiedMenu() {
             transition={{ duration: 0.2 }}
             className="fixed z-50 bottom-24 right-4 sm:right-6 md:right-8 lg:right-10"
           >
-            <WaterButton onClick={handleWaterTap} variant="floating" />
+            <WaterButton
+                onClick={handleWaterTap}
+                onLongPress={() => navigate("/meal-intervals")}
+                variant="floating"
+              />
           </motion.div>
         )}
       </AnimatePresence>
@@ -1405,9 +1423,12 @@ function RestTimerCard({
             </span>
           </div>
 
-          {/* Water button — same style as floating */}
+          {/* Water button — same style as floating; long press opens meal settings */}
           <div className="flex justify-center">
-            <WaterButton onClick={onWaterTap} />
+            <WaterButton
+              onClick={onWaterTap}
+              onLongPress={onOpenEditor}
+            />
           </div>
         </div>
       </motion.div>

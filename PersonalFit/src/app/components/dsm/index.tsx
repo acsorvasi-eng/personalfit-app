@@ -19,7 +19,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Apple, UtensilsCrossed, ShoppingCart, User, Dumbbell,
@@ -707,16 +707,72 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
 }
 
 // --- WaterButton ---
-// Single pill CTA: "+250ml", same style in rest card and floating. Pulse + click ripple.
+// Single pill CTA: "+250ml". Quick tap = log water; long press (500ms+) = optional onLongPress (e.g. open meal settings).
 export interface WaterButtonProps {
   onClick: () => void;
+  onLongPress?: () => void;
   className?: string;
   variant?: "default" | "floating";
 }
 
-export function WaterButton({ onClick, className = "", variant = "default" }: WaterButtonProps) {
+export function WaterButton({ onClick, onLongPress, className = "", variant = "default" }: WaterButtonProps) {
   const [clickKey, setClickKey] = useState(0);
+  const [showLongPressRing, setShowLongPressRing] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ringTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPress = useRef(false);
+
+  const clearTimers = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    if (ringTimer.current) {
+      clearTimeout(ringTimer.current);
+      ringTimer.current = null;
+    }
+    setShowLongPressRing(false);
+  }, []);
+
+  const handleTouchStart = useCallback(() => {
+    if (!onLongPress) return;
+    isLongPress.current = false;
+    clearTimers();
+    ringTimer.current = setTimeout(() => setShowLongPressRing(true), 300);
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      clearTimers();
+      if (navigator.vibrate) navigator.vibrate(30);
+      onLongPress();
+    }, 500);
+  }, [onLongPress, clearTimers]);
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimers();
+  }, [clearTimers]);
+
+  const handleMouseDown = useCallback(() => {
+    if (!onLongPress) return;
+    isLongPress.current = false;
+    clearTimers();
+    ringTimer.current = setTimeout(() => setShowLongPressRing(true), 300);
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      clearTimers();
+      if (navigator.vibrate) navigator.vibrate(30);
+      onLongPress();
+    }, 500);
+  }, [onLongPress, clearTimers]);
+
+  const handleMouseUp = useCallback(() => {
+    clearTimers();
+  }, [clearTimers]);
+
   const handleClick = useCallback(() => {
+    if (isLongPress.current) {
+      isLongPress.current = false;
+      return;
+    }
     setClickKey((k) => k + 1);
     onClick();
   }, [onClick]);
@@ -726,12 +782,19 @@ export function WaterButton({ onClick, className = "", variant = "default" }: Wa
       key={clickKey}
       type="button"
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
       className={`
-        flex items-center gap-2 rounded-full border border-white/30 font-bold text-white cursor-pointer select-none
+        relative flex items-center gap-2 rounded-full border font-bold text-white cursor-pointer select-none
         bg-gradient-to-br from-[#3b82f6] to-[#06b6d4]
         shadow-[0_4px_15px_rgba(59,130,246,0.4)]
         px-6 py-3 text-base
         ${variant === "floating" ? "shadow-[0_6px_20px_rgba(59,130,246,0.5)]" : ""}
+        ${showLongPressRing ? "ring-2 ring-white/50 ring-offset-2 ring-offset-transparent" : "border-white/30"}
         ${className}
       `}
       style={{
