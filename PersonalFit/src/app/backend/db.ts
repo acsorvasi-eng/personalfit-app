@@ -37,7 +37,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const DB_NAME = 'NutriPlanDB';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 // ═══════════════════════════════════════════════════════════════
 // STORE SCHEMAS — defines indexes for each object store
@@ -156,6 +156,10 @@ const STORE_SCHEMAS: Record<string, StoreSchema> = {
     indexes: [
       { name: 'by-date', keyPath: 'date' },
     ],
+  },
+  water_log: {
+    keyPath: 'date',
+    indexes: [{ name: 'by-date', keyPath: 'date' }],
   },
 };
 

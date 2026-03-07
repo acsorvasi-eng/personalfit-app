@@ -16,6 +16,7 @@ import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
+import { WaterService } from "../../../backend/services/WaterService";
 import { toast } from "sonner";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
@@ -266,13 +267,18 @@ export function UnifiedMenu() {
 
   useEffect(() => {
     const loadWater = () => {
-      const wd = localStorage.getItem('waterTracking');
-      if (wd) { try { setWaterIntakeMl(JSON.parse(wd)[todayDateStr] || 0); } catch {} }
+      WaterService.getTodayTotal().then(setWaterIntakeMl).catch(() => {});
     };
     loadWater();
-    window.addEventListener('storage', loadWater);
-    const iv = setInterval(loadWater, 1500);
-    return () => { window.removeEventListener('storage', loadWater); clearInterval(iv); };
+    const onWaterUpdated = () => {
+      WaterService.getTodayTotal().then(setWaterIntakeMl).catch(() => {});
+    };
+    window.addEventListener('waterUpdated', onWaterUpdated);
+    window.addEventListener('storage', onWaterUpdated);
+    return () => {
+      window.removeEventListener('waterUpdated', onWaterUpdated);
+      window.removeEventListener('storage', onWaterUpdated);
+    };
   }, [todayDateStr]);
 
   const snackCalories = useMemo(() => {
@@ -292,39 +298,27 @@ export function UnifiedMenu() {
     });
   }, [todayDateStr]);
 
-  const MAX_WATER_ML = 3000;
-
-  const handleWaterTap = useCallback(() => {
-    console.log("[Water] button tapped, logging 250ml");
+  const handleWaterTap = useCallback(async () => {
+    console.log("[Water] button clicked");
     try {
-      const waterData = localStorage.getItem("waterTracking");
-      const data = waterData ? JSON.parse(waterData) : {};
-      const current = data[todayDateStr] ?? 0;
-      const newAmount =
-        current < MAX_WATER_ML ? Math.min(current + 250, MAX_WATER_ML) : 0;
-      data[todayDateStr] = newAmount;
-      localStorage.setItem("waterTracking", JSON.stringify(data));
-      setWaterIntakeMl(newAmount);
+      const total = await WaterService.addWater(250);
+      setWaterIntakeMl(total);
       if (navigator.vibrate) navigator.vibrate(10);
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new Event("waterTrackerSync"));
-      console.log("[Water] saved successfully, total:", newAmount, "ml");
       toast.success(t("water.added"));
     } catch (e) {
       console.error("[Water] save failed:", e);
       toast.error(t("water.saveFailed"));
     }
-  }, [todayDateStr]);
+  }, [t]);
 
-  const handleWaterReset = useCallback(() => {
-    const waterData = localStorage.getItem('waterTracking');
-    const data = waterData ? JSON.parse(waterData) : {};
-    data[todayDateStr] = 0;
-    localStorage.setItem('waterTracking', JSON.stringify(data));
-    setWaterIntakeMl(0);
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new Event('waterTrackerSync'));
-  }, [todayDateStr]);
+  const handleWaterReset = useCallback(async () => {
+    try {
+      await WaterService.resetToday();
+      setWaterIntakeMl(0);
+    } catch {
+      setWaterIntakeMl(0);
+    }
+  }, []);
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   useEffect(() => {
