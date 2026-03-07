@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { translations } from '../translations';
+import { translations as i18nFlat } from '../../i18n/translations';
+import { saveUserPreferences } from '../../storage/repositories/userRepository';
 
 export type LanguageCode = 'hu' | 'en' | 'ro';
 
@@ -55,6 +57,8 @@ interface LanguageContextType {
 
 // ─── Fallback t() for when used outside provider (e.g. Figma preview iframe) ───
 function fallbackT(key: string): string {
+  const flat = i18nFlat.hu;
+  if (flat && key in flat && typeof flat[key] === 'string') return flat[key];
   const keys = key.split('.');
   let value: any = translations.hu;
   for (const k of keys) {
@@ -95,7 +99,7 @@ function detectDeviceLanguage(): LanguageCode | null {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    // 1. Check localStorage first (user's explicit choice)
+    // 1. Check localStorage first (user's explicit choice) — instant, no reload
     try {
       const saved = localStorage.getItem('selectedLanguage') as LanguageCode;
       if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
@@ -105,7 +109,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       // localStorage may not be available in some environments
     }
 
-    // 2. Detect device/browser language (uses navigator.languages for full preference list)
+    // 2. Detect device/browser language
     const detected = detectDeviceLanguage();
     if (detected) return detected;
 
@@ -122,9 +126,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch {
       // localStorage may not be available
     }
+    // Persist to IndexedDB in background — no reload
+    saveUserPreferences({ language: lang }).catch(() => {});
   }, []);
 
   const t = useCallback((key: string): string => {
+    // 1. Flat i18n keys (hu/ro/en consistent)
+    const flat = i18nFlat[language];
+    if (flat && key in flat && typeof flat[key] === 'string') {
+      return flat[key];
+    }
+    // 2. Nested app/translations lookup
     const keys = key.split('.');
     let value: any = translations[language];
 
@@ -138,7 +150,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           if (fallback && typeof fallback === 'object' && fallbackKey in fallback) {
             fallback = fallback[fallbackKey];
           } else {
-            return key; // Return key if no translation found
+            return key;
           }
         }
         return typeof fallback === 'string' ? fallback : key;

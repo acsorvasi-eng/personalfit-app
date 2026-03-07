@@ -17,6 +17,8 @@ import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
 import { toast } from "sonner";
+import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
+import type { LanguageCode } from "../../../contexts/LanguageContext";
 
 interface LoggedMeal {
   id: string;
@@ -241,31 +243,23 @@ export function UnifiedMenu() {
     return {};
   });
 
-  // Labels and kcal for rest-period snacks (must match MealIntervalEditor SNACK_OPTIONS)
-  const REST_SNACK_LABELS: Record<string, string> = {
-    alma: "Alma",
-    dio: "Dió",
-    mandula: "Mandula",
-    kivi: "Kivi",
-    sargarepa: "Sárgarépa",
-    afonya: "Áfonya",
-  };
-  const REST_SNACK_KCAL: Record<string, number> = {
-    alma: 42,
-    dio: 65,
-    mandula: 58,
-    kivi: 43,
-    sargarepa: 33,
-    afonya: 40,
-  };
-  const REST_SNACK_EMOJI: Record<string, string> = {
-    alma: "🍎",
-    dio: "🫘",
-    mandula: "🥜",
-    kivi: "🥝",
-    sargarepa: "🥕",
-    afonya: "🫐",
-  };
+  // Rest-period snacks by current language (from i18n/snacks)
+  const snackList = useMemo(
+    () => SNACKS[language as LanguageCode] ?? SNACKS.hu,
+    [language]
+  );
+  const REST_SNACK_LABELS = useMemo(
+    () => Object.fromEntries(snackList.map((s: SnackItem) => [s.id, s.name])),
+    [snackList]
+  );
+  const REST_SNACK_KCAL = useMemo(
+    () => Object.fromEntries(snackList.map((s: SnackItem) => [s.id, s.kcal])),
+    [snackList]
+  );
+  const REST_SNACK_EMOJI = useMemo(
+    () => Object.fromEntries(snackList.map((s: SnackItem) => [s.id, s.emoji])),
+    [snackList]
+  );
 
   // ─── Water intake state (synced with Layout's floating tracker) ──
   const [waterIntakeMl, setWaterIntakeMl] = useState(0);
@@ -315,10 +309,10 @@ export function UnifiedMenu() {
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new Event("waterTrackerSync"));
       console.log("[Water] saved successfully, total:", newAmount, "ml");
-      toast.success("💧 +250ml víz hozzáadva");
+      toast.success(t("water.added"));
     } catch (e) {
       console.error("[Water] save failed:", e);
-      toast.error("Víz mentése sikertelen");
+      toast.error(t("water.saveFailed"));
     }
   }, [todayDateStr]);
 
@@ -1318,7 +1312,7 @@ function RestTimerCard({
   const nextMealTimeStr = nextMealTime != null
     ? `${String(Math.floor(nextMealTime / 60) % 24).padStart(2, "0")}:${String(nextMealTime % 60).padStart(2, "0")}`
     : "--:--";
-  const nextMealTitle = nextMealLabel ? t(`menu.${nextMealLabel}`) : "";
+  const nextMealTitle = nextMealLabel ? t(`meal.${nextMealLabel}`) : "";
 
   return (
     <>
@@ -1349,7 +1343,7 @@ function RestTimerCard({
             className="text-center uppercase font-bold"
             style={{ fontSize: "0.7rem", letterSpacing: "0.15em", color: "rgba(30,58,95,0.6)" }}
           >
-            {t("menu.restTimeLabelShort")}
+            {t("rest.timeRemaining")}
           </p>
 
           {/* Countdown — very large, bold */}
@@ -1419,7 +1413,7 @@ function RestTimerCard({
           <div className="flex items-center justify-center gap-2 py-2">
             <Clock className="w-4 h-4" style={{ color: "#1e3a5f" }} />
             <span className="font-bold text-[13px]" style={{ color: "#1e3a5f" }}>
-              {t("menu.nextMealAt")}: {nextMealTimeStr} ({nextMealTitle})
+              {t("rest.nextMeal")}: {nextMealTimeStr} ({nextMealTitle})
             </span>
           </div>
 
@@ -1451,10 +1445,10 @@ function RestTimerCard({
               className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 max-w-sm w-full"
             >
               <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                {t("mealInterval.dialogTitle")}
+                {t("mealEditor.dialogTitle")}
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                {t("mealInterval.dialogMessage")}
+                {t("mealEditor.dialogMessage")}
               </p>
               <div className="flex gap-3">
                 <button
@@ -1462,14 +1456,14 @@ function RestTimerCard({
                   onClick={() => setConfirmOpen(false)}
                   className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium"
                 >
-                  {t("mealInterval.cancel")}
+                  {t("mealEditor.cancel")}
                 </button>
                 <button
                   type="button"
                   onClick={handleEdit}
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 text-white font-semibold"
                 >
-                  {t("mealInterval.edit")}
+                  {t("mealEditor.edit")}
                 </button>
               </div>
             </motion.div>

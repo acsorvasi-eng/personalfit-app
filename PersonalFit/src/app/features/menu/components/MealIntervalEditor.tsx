@@ -10,6 +10,8 @@ import { X, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { SNACKS, snackLabel, type SnackItem } from "../../../../i18n/snacks";
+import type { LanguageCode } from "../../../contexts/LanguageContext";
 import {
   getMealSettings,
   saveMealSettings,
@@ -21,16 +23,6 @@ import {
 } from "../../../backend/services/UserProfileService";
 
 const MAX_SNACKS = 2;
-
-/** Hardcoded snack options — not from food catalog. Max 2 selectable. */
-const SNACK_OPTIONS: Array<{ id: string; emoji: string; name: string; label: string; kcal: number }> = [
-  { id: "alma", emoji: "🍎", name: "Alma", label: "1 db · 42 kcal", kcal: 42 },
-  { id: "dio", emoji: "🫘", name: "Dió", label: "3 szem · 65 kcal", kcal: 65 },
-  { id: "mandula", emoji: "🥜", name: "Mandula", label: "5 szem · 58 kcal", kcal: 58 },
-  { id: "kivi", emoji: "🥝", name: "Kivi", label: "1 db · 43 kcal", kcal: 43 },
-  { id: "sargarepa", emoji: "🥕", name: "Sárgarépa", label: "1 db · 33 kcal", kcal: 33 },
-  { id: "afonya", emoji: "🫐", name: "Áfonya", label: "1 marék · 40 kcal", kcal: 40 },
-];
 
 const DEFAULT_SNACK_IDS = ["alma", "dio"];
 const MEAL_MODELS: MealModel[] = ["3meals", "5meals", "2meals", "if16_8", "if18_6"];
@@ -49,8 +41,9 @@ function isIFModel(model: MealModel): boolean {
 }
 
 export function MealIntervalEditor() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
+  const snackOptions = SNACKS[language as LanguageCode] ?? SNACKS.hu;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mealModel, setMealModel] = useState<MealModel>("3meals");
@@ -70,8 +63,8 @@ export function MealIntervalEditor() {
           ? settings.meals
           : getDefaultMealsForModel(model)
       );
-      const ids = (settings.allowedSnacks ?? []).filter((id) =>
-        SNACK_OPTIONS.some((s) => s.id === id)
+      const ids = (settings.allowedSnacks ?? []).filter((id: string) =>
+        snackOptions.some((s: SnackItem) => s.id === id)
       ).slice(0, MAX_SNACKS);
       setSelectedSnackIds(ids.length > 0 ? ids : DEFAULT_SNACK_IDS);
     } finally {
@@ -104,7 +97,7 @@ export function MealIntervalEditor() {
     setSelectedSnackIds((prev) => {
       if (prev.includes(snackId)) return prev.filter((id) => id !== snackId);
       if (prev.length >= MAX_SNACKS) {
-        setSnackLimitMessage(t("mealInterval.maxTwoSnacksMessage") ?? "Maximum 2 nassolnivaló választható");
+        setSnackLimitMessage(t("mealEditor.snackMax"));
         return prev;
       }
       return [...prev, snackId];
@@ -121,10 +114,7 @@ export function MealIntervalEditor() {
       const start = timeToMinutes(meals[i].startTime);
       const end = timeToMinutes(meals[i].endTime);
       if (end <= start) {
-        setValidationError(
-          t("mealInterval.validationEndAfterStart") ??
-            `${meals[i].name}: end time must be after start`
-        );
+        setValidationError(t("mealEditor.validation"));
         return false;
       }
     }
@@ -153,7 +143,7 @@ export function MealIntervalEditor() {
       await saveMealSettings(payload);
       window.dispatchEvent(new Event("mealSettingsUpdated"));
       if (navigator.vibrate) navigator.vibrate([10, 20]);
-      toast.success("Beállítások mentve ✓");
+      toast.success(t("mealEditor.saved"));
       navigate(-1);
     } finally {
       setSaving(false);
@@ -161,11 +151,11 @@ export function MealIntervalEditor() {
   };
 
   const modelLabelKey: Record<MealModel, string> = {
-    "3meals": "mealInterval.mealModel3",
-    "5meals": "mealInterval.mealModel5",
-    "2meals": "mealInterval.mealModel2",
-    if16_8: "mealInterval.mealModelIf16_8",
-    if18_6: "mealInterval.mealModelIf18_6",
+    "3meals": "mealModel.3",
+    "5meals": "mealModel.5",
+    "2meals": "mealModel.2",
+    if16_8: "mealModel.168",
+    if18_6: "mealModel.186",
   };
 
   const cardStyle = {
@@ -179,7 +169,7 @@ export function MealIntervalEditor() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#121212]">
         <div className="animate-pulse text-gray-500 dark:text-gray-400">
-          Betöltés...
+          {t("mealInterval.saving")}
         </div>
       </div>
     );
@@ -223,10 +213,10 @@ export function MealIntervalEditor() {
       >
         <div>
           <h1 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700, color: "white" }}>
-            {t("mealInterval.title")}
+            {t("mealEditor.title")}
           </h1>
           <p style={{ margin: 0, fontSize: "0.875rem", marginTop: 2, color: "rgba(255,255,255,0.9)" }}>
-            {t("mealInterval.subtitle")}
+            {t("mealEditor.subtitle")}
           </p>
         </div>
         <button
@@ -265,7 +255,7 @@ export function MealIntervalEditor() {
                 marginBottom: ROW_GAP,
               }}
             >
-              {t("mealInterval.mealCountLabel")}
+              {t("mealEditor.mealCount")}
             </h2>
             <select
               value={mealModel}
@@ -404,16 +394,16 @@ export function MealIntervalEditor() {
                 marginBottom: 8,
               }}
             >
-              {t("mealInterval.allowedSnacksSection")}
+              {t("mealEditor.snackTitle")}
             </h2>
             {isIFModel(mealModel) ? (
               <p style={{ fontSize: 15, color: "#6b7280", marginTop: 12 }}>
-                {t("mealInterval.ifFastingMessage")}
+                {t("mealEditor.ifFasting")}
               </p>
             ) : (
               <>
                 <p style={{ fontSize: 14, color: "#6b7280", marginBottom: ROW_GAP }}>
-                  {t("mealInterval.allowedSnacksHint")}
+                  {t("mealEditor.snackSubtitle")}
                 </p>
                 {snackLimitMessage && (
                   <p style={{ fontSize: 14, color: "#d97706", marginBottom: 12 }} role="alert">
@@ -421,7 +411,7 @@ export function MealIntervalEditor() {
                   </p>
                 )}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: CHIP_GAP }}>
-                  {SNACK_OPTIONS.map((snack) => {
+                  {snackOptions.map((snack: SnackItem) => {
                     const selected = selectedSnackIds.includes(snack.id);
                     return (
                       <button
@@ -448,7 +438,7 @@ export function MealIntervalEditor() {
                       >
                         <span>{snack.emoji}</span>
                         <span>{snack.name}</span>
-                        <span style={{ opacity: selected ? 0.95 : 0.85 }}>{snack.label}</span>
+                        <span style={{ opacity: selected ? 0.95 : 0.85 }}>{snackLabel(snack)}</span>
                         {selected && <Check className="w-4 h-4 flex-shrink-0" style={{ marginLeft: "auto" }} />}
                       </button>
                     );
@@ -497,7 +487,7 @@ export function MealIntervalEditor() {
             opacity: saving ? 0.6 : 1,
           }}
         >
-          {saving ? t("mealInterval.saving") : t("mealInterval.save")}
+          {saving ? t("mealInterval.saving") : t("mealEditor.save")}
         </button>
       </div>
     </div>

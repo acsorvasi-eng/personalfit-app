@@ -711,11 +711,14 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
 export interface WaterButtonProps {
   onClick: () => void;
   onLongPress?: () => void;
+  label?: string;
   className?: string;
   variant?: "default" | "floating";
 }
 
-export function WaterButton({ onClick, onLongPress, className = "", variant = "default" }: WaterButtonProps) {
+export function WaterButton({ onClick, onLongPress, label, className = "", variant = "default" }: WaterButtonProps) {
+  const { t } = useLanguage();
+  const displayLabel = label ?? t("water.add");
   const [clickKey, setClickKey] = useState(0);
   const [showLongPressRing, setShowLongPressRing] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -803,10 +806,10 @@ export function WaterButton({ onClick, onLongPress, className = "", variant = "d
       initial={{ scale: 0.95 }}
       animate={{ scale: [1.05, 1] }}
       transition={{ duration: 0.3 }}
-      aria-label="Víz hozzáadása +250ml"
+      aria-label={displayLabel}
     >
       <span>💧</span>
-      <span>+250ml</span>
+      <span>{displayLabel.replace(/^💧\s*/, "")}</span>
     </motion.button>
   );
 }
