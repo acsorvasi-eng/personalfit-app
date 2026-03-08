@@ -486,7 +486,7 @@ export function Foods() {
       />
 
       {/* ═══ Header — full-bleed gradient, shared PageHeader DSM component ═══ */}
-      <div className="flex-shrink-0 sm:-mx-4 md:-mx-6 lg:-mx-8">
+      <div className="flex-shrink-0">
         <PageHeader
           title={t("foods.title")}
           subtitle={t("foods.foodCount").replace("{n}", String(foods.length))}

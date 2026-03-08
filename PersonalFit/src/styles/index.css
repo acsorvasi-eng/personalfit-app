@@ -1,3 +1,17 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* Root and body: full width, no padding — header gradient must reach screen edges */
+* {
+  box-sizing: border-box;
+}
+
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}

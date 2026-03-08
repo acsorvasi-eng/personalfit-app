@@ -760,8 +760,7 @@ export function UnifiedMenu() {
   if (!appData.isLoading && !appData.hasActivePlan && !hasPlanData) {
     return (
       <div className="h-full flex flex-col overflow-hidden relative" role="main" aria-label={t("calendar.dailyMealPlan")}>
-        {/* Full-bleed header (same pattern as AI Calorie Calculator): breaks out of Layout padding on sm+ */}
-        <div className="flex-shrink-0 sm:-mx-4 md:-mx-6 lg:-mx-8">
+        <div className="flex-shrink-0">
           <PageHeader
             icon={UtensilsCrossed}
             title={t("menu.title")}
@@ -965,8 +964,8 @@ export function UnifiedMenu() {
         )}
       </AnimatePresence>
 
-      {/* ══ HEADER — full-bleed, same pattern as AI Calorie Calculator ══ */}
-      <div className="flex-shrink-0 sm:-mx-4 md:-mx-6 lg:-mx-8">
+      {/* ══ HEADER — full-bleed gradient edge-to-edge ══ */}
+      <div className="flex-shrink-0">
         <PageHeader
           icon={UtensilsCrossed}
           title={t("menu.title")}

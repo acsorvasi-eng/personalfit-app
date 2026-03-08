@@ -31,7 +31,7 @@ export function Layout() {
       <div className="min-h-screen h-svh flex flex-col bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#121212] dark:to-[#121212] overflow-hidden">
         {/* Main Content */}
         <main
-          className="flex-1 overflow-hidden w-full pb-20 px-0 sm:px-4 md:px-6 lg:px-8"
+          className="flex-1 overflow-hidden w-full pb-20 px-0"
           role="main"
           aria-label={t('nav.menu')}
         >

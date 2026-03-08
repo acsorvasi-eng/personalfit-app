@@ -44,17 +44,18 @@ export function PageHeader({
     <div
       style={{
         width: "100%",
-        borderRadius: 0,
-        paddingTop: "48px",
-        paddingBottom: "1rem",
-        paddingLeft: "1rem",
-        paddingRight: "1rem",
-        background: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)",
-        color: "white",
+        margin: 0,
+        padding: 0,
+        boxSizing: "border-box",
         position: "sticky",
         top: 0,
         zIndex: 50,
-        boxSizing: "border-box",
+        background: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)",
+        color: "white",
+        paddingTop: "48px",
+        paddingBottom: "1.25rem",
+        paddingLeft: "1rem",
+        paddingRight: "1rem",
       }}
     >
       {onClose && (

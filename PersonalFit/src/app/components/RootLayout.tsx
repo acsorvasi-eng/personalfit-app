@@ -26,7 +26,15 @@ function RootLayoutInner() {
   }
 
   return (
-    <>
+    <div
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        padding: 0,
+        overflowX: "hidden",
+      }}
+    >
       <PipelineDiagnostics />
       {/* Skip-to-content link for keyboard/screen reader accessibility */}
       <a
@@ -39,7 +47,7 @@ function RootLayoutInner() {
       <div id="main-content">
         <Outlet />
       </div>
-    </>
+    </div>
   );
 }
 
