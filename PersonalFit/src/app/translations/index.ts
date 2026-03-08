@@ -349,6 +349,12 @@ export const translations = {
       bmi: 'BMI',
       bodyVision: 'Ahogyan szeretném magamat látni',
       bodyVisionSubtitle: '3D Test Vízió - AI Előrejelzés',
+      progressChartTitle: 'Ha így folytatod...',
+      progressChartSubtitle: 'Várható testsúly alakulása',
+      progressChartTargetReach: '🎯 Célsúlyt eléred: {date}',
+      progressChartDay30: '30 nap',
+      progressChartDay60: '60 nap',
+      progressChartDay90: '90 nap',
       editMode: 'Szerkesztési mód aktív. Módosítsd az adatokat, majd kattints a mentés gombra.',
       dailyGoals: 'Napi célok',
       calories: 'Kalória',
@@ -517,6 +523,12 @@ export const translations = {
       bodyMetrics: 'Testméretek',
       bmr: 'Alapanyagcsere',
       gmonBadge: 'GMON',
+    },
+
+    bodyVision: {
+      noWeightTitle: 'Add meg a testsúlyodat',
+      noWeightSubtitle: 'Az előrevetítéshez szükségünk van az aktuális testsúlyodra',
+      goToProfile: 'Profil megnyitása',
     },
     
     // Categories
@@ -1571,6 +1583,12 @@ export const translations = {
       bmi: 'BMI',
       bodyVision: 'How I want to see myself',
       bodyVisionSubtitle: '3D Body Vision - AI Prediction',
+      progressChartTitle: 'If you keep it up...',
+      progressChartSubtitle: 'Expected weight trend',
+      progressChartTargetReach: '🎯 Target weight reached: {date}',
+      progressChartDay30: '30 days',
+      progressChartDay60: '60 days',
+      progressChartDay90: '90 days',
       editMode: 'Edit mode active. Modify the data, then click save.',
       dailyGoals: 'Daily goals',
       calories: 'Calories',
@@ -1739,6 +1757,12 @@ export const translations = {
       bodyMetrics: 'Body metrics',
       bmr: 'BMR',
       gmonBadge: 'GMON',
+    },
+
+    bodyVision: {
+      noWeightTitle: 'Set your weight',
+      noWeightSubtitle: 'We need your current weight for predictions',
+      goToProfile: 'Open profile',
     },
 
     categories: {
@@ -2776,6 +2800,12 @@ export const translations = {
       bmi: 'IMC',
       bodyVision: 'Cum vreau să mă văd',
       bodyVisionSubtitle: 'Viziune corp 3D - Predicție AI',
+      progressChartTitle: 'Dacă continui așa...',
+      progressChartSubtitle: 'Evoluția previzualizată a greutății',
+      progressChartTargetReach: '🎯 Îți atingi greutatea țintă: {date}',
+      progressChartDay30: '30 zile',
+      progressChartDay60: '60 zile',
+      progressChartDay90: '90 zile',
       editMode: 'Mod editare activ. Modifică datele apoi apasă salvează.',
       dailyGoals: 'Obiective zilnice',
       calories: 'Calorii',
@@ -2944,6 +2974,12 @@ export const translations = {
       bodyMetrics: 'Mărimi corporale',
       bmr: 'Rata metabolică bazală',
       gmonBadge: 'GMON',
+    },
+
+    bodyVision: {
+      noWeightTitle: 'Introdu greutatea ta',
+      noWeightSubtitle: 'Avem nevoie de greutatea ta pentru predicție',
+      goToProfile: 'Deschide profilul',
     },
 
     categories: {

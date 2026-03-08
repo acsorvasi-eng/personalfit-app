@@ -26,16 +26,28 @@ import { BodyVisionFullscreen } from "./BodyVisionFullscreen";
 import { BodyVisionControls } from "./BodyVisionControls";
 import { BodyVisionArchive } from "./BodyVisionArchive";
 import { BodyVisionStatsPanel } from "./BodyVisionStatsPanel";
+import { AIProgressImage } from "./AIProgressImage";
 import { processBodyTransform, getDefinitionOverlays } from "./ar-engine";
 import { analyzeSkinContent } from "./skin-detection";
 import { useBodyPrediction } from "../../hooks/useBodyPrediction";
 import type { BodyImages, ImageValidation, ArchivedSession, ViewType } from "./types";
 import { POSITIONS, POSITION_LABELS } from "./types";
+import { getUserProfile, type StoredUserProfile } from "../../backend/services/UserProfileService";
+import { ProgressPredictionService, type ProgressSnapshot } from "../../backend/services/ProgressPredictionService";
+import { ProgressChart } from "../../features/body-vision/components/ProgressChart";
+import { useLanguage } from "../../contexts/LanguageContext";
+
+type ProgressMilestones = ReturnType<typeof ProgressPredictionService.getMilestones>;
 
 export function BodyVision3D() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // ========== STATE ==========
+  const [profile, setProfile] = useState<StoredUserProfile | null>(null);
+  const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
+  const [milestones, setMilestones] = useState<ProgressMilestones | null>(null);
+
   const [bodyImages, setBodyImages] = useState<BodyImages>(() => {
     const s = localStorage.getItem('bodyVision3D');
     return s ? JSON.parse(s) : { front: '', side: '', back: '', sideAlt: '' };
@@ -137,6 +149,32 @@ export function BodyVision3D() {
   const hasWarped = hasGenerated && !!warpedImages[warpKey];
 
   // ========== EFFECTS ==========
+  useEffect(() => {
+    getUserProfile().then((p) => {
+      setProfile(p);
+      if (p?.weight != null && p.weight > 0) {
+        const dailyCalorieTarget = p.calorieTarget ?? 2000;
+        const dailyCaloriesBurned = 300; // default when not tracked
+        const workoutsPerWeek = p.weeklyWorkoutGoal ?? 3;
+        const targetW = (p as StoredUserProfile & { targetWeight?: number }).targetWeight;
+        const snaps = ProgressPredictionService.predict(
+          {
+            currentWeight: p.weight,
+            currentBodyFat: p.bodyFat,
+            dailyCalorieTarget,
+            dailyCaloriesBurned,
+            workoutsPerWeek,
+            targetWeight: targetW,
+          },
+          90
+        );
+        setSnapshots(snaps);
+        const targetWeight = targetW ?? p.weight - 10;
+        setMilestones(ProgressPredictionService.getMilestones(snaps, targetWeight));
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (!hasGenerated) return;
     if (!currentImage) return;
@@ -432,6 +470,63 @@ export function BodyVision3D() {
             prediction={prediction}
             monthsInvested={monthsInvested}
           />
+        )}
+
+        {/* Progress prediction - only if weight is set */}
+        {profile?.weight != null && profile.weight > 0 ? (
+          <>
+            <div style={{ margin: '0 1rem 1rem' }}>
+              <ProgressChart
+                currentWeight={profile.weight}
+                snapshots={ProgressPredictionService.getWeeklySnapshots(snapshots)}
+                targetWeight={(profile as StoredUserProfile & { targetWeight?: number }).targetWeight}
+                milestones={milestones ?? {}}
+              />
+            </div>
+            <div style={{ margin: '0 1rem 1rem' }}>
+              <AIProgressImage
+                currentWeight={profile.weight}
+                targetWeight={(profile as StoredUserProfile & { targetWeight?: number }).targetWeight ?? profile.weight - 10}
+                weightLoss={profile.weight - ((profile as StoredUserProfile & { targetWeight?: number }).targetWeight ?? profile.weight - 10)}
+                gender={profile.gender === 'female' ? 'female' : 'male'}
+                timeframeDays={90}
+              />
+            </div>
+          </>
+        ) : (
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '1rem',
+              padding: '1.5rem',
+              textAlign: 'center',
+              margin: '0 1rem 1rem',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            }}
+          >
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚖️</div>
+            <div style={{ fontWeight: 600, color: '#111827', marginBottom: '0.25rem' }}>
+              {t('bodyVision.noWeightTitle')}
+            </div>
+            <div style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem' }}>
+              {t('bodyVision.noWeightSubtitle')}
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/profile')}
+              style={{
+                background: 'linear-gradient(135deg, #3b82f6, #14b8a6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.75rem',
+                padding: '0.75rem 1.5rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {t('bodyVision.goToProfile')}
+            </button>
+          </div>
         )}
 
         {/* Blocked state */}
