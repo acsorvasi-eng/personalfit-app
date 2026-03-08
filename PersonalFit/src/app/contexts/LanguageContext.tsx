@@ -101,8 +101,6 @@ const LANGUAGE_KEY = 'selectedLanguage';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    const detected = detectDeviceLanguage();
-    if (detected) return detected;
     return 'hu';
   });
   const [languageLoaded, setLanguageLoaded] = useState(false);
