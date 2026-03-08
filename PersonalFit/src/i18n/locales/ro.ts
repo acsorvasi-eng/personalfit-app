@@ -57,6 +57,19 @@ const ro: LocalePartial = {
 
   'menu.title': 'Meniul meu',
   'menu.subtitle': 'Plan 28 zile',
+  'menu.timeRemaining': 'TIMP RĂMAS',
+  'menu.allowed': 'PERMIS:',
+  'menu.nextMeal': 'Masa următoare',
+  'menu.longPressHint': 'Apăsare lungă: setări mese',
+  'menu.percentRemaining': '{n}% rămas',
+
+  'card.toBedtime': 'Până la culcare',
+  'card.goodMorning': 'Bună dimineața!',
+  'card.toBreakfast': 'Până la micul dejun',
+  'card.optimalSleep': 'Odihnă optimă ✓',
+  'card.lowSleep': 'Somn insuficient',
+
+  'meal.snack': 'Gustare',
 
   'sleep.title': 'Somn & Regenerare',
   'sleep.subtitle': 'Calcul bazat pe cicluri',

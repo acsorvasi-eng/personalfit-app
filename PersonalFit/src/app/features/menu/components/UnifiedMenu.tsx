@@ -15,8 +15,10 @@ import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
-import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
+import { getMealSettings, getUserProfile, type MealSettings } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
+import { SleepService } from "../../../backend/services/SleepService";
+import { WaterService } from "../../../backend/services/WaterService";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
 
@@ -53,6 +55,28 @@ const DINNER_END = DEFAULT_DINNER_END;
 function parseTimeToMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
   return (h ?? 0) * 60 + (m ?? 0);
+}
+
+function getCardSkin(
+  now: Date,
+  wakeTime: string,
+  bedtime: string,
+  isRestPeriod: boolean
+): "rest" | "evening" | "morning" {
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const total = h * 60 + m;
+
+  const [wH, wM] = (wakeTime || "07:00").split(":").map(Number);
+  const wake = wH * 60 + wM;
+
+  const [bH, bM] = (bedtime || "23:00").split(":").map(Number);
+  const bed = bH * 60 + bM;
+
+  if (total >= wake && total < wake + 45) return "morning";
+  const eveningStart = bed - 120;
+  if (total >= eveningStart && total < bed) return "evening";
+  return "rest";
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -315,6 +339,92 @@ export function UnifiedMenu() {
     window.addEventListener("mealSettingsUpdated", onUpdated);
     return () => window.removeEventListener("mealSettingsUpdated", onUpdated);
   }, []);
+
+  const [sleepData, setSleepData] = useState<{
+    wakeTime: string;
+    bedtime: string;
+    cycles: number;
+    firstMeal: string;
+    lastMeal: string;
+    workoutWindow: string;
+    score: number;
+    calorieAdj: number;
+  } | null>(null);
+  useEffect(() => {
+    SleepService.analyzeSleep().then((a) => {
+      if (!a) return;
+      const bt =
+        a.recommendedBedtimes.find((o) => o.cycleCount === a.selectedCycles)?.bedtime ?? "23:00";
+      setSleepData({
+        wakeTime: a.recommendedBedtimes[0]?.wakeTime ?? "07:00",
+        bedtime: bt,
+        cycles: a.selectedCycles,
+        firstMeal: a.firstMealTime,
+        lastMeal: a.lastMealTime,
+        workoutWindow: a.optimalWorkoutWindow,
+        score: a.circadianScore,
+        calorieAdj: a.dailyCalorieAdjustment,
+      });
+    });
+  }, []);
+
+  const [cardSkin, setCardSkin] = useState<"rest" | "evening" | "morning">("rest");
+  useEffect(() => {
+    const update = () => {
+      if (sleepData) {
+        setCardSkin(
+          getCardSkin(new Date(), sleepData.wakeTime, sleepData.bedtime, true)
+        );
+      }
+    };
+    update();
+    const timer = setInterval(update, 30000);
+    return () => clearInterval(timer);
+  }, [sleepData]);
+
+  const skinStyles = useMemo(
+    () => ({
+      rest: {
+        background: "rgba(219,234,254,0.8)",
+        color: "#1e3a5f",
+      },
+      evening: {
+        background: "linear-gradient(135deg, #0f172a, #1e1b4b)",
+        color: "white",
+      },
+      morning: {
+        background: "linear-gradient(135deg, #fffbeb, #fef3c7)",
+        color: "#92400e",
+      },
+    }),
+    []
+  );
+
+  const [waterTotal, setWaterTotal] = useState(0);
+  const [waterGoal, setWaterGoal] = useState(2500);
+  useEffect(() => {
+    WaterService.getTodayTotal().then(setWaterTotal);
+    getUserProfile().then((p) => {
+      if (p?.weight && p.weight > 0) setWaterGoal(Math.round(p.weight * 35));
+    });
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ total: number }>).detail;
+      if (detail?.total != null) setWaterTotal(detail.total);
+    };
+    window.addEventListener("waterUpdated", handler);
+    return () => window.removeEventListener("waterUpdated", handler);
+  }, []);
+  const handleWaterPress = useCallback(async () => {
+    const next = waterTotal + 250;
+    setWaterTotal(next);
+    try {
+      const saved = await WaterService.addWater(250);
+      setWaterTotal(saved);
+      window.dispatchEvent(new CustomEvent("waterUpdated", { detail: { total: saved } }));
+    } catch {
+      setWaterTotal(waterTotal);
+    }
+  }, [waterTotal]);
 
   // Swipe state
   const [swipeDir, setSwipeDir] = useState<'left' | 'right' | null>(null);
@@ -1004,24 +1114,209 @@ export function UnifiedMenu() {
               </div>
             </motion.div>
 
-            {/* ── 2. Rest Timer (INACTIVE state only) — auto-scrolled to on load ── */}
+            {/* ── 2. Rest / Evening / Morning contextual card ── */}
             {status.isToday && !status.isInEatingWindow && (
-              <div ref={restTimerRef}>
-              <RestTimerCard
-                restingTimeMinutes={status.restingTimeMinutes}
-                currentMeal={status.currentMeal}
-                nextMealTime={status.nextMealTime}
-                nextMealLabel={status.nextMealLabel}
-                totalRestMinutes={status.totalRestMinutes}
-                t={t}
-                allowedSnackIds={mealSettings?.allowedSnacks ?? ["alma"]}
-                snackLabels={REST_SNACK_LABELS}
-                snackKcal={REST_SNACK_KCAL}
-                snackEmoji={REST_SNACK_EMOJI}
-                consumedSnacks={consumedSnacks}
-                onSnackConsume={handleSnackConsume}
-                onOpenEditor={() => navigate("/meal-intervals")}
-              />
+              <div
+                ref={restTimerRef}
+                style={{
+                  ...skinStyles[cardSkin],
+                  borderRadius: "1.5rem",
+                  padding: "1.25rem",
+                  margin: "0 1rem 1rem",
+                  transition: "background 0.6s ease, color 0.6s ease",
+                }}
+              >
+                {cardSkin === "evening" && sleepData && (
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700 }}>
+                        🌙 {t("sleep.tonightTitle")}
+                      </span>
+                      <span
+                        style={{
+                          background: "rgba(255,255,255,0.15)",
+                          borderRadius: 999,
+                          padding: "2px 10px",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        {t("sleep.score")}: {sleepData.score}
+                      </span>
+                    </div>
+                    {(() => {
+                      const now = new Date();
+                      const [bH, bM] = sleepData.bedtime.split(":").map(Number);
+                      const bedTotal = bH * 60 + bM;
+                      const nowTotal = now.getHours() * 60 + now.getMinutes();
+                      const diff = bedTotal - nowTotal;
+                      const hh = Math.floor(diff / 60);
+                      const mm = diff % 60;
+                      return diff > 0 ? (
+                        <div style={{ textAlign: "center", margin: "1rem 0" }}>
+                          <div style={{ fontSize: "2.5rem", fontWeight: 700, color: "white" }}>
+                            {hh}:{String(mm).padStart(2, "0")}
+                          </div>
+                          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>
+                            {t("card.toBedtime")}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.5rem",
+                        marginBottom: "1rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.375rem 0",
+                          borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>
+                          {t("sleep.bedtimeLabel")}
+                        </span>
+                        <span style={{ color: "white", fontWeight: 600 }}>{sleepData.bedtime}</span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.375rem 0",
+                          borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>
+                          {t("sleep.firstMeal")}
+                        </span>
+                        <span style={{ color: "white", fontWeight: 600 }}>
+                          {sleepData.firstMeal}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "0.375rem 0",
+                        }}
+                      >
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>
+                          {t("sleep.workout")}
+                        </span>
+                        <span style={{ color: "white", fontWeight: 600 }}>
+                          {sleepData.workoutWindow}
+                        </span>
+                      </div>
+                    </div>
+                    {sleepData.calorieAdj > 0 && (
+                      <div
+                        style={{
+                          background: "rgba(251,191,36,0.2)",
+                          border: "1px solid rgba(251,191,36,0.4)",
+                          borderRadius: "0.5rem",
+                          padding: "0.5rem",
+                          color: "#fbbf24",
+                          fontSize: "0.8rem",
+                          marginBottom: "1rem",
+                        }}
+                      >
+                        ⚠️ {t("sleep.lowSleepWarning").replace("{n}", String(sleepData.calorieAdj))}
+                      </div>
+                    )}
+                    <WaterButton
+                      skin="evening"
+                      totalMl={waterTotal}
+                      goalMl={waterGoal}
+                      onPress={handleWaterPress}
+                      className="w-full max-w-[200px]"
+                    />
+                  </div>
+                )}
+                {cardSkin === "morning" && sleepData && (
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "1.25rem",
+                        fontWeight: 700,
+                        marginBottom: "0.5rem",
+                        color: "#92400e",
+                      }}
+                    >
+                      🌅 {t("card.goodMorning")}
+                    </div>
+                    <div
+                      style={{
+                        color: sleepData.cycles >= 6 ? "#22c55e" : "#f59e0b",
+                        fontSize: "0.9rem",
+                        fontWeight: 500,
+                        marginBottom: "1rem",
+                      }}
+                    >
+                      {sleepData.cycles >= 6
+                        ? `😴 ${sleepData.cycles} ${t("sleep.cycles")} · ${t("card.optimalSleep")}`
+                        : `⚠️ ${t("card.lowSleep")} · +${sleepData.calorieAdj} kcal`}
+                    </div>
+                    {(() => {
+                      const now = new Date();
+                      const [fH, fM] = sleepData.firstMeal.split(":").map(Number);
+                      const firstTotal = fH * 60 + fM;
+                      const nowTotal = now.getHours() * 60 + now.getMinutes();
+                      const diff = firstTotal - nowTotal;
+                      if (diff <= 0) return null;
+                      const hh = Math.floor(diff / 60);
+                      const mm = diff % 60;
+                      return (
+                        <div style={{ textAlign: "center", margin: "1rem 0" }}>
+                          <div style={{ fontSize: "2rem", fontWeight: 700, color: "#92400e" }}>
+                            {hh}:{String(mm).padStart(2, "0")}
+                          </div>
+                          <div style={{ fontSize: "0.875rem", opacity: 0.7, color: "#92400e" }}>
+                            {t("card.toBreakfast")}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <div
+                      style={{
+                        fontSize: "0.875rem",
+                        opacity: 0.7,
+                        marginBottom: "1rem",
+                        color: "#92400e",
+                      }}
+                    >
+                      💪 {t("sleep.workout")}: {sleepData.workoutWindow}
+                    </div>
+                    <WaterButton
+                      skin="morning"
+                      totalMl={waterTotal}
+                      goalMl={waterGoal}
+                      onPress={handleWaterPress}
+                      className="w-full max-w-[200px]"
+                    />
+                  </div>
+                )}
+                {cardSkin === "rest" && (
+                  <RestTimerCard
+                    restingTimeMinutes={status.restingTimeMinutes}
+                    currentMeal={status.currentMeal}
+                    nextMealTime={status.nextMealTime}
+                    nextMealLabel={status.nextMealLabel}
+                    totalRestMinutes={status.totalRestMinutes}
+                    t={t}
+                    allowedSnackIds={mealSettings?.allowedSnacks ?? ["alma"]}
+                    snackLabels={REST_SNACK_LABELS}
+                    snackKcal={REST_SNACK_KCAL}
+                    snackEmoji={REST_SNACK_EMOJI}
+                    consumedSnacks={consumedSnacks}
+                    onSnackConsume={handleSnackConsume}
+                    onOpenEditor={() => navigate("/meal-intervals")}
+                  />
+                )}
               </div>
             )}
 
@@ -1282,7 +1577,7 @@ function RestTimerCard({
             className="text-center uppercase font-bold"
             style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(30,58,95,0.6)" }}
           >
-            {t("rest.timeRemaining")}
+            {t("menu.timeRemaining")}
           </p>
           <div className="flex justify-center">
             <motion.div
@@ -1309,7 +1604,7 @@ function RestTimerCard({
               />
             </div>
             <p className="text-center text-[0.65rem] font-medium" style={{ color: "rgba(30,58,95,0.6)" }}>
-              {Math.round(percentRemaining)}% {t("rest.remaining")}
+              {t("menu.percentRemaining").replace("{n}", String(Math.round(percentRemaining)))}
             </p>
           </div>
 
@@ -1317,7 +1612,7 @@ function RestTimerCard({
           {allowedSnackIds.length > 0 && (
             <>
               <p className="text-center uppercase text-[0.6rem] font-bold" style={{ letterSpacing: "0.08em", color: "rgba(30,58,95,0.5)" }}>
-                {t("rest.allowed")}
+                {t("menu.allowed")}
               </p>
               <div className="flex flex-wrap gap-1.5 justify-center">
                 {allowedSnackIds.map((snackId) => {
@@ -1355,7 +1650,7 @@ function RestTimerCard({
           <div className="flex items-center justify-center gap-1.5 py-1">
             <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1e3a5f" }} />
             <span className="font-bold text-[12px]" style={{ color: "#1e3a5f" }}>
-              {t("rest.nextMeal")}: {nextMealTimeStr} {nextMealTitle ? `(${nextMealTitle})` : ""}
+              {t("menu.nextMeal")}: {nextMealTimeStr} {nextMealTitle ? `(${nextMealTitle})` : ""}
             </span>
           </div>
 
@@ -1369,7 +1664,7 @@ function RestTimerCard({
               letterSpacing: "0.05em",
             }}
           >
-            {t("rest.longPressHint")}
+            {t("menu.longPressHint")}
           </p>
         </div>
       </motion.div>

@@ -57,6 +57,19 @@ const en: LocalePartial = {
 
   'menu.title': 'My Menu',
   'menu.subtitle': '28 day plan',
+  'menu.timeRemaining': 'TIME REMAINING',
+  'menu.allowed': 'ALLOWED:',
+  'menu.nextMeal': 'Next meal',
+  'menu.longPressHint': 'Long press: meal settings',
+  'menu.percentRemaining': '{n}% remaining',
+
+  'card.toBedtime': 'Until bedtime',
+  'card.goodMorning': 'Good morning!',
+  'card.toBreakfast': 'Until breakfast',
+  'card.optimalSleep': 'Optimal rest ✓',
+  'card.lowSleep': 'Low sleep',
+
+  'meal.snack': 'Snack',
 
   'sleep.title': 'Sleep & Recovery',
   'sleep.subtitle': 'Cycle-based calculation',

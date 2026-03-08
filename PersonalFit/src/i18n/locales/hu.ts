@@ -60,6 +60,19 @@ const hu = {
 
   'menu.title': 'Menüm',
   'menu.subtitle': '28 napos terv',
+  'menu.timeRemaining': 'HÁTRALÉVŐ IDŐ',
+  'menu.allowed': 'ENGEDÉLYEZETT:',
+  'menu.nextMeal': 'Következő étkezés',
+  'menu.longPressHint': 'Hosszan nyomva: étkezési beállítások',
+  'menu.percentRemaining': '{n}% hátra',
+
+  'card.toBedtime': 'Lefekvésig',
+  'card.goodMorning': 'Jó reggelt!',
+  'card.toBreakfast': 'Reggeliig',
+  'card.optimalSleep': 'Optimális pihenő ✓',
+  'card.lowSleep': 'Kevés alvás',
+
+  'meal.snack': 'Nassolnivaló',
 
   'sleep.title': 'Alvás & Regeneráció',
   'sleep.subtitle': 'Ciklus-alapú számítás',

@@ -709,45 +709,69 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
 }
 
 // --- WaterButton ---
-// Simple pill: blue gradient, white outline drop icon, current total in ml. Tap = +250ml. No animation, no progress bar.
+// Simple pill: blue gradient, white outline drop icon, current total in ml. Tap = +250ml. Optional skin for contextual cards.
 export interface WaterButtonProps {
   className?: string;
+  skin?: "rest" | "evening" | "morning";
+  totalMl?: number;
+  goalMl?: number;
+  onPress?: () => void;
 }
 
-export function WaterButton({ className = "" }: WaterButtonProps) {
-  const [total, setTotal] = useState(0);
-  const [goal, setGoal] = useState(2500);
+export function WaterButton({
+  className = "",
+  skin,
+  totalMl,
+  goalMl,
+  onPress,
+}: WaterButtonProps) {
+  const [internalTotal, setInternalTotal] = useState(0);
+  const [internalGoal, setInternalGoal] = useState(2500);
+  const isControlled = totalMl != null && goalMl != null && onPress != null;
+  const total = isControlled ? totalMl : internalTotal;
+  const goal = isControlled ? goalMl : internalGoal;
 
   useEffect(() => {
-    WaterService.getTodayTotal().then(setTotal);
+    if (isControlled) return;
+    WaterService.getTodayTotal().then(setInternalTotal);
     getUserProfile().then((p) => {
-      if (p?.weight && p.weight > 0) setGoal(Math.round(p.weight * 35));
+      if (p?.weight && p.weight > 0) setInternalGoal(Math.round(p.weight * 35));
     });
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<{ total: number }>).detail;
-      if (detail?.total != null) setTotal(detail.total);
+      if (detail?.total != null) setInternalTotal(detail.total);
     };
     window.addEventListener("waterUpdated", handler);
     return () => window.removeEventListener("waterUpdated", handler);
-  }, []);
+  }, [isControlled]);
 
   const handleTap = useCallback(
     async (e: React.MouseEvent | React.TouchEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      const optimistic = total + 250;
-      setTotal(optimistic);
+      if (isControlled && onPress) {
+        onPress();
+        return;
+      }
+      const optimistic = internalTotal + 250;
+      setInternalTotal(optimistic);
       try {
         const saved = await WaterService.addWater(250);
-        setTotal(saved);
+        setInternalTotal(saved);
       } catch {
-        setTotal((prev) => prev - 250);
+        setInternalTotal((prev) => prev - 250);
       }
     },
-    [total]
+    [isControlled, onPress, internalTotal]
   );
 
-  const goalReached = total >= goal && goal > 0;
+  const goalReached = goal > 0 && total >= goal;
+  const buttonStyle =
+    skin === "evening"
+      ? { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.5)", color: "white" }
+      : skin === "morning"
+        ? { background: "#f59e0b", border: "none", color: "white" }
+        : { background: "linear-gradient(135deg, #3b82f6, #06b6d4)", border: "none", color: "white" };
 
   return (
     <button
@@ -763,34 +787,26 @@ export function WaterButton({ className = "" }: WaterButtonProps) {
         minWidth: "120px",
         height: "52px",
         borderRadius: "999px",
-        border: "none",
         cursor: "pointer",
-        background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         gap: "0.6rem",
         animation: "none",
         boxShadow: "none",
+        ...buttonStyle,
       }}
     >
       <svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
         <path
           d="M9 1C9 1 2 8.5 2 13.5C2 17.09 5.13 20 9 20C12.87 20 16 17.09 16 13.5C16 8.5 9 1 9 1Z"
-          stroke="white"
+          stroke="currentColor"
           strokeWidth="1.8"
           strokeLinejoin="round"
           fill="none"
         />
       </svg>
-      <span
-        style={{
-          color: "white",
-          fontWeight: 700,
-          fontSize: "1.1rem",
-          letterSpacing: "0.01em",
-        }}
-      >
+      <span style={{ fontWeight: 700, fontSize: "1.1rem", letterSpacing: "0.01em" }}>
         {total}ml{goalReached ? " ✓" : ""}
       </span>
     </button>

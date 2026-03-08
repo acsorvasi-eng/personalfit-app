@@ -184,7 +184,7 @@ export function SleepSetup({
                       color: dotColor,
                     }}
                   >
-                    {t(getLabelKey(opt.quality))}
+                    {opt.cycleCount === 7 ? t("sleep.label.max") : t(getLabelKey(opt.quality))}
                   </span>
                 </div>
               </button>
