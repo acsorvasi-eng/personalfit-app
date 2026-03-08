@@ -47,10 +47,10 @@ export function ToastContainer() {
     <div
       style={{
         position: "fixed",
-        bottom: "5.5rem",
+        bottom: "6rem",
         left: "50%",
         transform: "translateX(-50%)",
-        zIndex: 9999,
+        zIndex: 99999,
         display: "flex",
         flexDirection: "column",
         gap: "0.5rem",
@@ -79,6 +79,9 @@ export function ToastContainer() {
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
+            minWidth: "200px",
+            maxWidth: "90vw",
+            textAlign: "center",
           }}
         >
           {toast.type === "success" && "✓"}

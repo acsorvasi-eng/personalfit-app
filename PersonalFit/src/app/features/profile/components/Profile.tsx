@@ -809,7 +809,6 @@ export function Profile() {
                     });
                   }}
                   t={t}
-                  showToast={showToast}
                 />
               )}
 
@@ -919,14 +918,12 @@ function ProfileGoalsTab({
   dailyCalories,
   onProfileUpdate,
   t,
-  showToast,
 }: {
   profile: ProfileData;
   targetCalories: number;
   dailyCalories: number;
   onProfileUpdate: (partial: Partial<ProfileData>) => void;
   t: (key: string) => string;
-  showToast: (message: string, type?: 'success' | 'info' | 'warning') => void;
 }) {
   const kcal = profile.calorieTarget ?? targetCalories;
   const proteinPct = profile.macroProteinPct ?? 30;
@@ -965,11 +962,13 @@ function ProfileGoalsTab({
       setSelectedBedtime(preferred.bedtime);
       setSelectedCycles(preferred.cycleCount);
     }
+    console.log('Saving sleep settings:', { wakeTime: time, selectedBedtime: newBedtime, selectedCycles: newCycles });
     await SleepService.saveSleepSettings({
       wakeTime: time,
       selectedBedtime: newBedtime,
       selectedCycles: newCycles,
     });
+    console.log('Sleep saved, showing toast');
     showToast(t('toast.sleepSaved'));
     try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
   };
@@ -977,11 +976,13 @@ function ProfileGoalsTab({
   const handleBedtimeSelect = async (bedtime: string, cycles: number) => {
     setSelectedBedtime(bedtime);
     setSelectedCycles(cycles);
+    console.log('Saving sleep settings:', { wakeTime, selectedBedtime: bedtime, selectedCycles: cycles });
     await SleepService.saveSleepSettings({
       wakeTime,
       selectedBedtime: bedtime,
       selectedCycles: cycles,
     });
+    console.log('Sleep saved, showing toast');
     showToast(t('toast.sleepSaved'));
     try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
   };
