@@ -957,12 +957,27 @@ export function LogMeal() {
             )}
           </div>
 
-          {/* AI Features */}
+          {/* AI Features — design system colors (blue-cyan, cyan-teal) */}
           <div className="flex gap-2">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isRecognizing}
-              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-3 rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              style={{
+                flex: 1,
+                background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.75rem',
+                padding: '0.875rem',
+                fontWeight: 600,
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                opacity: isRecognizing ? 0.5 : 1,
+                cursor: isRecognizing ? 'not-allowed' : 'pointer',
+              }}
             >
               {isRecognizing ? (
                 <>
@@ -985,7 +1000,22 @@ export function LogMeal() {
             />
             <button
               onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-              className={`flex-1 ${isListening ? 'bg-red-500 animate-pulse' : 'bg-gradient-to-r from-blue-500 to-teal-500'} text-white px-4 py-3 rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2`}
+              style={{
+                flex: 1,
+                background: isListening ? '#ef4444' : 'linear-gradient(135deg, #06b6d4, #14b8a6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.75rem',
+                padding: '0.875rem',
+                fontWeight: 600,
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                animation: isListening ? 'pulse 1.5s ease-in-out infinite' : undefined,
+              }}
             >
               {isListening ? (
                 <>
