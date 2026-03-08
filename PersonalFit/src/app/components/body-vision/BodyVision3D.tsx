@@ -488,6 +488,7 @@ export function BodyVision3D() {
                 currentWeight={profile.weight}
                 targetWeight={(profile as StoredUserProfile & { targetWeight?: number }).targetWeight ?? profile.weight - 10}
                 weightLoss={profile.weight - ((profile as StoredUserProfile & { targetWeight?: number }).targetWeight ?? profile.weight - 10)}
+                bodyFat={profile.bodyFat}
                 gender={profile.gender === 'female' ? 'female' : 'male'}
                 timeframeDays={90}
               />

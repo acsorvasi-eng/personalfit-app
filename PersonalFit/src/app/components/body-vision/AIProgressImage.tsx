@@ -1,165 +1,141 @@
 /**
  * AIProgressImage
- * AI-generated "future body" progress image via Replicate (SDXL).
- * Card with generate button, loading skeleton, result image and regenerate.
+ * Claude-powered SVG body silhouette infographic (replaces Replicate image).
+ * Card with generate button, loading skeleton, inline SVG result and regenerate link.
  */
 
 import { useState } from "react";
-import { Sparkles, RefreshCw } from "lucide-react";
-import { DSMCard } from "../dsm";
+import { Sparkles } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-interface Props {
-  weightLoss: number;
+export interface AIProgressImageProps {
   currentWeight: number;
   targetWeight: number;
+  weightLoss: number;
+  bodyFat?: number;
+  gender: "male" | "female";
   timeframeDays: number;
-  /** When provided, used for AI image; otherwise falls back to profile/localStorage */
-  gender?: "male" | "female";
 }
-
-function getProfileGender(): "male" | "female" {
-  try {
-    const raw = localStorage.getItem("userProfile");
-    if (raw) {
-      const p = JSON.parse(raw);
-      return p.gender === "female" ? "female" : "male";
-    }
-  } catch {
-    /* ignore */
-  }
-  return "male";
-}
-
-const TITLES: Record<string, string> = {
-  hu: "Így nézhetsz ki",
-  ro: "Cum vei arăta",
-  en: "How you'll look",
-};
-
-const SUBTITLES: Record<string, (w: number) => string> = {
-  hu: (w) => `AI-generált előrevetítés ${w}kg-nál`,
-  ro: (w) => `Previzualizare generată de AI la ${w}kg`,
-  en: (w) => `AI-generated preview at ${w}kg`,
-};
-
-const BTN_GENERATE: Record<string, string> = {
-  hu: "✨ Kép generálása",
-  ro: "✨ Generează imaginea",
-  en: "✨ Generate image",
-};
-
-const BTN_REGENERATE: Record<string, string> = {
-  hu: "Újragenerálás",
-  ro: "Regenerează",
-  en: "Regenerate",
-};
-
-const DISCLAIMER: Record<string, string> = {
-  hu: "AI generált kép, csak szemléltetés",
-  ro: "Imagine generată de AI, doar ilustrativ",
-  en: "AI-generated image, for illustration only",
-};
 
 export function AIProgressImage({
-  weightLoss,
   currentWeight,
   targetWeight,
+  weightLoss,
+  bodyFat,
+  gender,
   timeframeDays,
-  gender: genderProp,
-}: Props) {
-  const { locale } = useLanguage();
-  const lang = locale?.startsWith("ro") ? "ro" : locale?.startsWith("hu") ? "hu" : "en";
-  const gender = genderProp ?? getProfileGender();
+}: AIProgressImageProps) {
+  const { t } = useLanguage();
 
   const [generating, setGenerating] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [svgContent, setSvgContent] = useState<string | null>(null);
+  const [error, setError] = useState(false);
 
   const handleGenerate = async () => {
     setGenerating(true);
-    setError(null);
+    setError(false);
     try {
-      const res = await fetch("/api/generate-progress-image", {
+      const res = await fetch("/api/generate-body-visual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          weightLoss,
           currentWeight,
           targetWeight,
+          weightLoss,
+          bodyFat,
           gender,
           timeframeDays,
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error || "Request failed");
-        return;
+      if (data.svg) {
+        setSvgContent(data.svg);
+      } else {
+        setError(true);
       }
-      setImageUrl(data.imageUrl ?? null);
-    } catch (e: any) {
-      setError(e?.message || "Network error");
+    } catch {
+      setError(true);
     } finally {
       setGenerating(false);
     }
   };
 
-  const title = TITLES[lang] ?? TITLES.en;
-  const subtitle = (SUBTITLES[lang] ?? SUBTITLES.en)(targetWeight);
-  const btnLabel = imageUrl ? (BTN_REGENERATE[lang] ?? BTN_REGENERATE.en) : (BTN_GENERATE[lang] ?? BTN_GENERATE.en);
-  const disclaimer = DISCLAIMER[lang] ?? DISCLAIMER.en;
-
   return (
-    <DSMCard className="overflow-hidden">
+    <div
+      style={{
+        background: "white",
+        borderRadius: "1.5rem",
+        padding: "1.5rem",
+        margin: "0 1rem 1rem",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+      }}
+    >
       <div className="space-y-3">
         <div>
-          <h3 className="text-base font-bold text-gray-900">{title}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+          <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-indigo-500" />
+            {t("bodyVision.aiTitle")}
+          </h3>
+          <p className="text-xs text-gray-500 mt-0.5">{t("bodyVision.aiSubtitle")}</p>
         </div>
 
+        {!svgContent && !generating && (
+          <>
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating}
+              style={{
+                background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
+                color: "white",
+                borderRadius: "1rem",
+                padding: "1rem 2rem",
+                width: "100%",
+                fontSize: "1rem",
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              {t("bodyVision.aiGenerate")}
+            </button>
+            <p className="text-center text-xs text-gray-500">{t("bodyVision.aiFree")}</p>
+          </>
+        )}
+
         {generating && (
-          <div className="w-full aspect-[512/768] max-h-[320px] rounded-xl bg-gray-100 animate-pulse flex items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <Sparkles className="w-8 h-8 text-purple-400" />
-              <span className="text-xs text-gray-500">Generálás…</span>
-            </div>
+          <div className="flex flex-col items-center justify-center gap-3" style={{ minHeight: 320 }}>
+            <div
+              className="w-full rounded-xl animate-pulse"
+              style={{ aspectRatio: "320/480", maxWidth: 320, margin: "0 auto", backgroundColor: "#f3f4f6" }}
+            />
+            <span className="text-sm text-gray-500">{t("bodyVision.aiGenerating")}</span>
           </div>
         )}
 
-        {!generating && imageUrl && (
+        {!generating && svgContent && (
           <>
-            <img
-              src={imageUrl}
-              alt="AI progress preview"
-              className="w-full rounded-xl object-cover max-h-[320px] object-top"
+            <div
+              className="w-full overflow-hidden rounded-xl"
+              style={{ maxWidth: 320, margin: "0 auto" }}
+              dangerouslySetInnerHTML={{ __html: svgContent }}
             />
-            <p className="text-[10px] text-gray-400">{disclaimer}</p>
+            <p className="text-center">
+              <button
+                type="button"
+                onClick={handleGenerate}
+                className="text-sm text-indigo-600 hover:underline"
+              >
+                {t("bodyVision.aiRegenerate")}
+              </button>
+            </p>
           </>
         )}
 
         {error && (
-          <p className="text-xs text-red-500">{error}</p>
+          <p className="text-sm text-red-500 text-center">{t("bodyVision.aiError")}</p>
         )}
-
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={generating}
-          className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
-        >
-          {generating ? (
-            <>
-              <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              <span>Generálás…</span>
-            </>
-          ) : (
-            <>
-              {imageUrl ? <RefreshCw className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-              {btnLabel}
-            </>
-          )}
-        </button>
       </div>
-    </DSMCard>
+    </div>
   );
 }

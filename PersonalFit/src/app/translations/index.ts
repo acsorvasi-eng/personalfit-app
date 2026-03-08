@@ -529,6 +529,13 @@ export const translations = {
       noWeightTitle: 'Add meg a testsúlyodat',
       noWeightSubtitle: 'Az előrevetítéshez szükségünk van az aktuális testsúlyodra',
       goToProfile: 'Profil megnyitása',
+      aiTitle: 'Hogyan nézhetsz ki?',
+      aiSubtitle: 'AI-generált vizualizáció a céljaid alapján',
+      aiGenerate: '✨ Vizualizáció generálása',
+      aiGenerating: 'Claude gondolkodik...',
+      aiFree: 'Ingyenes · ~5 másodperc',
+      aiRegenerate: 'Újragenerálás',
+      aiError: 'Hiba történt, próbáld újra',
     },
     
     // Categories
@@ -1763,6 +1770,13 @@ export const translations = {
       noWeightTitle: 'Set your weight',
       noWeightSubtitle: 'We need your current weight for predictions',
       goToProfile: 'Open profile',
+      aiTitle: 'How will you look?',
+      aiSubtitle: 'AI-generated visualization based on your goals',
+      aiGenerate: '✨ Generate visualization',
+      aiGenerating: 'Claude is thinking...',
+      aiFree: 'Free · ~5 seconds',
+      aiRegenerate: 'Regenerate',
+      aiError: 'Something went wrong, please try again',
     },
 
     categories: {
@@ -2980,6 +2994,13 @@ export const translations = {
       noWeightTitle: 'Introdu greutatea ta',
       noWeightSubtitle: 'Avem nevoie de greutatea ta pentru predicție',
       goToProfile: 'Deschide profilul',
+      aiTitle: 'Cum vei arăta?',
+      aiSubtitle: 'Vizualizare AI bazată pe obiectivele tale',
+      aiGenerate: '✨ Generează vizualizare',
+      aiGenerating: 'Claude se gândește...',
+      aiFree: 'Gratuit · ~5 secunde',
+      aiRegenerate: 'Regenerează',
+      aiError: 'Ceva n-a mers bine, încearcă din nou',
     },
 
     categories: {
