@@ -34,6 +34,11 @@ export function LogMeal() {
   const { t, locale } = useLanguage();
   const navigate = useNavigate();
   const { consumed, target } = useCalorieTracker();
+
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
   const [mealInput, setMealInput] = useState("");
   const [quantityInput, setQuantityInput] = useState("");
   const [servingsInput, setServingsInput] = useState("1");
@@ -527,14 +532,7 @@ export function LogMeal() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-blue-100 dark:from-[#121212] dark:via-[#121212] dark:to-[#1E1E1E]">
       {/* Header */}
       <PageHeader
-        iconElement={
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center justify-center"
-          >
-            <ArrowLeft className="w-6 h-6 text-white" />
-          </button>
-        }
+        onClose={handleClose}
         title={t("logMealExt.headerTitle")}
         subtitle={t("logMealExt.headerSubtitle")}
         gradientFrom="from-blue-400"

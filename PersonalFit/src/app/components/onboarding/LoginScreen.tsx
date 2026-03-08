@@ -20,7 +20,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ArrowLeft,
   CheckCircle2,
   KeyRound,
 } from 'lucide-react';
@@ -350,9 +349,8 @@ export function LoginScreen() {
                 {/* Back to login */}
                 <button
                   onClick={closeForgotPassword}
-                  className="w-full flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pt-2"
+                  className="w-full flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pt-2"
                 >
-                  <ArrowLeft className="w-4 h-4" />
                   {t('login.backToLogin')}
                 </button>
               </CardContent>

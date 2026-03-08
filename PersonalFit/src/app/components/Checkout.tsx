@@ -234,6 +234,11 @@ export function Checkout() {
     }
   };
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   const handleBack = () => {
     if (step === "cart") {
       navigate("/shopping");
@@ -273,15 +278,7 @@ export function Checkout() {
       {/* Header */}
       <div className="flex-shrink-0">
         <PageHeader
-          iconElement={
-            step !== "confirmation" ? (
-              <button onClick={handleBack} className="w-full h-full flex items-center justify-center">
-                <ArrowLeft className="w-6 h-6 text-white" />
-              </button>
-            ) : (
-              <PartyPopper className="w-6 h-6 text-white" />
-            )
-          }
+          onClose={handleClose}
           title={step === "confirmation" ? t("checkout.orderPlaced") : `${t("checkout.orderTitle")} - ${storeName}`}
           subtitle={step === "confirmation" ? `#${orderId}` : localizedSteps[stepIndex]?.label}
           gradientFrom="from-blue-500"

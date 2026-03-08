@@ -14,7 +14,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft,
+  X,
   CreditCard,
   Check,
   AlertCircle,
@@ -189,20 +189,19 @@ export function SubscriptionScreen() {
     );
   }
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   // ─── Main View ───
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-[#121212] dark:via-[#1E1E1E] dark:to-[#121212] flex flex-col relative">
       {/* ── Sticky Header ── */}
       <div className="sticky top-0 z-20 bg-white/80 dark:bg-[#1E1E1E]/80 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-lg mx-auto flex items-center gap-3 px-4 py-3">
-          <button
-            onClick={() => navigate('/profile')}
-            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-base text-gray-900" style={{ fontWeight: 700 }}>{t("subscription.title")}</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>{t("subscription.title")}</h1>
           </div>
           {!trial.isExpired && (
             <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-full">
@@ -210,6 +209,14 @@ export function SubscriptionScreen() {
               <span className="text-[11px] font-bold">{trial.daysRemaining} {t("subscription.daysRemaining")}</span>
             </div>
           )}
+          <button
+            type="button"
+            onClick={handleClose}
+            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#252525] rounded-full transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </button>
         </div>
       </div>
 

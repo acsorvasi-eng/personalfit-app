@@ -14,6 +14,11 @@ export function FAQPage() {
   const { t } = useLanguage();
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   const toggleItem = (key: string) => {
     setOpenItems(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -65,7 +70,7 @@ export function FAQPage() {
         <PageHeader
           title={t("faq.title")}
           subtitle={t("faq.subtitle")}
-          onBack={() => navigate('/profile')}
+          onClose={handleClose}
         />
       </div>
 

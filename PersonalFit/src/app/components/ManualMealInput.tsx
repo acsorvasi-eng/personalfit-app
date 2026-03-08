@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, X, Search, ChevronLeft, ChevronRight,
   UtensilsCrossed, Coffee, Sandwich, Moon, Cookie,
-  Trash2, ArrowLeft, AlertCircle, Flame,
+  Trash2, AlertCircle, Flame,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { foodDatabase, type Food } from '../data/mealData';
@@ -367,14 +367,17 @@ export function ManualMealInput() {
     }
   }, [allDays, navigate, t]);
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#0f0f0f] dark:to-[#121212] flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-xl border-b border-gray-100 dark:border-[#2a2a2a]">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 dark:text-gray-400">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+          <div className="w-9" />
           <div className="text-center">
             <h1 className="text-sm text-gray-900 dark:text-white" style={{ fontWeight: 600 }}>
               {t('manualInput.title')}
@@ -383,6 +386,14 @@ export function ManualMealInput() {
               {completedDaysCount}/{TOTAL_DAYS} {t('manualInput.daysCompleted')}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="w-9 h-9 rounded-full bg-gray-200/80 dark:bg-white/10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-white/20 transition-all"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </button>
           <button
             onClick={handleFinishPlan}
             disabled={completedDaysCount === 0 || isSaving}

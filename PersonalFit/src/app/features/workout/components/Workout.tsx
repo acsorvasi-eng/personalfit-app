@@ -352,13 +352,13 @@ export function Workout() {
     return (
       <div className="h-full flex flex-col overflow-hidden bg-gray-50 dark:bg-[#121212]">
         <div className="bg-white dark:bg-[#1E1E1E] border-b border-gray-200 dark:border-[#2a2a2a] px-4 py-4 flex items-center gap-4">
-          <button onClick={() => setShowApps(false)} className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#252525] rounded-xl transition-colors" aria-label={t('common.back')}>
-            <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-          </button>
-          <div>
+          <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('workout.syncApps')}</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400">{t('workout.connectAppsDesc')}</p>
           </div>
+          <button onClick={() => setShowApps(false)} className="w-10 h-10 flex-shrink-0 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#252525] rounded-full transition-colors" aria-label={t('common.close')}>
+            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {apps.map(app => (

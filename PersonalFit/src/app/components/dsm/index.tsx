@@ -23,7 +23,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Apple, UtensilsCrossed, ShoppingCart, User, Dumbbell,
-  X, ArrowLeft, ChevronLeft, ChevronRight, RotateCw,
+  X, ChevronLeft, ChevronRight, RotateCw,
   AlertTriangle, Camera, Eye, Trash2, Archive, Info,
   Maximize2, ZoomIn, ZoomOut, CheckCircle2, Bell, XCircle,
   Droplets
@@ -966,24 +966,24 @@ export function DSMNotification({
 }
 
 // --- DSMSubPageHeader ---
-// Sub-page navigation header with gradient background, back button, title/subtitle, and optional action.
+// Sub-page navigation header with gradient background, X close (top right), title/subtitle, and optional action.
 interface DSMSubPageHeaderProps {
   title: string;
   subtitle?: string;
-  onBack: () => void;
+  onClose: () => void;
   action?: ReactNode;
   gradientFrom?: string;
   gradientTo?: string;
 }
 
 export function DSMSubPageHeader({
-  title, subtitle, onBack, action,
+  title, subtitle, onClose, action,
   gradientFrom = "from-[#3366FF]", gradientTo = "to-[#12CFA6]",
 }: DSMSubPageHeaderProps) {
   const { t } = useLanguage();
   return (
     <div
-      className="w-full rounded-none m-0 text-white py-4"
+      className="w-full rounded-none m-0 text-white py-4 relative"
       style={{
         width: '100%',
         borderRadius: 0,
@@ -993,20 +993,19 @@ export function DSMSubPageHeader({
         background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)',
       }}
     >
-      <div className="w-full">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-[max(1rem,env(safe-area-inset-top,16px))] right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all backdrop-blur-sm"
+        aria-label={t("ui.close")}
+      >
+        <X className="w-4.5 h-4.5 text-white" />
+      </button>
+      <div className="w-full pr-10">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBack}
-              className="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center hover:bg-white/25 transition-all active:scale-90"
-              aria-label={t("ui.back")}
-            >
-              <ArrowLeft className="w-4.5 h-4.5" />
-            </button>
-            <div>
-              <h1 className="font-bold" style={{ fontSize: "1.1rem" }}>{title}</h1>
-              {subtitle && <p className="text-xs text-white/70">{subtitle}</p>}
-            </div>
+          <div>
+            <h1 className="font-bold" style={{ fontSize: "1.1rem" }}>{title}</h1>
+            {subtitle && <p className="text-xs text-white/70">{subtitle}</p>}
           </div>
           {action}
         </div>

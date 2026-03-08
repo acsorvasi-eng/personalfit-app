@@ -550,6 +550,7 @@ export const translations = {
 
     common: {
       back: 'Vissza',
+      close: 'Bezárás',
       noData: 'Nincs adat',
       kcal: 'kcal',
       week: 'hét',
@@ -620,6 +621,7 @@ export const translations = {
       cancel: 'Mégse',
       ok: 'OK',
       back: 'Vissza',
+      close: 'Bezárás',
       water: 'Víz',
       privacyNote: 'A képek kizárólag helyileg, a készülékeden tárolódnak.',
       skipToContent: 'Ugrás a tartalomhoz',
@@ -1790,6 +1792,7 @@ export const translations = {
 
     common: {
       back: 'Back',
+      close: 'Close',
       noData: 'No data',
       kcal: 'kcal',
       week: 'week',
@@ -1860,6 +1863,7 @@ export const translations = {
       cancel: 'Cancel',
       ok: 'OK',
       back: 'Back',
+      close: 'Close',
       water: 'Water',
       privacyNote: 'Images are stored locally on your device only.',
       skipToContent: 'Skip to content',
@@ -3014,6 +3018,7 @@ export const translations = {
 
     common: {
       back: 'Înapoi',
+      close: 'Închide',
       noData: 'Nu există date',
       kcal: 'kcal',
       week: 'săptămână',
@@ -3084,6 +3089,7 @@ export const translations = {
       cancel: 'Anulează',
       ok: 'OK',
       back: 'Înapoi',
+      close: 'Închide',
       water: 'Apă',
       privacyNote: 'Imaginile sunt stocate doar local, pe dispozitivul tău.',
       skipToContent: 'Sari la conținut',

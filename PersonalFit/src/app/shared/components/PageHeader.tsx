@@ -1,9 +1,11 @@
 /**
  * PageHeader — Universal header for every page (Design System Rule 1).
- * Full width, gradient, sticky, 48px top padding, optional close/back, stats, action.
+ * Full width, gradient, sticky, 48px top padding, optional X close (top right), stats, action.
+ * Navigation rule: subpages use onClose only (X button); never use back arrows (←).
  */
 
 import { ReactNode } from "react";
+import { X } from "lucide-react";
 
 export interface PageHeaderStatItem {
   label: string;
@@ -17,8 +19,10 @@ export interface PageHeaderProps {
   title: string;
   titleElement?: ReactNode;
   subtitle?: string;
+  /** If provided, shows X close button top right (subpages only). Main tabs have no close button. */
   onClose?: () => void;
-  onBack?: () => void;
+  /** Optional right-side element (e.g. extra actions). Close button is separate. */
+  rightElement?: ReactNode;
   /** Optional stat cards row below title */
   stats?: PageHeaderStatItem[];
   /** Optional top-right action (e.g. AI button) */
@@ -31,7 +35,7 @@ export function PageHeader({
   titleElement,
   subtitle,
   onClose,
-  onBack,
+  rightElement,
   stats,
   action,
   children,
@@ -53,30 +57,34 @@ export function PageHeader({
         boxSizing: "border-box",
       }}
     >
-      {(onClose ?? onBack) && (
+      {onClose && (
         <button
           type="button"
-          onClick={onClose ?? onBack}
+          onClick={onClose}
           style={{
             position: "absolute",
-            top: "1rem",
+            top: "48px",
             right: "1rem",
             width: "2rem",
             height: "2rem",
-            background: "rgba(255,255,255,0.2)",
             borderRadius: "50%",
-            color: "white",
+            background: "rgba(255,255,255,0.2)",
             border: "none",
-            cursor: "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "1rem",
+            cursor: "pointer",
+            backdropFilter: "blur(4px)",
           }}
-          aria-label={onClose ? "Close" : "Back"}
+          aria-label="Close"
         >
-          {onClose ? "✕" : "←"}
+          <X size={18} color="white" />
         </button>
+      )}
+      {rightElement != null && (
+        <div style={{ position: "absolute", top: "48px", right: onClose ? "3.5rem" : "1rem" }}>
+          {rightElement}
+        </div>
       )}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem" }}>
         <div style={{ flex: 1, minWidth: 0 }}>

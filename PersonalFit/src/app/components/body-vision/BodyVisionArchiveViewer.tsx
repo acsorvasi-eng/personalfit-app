@@ -5,7 +5,7 @@
  */
 
 import { useState, useRef } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock, Camera } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Clock, Camera } from "lucide-react";
 import type { ArchivedSession, ViewType } from "./types";
 import { POSITIONS, POSITION_LABELS } from "./types";
 import { DSMPrivacyStrip, DSMStatCard } from "../dsm";
@@ -48,9 +48,6 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
     <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,12px)] pb-3 bg-gradient-to-b from-black/60 to-transparent">
-        <button onClick={onClose} className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all">
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-bold truncate" style={{ fontSize: '1rem' }}>{session.label}</h2>
           <div className="flex items-center gap-1.5 text-white/40 text-[10px]">
@@ -60,6 +57,9 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
             <span>{session.monthsInvested} honap</span>
           </div>
         </div>
+        <button onClick={onClose} className="w-9 h-9 flex-shrink-0 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all" aria-label="Close">
+          <X className="w-5 h-5 text-white" />
+        </button>
       </div>
 
       {/* Main image */}

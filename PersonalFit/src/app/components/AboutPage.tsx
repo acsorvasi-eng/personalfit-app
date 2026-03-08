@@ -12,6 +12,11 @@ export function AboutPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   const TEAM_VALUES = [
     {
       icon: Heart,
@@ -49,7 +54,7 @@ export function AboutPage() {
         <PageHeader
           title={t('about.title')}
           subtitle={t('about.subtitle')}
-          onBack={() => navigate('/profile')}
+          onClose={handleClose}
         />
       </div>
 

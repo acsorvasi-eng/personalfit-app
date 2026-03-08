@@ -20,13 +20,13 @@
 import { useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import {
-  ArrowLeft,
   ChevronDown,
   ChevronUp,
   Flame,
   UtensilsCrossed,
   RefreshCw,
   Sparkles,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlanData, type MealOption, type WeekData } from "../../../hooks/usePlanData";
@@ -153,6 +153,11 @@ export function MealDetail() {
 
   const isTrainingDay = routeState?.isTrainingDay ?? false;
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/foods");
+  };
+
   // Today's meal for this type
   const todayMeal = useMemo(() => {
     const { week, day } = calculateWeekAndDay(new Date());
@@ -222,15 +227,15 @@ export function MealDetail() {
           <div className="absolute bottom-0 -left-6 w-28 h-28 bg-white/5 rounded-full blur-lg" />
 
           <div className="relative z-10">
-            {/* Back button */}
+            {/* Close button — top right */}
             <button
-              onClick={() => navigate("/foods")}
-              className="flex items-center gap-1.5 text-white/80 hover:text-white mb-4 cursor-pointer"
+              type="button"
+              onClick={handleClose}
+              className="absolute top-0 right-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all cursor-pointer"
+              style={{ backdropFilter: "blur(4px)" }}
+              aria-label="Close"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="text-[13px]" style={{ fontWeight: 500 }}>
-                {t('foods.back')}
-              </span>
+              <X className="w-5 h-5 text-white" />
             </button>
 
             {/* Meal type badge */}

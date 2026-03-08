@@ -185,6 +185,11 @@ export function MealIntervalEditor() {
     return true;
   };
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
@@ -256,7 +261,7 @@ export function MealIntervalEditor() {
         <PageHeader
           title={t("mealEditor.title")}
           subtitle={t("mealEditor.subtitle")}
-          onBack={() => navigate(-1)}
+          onClose={handleClose}
         />
       </div>
 

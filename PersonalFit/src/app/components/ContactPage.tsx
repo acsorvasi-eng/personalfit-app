@@ -15,6 +15,11 @@ export function ContactPage() {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Simulated submission
@@ -29,7 +34,7 @@ export function ContactPage() {
         <PageHeader
           title={t('contact.title')}
           subtitle={t('contact.subtitle')}
-          onBack={() => navigate('/profile')}
+          onClose={handleClose}
         />
       </div>
 

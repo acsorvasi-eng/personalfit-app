@@ -44,6 +44,11 @@ export function BodyVision3D() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
+
   // ========== STATE ==========
   const [profile, setProfile] = useState<StoredUserProfile | null>(null);
   const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
@@ -362,7 +367,7 @@ export function BodyVision3D() {
       {/* Header */}
       <PageHeader
         title="AR Test Vizio"
-        onBack={() => navigate('/profile')}
+        onClose={handleClose}
         action={archivedSessions.length > 0 ? (
           <button
             type="button"

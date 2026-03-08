@@ -7,7 +7,7 @@
 
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useState } from "react";
-import { ArrowLeft, Camera, Clock, ChevronLeft, ChevronRight, Grid2x2, GalleryHorizontal } from "lucide-react";
+import { X, Camera, Clock, ChevronLeft, ChevronRight, Grid2x2, GalleryHorizontal } from "lucide-react";
 import type { ArchivedSession, ViewType } from "./types";
 import { POSITIONS, POSITION_LABELS } from "./types";
 import { DSMPrivacyStrip } from "../dsm";
@@ -29,9 +29,6 @@ export function BodyVisionCompare({ sessions, onClose }: Props) {
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,12px)] pb-3 bg-gradient-to-b from-black/80 to-transparent z-10">
-        <button onClick={onClose} className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all">
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-bold" style={{ fontSize: '1rem' }}>Osszehasonlitas</h2>
           <span className="text-white/40 text-[10px]">{sorted.length} munkamenet &bull; {POSITION_LABELS[activeView]}</span>
@@ -48,6 +45,9 @@ export function BodyVisionCompare({ sessions, onClose }: Props) {
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${viewMode === 'grid' ? 'bg-amber-500 text-white' : 'bg-white/10 text-white/40'}`}
           >
             <Grid2x2 className="w-4 h-4" />
+          </button>
+          <button onClick={onClose} className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all" aria-label="Close">
+            <X className="w-5 h-5 text-white" />
           </button>
         </div>
       </div>
