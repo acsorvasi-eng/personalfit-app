@@ -84,9 +84,6 @@ export function ToastContainer() {
             textAlign: "center",
           }}
         >
-          {toast.type === "success" && "✓"}
-          {toast.type === "warning" && "⚠️"}
-          {toast.type === "info" && "ℹ️"}
           {toast.message}
         </div>
       ))}
