@@ -55,7 +55,13 @@ export function LogMeal() {
       }
     });
   }, [today]);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    name: string;
+    kcal: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  } | null>(null);
   const [recognizedFood, setRecognizedFood] = useState<RecognizedFood | null>(null);
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -159,7 +165,13 @@ export function LogMeal() {
 
     setLoggedMeals(prev => [...prev, newMeal]);
     resetForm();
-    showSuccessAnimation();
+    showSuccessAndNavigate(
+      aiRecognition.combinedName,
+      aiRecognition.totalNutrition.calories,
+      aiRecognition.totalNutrition.protein,
+      aiRecognition.totalNutrition.carbs,
+      aiRecognition.totalNutrition.fat
+    );
   };
 
   // Select an AI food item from search dropdown
@@ -240,7 +252,13 @@ export function LogMeal() {
 
       setLoggedMeals(prev => [...prev, newMeal]);
       resetForm();
-      showSuccessAnimation();
+      showSuccessAndNavigate(
+        selectedProduct.name,
+        calculatedProductNutrition.calories,
+        calculatedProductNutrition.protein,
+        calculatedProductNutrition.carbs,
+        calculatedProductNutrition.fat
+      );
     } else if (selectedRecipe && calculatedRecipeNutrition) {
       const newMeal: LoggedMeal = {
         id: Date.now().toString(),
@@ -257,7 +275,13 @@ export function LogMeal() {
 
       setLoggedMeals(prev => [...prev, newMeal]);
       resetForm();
-      showSuccessAnimation();
+      showSuccessAndNavigate(
+        selectedRecipe.name,
+        calculatedRecipeNutrition.calories,
+        calculatedRecipeNutrition.protein,
+        calculatedRecipeNutrition.carbs,
+        calculatedRecipeNutrition.fat
+      );
     }
   };
 
@@ -275,9 +299,12 @@ export function LogMeal() {
     setCompoundPortionInput("");
   };
 
-  const showSuccessAnimation = () => {
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+  const showSuccessAndNavigate = (name: string, kcal: number, protein: number, carbs: number, fat: number) => {
+    setSuccessData({ name, kcal, protein, carbs, fat });
+    setTimeout(() => {
+      if (window.history.length > 1) navigate(-1);
+      else navigate("/menu");
+    }, 1800);
   };
 
   const removeMeal = (id: string) => {
@@ -480,7 +507,7 @@ export function LogMeal() {
     setVoiceMatches(null);
     setVoiceTranscript(null);
     resetForm();
-    showSuccessAnimation();
+    showSuccessAndNavigate(names.join(" + "), totalCal, totalPro, totalCarb, totalFat);
   };
 
   const startVoiceRecognition = () => {
@@ -527,6 +554,123 @@ export function LogMeal() {
       setIsListening(false);
     }
   };
+
+  if (successData) {
+    const { name: addedFoodName, kcal, protein, carbs, fat } = successData;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-blue-100 dark:from-[#121212] dark:via-[#121212] dark:to-[#1E1E1E]">
+        <style>{`@keyframes scaleIn {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes drawCheck {
+  from { stroke-dashoffset: 30; }
+  to { stroke-dashoffset: 0; }
+}`}</style>
+        <PageHeader
+          onClose={handleClose}
+          title={t("logMealExt.headerTitle")}
+        />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "3rem 2rem",
+            textAlign: "center",
+            minHeight: "60vh",
+          }}
+        >
+          <div
+            style={{
+              width: "4rem",
+              height: "4rem",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "1.5rem",
+              animation: "scaleIn 0.3s ease-out",
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M5 13l4 4L19 7"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{
+                  strokeDasharray: 30,
+                  strokeDashoffset: 0,
+                  animation: "drawCheck 0.4s ease-out 0.2s both",
+                }}
+              />
+            </svg>
+          </div>
+          <div
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: 700,
+              color: "#111827",
+              marginBottom: "0.5rem",
+            }}
+            className="dark:text-gray-100"
+          >
+            {t("calorieCalculator.successTitle")}
+          </div>
+          <div
+            style={{
+              color: "#6b7280",
+              fontSize: "0.9rem",
+              marginBottom: "0.5rem",
+            }}
+            className="dark:text-gray-400"
+          >
+            {addedFoodName}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              marginTop: "1rem",
+              background: "#f9fafb",
+              borderRadius: "1rem",
+              padding: "1rem 1.5rem",
+            }}
+            className="dark:bg-gray-800/50"
+          >
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "#111827" }} className="dark:text-gray-100">
+                {kcal}
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>kcal</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "#3b82f6" }}>{protein}g</div>
+              <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{t("macros.protein")}</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "#14b8a6" }}>{carbs}g</div>
+              <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{t("macros.carbs")}</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontWeight: 700, color: "#f59e0b" }}>{fat}g</div>
+              <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{t("macros.fat")}</div>
+            </div>
+          </div>
+          <div
+            style={{ color: "#9ca3af", fontSize: "0.8rem", marginTop: "1.5rem" }}
+            className="dark:text-gray-500"
+          >
+            {t("calorieCalculator.successBack")}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-blue-100 dark:from-[#121212] dark:via-[#121212] dark:to-[#1E1E1E]">
@@ -1226,7 +1370,13 @@ export function LogMeal() {
                       };
                       setLoggedMeals(prev => [...prev, newMeal]);
                       resetForm();
-                      showSuccessAnimation();
+                      showSuccessAndNavigate(
+                        newMeal.name,
+                        calculatedCompoundNutrition.calories,
+                        calculatedCompoundNutrition.protein,
+                        calculatedCompoundNutrition.carbs,
+                        calculatedCompoundNutrition.fat
+                      );
                     }}
                     disabled={!calculatedCompoundNutrition}
                     className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
@@ -1364,7 +1514,13 @@ export function LogMeal() {
                       };
                       setLoggedMeals(prev => [...prev, newMeal]);
                       resetForm();
-                      showSuccessAnimation();
+                      showSuccessAndNavigate(
+                        newMeal.name,
+                        calculatedSmartNutrition.calories,
+                        calculatedSmartNutrition.protein,
+                        calculatedSmartNutrition.carbs,
+                        calculatedSmartNutrition.fat
+                      );
                     }}
                     disabled={!calculatedSmartNutrition}
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-amber-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
@@ -1611,15 +1767,6 @@ export function LogMeal() {
           </div>
         )}
 
-        {/* Success Animation */}
-        {showSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="bg-green-500 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce">
-              <Check className="w-6 h-6" />
-              <span className="font-black text-lg">{t("logMeal.success")}</span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

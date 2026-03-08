@@ -80,6 +80,12 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'sleep.label.good': 'Ajánlott',
     'sleep.label.optimal': 'Ideális',
     'sleep.label.max': 'Maximum regeneráció',
+
+    'calorieCalculator.successTitle': 'Sikeresen hozzáadva! 🎉',
+    'calorieCalculator.successBack': 'Visszatérés a menübe...',
+    'macros.protein': 'Fehérje',
+    'macros.carbs': 'Szénhidrát',
+    'macros.fat': 'Zsír',
   },
 
   ro: {
@@ -156,6 +162,12 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'sleep.label.good': 'Recomandat',
     'sleep.label.optimal': 'Ideal',
     'sleep.label.max': 'Regenerare maximă',
+
+    'calorieCalculator.successTitle': 'Adăugat cu succes! 🎉',
+    'calorieCalculator.successBack': 'Revenire la meniu...',
+    'macros.protein': 'Proteine',
+    'macros.carbs': 'Carbohidrați',
+    'macros.fat': 'Grăsimi',
   },
 
   en: {
@@ -232,5 +244,11 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'sleep.label.good': 'Recommended',
     'sleep.label.optimal': 'Ideal',
     'sleep.label.max': 'Maximum recovery',
+
+    'calorieCalculator.successTitle': 'Successfully added! 🎉',
+    'calorieCalculator.successBack': 'Returning to menu...',
+    'macros.protein': 'Protein',
+    'macros.carbs': 'Carbs',
+    'macros.fat': 'Fat',
   },
 };
