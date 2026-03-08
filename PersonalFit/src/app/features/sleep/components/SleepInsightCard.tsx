@@ -106,7 +106,7 @@ export function SleepInsightCard({
             fontWeight: 500,
           }}
         >
-          Score: {circadianScore}
+          {t("sleep.score")}: {circadianScore}
         </span>
       </div>
 

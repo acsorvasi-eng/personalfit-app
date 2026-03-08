@@ -77,6 +77,7 @@ const hu = {
   'sleep.label.good': 'Ajánlott',
   'sleep.label.optimal': 'Ideális',
   'sleep.label.max': 'Maximum regeneráció',
+  'sleep.score': 'Pontszám',
 
   'calorieCalculator.successTitle': 'Sikeresen hozzáadva! 🎉',
   'calorieCalculator.successBack': 'Visszatérés a menübe...',

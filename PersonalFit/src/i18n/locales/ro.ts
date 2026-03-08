@@ -74,6 +74,7 @@ const ro: LocalePartial = {
   'sleep.label.good': 'Recomandat',
   'sleep.label.optimal': 'Ideal',
   'sleep.label.max': 'Regenerare maximă',
+  'sleep.score': 'Scor',
 
   'calorieCalculator.successTitle': 'Adăugat cu succes! 🎉',
   'calorieCalculator.successBack': 'Revenire la meniu...',

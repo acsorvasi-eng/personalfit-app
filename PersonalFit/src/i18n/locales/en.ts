@@ -74,6 +74,7 @@ const en: LocalePartial = {
   'sleep.label.good': 'Recommended',
   'sleep.label.optimal': 'Ideal',
   'sleep.label.max': 'Maximum recovery',
+  'sleep.score': 'Score',
 
   'calorieCalculator.successTitle': 'Successfully added! 🎉',
   'calorieCalculator.successBack': 'Returning to menu...',
