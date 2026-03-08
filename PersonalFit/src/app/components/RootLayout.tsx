@@ -12,10 +12,28 @@ import { useDailyReset } from "../hooks/useDailyReset";
 import { useBackendInit } from "../hooks/useBackendInit";
 import { PipelineDiagnostics } from "./PipelineDiagnostics";
 import { ToastContainer } from "../shared/components/Toast";
+// TEMP DEBUG - remove after testing
+import { useEffect } from "react";
 
 function RootLayoutInner() {
   // Monitor midnight crossing, archive daily data & reset counters
   useDailyReset();
+
+  useEffect(() => {
+    console.log("[Toast] ToastContainer mounted, firing test toast in 3s");
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent("showToast", {
+          detail: {
+            id: "test-123",
+            message: "Toast működik! ✓",
+            type: "success",
+            duration: 3000,
+          },
+        })
+      );
+    }, 3000);
+  }, []);
 
   // Initialize IndexedDB backend & seed default data
   const backend = useBackendInit();
