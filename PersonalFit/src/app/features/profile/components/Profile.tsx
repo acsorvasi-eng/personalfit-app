@@ -810,241 +810,36 @@ export function Profile() {
                 />
               )}
 
-              {/* TAB 3 — Beállítások / Settings */}
+              {/* TAB 3 — Beállítások / Settings (clean minimal, black & white) */}
               {activeTab === "settings" && (
-                <>
-        {/* ★ UPLOAD MY PLAN — Primary entry point ★ */}
-        <DSMCard className={`border-2 ${appData.hasData ? 'border-blue-200 dark:border-blue-500/20' : 'border-dashed border-blue-300 dark:border-blue-500/30'}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              appData.hasData
-                ? 'bg-blue-100 dark:bg-blue-500/20'
-                : 'bg-gradient-to-br from-blue-400 to-teal-500 shadow-md'
-            }`}>
-              {appData.hasData
-                ? <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                : <Upload className="w-5 h-5 text-white" />
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
-                {t('profile.uploadPlan')}
-              </div>
-              {appData.hasData ? (
-                <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
-                  {appData.activePlanLabel || t('profile.activePlanLoaded')} · v{appData.planCount}
-                </p>
-              ) : (
-                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                  {t('profile.uploadFormats')}
-                </p>
-              )}
-            </div>
-            <DSMButton
-              variant={appData.hasData ? "secondary" : "gradient"}
-              size="sm"
-              icon={Upload}
-              onClick={() => setIsUploadOpen(true)}
-            >
-              {appData.hasData ? t('profile.newPlan') : t('profile.upload')}
-            </DSMButton>
-          </div>
-          {!appData.hasData && (
-            <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200/50 dark:border-amber-500/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-              <p className="text-[11px] text-amber-700 dark:text-amber-400">
-                {t('profile.uploadAiHint')}
-              </p>
-            </div>
-          )}
-        </DSMCard>
-
-        {/* ★ STAGING / PUBLISH — Shown when staged data exists ★ */}
-        {staging.hasStagedPlan && staging.info && (
-          <DSMCard className="border-2 border-amber-300 dark:border-amber-500/30 bg-gradient-to-br from-amber-50/50 to-white dark:from-amber-500/5 dark:to-[#1E1E1E]">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                <Layers className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
-                  {t('profile.publishData')}
-                </div>
-                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
-                  {t('profile.stagingState')} · {staging.info.label}
-                </p>
-              </div>
-              <DSMButton
-                variant="gradient"
-                size="sm"
-                icon={Zap}
-                loading={staging.isPublishing}
-                onClick={async () => {
-                  const success = await staging.publish();
-                  if (success) {
-                    appData.refresh();
-                    reReadProfile();
-                  }
-                }}
-              >
-                {t('profile.publish')}
-              </DSMButton>
-            </div>
-            <div className="mt-3 flex items-start gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-500/10 rounded-xl border border-amber-200/50 dark:border-amber-500/20">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
-              <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                {t('profile.publishHint')}
-              </p>
-            </div>
-          </DSMCard>
-        )}
-
-        {/* Published success indicator */}
-        {staging.hasPublishedPlan && staging.info && (
-          <DSMCard className="border border-blue-200 dark:border-blue-500/20">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
-                  {t('profile.planPublished')}
-                </div>
-                <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
-                  {staging.info.label} · {t('profile.active')}
-                </p>
-              </div>
-              <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-full font-medium">
-                {t('profile.active')}
-              </span>
-            </div>
-          </DSMCard>
-        )}
-
-        {/* ★ BODY COMPOSITION / GMON — Optional upload ★ */}
-        <DSMCard className="border border-purple-200/50 dark:border-purple-500/20">
-          <div className="flex items-center gap-3">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              appData.hasMeasurements
-                ? 'bg-purple-100 dark:bg-purple-500/20'
-                : 'bg-gradient-to-br from-purple-400 to-indigo-500 shadow-md'
-            }`}>
-              {appData.hasMeasurements
-                ? <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                : <Scan className="w-5 h-5 text-white" />
-              }
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
-                {t('profile.bodyComposition')}
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                {appData.hasMeasurements
-                  ? t('profile.measurementsImported')
-                  : t('profile.optionalUpload')
-                }
-              </p>
-            </div>
-            <DSMButton
-              variant={appData.hasMeasurements ? "secondary" : "outline"}
-              size="sm"
-              icon={Scan}
-              onClick={() => setIsBodyCompUploadOpen(true)}
-            >
-              {appData.hasMeasurements ? t('profile.newReport') : t('profile.upload')}
-            </DSMButton>
-          </div>
-          <div className="mt-2.5 flex items-start gap-2 px-3 py-2 bg-purple-50/50 dark:bg-purple-500/5 rounded-xl">
-            <Info className="w-3.5 h-3.5 text-purple-400 dark:text-purple-500 mt-0.5 flex-shrink-0" />
-            <p className="text-[10px] text-purple-600 dark:text-purple-400 leading-relaxed">
-              {t('profile.bodyCompHint')}
-            </p>
-          </div>
-        </DSMCard>
-
-        {/* Danger zone — subtle grey link */}
-        <div className="pt-4 border-t border-gray-100 dark:border-[#2a2a2a]">
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">{t('profile.dangerZone')}</p>
-          <button
-            type="button"
-            onClick={() => setShowResetConfirm(true)}
-            className="text-xs text-gray-500 dark:text-gray-400 underline hover:text-gray-700 dark:hover:text-gray-300"
-          >
-            {t('profile.deleteAllData')}
-          </button>
-        </div>
-        {showResetConfirm && !showResetFinal && (
-          <div className="mt-3 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <span className="text-xs text-red-800 dark:text-red-300" style={{ fontWeight: 600 }}>{t('ui.confirm')}?</span>
-            </div>
-            <p className="text-[11px] text-red-600 dark:text-red-400 mb-3">
-              {t('profile.deleteWarning')}
-            </p>
-            <div className="flex gap-2">
-              <DSMButton variant="outline" size="sm" fullWidth onClick={() => setShowResetConfirm(false)}>{t('ui.cancel')}</DSMButton>
-              <DSMButton variant="destructive" size="sm" fullWidth icon={AlertTriangle} onClick={() => setShowResetFinal(true)}>{t('ui.confirm')}</DSMButton>
-            </div>
-          </div>
-        )}
-        {showResetFinal && (
-          <div className="mt-3 p-3 bg-red-100 dark:bg-red-500/20 border-2 border-red-300 dark:border-red-500/30 rounded-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-red-600" />
-              <span className="text-xs text-red-900 dark:text-red-200" style={{ fontWeight: 700 }}>{t('profile.finalConfirmation')}</span>
-            </div>
-            <p className="text-[11px] text-red-700 dark:text-red-300 mb-3">
-              {t('profile.finalDeleteWarning')}
-            </p>
-            <div className="flex gap-2">
-              <DSMButton variant="outline" size="sm" fullWidth onClick={() => { setShowResetFinal(false); setShowResetConfirm(false); }}>{t('ui.cancel')}</DSMButton>
-              <DSMButton
-                variant="destructive"
-                size="sm"
-                fullWidth
-                icon={Trash2}
-                loading={isResetting}
-                onClick={async () => {
-                  setIsResetting(true);
-                  if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
-                  const result = await performFullReset({ clearTheme: false, reseed: false });
-                  setIsResetting(false);
-                  if (result.success) {
-                    setShowResetFinal(false);
-                    setShowResetConfirm(false);
-                    appData.refresh();
-                  }
-                }}
-              >
-                {t('profile.irreversibleDelete')}
-              </DSMButton>
-            </div>
-          </div>
-        )}
-
-        {/* Subscription */}
-        <SubscriptionManagement />
-
-        {/* Theme Toggle */}
-        <ThemeToggleCard />
-
-        {/* Language Selector */}
-        <LanguageSelectorCard />
-
-        {/* Navigation Links */}
-        <DSMCard>
-          <DSMSectionTitle icon={Settings} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.others')} className="mb-3" />
-          <div className="space-y-0.5">
-            <SettingsLink icon={HelpCircle} iconColor="text-emerald-500" label={t('profile.faq')} onClick={() => navigate('/faq')} />
-            <SettingsLink icon={Info} iconColor="text-blue-500" label={t('profile.aboutUs')} onClick={() => navigate('/about')} />
-            <SettingsLink icon={Mail} iconColor="text-purple-500" label={t('profile.contact')} onClick={() => navigate('/contact')} />
-          </div>
-        </DSMCard>
-
-        {/* Account & Logout */}
-        <AccountSettingsCard onLogout={() => { logout(); navigate('/splash'); }} />
-                </>
+                <SettingsTabContent
+                  appData={appData}
+                  staging={staging}
+                  onUploadOpen={() => setIsUploadOpen(true)}
+                  onBodyCompOpen={() => setIsBodyCompUploadOpen(true)}
+                  onPublish={async () => {
+                    const success = await staging.publish();
+                    if (success) { appData.refresh(); reReadProfile(); }
+                  }}
+                  showResetConfirm={showResetConfirm}
+                  showResetFinal={showResetFinal}
+                  isResetting={isResetting}
+                  onShowResetConfirm={setShowResetConfirm}
+                  onShowResetFinal={setShowResetFinal}
+                  onReset={async () => {
+                    setIsResetting(true);
+                    if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
+                    const result = await performFullReset({ clearTheme: false, reseed: false });
+                    setIsResetting(false);
+                    if (result.success) {
+                      setShowResetFinal(false);
+                      setShowResetConfirm(false);
+                      appData.refresh();
+                    }
+                  }}
+                  onLogout={() => { logout(); navigate('/splash'); }}
+                  reReadProfile={reReadProfile}
+                />
               )}
             </div>
           )}
@@ -1221,6 +1016,274 @@ function ProfileGoalsTab({
           </div>
         </div>
       </DSMCard>
+    </div>
+  );
+}
+
+// ─── Settings tab: minimal row + card ─────────────────────────────────
+function SettingsRow({
+  title,
+  subtitle,
+  rightText,
+  rightElement,
+  onClick,
+  color,
+}: {
+  title: string;
+  subtitle?: string;
+  rightText?: string;
+  rightElement?: React.ReactNode;
+  onClick?: () => void;
+  color?: string;
+}) {
+  return (
+    <div
+      role={onClick ? "button" : undefined}
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '1rem',
+        borderBottom: '1px solid #f3f4f6',
+        cursor: onClick ? 'pointer' : 'default',
+        background: 'white',
+      }}
+    >
+      <div>
+        <div style={{ fontSize: '1rem', fontWeight: 500, color: color ?? '#111827' }}>{title}</div>
+        {subtitle != null && subtitle !== '' && (
+          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: 2 }}>{subtitle}</div>
+        )}
+      </div>
+      {rightElement != null ? rightElement : (rightText != null && rightText !== '' && (
+        <span style={{ color: '#3b82f6', fontSize: '0.875rem' }}>{rightText}</span>
+      ))}
+    </div>
+  );
+}
+
+function SettingsCard({ sectionTitle, children }: { sectionTitle: string; children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: 'white',
+        borderRadius: '1rem',
+        overflow: 'hidden',
+        marginBottom: '1rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          color: '#9ca3af',
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          padding: '0.75rem 1rem 0.25rem',
+        }}
+      >
+        {sectionTitle}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+const LANGUAGES_SETTINGS = [
+  { code: 'hu' as LanguageCode, name: 'Magyar', flag: '\u{1F1ED}\u{1F1FA}' },
+  { code: 'en' as LanguageCode, name: 'English', flag: '\u{1F1EC}\u{1F1E7}' },
+  { code: 'ro' as LanguageCode, name: 'Română', flag: '\u{1F1F7}\u{1F1F4}' },
+];
+
+function SettingsTabContent(props: {
+  appData: ReturnType<typeof useAppData>;
+  staging: ReturnType<typeof useStagingManager>;
+  onUploadOpen: () => void;
+  onBodyCompOpen: () => void;
+  onPublish: () => Promise<void>;
+  showResetConfirm: boolean;
+  showResetFinal: boolean;
+  isResetting: boolean;
+  onShowResetConfirm: (v: boolean) => void;
+  onShowResetFinal: (v: boolean) => void;
+  onReset: () => Promise<void>;
+  onLogout: () => void;
+  reReadProfile: () => void;
+}) {
+  const {
+    appData,
+    staging,
+    onUploadOpen,
+    onBodyCompOpen,
+    onPublish,
+    showResetConfirm,
+    showResetFinal,
+    isResetting,
+    onShowResetConfirm,
+    onShowResetFinal,
+    onReset,
+    onLogout,
+  } = props;
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { user, subscriptionActive } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
+  const trial = getTrialInfo();
+  const isDark = theme === 'dark';
+
+  return (
+    <div style={{ background: '#f9fafb', minHeight: '100%', paddingBottom: '1rem' }}>
+      {/* Section 1: Tervem / My Plan */}
+      <SettingsCard sectionTitle={t('profile.sectionPlan')}>
+        <SettingsRow
+          title={t('profile.uploadPlan')}
+          subtitle={appData.hasData ? (appData.activePlanLabel || t('profile.activePlanLoaded')) + ' · v' + appData.planCount : t('profile.noUploadYet')}
+          rightText={t('profile.uploadLink')}
+          onClick={onUploadOpen}
+        />
+        <SettingsRow
+          title={t('profile.bodyComposition')}
+          subtitle={t('profile.optionalUpload')}
+          rightText={t('profile.loadLink')}
+          onClick={onBodyCompOpen}
+        />
+      </SettingsCard>
+
+      {/* Section 2: Appearance */}
+      <SettingsCard sectionTitle={t('profile.sectionAppearance')}>
+        <SettingsRow
+          title={isDark ? t('profile.darkMode') : t('profile.lightMode')}
+          subtitle={isDark ? t('profile.activeState') : t('profile.inactiveState')}
+          rightElement={
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isDark}
+              onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
+              style={{
+                width: 48,
+                height: 28,
+                borderRadius: 14,
+                background: isDark ? '#111827' : '#e5e7eb',
+                border: 'none',
+                cursor: 'pointer',
+                position: 'relative',
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 2,
+                  left: isDark ? 22 : 2,
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  background: 'white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  transition: 'left 0.2s',
+                }}
+              />
+            </button>
+          }
+        />
+      </SettingsCard>
+
+      {/* Section 3: Language */}
+      <SettingsCard sectionTitle={t('profile.sectionLanguage')}>
+        <div style={{ padding: '0.75rem 1rem 1rem' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 500, color: '#111827' }}>{t('profile.appLanguage')}</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            {LANGUAGES_SETTINGS.map((lang) => {
+              const isActive = language === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  type="button"
+                  onClick={() => { setLanguage(lang.code); if (navigator.vibrate) navigator.vibrate(10); }}
+                  style={{
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: 999,
+                    border: isActive ? '1px solid #d1d5db' : 'none',
+                    background: isActive ? 'white' : '#f3f4f6',
+                    color: isActive ? '#111827' : '#6b7280',
+                    fontWeight: isActive ? 600 : 400,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {lang.flag} {lang.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </SettingsCard>
+
+      {/* Section 4: Subscription */}
+      <SettingsCard sectionTitle={t('profile.sectionSubscription')}>
+        <SettingsRow
+          title={t('profile.sectionSubscription')}
+          subtitle={
+            subscriptionActive
+              ? t('profile.subscriptionActiveLabel')
+              : !trial.isExpired
+              ? t('profile.trialDaysRemaining').replace('{n}', String(trial.daysRemaining))
+              : t('profile.trialExpired')
+          }
+          rightText={!subscriptionActive && !trial.isExpired ? t('profile.upgradeLink') : undefined}
+          onClick={!subscriptionActive && !trial.isExpired ? () => navigate('/subscription') : undefined}
+        />
+      </SettingsCard>
+
+      {/* Section 5: Other */}
+      <SettingsCard sectionTitle={t('profile.sectionOther')}>
+        <SettingsRow title={t('profile.faq')} rightText="›" onClick={() => navigate('/faq')} />
+        <SettingsRow title={t('profile.aboutUs')} rightText="›" onClick={() => navigate('/about')} />
+        <SettingsRow title={t('profile.contact')} rightText="›" onClick={() => navigate('/contact')} />
+      </SettingsCard>
+
+      {/* Section 6: Account */}
+      <SettingsCard sectionTitle={t('profile.account.accountSection')}>
+        {user && (
+          <div style={{ padding: '1rem', borderBottom: '1px solid #f3f4f6' }}>
+            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>{user.email}</div>
+            <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 2 }}>
+              {user.provider === 'demo' ? 'Demo (offline)' : user.provider === 'email' ? t('profile.account.emailAccount') : t('profile.googleAccount')}
+            </div>
+          </div>
+        )}
+        <SettingsRow title={t('profile.signOut')} color="#ef4444" onClick={onLogout} />
+        <SettingsRow
+          title={t('profile.deleteAllData')}
+          color="#9ca3af"
+          onClick={() => onShowResetConfirm(true)}
+        />
+      </SettingsCard>
+
+      {/* Reset confirm dialogs */}
+      {showResetConfirm && !showResetFinal && (
+        <div style={{ marginTop: 16, padding: 16, background: 'white', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>{t('ui.confirm')}?</div>
+          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 12 }}>{t('profile.deleteWarning')}</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <DSMButton variant="outline" size="sm" fullWidth onClick={() => onShowResetConfirm(false)}>{t('ui.cancel')}</DSMButton>
+            <DSMButton variant="destructive" size="sm" fullWidth onClick={() => onShowResetFinal(true)}>{t('ui.confirm')}</DSMButton>
+          </div>
+        </div>
+      )}
+      {showResetFinal && (
+        <div style={{ marginTop: 16, padding: 16, background: '#fef2f2', borderRadius: '1rem', border: '2px solid #fecaca' }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, color: '#991b1b' }}>{t('profile.finalConfirmation')}</div>
+          <p style={{ fontSize: '0.875rem', color: '#b91c1c', marginBottom: 12 }}>{t('profile.finalDeleteWarning')}</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <DSMButton variant="outline" size="sm" fullWidth onClick={() => { onShowResetFinal(false); onShowResetConfirm(false); }}>{t('ui.cancel')}</DSMButton>
+            <DSMButton variant="destructive" size="sm" fullWidth icon={Trash2} loading={isResetting} onClick={onReset}>{t('profile.irreversibleDelete')}</DSMButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
