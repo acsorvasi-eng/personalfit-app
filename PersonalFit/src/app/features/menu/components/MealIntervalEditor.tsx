@@ -61,6 +61,26 @@ export function MealIntervalEditor() {
   const [selectedSnackIds, setSelectedSnackIds] = useState<string[]>(DEFAULT_SNACK_IDS);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [snackLimitMessage, setSnackLimitMessage] = useState<string | null>(null);
+  const [sleepSuggestion, setSleepSuggestion] = useState<{
+    suggestedFirstMeal: string;
+    suggestedLastMeal: string;
+    workoutWindow: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ suggestedFirstMeal: string; suggestedLastMeal: string; workoutWindow: string }>).detail;
+      if (detail?.suggestedFirstMeal != null && detail?.suggestedLastMeal != null) {
+        setSleepSuggestion({
+          suggestedFirstMeal: detail.suggestedFirstMeal,
+          suggestedLastMeal: detail.suggestedLastMeal,
+          workoutWindow: detail.workoutWindow ?? "",
+        });
+      }
+    };
+    window.addEventListener("sleepSettingsUpdated", handler);
+    return () => window.removeEventListener("sleepSettingsUpdated", handler);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -117,6 +137,39 @@ export function MealIntervalEditor() {
   const timeToMinutes = (hhmm: string): number => {
     const [h, m] = hhmm.split(":").map(Number);
     return (h ?? 0) * 60 + (m ?? 0);
+  };
+
+  const addMinutesToTime = (hhmm: string, mins: number): string => {
+    const total = ((timeToMinutes(hhmm) + mins) % 1440 + 1440) % 1440;
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+
+  const applySleepSuggestion = async () => {
+    if (!sleepSuggestion || meals.length === 0) return;
+    const firstEnd = addMinutesToTime(sleepSuggestion.suggestedFirstMeal, 60);
+    const lastStart = addMinutesToTime(sleepSuggestion.suggestedLastMeal, -60);
+    const updated =
+      meals.length === 1
+        ? [{ ...meals[0], startTime: sleepSuggestion.suggestedFirstMeal, endTime: sleepSuggestion.suggestedLastMeal }]
+        : meals.map((meal, i) => {
+            if (i === 0) return { ...meal, startTime: sleepSuggestion.suggestedFirstMeal, endTime: firstEnd };
+            if (i === meals.length - 1) return { ...meal, startTime: lastStart, endTime: sleepSuggestion.suggestedLastMeal };
+            return meal;
+          });
+    setMeals(updated);
+    setSaving(true);
+    try {
+      const mealCount = getMealCountForModel(mealModel);
+      const allowedSnacks = isIFModel(mealModel) ? [] : selectedSnackIds;
+      await saveMealSettings({ mealCount, meals: updated, allowedSnacks, mealModel });
+      window.dispatchEvent(new Event("mealSettingsUpdated"));
+      setSleepSuggestion(null);
+      toast.success(t("mealEditor.saved"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const validate = (): boolean => {
@@ -219,6 +272,60 @@ export function MealIntervalEditor() {
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: SECTION_GAP }}>
+          {sleepSuggestion && (
+            <div
+              style={{
+                background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
+                border: "1.5px solid #a5b4fc",
+                borderRadius: 16,
+                padding: 16,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+              className="dark:bg-indigo-950/30 dark:border-indigo-700/50"
+            >
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#3730a3" }} className="dark:text-indigo-300">
+                {t("mealEditor.sleepBanner")}
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => setSleepSuggestion(null)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 10,
+                    border: "1px solid #a5b4fc",
+                    background: "transparent",
+                    color: "#4f46e5",
+                    fontWeight: 500,
+                    fontSize: 14,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("mealEditor.sleepSkip")}
+                </button>
+                <button
+                  type="button"
+                  onClick={applySleepSuggestion}
+                  disabled={saving}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 10,
+                    border: "none",
+                    background: "#4f46e5",
+                    color: "white",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: saving ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {t("mealEditor.sleepUpdate")}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Section 1: Meal model dropdown */}
           <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
             <h2

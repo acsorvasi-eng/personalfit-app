@@ -61,6 +61,12 @@ export interface StoredUserProfile {
   bmr?: number;
   /** ISO date of last GMON upload (for "GMON" badge) */
   gmonUploadedAt?: string;
+  /** Wake time "HH:MM" (e.g. "07:00") */
+  wakeTime?: string;
+  /** Bedtime "HH:MM" (e.g. "23:16") */
+  bedtime?: string;
+  /** Sleep cycles 4–7 */
+  sleepCycles?: number;
 }
 
 /** Parsed GMON/body composition from API */

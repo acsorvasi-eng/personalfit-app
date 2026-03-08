@@ -28,6 +28,8 @@ import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
 import { getUserProfile, saveUserProfile } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
+import { SleepSetup } from "../../sleep/components/SleepSetup";
+import { SleepService } from "../../../backend/services/SleepService";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ProfileData {
@@ -920,6 +922,51 @@ function ProfileGoalsTab({
   const waterGoal = profile.waterGoalMl ?? Math.round((profile.weight || 70) * 35);
   const workoutGoal = profile.weeklyWorkoutGoal ?? 3;
 
+  const [wakeTime, setWakeTime] = useState("07:00");
+  const [selectedBedtime, setSelectedBedtime] = useState("");
+  const [selectedCycles, setSelectedCycles] = useState(6);
+  const [bedtimeOptions, setBedtimeOptions] = useState<ReturnType<typeof SleepService.getBedtimeOptions>>([]);
+
+  useEffect(() => {
+    getUserProfile().then((p) => {
+      if (p?.wakeTime) {
+        setWakeTime(p.wakeTime);
+        const options = SleepService.getBedtimeOptions(p.wakeTime);
+        setBedtimeOptions(options);
+        setSelectedBedtime(p.bedtime ?? options.find((o) => o.cycleCount === 6)?.bedtime ?? "");
+        setSelectedCycles(p.sleepCycles ?? 6);
+      } else {
+        setBedtimeOptions(SleepService.getBedtimeOptions("07:00"));
+      }
+    });
+  }, []);
+
+  const handleWakeTimeChange = (time: string) => {
+    setWakeTime(time);
+    const options = SleepService.getBedtimeOptions(time);
+    setBedtimeOptions(options);
+    const preferred = options.find((o) => o.cycleCount === 6);
+    if (preferred) {
+      setSelectedBedtime(preferred.bedtime);
+      setSelectedCycles(preferred.cycleCount);
+    }
+    void SleepService.saveSleepSettings({
+      wakeTime: time,
+      selectedBedtime: preferred?.bedtime ?? selectedBedtime,
+      selectedCycles: preferred?.cycleCount ?? selectedCycles,
+    });
+  };
+
+  const handleBedtimeSelect = (bedtime: string, cycles: number) => {
+    setSelectedBedtime(bedtime);
+    setSelectedCycles(cycles);
+    void SleepService.saveSleepSettings({
+      wakeTime,
+      selectedBedtime: bedtime,
+      selectedCycles: cycles,
+    });
+  };
+
   const proteinG = Math.round((kcal * (proteinPct / 100)) / 4);
   const carbsG = Math.round((kcal * (carbsPct / 100)) / 4);
   const fatG = Math.round((kcal * (fatPct / 100)) / 9);
@@ -977,6 +1024,16 @@ function ProfileGoalsTab({
             <span className="text-sm text-gray-500 dark:text-gray-400">{t('profile.waterGoalMlPerDay')}</span>
           </div>
         </div>
+      </DSMCard>
+
+      <DSMCard>
+        <SleepSetup
+          wakeTime={wakeTime}
+          bedtimeOptions={bedtimeOptions}
+          selectedBedtime={selectedBedtime}
+          onWakeTimeChange={handleWakeTimeChange}
+          onBedtimeSelect={handleBedtimeSelect}
+        />
       </DSMCard>
 
       <DSMCard>

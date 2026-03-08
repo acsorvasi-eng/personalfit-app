@@ -53,6 +53,7 @@ import { todayDate, nowISO, getDB } from '../db';
 import { getUserProfile } from './UserProfileService';
 import * as ActivityService from './ActivityService';
 import { getSetting } from './SettingsService';
+import { SleepService } from './SleepService';
 
 // ═══════════════════════════════════════════════════════════════
 // BMR & TDEE CALCULATIONS
@@ -197,6 +198,11 @@ export async function computeDailyBudget(): Promise<DailyCalorieBudget> {
   // Step 3: Goal-adjusted target
   const baseNeed = profile.calorieTarget || calculateGoalTarget(tdee, profile.goal);
 
+  // Step 3b: Sleep adjustment (low sleep → +150–300 kcal to daily target)
+  const sleepAnalysis = await SleepService.analyzeSleep();
+  const sleepAdjustment = sleepAnalysis?.dailyCalorieAdjustment ?? 0;
+  const baseNeedWithSleep = baseNeed + sleepAdjustment;
+
   // Step 4: Calories burned from activity logs
   const burnedActivity = await ActivityService.getTodayCaloriesBurned();
 
@@ -213,15 +219,15 @@ export async function computeDailyBudget(): Promise<DailyCalorieBudget> {
 
   // Step 7: Calculate budget and balance
   const totalBurn = burnedActivity + burnedScheduled;
-  const adjustedTarget = baseNeed + totalBurn; // Can eat more if you burn
+  const adjustedTarget = baseNeedWithSleep + totalBurn; // Can eat more if you burn
   const remaining = Math.max(0, adjustedTarget - consumed);
   const percentage = Math.min(100, Math.round((consumed / adjustedTarget) * 100));
   const netBalance = consumed - totalBurn;
-  const energyBalance = consumed - baseNeed;
+  const energyBalance = consumed - baseNeedWithSleep;
 
   return {
     date: todayDate(),
-    base_calorie_need: baseNeed,
+    base_calorie_need: baseNeedWithSleep,
     calories_consumed: consumed,
     calories_burned_activity: burnedActivity,
     calories_burned_scheduled: burnedScheduled,

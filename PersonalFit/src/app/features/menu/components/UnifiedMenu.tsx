@@ -17,6 +17,8 @@ import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
+import { SleepInsightCard } from "../../sleep/components/SleepInsightCard";
+import { SleepService, type SleepAnalysis } from "../../../backend/services/SleepService";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
 
@@ -314,6 +316,18 @@ export function UnifiedMenu() {
       });
     window.addEventListener("mealSettingsUpdated", onUpdated);
     return () => window.removeEventListener("mealSettingsUpdated", onUpdated);
+  }, []);
+
+  const [sleepAnalysis, setSleepAnalysis] = useState<SleepAnalysis | null>(null);
+  useEffect(() => {
+    SleepService.analyzeSleep().then((analysis) => {
+      setSleepAnalysis(analysis);
+    });
+  }, []);
+  useEffect(() => {
+    const handler = () => SleepService.analyzeSleep().then(setSleepAnalysis);
+    window.addEventListener("profileUpdated", handler);
+    return () => window.removeEventListener("profileUpdated", handler);
   }, []);
 
   // Swipe state
@@ -847,6 +861,52 @@ export function UnifiedMenu() {
               </div>
             )}
 
+            {sleepAnalysis && (
+              <div style={{ margin: "0 1rem 1rem" }}>
+                <SleepInsightCard
+                  bedtime={
+                    sleepAnalysis.recommendedBedtimes.find(
+                      (o) => o.cycleCount === sleepAnalysis.selectedCycles
+                    )?.bedtime ?? "23:00"
+                  }
+                  wakeTime={sleepAnalysis.recommendedBedtimes[0]?.wakeTime ?? "07:00"}
+                  cycleCount={sleepAnalysis.selectedCycles}
+                  firstMealTime={sleepAnalysis.firstMealTime}
+                  lastMealTime={sleepAnalysis.lastMealTime}
+                  workoutWindow={sleepAnalysis.optimalWorkoutWindow}
+                  circadianScore={sleepAnalysis.circadianScore}
+                  calorieAdjustment={sleepAnalysis.dailyCalorieAdjustment}
+                />
+              </div>
+            )}
+            {!sleepAnalysis && (
+              <div
+                onClick={() => navigate("/profile")}
+                style={{
+                  margin: "0 1rem 1rem",
+                  padding: "1rem",
+                  background: "#f9fafb",
+                  borderRadius: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  cursor: "pointer",
+                  border: "1.5px dashed #e5e7eb",
+                }}
+              >
+                <span style={{ fontSize: "1.5rem" }}>🌙</span>
+                <div>
+                  <div style={{ fontWeight: 600, color: "#374151", fontSize: "0.9rem" }}>
+                    Alvási ritmus beállítása
+                  </div>
+                  <div style={{ color: "#9ca3af", fontSize: "0.8rem" }}>
+                    Személyre szabott étkezési és edzési időpontok
+                  </div>
+                </div>
+                <span style={{ marginLeft: "auto", color: "#9ca3af" }}>›</span>
+              </div>
+            )}
+
             <div className="space-y-3">
               <EmptyMealCard
                 title={t("menu.breakfast")}
@@ -1037,6 +1097,52 @@ export function UnifiedMenu() {
                 <span className="text-[14px] font-medium">
                   {status.isPast ? t("menu.pastDay") : t("menu.upcomingDay")}
                 </span>
+              </div>
+            )}
+
+            {sleepAnalysis && (
+              <div style={{ margin: "0 1rem 1rem" }}>
+                <SleepInsightCard
+                  bedtime={
+                    sleepAnalysis.recommendedBedtimes.find(
+                      (o) => o.cycleCount === sleepAnalysis.selectedCycles
+                    )?.bedtime ?? "23:00"
+                  }
+                  wakeTime={sleepAnalysis.recommendedBedtimes[0]?.wakeTime ?? "07:00"}
+                  cycleCount={sleepAnalysis.selectedCycles}
+                  firstMealTime={sleepAnalysis.firstMealTime}
+                  lastMealTime={sleepAnalysis.lastMealTime}
+                  workoutWindow={sleepAnalysis.optimalWorkoutWindow}
+                  circadianScore={sleepAnalysis.circadianScore}
+                  calorieAdjustment={sleepAnalysis.dailyCalorieAdjustment}
+                />
+              </div>
+            )}
+            {!sleepAnalysis && (
+              <div
+                onClick={() => navigate("/profile")}
+                style={{
+                  margin: "0 1rem 1rem",
+                  padding: "1rem",
+                  background: "#f9fafb",
+                  borderRadius: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                  cursor: "pointer",
+                  border: "1.5px dashed #e5e7eb",
+                }}
+              >
+                <span style={{ fontSize: "1.5rem" }}>🌙</span>
+                <div>
+                  <div style={{ fontWeight: 600, color: "#374151", fontSize: "0.9rem" }}>
+                    Alvási ritmus beállítása
+                  </div>
+                  <div style={{ color: "#9ca3af", fontSize: "0.8rem" }}>
+                    Személyre szabott étkezési és edzési időpontok
+                  </div>
+                </div>
+                <span style={{ marginLeft: "auto", color: "#9ca3af" }}>›</span>
               </div>
             )}
 

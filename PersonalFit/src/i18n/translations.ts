@@ -43,6 +43,9 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'mealEditor.ifFasting': 'Böjti időszakban csak víz engedélyezett',
     'mealEditor.validation': 'A befejezési időnek a kezdési idő után kell lennie',
     'mealEditor.saved': 'Beállítások mentve ✓',
+    'mealEditor.sleepBanner': '🌙 Alvásod alapján javasolt étkezési idők frissítése →',
+    'mealEditor.sleepUpdate': 'Frissítés',
+    'mealEditor.sleepSkip': 'Kihagyás',
 
     'mealModel.3': '3 étkezés (Reggeli / Ebéd / Vacsora)',
     'mealModel.5': '5 étkezés (Reggeli / Tízórai / Ebéd / Uzsonna / Vacsora)',
@@ -60,6 +63,23 @@ export const translations: Record<I18nLang, Record<string, string>> = {
 
     'menu.title': 'Menüm',
     'menu.subtitle': '28 napos terv',
+
+    'sleep.title': 'Alvás & Regeneráció',
+    'sleep.subtitle': 'Ciklus-alapú számítás',
+    'sleep.wakeTime': 'Ébredési idő',
+    'sleep.bedtimeOptions': 'Ajánlott lefekvési idők',
+    'sleep.cycles': 'ciklus',
+    'sleep.tonightTitle': 'Ma éjjel',
+    'sleep.bedtimeLabel': 'Lefekvés',
+    'sleep.wakeLabel': 'Ébredés',
+    'sleep.firstMeal': 'Első étkezés',
+    'sleep.lastMeal': 'Utolsó étel',
+    'sleep.workout': 'Edzés',
+    'sleep.lowSleepWarning': 'Kevés alvás: +{n} kcal mai cél',
+    'sleep.label.minimum': 'Minimum',
+    'sleep.label.good': 'Ajánlott',
+    'sleep.label.optimal': 'Ideális',
+    'sleep.label.max': 'Maximum regeneráció',
   },
 
   ro: {
@@ -99,6 +119,9 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'mealEditor.ifFasting': 'În perioada de post doar apa este permisă',
     'mealEditor.validation': 'Ora de sfârșit trebuie să fie după ora de început',
     'mealEditor.saved': 'Setări salvate ✓',
+    'mealEditor.sleepBanner': '🌙 Actualizare ore mese recomandate pe baza somnului →',
+    'mealEditor.sleepUpdate': 'Actualizează',
+    'mealEditor.sleepSkip': 'Omite',
 
     'mealModel.3': '3 mese (Mic dejun / Prânz / Cină)',
     'mealModel.5': '5 mese (Mic dejun / Gustare / Prânz / Gustare / Cină)',
@@ -116,6 +139,23 @@ export const translations: Record<I18nLang, Record<string, string>> = {
 
     'menu.title': 'Meniul meu',
     'menu.subtitle': 'Plan 28 zile',
+
+    'sleep.title': 'Somn & Regenerare',
+    'sleep.subtitle': 'Calcul bazat pe cicluri',
+    'sleep.wakeTime': 'Ora de trezire',
+    'sleep.bedtimeOptions': 'Ore de culcare recomandate',
+    'sleep.cycles': 'cicluri',
+    'sleep.tonightTitle': 'Această noapte',
+    'sleep.bedtimeLabel': 'Ora de culcare',
+    'sleep.wakeLabel': 'Trezire',
+    'sleep.firstMeal': 'Prima masă',
+    'sleep.lastMeal': 'Ultima masă',
+    'sleep.workout': 'Antrenament',
+    'sleep.lowSleepWarning': 'Somn insuficient: +{n} kcal azi',
+    'sleep.label.minimum': 'Minim',
+    'sleep.label.good': 'Recomandat',
+    'sleep.label.optimal': 'Ideal',
+    'sleep.label.max': 'Regenerare maximă',
   },
 
   en: {
@@ -155,6 +195,9 @@ export const translations: Record<I18nLang, Record<string, string>> = {
     'mealEditor.ifFasting': 'Only water is allowed during fasting period',
     'mealEditor.validation': 'End time must be after start time',
     'mealEditor.saved': 'Settings saved ✓',
+    'mealEditor.sleepBanner': '🌙 Update meal times based on your sleep →',
+    'mealEditor.sleepUpdate': 'Update',
+    'mealEditor.sleepSkip': 'Skip',
 
     'mealModel.3': '3 meals (Breakfast / Lunch / Dinner)',
     'mealModel.5': '5 meals (Breakfast / Morning snack / Lunch / Afternoon snack / Dinner)',
@@ -172,5 +215,22 @@ export const translations: Record<I18nLang, Record<string, string>> = {
 
     'menu.title': 'My Menu',
     'menu.subtitle': '28 day plan',
+
+    'sleep.title': 'Sleep & Recovery',
+    'sleep.subtitle': 'Cycle-based calculation',
+    'sleep.wakeTime': 'Wake time',
+    'sleep.bedtimeOptions': 'Recommended bedtimes',
+    'sleep.cycles': 'cycles',
+    'sleep.tonightTitle': 'Tonight',
+    'sleep.bedtimeLabel': 'Bedtime',
+    'sleep.wakeLabel': 'Wake',
+    'sleep.firstMeal': 'First meal',
+    'sleep.lastMeal': 'Last meal',
+    'sleep.workout': 'Workout',
+    'sleep.lowSleepWarning': 'Low sleep: +{n} kcal today',
+    'sleep.label.minimum': 'Minimum',
+    'sleep.label.good': 'Recommended',
+    'sleep.label.optimal': 'Ideal',
+    'sleep.label.max': 'Maximum recovery',
   },
 };
