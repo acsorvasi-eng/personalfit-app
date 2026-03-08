@@ -18,13 +18,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UtensilsCrossed, ArrowRight, Sparkles, Check, X, Globe } from 'lucide-react';
 import { useLanguage, LanguageCode } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { SUPPORTED_LANGUAGES, LANGUAGE_META } from '../../i18n';
 import { Button } from './ui/button';
 
-const languages = [
-  { code: 'hu', name: 'Magyar', flag: '\u{1F1ED}\u{1F1FA}', greeting: 'Kezdjük!' },
-  { code: 'en', name: 'English', flag: '\u{1F1EC}\u{1F1E7}', greeting: "Let's go!" },
-  { code: 'ro', name: 'Română', flag: '\u{1F1F7}\u{1F1F4}', greeting: 'Să începem!' },
-];
+const GREETINGS: Record<string, string> = { hu: 'Kezdjük!', en: "Let's go!", ro: 'Să începem!' };
+const languages = SUPPORTED_LANGUAGES.map((code) => ({
+  code,
+  name: LANGUAGE_META[code]?.name ?? code,
+  flag: LANGUAGE_META[code]?.flag ?? '',
+  greeting: GREETINGS[code] ?? "Let's go!",
+}));
 
 export function SplashScreen() {
   const navigate = useNavigate();

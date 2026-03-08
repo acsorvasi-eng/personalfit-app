@@ -3,7 +3,7 @@
  * Used by MealIntervalEditor and UnifiedMenu for consistent labels.
  */
 
-import type { I18nLang } from './translations';
+import type { I18nLang } from './index';
 
 export interface SnackItem {
   id: string;

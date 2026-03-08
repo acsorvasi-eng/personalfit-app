@@ -1,12 +1,11 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { translations } from '../translations';
-import { translations as i18nFlat } from '../../i18n/translations';
+import { loadLocale, SUPPORTED_LANGUAGES } from '../../i18n';
+import hu from '../../i18n/locales/hu';
 import { saveUserPreferences } from '../../storage/repositories/userRepository';
 import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 export type LanguageCode = 'hu' | 'en' | 'ro';
-
-const SUPPORTED_LANGUAGES: LanguageCode[] = ['hu', 'en', 'ro'];
 
 // ─── Locale mapping for Intl APIs ───
 export const LOCALE_MAP: Record<LanguageCode, string> = {
@@ -56,10 +55,11 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
+const huFlat: Record<string, string> = { ...hu };
+
 // ─── Fallback t() for when used outside provider (e.g. Figma preview iframe) ───
 function fallbackT(key: string): string {
-  const flat = i18nFlat.hu;
-  if (flat && key in flat && typeof flat[key] === 'string') return flat[key];
+  if (huFlat[key]) return huFlat[key];
   const keys = key.split('.');
   let value: any = translations.hu;
   for (const k of keys) {
@@ -84,7 +84,6 @@ const LanguageContext = createContext<LanguageContextType>(fallbackContext);
 /** Detect the best matching supported language from the device/browser */
 function detectDeviceLanguage(): LanguageCode | null {
   try {
-    // navigator.languages gives ordered preference list (e.g. ['ro-RO', 'ro', 'en-US', 'en'])
     const candidates = navigator.languages ?? [navigator.language];
     for (const lang of candidates) {
       const code = lang.split('-')[0].toLowerCase();
@@ -107,6 +106,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return 'hu';
   });
   const [languageLoaded, setLanguageLoaded] = useState(false);
+  const [flatStrings, setFlatStrings] = useState<Record<string, string>>(() => ({ ...hu }));
 
   useEffect(() => {
     getSetting(LANGUAGE_KEY).then((saved) => {
@@ -117,6 +117,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  useEffect(() => {
+    loadLocale(language).then(setFlatStrings);
+  }, [language]);
+
   const locale = LOCALE_MAP[language];
 
   const setLanguage = useCallback((lang: LanguageCode) => {
@@ -126,11 +130,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback((key: string): string => {
-    // 1. Flat i18n keys (hu/ro/en consistent)
-    const flat = i18nFlat[language];
-    if (flat && key in flat && typeof flat[key] === 'string') {
-      return flat[key];
-    }
+    // 1. Flat i18n keys (from loaded locale, fallback to hu)
+    const flat = flatStrings[key];
+    if (flat) return flat;
     // 2. Nested app/translations lookup
     const keys = key.split('.');
     let value: any = translations[language];
@@ -153,7 +155,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
 
     return typeof value === 'string' ? value : key;
-  }, [language]);
+  }, [language, flatStrings]);
 
   return (
     <LanguageContext.Provider value={{ language, locale, setLanguage, t }}>

@@ -25,6 +25,7 @@ import { useAppData } from "../../../hooks/useAppData";
 import { performFullReset } from "../../../backend/services/ResetService";
 import { useStagingManager } from "../../../hooks/useStagingManager";
 import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
+import { SUPPORTED_LANGUAGES, LANGUAGE_META } from "../../../../i18n";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
 import { getUserProfile, saveUserProfile } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
@@ -1138,11 +1139,15 @@ function SettingsCard({ sectionTitle, children }: { sectionTitle: string; childr
   );
 }
 
-const LANGUAGES_SETTINGS = [
-  { code: 'hu' as LanguageCode, name: 'Magyar', flag: '\u{1F1ED}\u{1F1FA}' },
-  { code: 'en' as LanguageCode, name: 'English', flag: '\u{1F1EC}\u{1F1E7}' },
-  { code: 'ro' as LanguageCode, name: 'Română', flag: '\u{1F1F7}\u{1F1F4}' },
-];
+function getLanguagesSettings(): { code: LanguageCode; name: string; flag: string }[] {
+  const meta = LANGUAGE_META;
+  return SUPPORTED_LANGUAGES.map((code) => ({
+    code,
+    name: meta[code]?.name ?? code,
+    flag: meta[code]?.flag ?? '',
+  }));
+}
+const LANGUAGES_SETTINGS = getLanguagesSettings();
 
 function SettingsTabContent(props: {
   appData: ReturnType<typeof useAppData>;
