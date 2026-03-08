@@ -116,7 +116,7 @@ function GlobalErrorCatcher({ children }: { children: ReactNode }) {
 
 // ─── Root App ────────────────────────────────────────────────────────
 export default function App() {
-  // Egyszeri migráció: weightHistory localStorage → IndexedDB
+  // Egyszeri migráció: weightHistory legacy → IndexedDB
   useEffect(() => {
     WeightHistoryService.migrateFromLocalStorage().catch((err) => {
       console.warn("[App] WeightHistory migration failed:", err);

@@ -12,6 +12,7 @@
  */
 
 import { logger } from '../core/config';
+import { getSetting, setSetting, removeSetting } from '../app/backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // Types
@@ -52,8 +53,9 @@ export async function isBiometricAvailable(): Promise<boolean> {
 /**
  * Check if the user has already enrolled a biometric credential.
  */
-export function isBiometricEnrolled(): boolean {
-  return localStorage.getItem(BIOMETRIC_STORAGE_KEY) !== null;
+export async function isBiometricEnrolled(): Promise<boolean> {
+  const value = await getSetting(BIOMETRIC_STORAGE_KEY);
+  return value !== null;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -111,7 +113,7 @@ export async function enrollBiometric(userId: string, userName: string): Promise
       lastUsed: new Date().toISOString(),
     };
 
-    localStorage.setItem(BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
+    await setSetting(BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
     logger.info('[Biometric] Enrollment successful');
     return true;
   } catch (err) {
@@ -129,13 +131,13 @@ export async function enrollBiometric(userId: string, userName: string): Promise
  * Returns true if the biometric check passed.
  */
 export async function verifyBiometric(): Promise<boolean> {
-  if (!isBiometricEnrolled()) {
+  if (!(await isBiometricEnrolled())) {
     logger.warn('[Biometric] No credential enrolled');
     return false;
   }
 
   try {
-    const storedRaw = localStorage.getItem(BIOMETRIC_STORAGE_KEY);
+    const storedRaw = await getSetting(BIOMETRIC_STORAGE_KEY);
     if (!storedRaw) return false;
 
     const stored: BiometricCredential = JSON.parse(storedRaw);
@@ -164,7 +166,7 @@ export async function verifyBiometric(): Promise<boolean> {
 
     // Update last used
     stored.lastUsed = new Date().toISOString();
-    localStorage.setItem(BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
+    await setSetting(BIOMETRIC_STORAGE_KEY, JSON.stringify(stored));
 
     logger.info('[Biometric] Verification successful');
     return true;
@@ -178,8 +180,8 @@ export async function verifyBiometric(): Promise<boolean> {
 // Remove Enrollment
 // ═══════════════════════════════════════════════════════════════
 
-export function removeBiometricEnrollment(): void {
-  localStorage.removeItem(BIOMETRIC_STORAGE_KEY);
+export async function removeBiometricEnrollment(): Promise<void> {
+  await removeSetting(BIOMETRIC_STORAGE_KEY);
   logger.info('[Biometric] Enrollment removed');
 }
 

@@ -36,7 +36,7 @@
  *      (Negative = deficit = weight loss direction)
  *
  * REAL-TIME UPDATES:
- *   The calorie engine reads from IndexedDB + localStorage and
+ *   The calorie engine reads from IndexedDB (profile + settings) and
  *   recomputes on every call. Components poll or subscribe via
  *   BroadcastChannel for cross-tab sync.
  */
@@ -52,7 +52,7 @@ import type {
 import { todayDate, nowISO, getDB } from '../db';
 import { getUserProfile } from './UserProfileService';
 import * as ActivityService from './ActivityService';
-import { legacyGetItem } from '../../../storage/legacyLocalStorage';
+import { getSetting } from './SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // BMR & TDEE CALCULATIONS
@@ -92,7 +92,7 @@ export function calculateGoalTarget(
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PROFILE READER (from localStorage for compatibility)
+// PROFILE READER (IndexedDB user_profile + settings fallback)
 // ═══════════════════════════════════════════════════════════════
 
 function mapActivityLevel(level: string): ActivityLevel {
@@ -157,7 +157,7 @@ async function readConsumedToday(): Promise<number> {
       .filter((md: any) => md.date === today)
       .map((md: any) => md.id);
     if (todayMealDayIds.length === 0) {
-      const raw = legacyGetItem('totalConsumedCalories');
+      const raw = await getSetting('totalConsumedCalories');
       return raw ? parseInt(raw) || 0 : 0;
     }
     let total = 0;
@@ -172,7 +172,7 @@ async function readConsumedToday(): Promise<number> {
     }
     return total;
   } catch {
-    const raw = legacyGetItem('totalConsumedCalories');
+    const raw = await getSetting('totalConsumedCalories');
     return raw ? parseInt(raw) || 0 : 0;
   }
 }

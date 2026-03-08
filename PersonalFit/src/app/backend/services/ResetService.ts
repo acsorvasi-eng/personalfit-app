@@ -15,30 +15,7 @@
 
 import { destroyDatabase, getDB, type StoreName } from '../db';
 import { seedDatabase } from '../seed';
-import { legacyGetItem, legacyRemoveItem, legacyListKeys, legacySetItem } from '../../../storage/legacyLocalStorage';
-
-// ═══════════════════════════════════════════════════════════════
-// RESET TOKENS
-// ═══════════════════════════════════════════════════════════════
-
-const LOCAL_STORAGE_KEYS_TO_CLEAR = [
-  'userProfile', 'authUser', 'authToken',
-  'totalConsumedCalories', 'dailyHistory', 'lastActiveDate',
-  // Menu-related selections & state
-  'menuCheckedMeals', 'menuSelectedMeals', 'selectedMeals',
-  // Favorites and shopping
-  'foodFavorites',
-  'shoppingList', 'shoppingChecked',
-  // Water & weight tracking
-  'waterTracking',
-  'weightHistory',
-  // Body-vision & onboarding
-  'bodyVisionData',
-  'appFirstUsageDate',
-  'onboardingCompleted', 'hasSeenSplash',
-  // Upload staging area
-  'uploadStaging',
-];
+import { clearAllSettings } from './SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // SELECTIVE CLEAR
@@ -50,35 +27,15 @@ export async function clearAllStores(): Promise<void> {
     'foods', 'nutrition_plans', 'meal_days', 'meals', 'meal_items',
     'shopping_list', 'activity_logs', 'training_plans', 'training_plan_days',
     'measurements', 'versions', 'user_profile', 'daily_history',
+    'water_log', 'weight_history', 'settings',
   ];
 
   for (const storeName of storeNames) {
-    await db.clear(storeName);
-  }
-}
-
-export function clearLocalStorage(): void {
-  for (const key of LOCAL_STORAGE_KEYS_TO_CLEAR) {
-    legacyRemoveItem(key);
-  }
-
-  // Clear dynamically named keys
-  const keysToRemove: string[] = [];
-  const allKeys = legacyListKeys();
-  for (const key of allKeys) {
-    if (
-      key.startsWith('loggedMeals_') ||
-      key.startsWith('snacks_') ||
-      key.startsWith('water_') ||
-      key.startsWith('meal_') ||
-      key.startsWith('day-')
-      // NOTE: 'workout_' prefix intentionally excluded — sport data preserved
-    ) {
-      keysToRemove.push(key);
+    try {
+      await db.clear(storeName);
+    } catch {
+      // store may not exist in older DB versions
     }
-  }
-  for (const key of keysToRemove) {
-    legacyRemoveItem(key);
   }
 }
 
@@ -117,17 +74,18 @@ export async function performFullReset(
       console.warn('[Reset] Failed to clear object stores:', err);
     }
 
-    // Step 2: Clear localStorage (via legacy adapter)
-    clearLocalStorage();
+    // Step 2: Clear IndexedDB settings store
+    await clearAllSettings();
     if (options.clearTheme) {
-      legacyRemoveItem('themeMode');
+      const { setSetting } = await import('./SettingsService');
+      await setSetting('themeMode', 'light');
     }
-    console.log('[Reset] localStorage cleared.');
+    console.log('[Reset] Settings cleared.');
 
-    // Step 2b: Set a flag so the UI/plan loader knows we're in a
-    // "no active plan" state until a new plan is explicitly activated.
+    // Step 2b: Set a flag so the UI/plan loader knows we're in a "no active plan" state.
     try {
-      legacySetItem('forceNoActivePlan', '1');
+      const { setSetting } = await import('./SettingsService');
+      await setSetting('forceNoActivePlan', '1');
     } catch {
       // ignore
     }

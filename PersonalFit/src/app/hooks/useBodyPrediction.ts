@@ -12,7 +12,7 @@
  *   - Diminishing returns on both fat loss and muscle gain over time
  *   - Adaptive thermogenesis (~5-10% TDEE reduction per 10% weight loss)
  *
- * INPUTS (all from localStorage / existing hooks):
+ * INPUTS (profile/history from IndexedDB; existing hooks):
  *   - Profile: weight, height, age, gender, activityLevel, goal
  *   - Calorie target (daily allowed intake)
  *   - Actual average calorie consumption (from dailyHistory)
@@ -33,8 +33,9 @@
  *   not guarantees. Individual results vary.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { getDailyHistory, type DailyHistoryEntry } from './useDailyReset';
+import { getSetting } from '../backend/services/SettingsService';
 
 // ============================================================
 // TYPES
@@ -150,10 +151,11 @@ function estimateBodyFatPercent(weight: number, height: number, age: number, isM
   return Math.max(5, Math.min(50, Math.round(bf * 10) / 10));
 }
 
-/** Load profile data from localStorage */
-function loadProfile() {
+const DEFAULT_PROFILE = { weight: 90, height: 175, age: 30, gender: 'male', activityLevel: 'Közepes', goal: 'Fogyás', calorieTarget: 0 };
+
+async function loadProfileAsync(): Promise<typeof DEFAULT_PROFILE> {
   try {
-    const raw = localStorage.getItem('userProfile');
+    const raw = await getSetting('userProfile');
     if (raw) {
       const p = JSON.parse(raw);
       return {
@@ -167,14 +169,12 @@ function loadProfile() {
       };
     }
   } catch { /* fallback */ }
-  return { weight: 90, height: 175, age: 30, gender: 'male', activityLevel: 'Közepes', goal: 'Fogyás', calorieTarget: 0 };
+  return DEFAULT_PROFILE;
 }
 
 /** Load calorie target */
-function loadCalorieTarget(): number {
-  const profile = loadProfile();
+function loadCalorieTarget(profile: typeof DEFAULT_PROFILE): number {
   if (profile.calorieTarget > 0) return profile.calorieTarget;
-  // Estimate from weight
   if (profile.weight) return Math.round(profile.weight * 28 / 50) * 50;
   return 2000;
 }
@@ -276,12 +276,17 @@ function monthlyMuscleGain(
 // ============================================================
 
 export function useBodyPrediction({ forecastMonths }: BodyPredictionInput): BodyPrediction {
+  const [profile, setProfile] = useState<typeof DEFAULT_PROFILE>(DEFAULT_PROFILE);
+  const [history, setHistory] = useState<DailyHistoryEntry[]>([]);
+
+  useEffect(() => {
+    loadProfileAsync().then(setProfile);
+    getDailyHistory().then(setHistory);
+  }, []);
+
   return useMemo(() => {
-    // === LOAD DATA ===
-    const profile = loadProfile();
     const isMale = profile.gender !== 'female';
-    const dailyTarget = loadCalorieTarget();
-    const history = getDailyHistory();
+    const dailyTarget = loadCalorieTarget(profile);
 
     // Calculate baseline metabolic values
     const bmr = calculateBMR(profile.weight, profile.height, profile.age, isMale);
@@ -445,5 +450,5 @@ export function useBodyPrediction({ forecastMonths }: BodyPredictionInput): Body
       isDeficit,
       disclaimer: 'Az eredmenyek kaloria-deficit modellre epulo elorejelzesek. Az egyeni eredmenyek elterhetnek a genetika, anyagcsere, stressz es alvas fuggvenyeben.',
     };
-  }, [forecastMonths]);
+  }, [forecastMonths, profile, history]);
 }

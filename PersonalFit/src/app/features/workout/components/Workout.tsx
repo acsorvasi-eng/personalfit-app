@@ -9,6 +9,7 @@ import { DSMCoachMark } from '../../../components/dsm/ux-patterns';
 // import { recipeDatabase, calculateRecipeNutrition, Recipe } from '../../../data/recipeDatabase';
 import { useCalorieTracker } from '../../../hooks/useCalorieTracker';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { getSetting, setSetting } from '../../../backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════
 // Types
@@ -258,10 +259,13 @@ export function Workout() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const storedApps = localStorage.getItem('connectedWorkoutApps');
-    if (storedApps) setApps(JSON.parse(storedApps));
-    const workoutData = localStorage.getItem('workoutTracking');
-    if (workoutData) {
+    let cancelled = false;
+    getSetting('connectedWorkoutApps').then((storedApps) => {
+      if (cancelled || !storedApps) return;
+      setApps(JSON.parse(storedApps));
+    });
+    getSetting('workoutTracking').then((workoutData) => {
+      if (cancelled || !workoutData) return;
       const data = JSON.parse(workoutData);
       if (data[today]) setDailyWorkout(data[today]);
       const history: DailyWorkout[] = [];
@@ -271,7 +275,8 @@ export function Workout() {
         if (data[key] && data[key].entries?.length > 0) history.push(data[key]);
       }
       setWorkoutHistory(history);
-    }
+    });
+    return () => { cancelled = true; };
   }, [today]);
 
   const aiSuggestions = useMemo(() => fuzzySearch(searchQuery, ALL_SPORTS), [searchQuery]);
@@ -281,39 +286,39 @@ export function Workout() {
     setSearchQuery(''); setSearchFocused(false);
   };
 
-  const handleAddWorkout = () => {
+  const handleAddWorkout = async () => {
     if (!selectedSport || !duration || parseInt(duration) <= 0) return;
     const durationNum = parseInt(duration);
     const calories = Math.round(selectedSport.caloriesPerMinute * durationNum);
     const newEntry: WorkoutEntry = { activityId: selectedSport.id, activityName: selectedSport.name, activityIcon: selectedSport.icon, duration: durationNum, calories, timestamp: new Date().toISOString(), source: 'manual' };
-    const workoutData = localStorage.getItem('workoutTracking');
+    const workoutData = await getSetting('workoutTracking');
     const allData = workoutData ? JSON.parse(workoutData) : {};
     const currentDayData = allData[today] || { date: today, entries: [], totalDuration: 0, totalCalories: 0 };
     currentDayData.entries.push(newEntry);
     currentDayData.totalDuration += durationNum;
     currentDayData.totalCalories += calories;
     allData[today] = currentDayData;
-    localStorage.setItem('workoutTracking', JSON.stringify(allData));
+    await setSetting('workoutTracking', JSON.stringify(allData));
     setDailyWorkout(currentDayData); setShowDurationModal(false); setSelectedSport(null); setDuration('');
     if (navigator.vibrate) navigator.vibrate([10, 20]);
   };
 
-  const handleDeleteEntry = (index: number) => {
+  const handleDeleteEntry = async (index: number) => {
     if (!dailyWorkout) return;
     const updatedEntries = [...dailyWorkout.entries];
     const removed = updatedEntries.splice(index, 1)[0];
     const updated = { ...dailyWorkout, entries: updatedEntries, totalDuration: dailyWorkout.totalDuration - removed.duration, totalCalories: dailyWorkout.totalCalories - removed.calories };
-    const workoutData = localStorage.getItem('workoutTracking');
+    const workoutData = await getSetting('workoutTracking');
     const allData = workoutData ? JSON.parse(workoutData) : {};
     if (updated.entries.length === 0) delete allData[today]; else allData[today] = updated;
-    localStorage.setItem('workoutTracking', JSON.stringify(allData));
+    await setSetting('workoutTracking', JSON.stringify(allData));
     setDailyWorkout(updated.entries.length > 0 ? updated : null);
   };
 
   const handleAppConnect = (appId: string) => {
     const updatedApps = apps.map(app => app.id === appId ? { ...app, connected: !app.connected } : app);
     setApps(updatedApps);
-    localStorage.setItem('connectedWorkoutApps', JSON.stringify(updatedApps));
+    void setSetting('connectedWorkoutApps', JSON.stringify(updatedApps));
   };
 
   const hasActivity = (dailyWorkout?.entries?.length ?? 0) > 0 || workoutHistory.length > 0;

@@ -41,6 +41,7 @@ import { usePlanData } from "../../../hooks/usePlanData";
 import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
+import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 
 interface ShoppingItem {
   product: Product;
@@ -67,21 +68,18 @@ export function ShoppingList() {
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>(() => {
-    const saved = localStorage.getItem("shoppingItems");
-    if (saved) {
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+  useEffect(() => {
+    getSetting("shoppingItems").then((saved) => {
+      if (!saved) return;
       try {
         const items = JSON.parse(saved) as ShoppingItem[];
-        // Migrate: remove items missing new tags field (stale schema)
         const valid = items.filter(i => i.product && Array.isArray(i.product.tags));
-        if (valid.length !== items.length) {
-          localStorage.setItem("shoppingItems", JSON.stringify(valid));
-        }
-        return valid;
-      } catch { return []; }
-    }
-    return [];
-  });
+        setShoppingItems(valid);
+        if (valid.length !== items.length) setSetting("shoppingItems", JSON.stringify(valid)).catch(() => {});
+      } catch { /* ignore */ }
+    });
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -95,7 +93,7 @@ export function ShoppingList() {
   const updateShoppingItems = (updater: (prev: ShoppingItem[]) => ShoppingItem[]) => {
     setShoppingItems((prev) => {
       const next = updater(prev);
-      localStorage.setItem("shoppingItems", JSON.stringify(next));
+      setSetting("shoppingItems", JSON.stringify(next)).catch(() => {});
       return next;
     });
   };
@@ -215,11 +213,14 @@ export function ShoppingList() {
   const [showMealPlanImport, setShowMealPlanImport] = useState(false);
   const [mealPlanAddedCount, setMealPlanAddedCount] = useState(0);
 
+  const [menuSelectedMealsJson, setMenuSelectedMealsJson] = useState<string | null>(null);
+  useEffect(() => {
+    getSetting('menuSelectedMeals').then(setMenuSelectedMealsJson);
+  }, []);
   const mealPlanSuggestions = useMemo(() => {
-    const savedMeals = localStorage.getItem('menuSelectedMeals');
-    const selectedMeals = savedMeals ? JSON.parse(savedMeals) : {};
+    const selectedMeals = menuSelectedMealsJson ? (() => { try { return JSON.parse(menuSelectedMealsJson); } catch { return {}; } })() : {};
     return generateWeeklyShoppingList(planData, selectedMeals);
-  }, [planData]);
+  }, [planData, menuSelectedMealsJson]);
 
   const handleAutoPopulateFromMealPlan = useCallback(() => {
     let addedCount = 0;

@@ -19,6 +19,7 @@ import { ReactNode, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { X, Lightbulb } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getSetting, setSetting, removeSetting, getSettingKeys } from "../../backend/services/SettingsService";
 
 // ─── DSMBottomSheet ─────────────────────────────────────────────────
 // Slide-up overlay panel. Replaces full-page navigations for quick actions.
@@ -114,11 +115,11 @@ export function DSMBottomSheet({
 }
 
 // ─── DSMCoachMark ───────────────────────────────────────────────────
-// First-use discovery tooltip. Shows once per feature, then stored in localStorage.
+// First-use discovery tooltip. Shows once per feature, then stored in settings.
 // Used to teach long-press, swipe, and other non-obvious gestures.
 
 interface DSMCoachMarkProps {
-  id: string;                    // Unique localStorage key
+  id: string;                    // Unique settings key
   title: string;
   message: string;
   icon?: LucideIcon;
@@ -126,7 +127,7 @@ interface DSMCoachMarkProps {
   onDismiss?: () => void;
   delay?: number;                // ms before showing
   className?: string;
-  forceShow?: boolean;           // Override localStorage (for testing)
+  forceShow?: boolean;           // Override stored value (for testing)
 }
 
 export function DSMCoachMark({
@@ -137,21 +138,20 @@ export function DSMCoachMark({
   const storageKey = `coach_${id}`;
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     if (forceShow) {
-      const timer = setTimeout(() => setVisible(true), delay);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setVisible(true), delay);
+      return () => { if (timer) clearTimeout(timer); };
     }
-
-    const seen = localStorage.getItem(storageKey);
-    if (!seen) {
-      const timer = setTimeout(() => setVisible(true), delay);
-      return () => clearTimeout(timer);
-    }
+    getSetting(storageKey).then((seen) => {
+      if (!seen) timer = setTimeout(() => setVisible(true), delay);
+    });
+    return () => { if (timer) clearTimeout(timer); };
   }, [storageKey, delay, forceShow]);
 
   const dismiss = useCallback(() => {
     setVisible(false);
-    localStorage.setItem(storageKey, "true");
+    void setSetting(storageKey, "true");
     onDismiss?.();
   }, [storageKey, onDismiss]);
 
@@ -415,21 +415,22 @@ export function DSMEmptyFlow({
 // Manages coach mark visibility globally across the app.
 
 export function useCoachMarks() {
-  const isCoachSeen = useCallback((id: string): boolean => {
-    return localStorage.getItem(`coach_${id}`) === "true";
+  const isCoachSeen = useCallback((id: string): Promise<boolean> => {
+    return getSetting(`coach_${id}`).then((v) => v === "true");
   }, []);
 
   const markCoachSeen = useCallback((id: string) => {
-    localStorage.setItem(`coach_${id}`, "true");
+    return setSetting(`coach_${id}`, "true");
   }, []);
 
   const resetCoachMark = useCallback((id: string) => {
-    localStorage.removeItem(`coach_${id}`);
+    return removeSetting(`coach_${id}`);
   }, []);
 
-  const resetAllCoachMarks = useCallback(() => {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith("coach_"));
-    keys.forEach(k => localStorage.removeItem(k));
+  const resetAllCoachMarks = useCallback(async () => {
+    const keys = await getSettingKeys();
+    const coachKeys = keys.filter((k) => k.startsWith("coach_"));
+    await Promise.all(coachKeys.map((k) => removeSetting(k)));
   }, []);
 
   return { isCoachSeen, markCoachSeen, resetCoachMark, resetAllCoachMarks };

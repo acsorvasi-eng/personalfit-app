@@ -19,17 +19,15 @@
  *   + Works in all modern browsers natively
  *   - No built-in sync, but future cloud sync is planned separately
  *
- * vs localStorage (current):
+ * vs legacy key-value:
  *   + Structured data with indexes (fast category/date queries)
  *   + No 5MB limit (IndexedDB: typically 50%+ of disk)
  *   + Transactional integrity
  *   + Supports binary data (future: images, PDFs)
  *   - Slightly more complex API (mitigated by this wrapper)
  *
- * HYBRID APPROACH:
- *   IndexedDB for all structured entity data.
- *   localStorage retained for lightweight config (theme, auth tokens, trial info).
- *   BroadcastChannel for cross-tab reactivity.
+ * All persistent state uses IndexedDB.
+ * BroadcastChannel for cross-tab reactivity.
  */
 
 // ═══════════════════════════════════════════════════════════════
@@ -37,7 +35,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const DB_NAME = 'NutriPlanDB';
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 // ═══════════════════════════════════════════════════════════════
 // STORE SCHEMAS — defines indexes for each object store
@@ -160,6 +158,11 @@ const STORE_SCHEMAS: Record<string, StoreSchema> = {
   water_log: {
     keyPath: 'date',
     indexes: [{ name: 'by-date', keyPath: 'date' }],
+  },
+  /** Key-value settings (theme, language, flags, session, etc.). */
+  settings: {
+    keyPath: 'id',
+    indexes: [],
   },
 };
 

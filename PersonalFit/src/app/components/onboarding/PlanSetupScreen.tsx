@@ -28,20 +28,21 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { setSetting } from '../../backend/services/SettingsService';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 export function PlanSetupScreen() {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, setHasPlanSetup } = useAuth();
   const [selected, setSelected] = useState<'manual' | 'pdf' | null>(null);
   const [hoveredCard, setHoveredCard] = useState<'manual' | 'pdf' | null>(null);
 
   const handleContinue = useCallback(() => {
     if (!selected) return;
     if (navigator.vibrate) navigator.vibrate(10);
-    localStorage.setItem('planSetupChoice', selected);
-    localStorage.setItem('hasPlanSetup', 'true');
+    setSetting('planSetupChoice', selected).catch(() => {});
+    setHasPlanSetup(true);
 
     if (selected === 'manual') {
       navigate('/manual-meal-input');

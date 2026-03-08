@@ -2084,10 +2084,11 @@ export interface UserDietProfile {
   calorieTarget?: number;
 }
 
-/** Load the user's diet profile from localStorage */
-export function loadUserDietProfile(): UserDietProfile {
+/** Load the user's diet profile from IndexedDB (async). Call from component with useEffect or use async wrapper. */
+export async function loadUserDietProfileAsync(): Promise<UserDietProfile> {
   try {
-    const raw = localStorage.getItem('userProfile');
+    const { getSetting } = await import('../backend/services/SettingsService');
+    const raw = await getSetting('userProfile');
     if (raw) {
       const p = JSON.parse(raw);
       return {
@@ -2098,6 +2099,11 @@ export function loadUserDietProfile(): UserDietProfile {
       };
     }
   } catch { /* fallback */ }
+  return { goal: 'Fogyás', allergies: 'Nincs', dietaryPreferences: 'Nincs megkötés' };
+}
+
+/** Sync wrapper: returns default until async load completes. Prefer loadUserDietProfileAsync in React. */
+export function loadUserDietProfile(): UserDietProfile {
   return { goal: 'Fogyás', allergies: 'Nincs', dietaryPreferences: 'Nincs megkötés' };
 }
 

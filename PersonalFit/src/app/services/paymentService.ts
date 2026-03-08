@@ -5,6 +5,7 @@
  */
 
 import { SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from '../utils/currencyConverter';
+import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 export interface SubscriptionData {
   id: string;
@@ -53,27 +54,26 @@ export async function createSubscription(userId: string): Promise<SubscriptionDa
     stripeSubscriptionId: `sub_${Math.random().toString(36).substr(2, 14)}`,
   };
 
-  localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(subscription));
+  await setSetting(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(subscription));
   return subscription;
 }
 
 /**
  * Get current subscription data
  */
-export function getSubscription(): SubscriptionData | null {
+export async function getSubscription(): Promise<SubscriptionData | null> {
   try {
-    const data = localStorage.getItem(SUBSCRIPTION_STORAGE_KEY);
+    const data = await getSetting(SUBSCRIPTION_STORAGE_KEY);
     if (!data) return null;
 
     const subscription: SubscriptionData = JSON.parse(data);
 
-    // Check if subscription has expired
     const now = new Date();
     const periodEnd = new Date(subscription.currentPeriodEnd);
 
     if (now > periodEnd && subscription.status === 'active') {
       subscription.status = 'expired';
-      localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(subscription));
+      await setSetting(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(subscription));
     }
 
     return subscription;
@@ -85,8 +85,8 @@ export function getSubscription(): SubscriptionData | null {
 /**
  * Check if user has an active subscription
  */
-export function isSubscriptionActive(): boolean {
-  const sub = getSubscription();
+export async function isSubscriptionActive(): Promise<boolean> {
+  const sub = await getSubscription();
   return sub?.status === 'active';
 }
 
@@ -96,10 +96,10 @@ export function isSubscriptionActive(): boolean {
 export async function cancelSubscription(): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, 1000));
 
-  const sub = getSubscription();
+  const sub = await getSubscription();
   if (sub) {
     sub.status = 'cancelled';
-    localStorage.setItem(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(sub));
+    await setSetting(SUBSCRIPTION_STORAGE_KEY, JSON.stringify(sub));
   }
 }
 

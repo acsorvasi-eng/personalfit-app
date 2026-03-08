@@ -16,6 +16,7 @@ import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, type MealSettings } from "../../../backend/services/UserProfileService";
+import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
 
@@ -58,9 +59,9 @@ function parseTimeToMinutes(hhmm: string): number {
 // CalendarStrip: Compact elegant 7-day centered view
 // ═══════════════════════════════════════════════════════════
 
-function getWorkoutSchedule(): WorkoutScheduleMap {
+async function loadWorkoutSchedule(): Promise<WorkoutScheduleMap> {
   try {
-    const raw = localStorage.getItem('workoutSchedule');
+    const raw = await getSetting('workoutSchedule');
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
@@ -93,6 +94,7 @@ function CalendarStrip({
   onSelectDate,
   onPrevMonth,
   onNextMonth,
+  scheduleMap = {},
 }: {
   selectedDate: Date;
   calendarMonth: number;
@@ -100,11 +102,11 @@ function CalendarStrip({
   onSelectDate: (date: Date) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  scheduleMap?: WorkoutScheduleMap;
 }) {
   const { language, t } = useLanguage();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-  const scheduleMap = useMemo(() => getWorkoutSchedule(), []);
 
   // Generate 7 days centered on selected date
   const days = useMemo(() => {
@@ -201,6 +203,18 @@ export function UnifiedMenu() {
   const appData = useAppData();
   const { planData, hasData: hasPlanData } = usePlanData();
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
+  const [workoutScheduleMap, setWorkoutScheduleMap] = useState<WorkoutScheduleMap>({});
+
+  useEffect(() => {
+    loadWorkoutSchedule().then(setWorkoutScheduleMap);
+    const sync = () => loadWorkoutSchedule().then(setWorkoutScheduleMap);
+    window.addEventListener('storage', sync);
+    window.addEventListener('workoutScheduleSync', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('workoutScheduleSync', sync);
+    };
+  }, []);
 
   // Listen for openUploadSheet event (from PlanSetupScreen PDF choice)
   useEffect(() => {
@@ -215,16 +229,8 @@ export function UnifiedMenu() {
   const [calendarMonth, setCalendarMonth] = useState(now.getMonth());
   const [calendarYear, setCalendarYear] = useState(now.getFullYear());
 
-  const [selectedMeals, setSelectedMeals] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem('menuSelectedMeals');
-    if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
-    return {};
-  });
-  const [checkedMeals, setCheckedMeals] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('menuCheckedMeals');
-    if (saved) { try { return new Set(JSON.parse(saved)); } catch { return new Set(); } }
-    return new Set();
-  });
+  const [selectedMeals, setSelectedMeals] = useState<Record<string, string>>({});
+  const [checkedMeals, setCheckedMeals] = useState<Set<string>>(new Set());
   // expandedMealInDay removed — dialog replaces inline expansion
   const [loggedCalories, setLoggedCalories] = useState(0);
   const [loggedMealsForDay, setLoggedMealsForDay] = useState<LoggedMeal[]>([]);
@@ -236,11 +242,19 @@ export function UnifiedMenu() {
 
   // ─── Snack consumption state (keyed by saved snack id: alma, dio, mandula, kivi, sargarepa) ──
   const todayDateStr = useMemo(() => new Date().toISOString().split('T')[0], []);
-  const [consumedSnacks, setConsumedSnacks] = useState<Record<string, boolean>>(() => {
-    const saved = localStorage.getItem(`snacks_${todayDateStr}`);
-    if (saved) { try { return JSON.parse(saved); } catch { return {}; } }
-    return {};
-  });
+  const [consumedSnacks, setConsumedSnacks] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    getSetting('menuSelectedMeals').then((saved) => {
+      if (saved) { try { setSelectedMeals(JSON.parse(saved)); } catch { /* ignore */ } }
+    });
+    getSetting('menuCheckedMeals').then((saved) => {
+      if (saved) { try { setCheckedMeals(new Set(JSON.parse(saved))); } catch { /* ignore */ } }
+    });
+    getSetting(`snacks_${todayDateStr}`).then((saved) => {
+      if (saved) { try { setConsumedSnacks(JSON.parse(saved)); } catch { /* ignore */ } }
+    });
+  }, [todayDateStr]);
 
   // Rest-period snacks by current language (from i18n/snacks)
   const snackList = useMemo(
@@ -271,7 +285,7 @@ export function UnifiedMenu() {
   const handleSnackConsume = useCallback((snackId: string) => {
     setConsumedSnacks(prev => {
       const updated = { ...prev, [snackId]: !prev[snackId] };
-      localStorage.setItem(`snacks_${todayDateStr}`, JSON.stringify(updated));
+      void setSetting(`snacks_${todayDateStr}`, JSON.stringify(updated));
       if (navigator.vibrate) navigator.vibrate(updated[snackId] ? [10, 20] : 8);
       return updated;
     });
@@ -317,8 +331,8 @@ export function UnifiedMenu() {
 
   // Load logged calories
   useEffect(() => {
-    const update = () => {
-      const stored = localStorage.getItem("totalConsumedCalories");
+    const update = async () => {
+      const stored = await getSetting("totalConsumedCalories");
       setLoggedCalories(stored ? parseInt(stored) : 0);
     };
     update();
@@ -330,8 +344,8 @@ export function UnifiedMenu() {
   // Load logged meals for selected date
   useEffect(() => {
     const dateStr = selectedDate.toISOString().split('T')[0];
-    const load = () => {
-      const stored = localStorage.getItem(`loggedMeals_${dateStr}`);
+    const load = async () => {
+      const stored = await getSetting(`loggedMeals_${dateStr}`);
       if (stored) { try { setLoggedMealsForDay(JSON.parse(stored)); } catch { setLoggedMealsForDay([]); } }
       else setLoggedMealsForDay([]);
     };
@@ -526,9 +540,9 @@ export function UnifiedMenu() {
     const dateStr = selectedDate.toISOString().split('T')[0];
     const updated = loggedMealsForDay.filter(m => m.id !== mealId);
     setLoggedMealsForDay(updated);
-    localStorage.setItem(`loggedMeals_${dateStr}`, JSON.stringify(updated));
+    void setSetting(`loggedMeals_${dateStr}`, JSON.stringify(updated));
     const newTotal = updated.reduce((sum, m) => sum + m.calories, 0);
-    localStorage.setItem('totalConsumedCalories', newTotal.toString());
+    void setSetting('totalConsumedCalories', newTotal.toString());
     setLoggedCalories(newTotal);
   };
 
@@ -549,7 +563,7 @@ export function UnifiedMenu() {
     const key = `${dayKey}-${mealType}`;
     const updated = { ...selectedMeals, [key]: mealId };
     setSelectedMeals(updated);
-    localStorage.setItem('menuSelectedMeals', JSON.stringify(updated));
+    void setSetting('menuSelectedMeals', JSON.stringify(updated));
   };
 
   const handleMealCheck = (mealId: string, date: Date, mealType: string) => {
@@ -577,7 +591,7 @@ export function UnifiedMenu() {
     setCheckedMeals(prev => {
       const newSet = new Set(prev);
       if (newSet.has(mealId)) newSet.delete(mealId); else newSet.add(mealId);
-      localStorage.setItem('menuCheckedMeals', JSON.stringify([...newSet]));
+      void setSetting('menuCheckedMeals', JSON.stringify([...newSet]));
       return newSet;
     });
   };
@@ -610,9 +624,9 @@ export function UnifiedMenu() {
   }, [planData]);
 
   useEffect(() => {
-    const loadSportCal = () => {
+    const loadSportCal = async () => {
       try {
-        const wd = localStorage.getItem('workoutTracking');
+        const wd = await getSetting('workoutTracking');
         if (wd) {
           const data = JSON.parse(wd);
           const todayStr = new Date().toISOString().split('T')[0];
@@ -673,7 +687,7 @@ export function UnifiedMenu() {
   }, [selectedDate, currentMealType, isEating, isResting]);
 
   // Check workout schedule from calendar planner for overrides
-  const menuScheduleMap = useMemo(() => getWorkoutSchedule(), []);
+  const menuScheduleMap = workoutScheduleMap;
   const selectedDateKey = selectedDate.toISOString().split('T')[0];
   const scheduledWorkouts = menuScheduleMap[selectedDateKey] || [];
   const hasScheduledWorkout = scheduledWorkouts.length > 0;
@@ -766,6 +780,7 @@ export function UnifiedMenu() {
             onSelectDate={goToDay}
             onPrevMonth={goToPrevMonth}
             onNextMonth={goToNextMonth}
+            scheduleMap={workoutScheduleMap}
           />
         </div>
 
@@ -928,6 +943,7 @@ export function UnifiedMenu() {
           onSelectDate={goToDay}
           onPrevMonth={goToPrevMonth}
           onNextMonth={goToNextMonth}
+          scheduleMap={workoutScheduleMap}
         />
       </div>
 
@@ -1086,9 +1102,9 @@ export function UnifiedMenu() {
       <DSMQuickLogSheet
         open={quickLogOpen}
         onClose={() => setQuickLogOpen(false)}
-        onLogMeal={(item) => {
+        onLogMeal={async (item) => {
           const today = new Date().toISOString().split('T')[0];
-          const stored = localStorage.getItem(`loggedMeals_${today}`);
+          const stored = await getSetting(`loggedMeals_${today}`);
           const meals = stored ? JSON.parse(stored) : [];
           meals.push({
             id: `quick-${Date.now()}`,
@@ -1102,7 +1118,7 @@ export function UnifiedMenu() {
             timestamp: Date.now(),
             image: '',
           });
-          localStorage.setItem(`loggedMeals_${today}`, JSON.stringify(meals));
+          await setSetting(`loggedMeals_${today}`, JSON.stringify(meals));
         }}
       />
 

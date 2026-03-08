@@ -7,7 +7,7 @@
  *   1. See today's planned workout at a glance
  *   2. Open a 7-day (week) or 30-day (month) calendar
  *   3. Assign sport types to any day
- *   4. Data persists in localStorage `workoutSchedule`
+ *   4. Data persists in IndexedDB settings `workoutSchedule`
  *   5. Auto-syncs with daily menu & calorie tracker
  *
  * Data model:
@@ -23,6 +23,7 @@ import {
   CalendarDays, CalendarRange, Check
 } from 'lucide-react';
 import { useLanguage, getLocaleDayNarrow, getLocaleMonth } from '../../../contexts/LanguageContext';
+import { getSetting, setSetting } from '../../../backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -140,15 +141,15 @@ function getMonthDays(year: number, month: number): Date[] {
 
 const STORAGE_KEY = 'workoutSchedule';
 
-function loadSchedule(): WorkoutScheduleMap {
+async function loadSchedule(): Promise<WorkoutScheduleMap> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = await getSetting(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
 
-function persistSchedule(data: WorkoutScheduleMap) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function persistSchedule(data: WorkoutScheduleMap): Promise<void> {
+  return setSetting(STORAGE_KEY, JSON.stringify(data));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -157,7 +158,7 @@ function persistSchedule(data: WorkoutScheduleMap) {
 
 // A version counter shared across all hook instances in the same tab.
 // When any instance mutates the schedule it bumps the counter and
-// dispatches a custom event so sibling instances can re-read localStorage
+// dispatches a custom event so sibling instances can re-read settings
 // WITHOUT triggering the "setState during render" warning (the notification
 // is deferred to a microtask so it lands outside React's commit phase).
 let _scheduleVersion = 0;
@@ -174,13 +175,15 @@ function notifyPeers() {
 }
 
 export function useWorkoutSchedule() {
-  const [schedule, setSchedule] = useState<WorkoutScheduleMap>(loadSchedule);
+  const [schedule, setSchedule] = useState<WorkoutScheduleMap>({});
 
   useEffect(() => {
-    // Same-tab peer sync (deferred custom event)
-    const syncHandler = () => setSchedule(loadSchedule());
+    loadSchedule().then(setSchedule);
+  }, []);
+
+  useEffect(() => {
+    const syncHandler = () => loadSchedule().then(setSchedule);
     window.addEventListener(SYNC_EVENT, syncHandler);
-    // Cross-tab sync via native storage event
     window.addEventListener('storage', syncHandler);
     return () => {
       window.removeEventListener(SYNC_EVENT, syncHandler);
@@ -203,7 +206,7 @@ export function useWorkoutSchedule() {
         plannedDuration: duration,
       };
       updated[date] = [...existing, entry];
-      persistSchedule(updated);
+      void persistSchedule(updated);
       return updated;
     });
     notifyPeers();
@@ -216,7 +219,7 @@ export function useWorkoutSchedule() {
         updated[date] = updated[date].filter(w => w.id !== workoutId);
         if (updated[date].length === 0) delete updated[date];
       }
-      persistSchedule(updated);
+      void persistSchedule(updated);
       return updated;
     });
     notifyPeers();
@@ -226,7 +229,7 @@ export function useWorkoutSchedule() {
     setSchedule(prev => {
       const updated = { ...prev };
       delete updated[date];
-      persistSchedule(updated);
+      void persistSchedule(updated);
       return updated;
     });
     notifyPeers();

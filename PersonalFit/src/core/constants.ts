@@ -102,7 +102,7 @@ export const TOTAL_PLAN_DAYS = PLAN_WEEKS * DAYS_PER_WEEK;
 export const MEALS_PER_DAY = 5; // breakfast, lunch, dinner, snack, post_workout
 
 // ═══════════════════════════════════════════════════════════════
-// Storage Keys (localStorage)
+// Storage Keys (IndexedDB settings store)
 // ═══════════════════════════════════════════════════════════════
 
 export const STORAGE_KEYS = {

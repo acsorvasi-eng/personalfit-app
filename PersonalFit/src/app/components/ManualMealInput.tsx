@@ -32,6 +32,7 @@ import type { FoodItem as AIFoodItem } from '../data/aiFoodKnowledge';
 import * as NutritionPlanSvc from '../backend/services/NutritionPlanService';
 import { getDB, generateId, nowISO } from '../backend/db';
 import type { MealType } from '../backend/models';
+import { getSetting, setSetting, removeSetting } from '../backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -128,24 +129,24 @@ export function ManualMealInput() {
   // State
   const [currentDay, setCurrentDay] = useState(1);
   const [activeSlot, setActiveSlot] = useState<MealSlot>('breakfast');
-  const [allDays, setAllDays] = useState<Record<number, DayMealData>>(() => {
-    // Load from localStorage if exists
-    const saved = localStorage.getItem('manualMealPlan');
-    if (saved) {
-      try { return JSON.parse(saved); } catch { /* ignore */ }
-    }
-    return {};
-  });
+  const [allDays, setAllDays] = useState<Record<number, DayMealData>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [addingItem, setAddingItem] = useState<FoodSuggestion | null>(null);
   const [addQuantity, setAddQuantity] = useState('100');
   const [isSaving, setIsSaving] = useState(false);
-  const [savedDays, setSavedDays] = useState<Set<number>>(() => {
-    const saved = localStorage.getItem('manualSavedDays');
-    if (saved) try { return new Set(JSON.parse(saved)); } catch { /* ignore */ }
-    return new Set();
-  });
+  const [savedDays, setSavedDays] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    getSetting('manualMealPlan').then((saved) => {
+      if (saved) {
+        try { setAllDays(JSON.parse(saved)); } catch { /* ignore */ }
+      }
+    });
+    getSetting('manualSavedDays').then((saved) => {
+      if (saved) try { setSavedDays(new Set(JSON.parse(saved))); } catch { /* ignore */ }
+    });
+  }, []);
 
   // Build suggestion database
   const suggestionDB = useMemo(() => buildSuggestionDB(), []);
@@ -174,7 +175,7 @@ export function ManualMealInput() {
   const saveDay = useCallback((day: number, data: DayMealData) => {
     const updated = { ...allDays, [day]: data };
     setAllDays(updated);
-    localStorage.setItem('manualMealPlan', JSON.stringify(updated));
+    void setSetting('manualMealPlan', JSON.stringify(updated));
   }, [allDays]);
 
   // Add food item to current slot
@@ -355,9 +356,8 @@ export function ManualMealInput() {
       // Activate the plan
       await NutritionPlanSvc.activatePlan(plan.id);
 
-      // Cleanup localStorage
-      localStorage.removeItem('manualMealPlan');
-      localStorage.removeItem('manualSavedDays');
+      await removeSetting('manualMealPlan');
+      await removeSetting('manualSavedDays');
 
       navigate('/');
     } catch (err) {

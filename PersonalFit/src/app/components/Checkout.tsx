@@ -30,6 +30,7 @@ import { PageHeader } from "./PageHeader";
 import { Product, calculateNutrition } from "../data/productDatabase";
 import { useCalorieTracker } from "../hooks/useCalorieTracker";
 import { useLanguage, getLocale } from "../contexts/LanguageContext";
+import { getSetting, setSetting } from "../backend/services/SettingsService";
 
 interface ShoppingItem {
   product: Product;
@@ -113,11 +114,8 @@ export function Checkout() {
 
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [cartItems, setCartItems] = useState<ShoppingItem[]>([]);
-  const [address, setAddress] = useState<DeliveryAddress>(() => {
-    const saved = localStorage.getItem("deliveryAddress");
-    if (saved) try { return JSON.parse(saved); } catch { /* ignore */ }
-    return { name: "", phone: "+40 ", city: "Marosvásárhely", zip: "", street: "", floor: "", notes: "" };
-  });
+  const defaultAddress: DeliveryAddress = { name: "", phone: "+40 ", city: "Marosvásárhely", zip: "", street: "", floor: "", notes: "" };
+  const [address, setAddress] = useState<DeliveryAddress>(defaultAddress);
   const [selectedSlot, setSelectedSlot] = useState<DeliverySlot | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cash">("card");
   const [cardNumber, setCardNumber] = useState("");
@@ -137,18 +135,20 @@ export function Checkout() {
 
   const deliverySlots = generateDeliverySlots(getLocale(language));
 
-  // Load checked shopping items from localStorage into the cart
-  // If no items are checked, load ALL items so the user can still order
+  // Load delivery address and shopping items from IndexedDB
   useEffect(() => {
-    const saved = localStorage.getItem("shoppingItems");
-    if (saved) {
-      try {
-        const items: ShoppingItem[] = JSON.parse(saved);
-        const checkedItems = items.filter((i) => i.checked);
-        // If user has checked items, use those; otherwise use all items
-        setCartItems(checkedItems.length > 0 ? checkedItems : items);
-      } catch { /* ignore */ }
-    }
+    getSetting("deliveryAddress").then((saved) => {
+      if (saved) try { setAddress(JSON.parse(saved)); } catch { /* ignore */ }
+    });
+    getSetting("shoppingItems").then((saved) => {
+      if (saved) {
+        try {
+          const items: ShoppingItem[] = JSON.parse(saved);
+          const checkedItems = items.filter((i) => i.checked);
+          setCartItems(checkedItems.length > 0 ? checkedItems : items);
+        } catch { /* ignore */ }
+      }
+    });
   }, []);
 
   const updateCartItem = (index: number, quantity: number) => {
@@ -196,8 +196,8 @@ export function Checkout() {
       await new Promise((r) => setTimeout(r, 2500));
       const id = generateOrderId();
       setOrderId(id);
-      // Save order to localStorage
-      const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+      const ordersRaw = await getSetting("orders");
+      const orders = ordersRaw ? JSON.parse(ordersRaw) : [];
       orders.push({
         id,
         store: storeName,
@@ -213,17 +213,15 @@ export function Checkout() {
         status: "confirmed",
         createdAt: new Date().toISOString(),
       });
-      localStorage.setItem("orders", JSON.stringify(orders));
-      // Save address for future
-      localStorage.setItem("deliveryAddress", JSON.stringify(address));
-      // Remove ordered items from shopping list
-      const saved = localStorage.getItem("shoppingItems");
+      await setSetting("orders", JSON.stringify(orders));
+      await setSetting("deliveryAddress", JSON.stringify(address));
+      const saved = await getSetting("shoppingItems");
       if (saved) {
         try {
           const allItems: ShoppingItem[] = JSON.parse(saved);
           const orderedIds = new Set(cartItems.map((c) => c.product.id));
           const remaining = allItems.filter((item) => !orderedIds.has(item.product.id));
-          localStorage.setItem("shoppingItems", JSON.stringify(remaining));
+          await setSetting("shoppingItems", JSON.stringify(remaining));
         } catch { /* ignore */ }
       }
       setIsProcessing(false);

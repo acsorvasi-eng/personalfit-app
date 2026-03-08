@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { translations } from '../translations';
 import { translations as i18nFlat } from '../../i18n/translations';
 import { saveUserPreferences } from '../../storage/repositories/userRepository';
+import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 export type LanguageCode = 'hu' | 'en' | 'ro';
 
@@ -97,36 +98,30 @@ function detectDeviceLanguage(): LanguageCode | null {
   return null;
 }
 
+const LANGUAGE_KEY = 'selectedLanguage';
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
-    // 1. Check localStorage first (user's explicit choice) — instant, no reload
-    try {
-      const saved = localStorage.getItem('selectedLanguage') as LanguageCode;
-      if (saved && SUPPORTED_LANGUAGES.includes(saved)) {
-        return saved;
-      }
-    } catch {
-      // localStorage may not be available in some environments
-    }
-
-    // 2. Detect device/browser language
     const detected = detectDeviceLanguage();
     if (detected) return detected;
-
-    // 3. Default to Hungarian
     return 'hu';
   });
+  const [languageLoaded, setLanguageLoaded] = useState(false);
+
+  useEffect(() => {
+    getSetting(LANGUAGE_KEY).then((saved) => {
+      if (saved && SUPPORTED_LANGUAGES.includes(saved as LanguageCode)) {
+        setLanguageState(saved as LanguageCode);
+      }
+      setLanguageLoaded(true);
+    });
+  }, []);
 
   const locale = LOCALE_MAP[language];
 
   const setLanguage = useCallback((lang: LanguageCode) => {
     setLanguageState(lang);
-    try {
-      localStorage.setItem('selectedLanguage', lang);
-    } catch {
-      // localStorage may not be available
-    }
-    // Persist to IndexedDB in background — no reload
+    setSetting(LANGUAGE_KEY, lang).catch(() => {});
     saveUserPreferences({ language: lang }).catch(() => {});
   }, []);
 

@@ -1,3 +1,9 @@
+// Clear all localStorage on startup — we use IndexedDB only (prevents quota exceeded crash)
+try {
+  localStorage.clear();
+} catch {
+  // ignore
+}
 
 import { createRoot } from "react-dom/client";
 import App from "./app/App.tsx";

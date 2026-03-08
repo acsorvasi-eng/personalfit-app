@@ -6,7 +6,7 @@
  * logout on inactivity. Uses BroadcastChannel for multi-tab coordination.
  *
  * Architecture:
- * - Session token stored in localStorage (shared across tabs)
+ * - Session token stored in IndexedDB via SettingsService (shared across tabs)
  * - BroadcastChannel for real-time cross-tab events
  * - Inactivity timer with configurable timeout
  */
@@ -14,6 +14,7 @@
 import { SECURITY, STORAGE_KEYS } from '../core/constants';
 import { generateId } from '../core/utils';
 import { logger } from '../core/config';
+import { getSetting, setSetting, removeSetting } from '../app/backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // Types
@@ -60,7 +61,7 @@ function getChannel(): BroadcastChannel | null {
 /**
  * Create a new session after successful authentication.
  */
-export function createSession(userId: string): SessionInfo {
+export async function createSession(userId: string): Promise<SessionInfo> {
   const now = Date.now();
   const session: SessionInfo = {
     token: generateId(),
@@ -71,7 +72,7 @@ export function createSession(userId: string): SessionInfo {
     tabId: _tabId,
   };
 
-  localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, JSON.stringify(session));
+  await setSetting(STORAGE_KEYS.SESSION_TOKEN, JSON.stringify(session));
   broadcast({ type: 'SESSION_STARTED', session });
   startInactivityTimer();
 
@@ -82,16 +83,15 @@ export function createSession(userId: string): SessionInfo {
 /**
  * Get the current session info, or null if no active session.
  */
-export function getCurrentSession(): SessionInfo | null {
+export async function getCurrentSession(): Promise<SessionInfo | null> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.SESSION_TOKEN);
+    const raw = await getSetting(STORAGE_KEYS.SESSION_TOKEN);
     if (!raw) return null;
 
     const session: SessionInfo = JSON.parse(raw);
 
-    // Check expiry
     if (Date.now() > session.expiresAt) {
-      destroySession('timeout');
+      await destroySession('timeout');
       return null;
     }
 
@@ -104,13 +104,13 @@ export function getCurrentSession(): SessionInfo | null {
 /**
  * Refresh session activity (call on user interaction).
  */
-export function touchSession(): void {
-  const session = getCurrentSession();
+export async function touchSession(): Promise<void> {
+  const session = await getCurrentSession();
   if (!session) return;
 
   session.lastActivity = Date.now();
   session.expiresAt = Date.now() + SECURITY.SESSION_TIMEOUT_MS;
-  localStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, JSON.stringify(session));
+  await setSetting(STORAGE_KEYS.SESSION_TOKEN, JSON.stringify(session));
   broadcast({ type: 'SESSION_REFRESHED', lastActivity: session.lastActivity });
   resetInactivityTimer();
 }
@@ -118,8 +118,8 @@ export function touchSession(): void {
 /**
  * Destroy the current session.
  */
-export function destroySession(reason: 'logout' | 'timeout' | 'forced' = 'logout'): void {
-  localStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN);
+export async function destroySession(reason: 'logout' | 'timeout' | 'forced' = 'logout'): Promise<void> {
+  await removeSetting(STORAGE_KEYS.SESSION_TOKEN);
   broadcast({ type: 'SESSION_ENDED', reason });
   stopInactivityTimer();
 
@@ -138,7 +138,7 @@ function startInactivityTimer(): void {
   stopInactivityTimer();
   _inactivityTimer = setTimeout(() => {
     logger.info('[Session] Inactivity timeout reached');
-    destroySession('timeout');
+    destroySession('timeout').catch(() => {});
   }, SECURITY.SESSION_TIMEOUT_MS);
 }
 
@@ -202,11 +202,10 @@ export function attachActivityListeners(): () => void {
   let lastTouch = 0;
 
   const handler = () => {
-    // Throttle to once per 30 seconds
     const now = Date.now();
     if (now - lastTouch > 30_000) {
       lastTouch = now;
-      touchSession();
+      touchSession().catch(() => {});
     }
   };
 

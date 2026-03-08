@@ -263,7 +263,8 @@ export function usePlanData(): PlanDataState {
       // Hard override after factory reset: never load any plan data
       // while the forceNoActivePlan flag is set.
       try {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('forceNoActivePlan') === '1') {
+        const { getSetting } = await import('../backend/services/SettingsService');
+        if ((await getSetting('forceNoActivePlan')) === '1') {
           console.log('[usePlanData] forceNoActivePlan flag set — returning empty data');
           setPlanData([]);
           setActivePlan(null);
@@ -372,7 +373,8 @@ export function usePlanFoods() {
       // Hard override after factory reset: do not load any foods while
       // the forceNoActivePlan flag is present.
       try {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('forceNoActivePlan') === '1') {
+        const { getSetting } = await import('../backend/services/SettingsService');
+        if ((await getSetting('forceNoActivePlan')) === '1') {
           console.log('[usePlanFoods] forceNoActivePlan flag set — returning empty foods');
           setFoods([]);
           setCategories(['Osszes']);

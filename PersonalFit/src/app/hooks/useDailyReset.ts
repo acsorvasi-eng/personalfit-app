@@ -1,18 +1,19 @@
 /**
  * useDailyReset Hook
- * 
+ *
  * Detects midnight boundary crossing and:
- * 1. Archives the completed day's data to dailyHistory
+ * 1. Archives the completed day's data to dailyHistory (IndexedDB settings)
  * 2. Resets all daily counters (calories, checked meals, etc.)
  * 3. Keeps historical data intact for Profile/History view
- * 
- * Runs on mount + checks every 30 seconds for day change.
+ *
+ * All persistence via SettingsService (IndexedDB).
  */
 
 import { useEffect, useRef, useCallback } from 'react';
+import { getSetting, setSetting, removeSetting } from '../backend/services/SettingsService';
 
 export interface DailyHistoryEntry {
-  date: string; // YYYY-MM-DD
+  date: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -36,29 +37,26 @@ export interface DailyHistoryEntry {
     icon: string;
   }>;
   scheduledMealsChecked: number;
-  waterIntake: number; // ml
+  waterIntake: number;
 }
 
-// Get all history
-export function getDailyHistory(): DailyHistoryEntry[] {
+export async function getDailyHistory(): Promise<DailyHistoryEntry[]> {
   try {
-    const raw = localStorage.getItem('dailyHistory');
+    const raw = await getSetting('dailyHistory');
     if (raw) return JSON.parse(raw);
   } catch { /* empty */ }
   return [];
 }
 
-// Get history for a specific date
-export function getDailyHistoryForDate(date: string): DailyHistoryEntry | null {
-  const history = getDailyHistory();
+export async function getDailyHistoryForDate(date: string): Promise<DailyHistoryEntry | null> {
+  const history = await getDailyHistory();
   return history.find(h => h.date === date) || null;
 }
 
-// Get history summary for last N days
-export function getHistorySummary(days: number = 30) {
-  const history = getDailyHistory();
+export async function getHistorySummary(days: number = 30) {
+  const history = await getDailyHistory();
   const recent = history.slice(-days);
-  
+
   if (recent.length === 0) {
     return {
       avgCalories: 0,
@@ -92,14 +90,13 @@ export function getHistorySummary(days: number = 30) {
     totalWorkoutCalories: totals.workoutCal,
     totalWorkoutMinutes: totals.workoutMin,
     daysTracked: n,
-    adherenceRate: Math.round((totals.mealsChecked / (n * 3)) * 100), // 3 meals per day
+    adherenceRate: Math.round((totals.mealsChecked / (n * 3)) * 100),
     entries: recent,
   };
 }
 
-function archiveDay(dateStr: string) {
-  // Collect data for the given date
-  const loggedMealsRaw = localStorage.getItem(`loggedMeals_${dateStr}`);
+async function archiveDay(dateStr: string) {
+  const loggedMealsRaw = await getSetting(`loggedMeals_${dateStr}`);
   let meals: DailyHistoryEntry['meals'] = [];
   let totalCal = 0, totalPro = 0, totalCarbs = 0, totalFat = 0;
 
@@ -124,11 +121,10 @@ function archiveDay(dateStr: string) {
     } catch { /* empty */ }
   }
 
-  // Workout data
   let workoutCalories = 0, workoutDuration = 0;
   let workoutEntries: DailyHistoryEntry['workoutEntries'] = [];
   try {
-    const workoutRaw = localStorage.getItem('workoutTracking');
+    const workoutRaw = await getSetting('workoutTracking');
     if (workoutRaw) {
       const workoutData = JSON.parse(workoutRaw);
       if (workoutData[dateStr]) {
@@ -144,29 +140,26 @@ function archiveDay(dateStr: string) {
     }
   } catch { /* empty */ }
 
-  // Checked meals count
   let scheduledMealsChecked = 0;
   try {
-    const checkedRaw = localStorage.getItem('menuCheckedMeals');
+    const checkedRaw = await getSetting('menuCheckedMeals');
     if (checkedRaw) {
       const checked = JSON.parse(checkedRaw);
       scheduledMealsChecked = Array.isArray(checked) ? checked.length : 0;
     }
   } catch { /* empty */ }
 
-  // Water intake
   let waterIntake = 0;
   try {
-    const waterRaw = localStorage.getItem('waterTracking');
+    const waterRaw = await getSetting('waterTracking');
     if (waterRaw) {
       const waterData = JSON.parse(waterRaw);
       waterIntake = waterData[dateStr] || 0;
     }
   } catch { /* empty */ }
 
-  // Only archive if there's meaningful data
   if (totalCal === 0 && workoutCalories === 0 && scheduledMealsChecked === 0 && waterIntake === 0 && meals.length === 0) {
-    return; // Nothing to archive
+    return;
   }
 
   const entry: DailyHistoryEntry = {
@@ -184,25 +177,20 @@ function archiveDay(dateStr: string) {
     waterIntake,
   };
 
-  // Save to history (append, deduplicate by date)
-  const history = getDailyHistory();
+  const history = await getDailyHistory();
   const existingIdx = history.findIndex(h => h.date === dateStr);
   if (existingIdx >= 0) {
-    history[existingIdx] = entry; // Update existing
+    history[existingIdx] = entry;
   } else {
     history.push(entry);
   }
-  // Keep last 90 days max
   const trimmed = history.slice(-90);
-  localStorage.setItem('dailyHistory', JSON.stringify(trimmed));
+  await setSetting('dailyHistory', JSON.stringify(trimmed));
 }
 
-function resetDailyValues() {
-  // Reset consumed calories counter
-  localStorage.setItem('totalConsumedCalories', '0');
-  
-  // Reset checked meals (scheduled meals eaten)
-  localStorage.removeItem('menuCheckedMeals');
+async function resetDailyValues() {
+  await setSetting('totalConsumedCalories', '0');
+  await removeSetting('menuCheckedMeals');
 }
 
 export function useDailyReset() {
@@ -214,40 +202,28 @@ export function useDailyReset() {
     const previousDate = lastDateRef.current;
 
     if (currentDate !== previousDate) {
-      // Day has changed! Archive the previous day, then reset.
       console.log(`[DailyReset] Day changed: ${previousDate} → ${currentDate}. Archiving & resetting.`);
-      
-      // Archive the completed day
-      archiveDay(previousDate);
-      
-      // Reset daily values
-      resetDailyValues();
-      
-      // Update reference
-      lastDateRef.current = currentDate;
-
-      // Force reload calorie displays by dispatching storage event
-      window.dispatchEvent(new Event('storage'));
+      archiveDay(previousDate).then(() => {
+        resetDailyValues().then(() => {
+          lastDateRef.current = currentDate;
+          window.dispatchEvent(new Event('storage'));
+        });
+      });
     }
   }, []);
 
   useEffect(() => {
-    // Check immediately on mount
-    // If the app was closed yesterday and opened today, we need to archive
     const today = new Date().toISOString().split('T')[0];
-    const lastActiveDate = localStorage.getItem('lastActiveDate');
-    
-    if (lastActiveDate && lastActiveDate !== today) {
-      // App was last used on a different day - archive that day
-      archiveDay(lastActiveDate);
-      resetDailyValues();
-    }
-    
-    // Save today as last active date
-    localStorage.setItem('lastActiveDate', today);
+
+    getSetting('lastActiveDate').then((lastActiveDate) => {
+      if (lastActiveDate && lastActiveDate !== today) {
+        archiveDay(lastActiveDate).then(() => resetDailyValues());
+      }
+    });
+
+    setSetting('lastActiveDate', today).catch(() => {});
     lastDateRef.current = today;
 
-    // Check every 30 seconds for midnight crossing
     const interval = setInterval(checkAndReset, 30000);
     return () => clearInterval(interval);
   }, [checkAndReset]);

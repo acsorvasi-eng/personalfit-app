@@ -1,5 +1,5 @@
 import { getDB, generateId, nowISO } from '../db';
-import { legacyGetItem, legacyRemoveItem } from '../../../storage/legacyLocalStorage';
+import { getSetting, removeSetting } from './SettingsService';
 
 export interface WeightEntry {
   id: string;
@@ -58,26 +58,19 @@ export class WeightHistoryService {
     await db.delete(this.STORE as any, id);
   }
 
-  // ------- MIGRÁCIÓ localStorage → IndexedDB -------
-
+  /** One-time migration from settings store (legacy key) into weight_history store. */
   static async migrateFromLocalStorage(): Promise<void> {
-    const raw = legacyGetItem('weightHistory');
+    const raw = await getSetting('weightHistory');
     if (!raw) return;
-
     try {
       const history = JSON.parse(raw);
       const db = await getDB();
       const existing = await db.getAll<WeightEntry>(this.STORE as any);
-
-      // Csak akkor migráljuk ha IndexedDB még üres
       if (existing.length > 0) {
-        legacyRemoveItem('weightHistory');
+        await removeSetting('weightHistory');
         return;
       }
-
-      // Array vagy object formátum kezelése
       const entries = Array.isArray(history) ? history : Object.values(history);
-
       for (const entry of entries as any[]) {
         await db.put(this.STORE as any, {
           id: entry.id ?? generateId(),
@@ -87,12 +80,8 @@ export class WeightHistoryService {
           note: entry.note,
         } as WeightEntry);
       }
-
-      // Sikeres migráció után localStorage törlése
-      legacyRemoveItem('weightHistory');
-      console.log(
-        `[WeightHistoryService] Migrated ${(entries as any[]).length} entries from localStorage`
-      );
+      await removeSetting('weightHistory');
+      console.log(`[WeightHistoryService] Migrated ${(entries as any[]).length} entries to IndexedDB`);
     } catch (e) {
       console.error('[WeightHistoryService] Migration failed:', e);
     }
@@ -103,7 +92,7 @@ export class WeightHistoryService {
   static async clearAll(): Promise<void> {
     const db = await getDB();
     await db.clear(this.STORE as any);
-    legacyRemoveItem('weightHistory'); // cleanup legacy
+    await removeSetting('weightHistory');
   }
 }
 

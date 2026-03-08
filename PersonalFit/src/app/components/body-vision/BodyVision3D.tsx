@@ -33,6 +33,7 @@ import { useBodyPrediction } from "../../hooks/useBodyPrediction";
 import type { BodyImages, ImageValidation, ArchivedSession, ViewType } from "./types";
 import { POSITIONS, POSITION_LABELS } from "./types";
 import { getUserProfile, type StoredUserProfile } from "../../backend/services/UserProfileService";
+import { getSetting, setSetting, removeSetting } from "../../backend/services/SettingsService";
 import { ProgressPredictionService, type ProgressSnapshot } from "../../backend/services/ProgressPredictionService";
 import { ProgressChart } from "../../features/body-vision/components/ProgressChart";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -48,31 +49,18 @@ export function BodyVision3D() {
   const [snapshots, setSnapshots] = useState<ProgressSnapshot[]>([]);
   const [milestones, setMilestones] = useState<ProgressMilestones | null>(null);
 
-  const [bodyImages, setBodyImages] = useState<BodyImages>(() => {
-    const s = localStorage.getItem('bodyVision3D');
-    return s ? JSON.parse(s) : { front: '', side: '', back: '', sideAlt: '' };
-  });
+  const defaultBodyImages: BodyImages = { front: '', side: '', back: '', sideAlt: '' };
+  const [bodyImages, setBodyImages] = useState<BodyImages>(defaultBodyImages);
 
-  const [imageValidation, setImageValidation] = useState<ImageValidation>(() => {
-    const s = localStorage.getItem('bodyVision3D');
-    if (s) {
-      const imgs = JSON.parse(s) as BodyImages;
-      return {
-        front: imgs.front ? 'valid' : 'pending',
-        side: imgs.side ? 'valid' : 'pending',
-        back: imgs.back ? 'valid' : 'pending',
-        sideAlt: imgs.sideAlt ? 'valid' : 'pending',
-      };
-    }
-    return { front: 'pending', side: 'pending', back: 'pending', sideAlt: 'pending' };
-  });
+  const defaultValidation: ImageValidation = { front: 'pending', side: 'pending', back: 'pending', sideAlt: 'pending' };
+  const [imageValidation, setImageValidation] = useState<ImageValidation>(defaultValidation);
 
   const [rejectedPositions, setRejectedPositions] = useState<Set<keyof BodyImages>>(new Set());
   const [monthsInvested, setMonthsInvested] = useState(3);
   const [showColorOverlay, setShowColorOverlay] = useState(true);
   const [rotationAngle, setRotationAngle] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(() => localStorage.getItem('bodyVisionGenerated') === 'true');
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   // UI states
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
@@ -86,10 +74,7 @@ export function BodyVision3D() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Archive state
-  const [archivedSessions, setArchivedSessions] = useState<ArchivedSession[]>(() => {
-    const s = localStorage.getItem('bodyVisionArchive');
-    return s ? JSON.parse(s) : [];
-  });
+  const [archivedSessions, setArchivedSessions] = useState<ArchivedSession[]>([]);
   const [showArchive, setShowArchive] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
@@ -149,6 +134,25 @@ export function BodyVision3D() {
   const hasWarped = hasGenerated && !!warpedImages[warpKey];
 
   // ========== EFFECTS ==========
+  useEffect(() => {
+    getSetting('bodyVision3D').then((s) => {
+      if (s) {
+        const imgs = JSON.parse(s) as BodyImages;
+        setBodyImages(imgs);
+        setImageValidation({
+          front: imgs.front ? 'valid' : 'pending',
+          side: imgs.side ? 'valid' : 'pending',
+          back: imgs.back ? 'valid' : 'pending',
+          sideAlt: imgs.sideAlt ? 'valid' : 'pending',
+        });
+      }
+    });
+    getSetting('bodyVisionGenerated').then((v) => setHasGenerated(v === 'true'));
+    getSetting('bodyVisionArchive').then((s) => {
+      if (s) setArchivedSessions(JSON.parse(s));
+    });
+  }, []);
+
   useEffect(() => {
     getUserProfile().then((p) => {
       setProfile(p);
@@ -210,7 +214,7 @@ export function BodyVision3D() {
       const base64 = reader.result as string;
       const updated = { ...bodyImages, [position]: base64 };
       setBodyImages(updated);
-      localStorage.setItem('bodyVision3D', JSON.stringify(updated));
+      void setSetting('bodyVision3D', JSON.stringify(updated));
       await validateImage(base64, position);
     };
     reader.readAsDataURL(file);
@@ -219,19 +223,19 @@ export function BodyVision3D() {
   const handleRemoveImage = (position: keyof BodyImages) => {
     const updated = { ...bodyImages, [position]: '' };
     setBodyImages(updated);
-    localStorage.setItem('bodyVision3D', JSON.stringify(updated));
+    void setSetting('bodyVision3D', JSON.stringify(updated));
     setImageValidation(prev => ({ ...prev, [position]: 'pending' }));
     setRejectedPositions(prev => { const n = new Set(prev); n.delete(position); return n; });
-    if (hasGenerated) { setHasGenerated(false); localStorage.removeItem('bodyVisionGenerated'); setWarpedImages({}); }
+    if (hasGenerated) { setHasGenerated(false); void removeSetting('bodyVisionGenerated'); setWarpedImages({}); }
   };
 
   const handleResetAll = () => {
     setBodyImages({ front: '', side: '', back: '', sideAlt: '' });
-    localStorage.setItem('bodyVision3D', JSON.stringify({ front: '', side: '', back: '', sideAlt: '' }));
+    void setSetting('bodyVision3D', JSON.stringify({ front: '', side: '', back: '', sideAlt: '' }));
     setImageValidation({ front: 'pending', side: 'pending', back: 'pending', sideAlt: 'pending' });
     setRejectedPositions(new Set());
     setHasGenerated(false);
-    localStorage.removeItem('bodyVisionGenerated');
+    void removeSetting('bodyVisionGenerated');
     setWarpedImages({});
     setShowResetConfirm(false);
     setRotationAngle(0);
@@ -246,7 +250,7 @@ export function BodyVision3D() {
     };
     const updated = [session, ...archivedSessions];
     setArchivedSessions(updated);
-    localStorage.setItem('bodyVisionArchive', JSON.stringify(updated));
+    void setSetting('bodyVisionArchive', JSON.stringify(updated));
     handleResetAll();
     setShowArchiveConfirm(false);
     setArchiveLabel('');
@@ -255,7 +259,7 @@ export function BodyVision3D() {
   const handleDeleteArchived = (id: string) => {
     const updated = archivedSessions.filter(s => s.id !== id);
     setArchivedSessions(updated);
-    localStorage.setItem('bodyVisionArchive', JSON.stringify(updated));
+    void setSetting('bodyVisionArchive', JSON.stringify(updated));
   };
 
   const handleGenerate3D = () => {
@@ -264,7 +268,7 @@ export function BodyVision3D() {
     setTimeout(() => {
       setIsGenerating(false);
       setHasGenerated(true);
-      localStorage.setItem('bodyVisionGenerated', 'true');
+      void setSetting('bodyVisionGenerated', 'true');
     }, 2500);
   };
 

@@ -11,6 +11,7 @@
 
 import { SECURITY, STORAGE_KEYS } from '../core/constants';
 import { logger } from '../core/config';
+import { getSetting, setSetting } from '../app/backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // Types
@@ -31,26 +32,28 @@ export interface LocalAuthState {
 
 const AUTH_STATE_KEY = '__local_auth_state';
 
-function getAuthState(): LocalAuthState {
+const DEFAULT_AUTH_STATE: LocalAuthState = {
+  isAuthenticated: false,
+  userId: null,
+  lastActivity: 0,
+  sessionExpiry: 0,
+  failedAttempts: 0,
+  lockoutUntil: null,
+};
+
+async function getAuthState(): Promise<LocalAuthState> {
   try {
-    const raw = localStorage.getItem(AUTH_STATE_KEY);
+    const raw = await getSetting(AUTH_STATE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {
     // Corrupted state — reset
   }
-  return {
-    isAuthenticated: false,
-    userId: null,
-    lastActivity: 0,
-    sessionExpiry: 0,
-    failedAttempts: 0,
-    lockoutUntil: null,
-  };
+  return { ...DEFAULT_AUTH_STATE };
 }
 
-function saveAuthState(state: LocalAuthState): void {
+async function saveAuthState(state: LocalAuthState): Promise<void> {
   try {
-    localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(state));
+    await setSetting(AUTH_STATE_KEY, JSON.stringify(state));
   } catch {
     logger.error('[Security] Failed to save auth state');
   }
@@ -63,9 +66,9 @@ function saveAuthState(state: LocalAuthState): void {
 /**
  * Start a local session after successful authentication.
  */
-export function startSession(userId: string): void {
+export async function startSession(userId: string): Promise<void> {
   const now = Date.now();
-  saveAuthState({
+  await saveAuthState({
     isAuthenticated: true,
     userId,
     lastActivity: now,
@@ -79,16 +82,15 @@ export function startSession(userId: string): void {
 /**
  * Check if the current session is still valid.
  */
-export function isSessionValid(): boolean {
-  const state = getAuthState();
+export async function isSessionValid(): Promise<boolean> {
+  const state = await getAuthState();
   if (!state.isAuthenticated) return false;
 
   const now = Date.now();
 
-  // Check session timeout
   if (now > state.sessionExpiry) {
     logger.info('[Security] Session expired');
-    endSession();
+    await endSession();
     return false;
   }
 
@@ -97,29 +99,21 @@ export function isSessionValid(): boolean {
 
 /**
  * Refresh the session activity timestamp.
- * Call this on user interactions to extend the session.
  */
-export function refreshSession(): void {
-  const state = getAuthState();
+export async function refreshSession(): Promise<void> {
+  const state = await getAuthState();
   if (state.isAuthenticated) {
     state.lastActivity = Date.now();
     state.sessionExpiry = Date.now() + SECURITY.SESSION_TIMEOUT_MS;
-    saveAuthState(state);
+    await saveAuthState(state);
   }
 }
 
 /**
  * End the current session.
  */
-export function endSession(): void {
-  saveAuthState({
-    isAuthenticated: false,
-    userId: null,
-    lastActivity: 0,
-    sessionExpiry: 0,
-    failedAttempts: 0,
-    lockoutUntil: null,
-  });
+export async function endSession(): Promise<void> {
+  await saveAuthState({ ...DEFAULT_AUTH_STATE });
   logger.info('[Security] Session ended');
 }
 
@@ -131,33 +125,32 @@ export function endSession(): void {
  * Record a failed login attempt.
  * Returns true if the account is now locked out.
  */
-export function recordFailedAttempt(): boolean {
-  const state = getAuthState();
+export async function recordFailedAttempt(): Promise<boolean> {
+  const state = await getAuthState();
   state.failedAttempts += 1;
 
   if (state.failedAttempts >= SECURITY.MAX_LOGIN_ATTEMPTS) {
     state.lockoutUntil = Date.now() + SECURITY.LOCKOUT_DURATION_MS;
-    saveAuthState(state);
+    await saveAuthState(state);
     logger.warn(`[Security] Account locked after ${state.failedAttempts} failed attempts`);
     return true;
   }
 
-  saveAuthState(state);
+  await saveAuthState(state);
   return false;
 }
 
 /**
  * Check if the account is currently locked out.
  */
-export function isLockedOut(): boolean {
-  const state = getAuthState();
+export async function isLockedOut(): Promise<boolean> {
+  const state = await getAuthState();
   if (!state.lockoutUntil) return false;
 
   if (Date.now() > state.lockoutUntil) {
-    // Lockout expired — reset
     state.failedAttempts = 0;
     state.lockoutUntil = null;
-    saveAuthState(state);
+    await saveAuthState(state);
     return false;
   }
 
@@ -167,8 +160,8 @@ export function isLockedOut(): boolean {
 /**
  * Get remaining lockout time in milliseconds.
  */
-export function getRemainingLockoutMs(): number {
-  const state = getAuthState();
+export async function getRemainingLockoutMs(): Promise<number> {
+  const state = await getAuthState();
   if (!state.lockoutUntil) return 0;
   return Math.max(0, state.lockoutUntil - Date.now());
 }
@@ -176,11 +169,11 @@ export function getRemainingLockoutMs(): number {
 /**
  * Reset failed attempts (call after successful login).
  */
-export function resetFailedAttempts(): void {
-  const state = getAuthState();
+export async function resetFailedAttempts(): Promise<void> {
+  const state = await getAuthState();
   state.failedAttempts = 0;
   state.lockoutUntil = null;
-  saveAuthState(state);
+  await saveAuthState(state);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -190,14 +183,14 @@ export function resetFailedAttempts(): void {
 /**
  * Get milliseconds since last user activity.
  */
-export function getInactivityMs(): number {
-  const state = getAuthState();
+export async function getInactivityMs(): Promise<number> {
+  const state = await getAuthState();
   return Date.now() - state.lastActivity;
 }
 
 /**
  * Check if the user has been inactive for longer than the session timeout.
  */
-export function isInactive(): boolean {
-  return getInactivityMs() > SECURITY.SESSION_TIMEOUT_MS;
+export async function isInactive(): Promise<boolean> {
+  return (await getInactivityMs()) > SECURITY.SESSION_TIMEOUT_MS;
 }

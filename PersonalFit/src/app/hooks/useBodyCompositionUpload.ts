@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 // Worker URL resolved at runtime via CDN (the ?url Vite import breaks in sandbox)
 import * as MeasurementSvc from '../backend/services/MeasurementService';
 import * as VersionControlSvc from '../backend/services/VersionControlService';
-import { updateFromGmon, type GmonParsedData } from '../backend/services/UserProfileService';
+import { updateFromGmon, getUserProfile, saveUserProfile, type GmonParsedData } from '../backend/services/UserProfileService';
 import { generateId, nowISO } from '../backend/db';
 import type {
   AIParsedBodyComposition,
@@ -292,7 +292,7 @@ function generateDemoBodyComposition(): AIParsedBodyComposition {
 // ═══════════════════════════════════════════════════════════════
 
 export function useBodyCompositionUpload() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [state, setState] = useState<BodyCompUploadState>({
     step: 'idle',
     progress: 0,
@@ -421,27 +421,16 @@ export function useBodyCompositionUpload() {
       setStep('updating_engine', 85);
       if (!gmonApiResult && (parsed.weight || parsed.bmi)) {
         try {
-          const raw = localStorage.getItem('userProfile');
-          const profile = raw ? JSON.parse(raw) : {
-            name: '', age: 0, weight: 0, height: 0,
-            bloodPressure: '', activityLevel: '', goal: '',
-            allergies: '', dietaryPreferences: '', avatar: ''
-          };
-          let updated = false;
-          if (parsed.weight && parsed.weight > 0) {
-            profile.weight = parsed.weight;
-            updated = true;
-          }
+          const profile = await getUserProfile();
+          const updates: { weight?: number; height?: number } = {};
+          if (parsed.weight && parsed.weight > 0) updates.weight = parsed.weight;
           if (parsed.bmi && parsed.weight && !profile.height) {
             const heightM = Math.sqrt(parsed.weight / parsed.bmi);
             const heightCm = Math.round(heightM * 100);
-            if (heightCm > 100 && heightCm < 250) {
-              profile.height = heightCm;
-              updated = true;
-            }
+            if (heightCm > 100 && heightCm < 250) updates.height = heightCm;
           }
-          if (updated) {
-            localStorage.setItem('userProfile', JSON.stringify(profile));
+          if (Object.keys(updates).length > 0) {
+            await saveUserProfile(updates);
             window.dispatchEvent(new Event('storage'));
             window.dispatchEvent(new Event('profileUpdated'));
           }
@@ -462,7 +451,7 @@ export function useBodyCompositionUpload() {
       await VersionControlSvc.createVersion({
         entity_type: 'MeasurementProfile',
         entity_id: measurement.id,
-        label: `${isGmon ? 'GMON riport' : 'Testösszetétel'} — ${new Date().toLocaleDateString(getLocale((localStorage.getItem('appLanguage') as any) || 'hu'))}`,
+        label: `${isGmon ? 'GMON riport' : 'Testösszetétel'} — ${new Date().toLocaleDateString(getLocale(language))}`,
         metadata: {
           source_file: file.name,
           weight: parsed.weight,
@@ -552,27 +541,16 @@ export function useBodyCompositionUpload() {
       setStep('updating_engine', 80);
       if (parsed.weight) {
         try {
-          const raw = localStorage.getItem('userProfile');
-          const profile = raw ? JSON.parse(raw) : {
-            name: '', age: 0, weight: 0, height: 0,
-            bloodPressure: '', activityLevel: '', goal: '',
-            allergies: '', dietaryPreferences: '', avatar: ''
-          };
-          let updated = false;
-          if (parsed.weight && parsed.weight > 0) {
-            profile.weight = parsed.weight;
-            updated = true;
-          }
+          const profile = await getUserProfile();
+          const updates: { weight?: number; height?: number } = {};
+          if (parsed.weight && parsed.weight > 0) updates.weight = parsed.weight;
           if (parsed.bmi && parsed.weight && !profile.height) {
             const heightM = Math.sqrt(parsed.weight / parsed.bmi);
             const heightCm = Math.round(heightM * 100);
-            if (heightCm > 100 && heightCm < 250) {
-              profile.height = heightCm;
-              updated = true;
-            }
+            if (heightCm > 100 && heightCm < 250) updates.height = heightCm;
           }
-          if (updated) {
-            localStorage.setItem('userProfile', JSON.stringify(profile));
+          if (Object.keys(updates).length > 0) {
+            await saveUserProfile(updates);
             window.dispatchEvent(new Event('storage'));
             window.dispatchEvent(new Event('profileUpdated'));
           }
@@ -583,7 +561,7 @@ export function useBodyCompositionUpload() {
       await VersionControlSvc.createVersion({
         entity_type: 'MeasurementProfile',
         entity_id: measurement.id,
-        label: `Testösszetétel szöveg — ${new Date().toLocaleDateString(getLocale((localStorage.getItem('appLanguage') as any) || 'hu'))}`,
+        label: `Testösszetétel szöveg — ${new Date().toLocaleDateString(getLocale(language))}`,
       });
 
       setStep('complete', 100);

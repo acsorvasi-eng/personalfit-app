@@ -148,7 +148,7 @@ export async function decryptObject<T>(payload: EncryptedPayload, passphrase: st
 
 /**
  * Create a SHA-256 hash of the passphrase for verification.
- * Store this in localStorage to verify user passphrase on re-entry.
+ * Store this in app settings (IndexedDB) to verify user passphrase on re-entry.
  */
 export async function hashPassphrase(passphrase: string): Promise<string> {
   const encoder = new TextEncoder();

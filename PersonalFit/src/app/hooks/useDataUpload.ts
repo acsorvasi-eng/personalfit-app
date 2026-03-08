@@ -9,14 +9,14 @@
  *   - App works STRICTLY from uploaded data only
  *   - If parsing fails → error state (no demo plan generated)
  *   - REAL PDF text extraction via pdfjs-dist
- *   - Personal data extraction → populates userProfile localStorage
+ *   - Personal data extraction → populates userProfile (IndexedDB)
  *   - Measurements from ACTUAL document values (not hardcoded)
  *
  * PIPELINE:
  *   1. Accept file (PDF/Word/Image/Text) or raw text
  *   2. Extract text (pdfjs-dist for PDF)
  *   3. Unified AI parser → personal data + nutrition + measurements + training
- *   4. Populate userProfile in localStorage
+ *   4. Populate userProfile in IndexedDB
  *   5. Create NutritionPlan + MealDays + Meals + MealItems
  *   6. Add new foods to FoodCatalog
  *   7. Generate ShoppingList
@@ -48,7 +48,8 @@ import { getDB, nowISO } from '../backend/db';
 // REMOVED: import { mealPlan } from '../data/mealData'; — no more hardcoded demo data
 import type { MealType } from '../backend/models';
 import { stagePlan, setStagingActive } from './useStagingManager';
-import { getLocale } from '../contexts/LanguageContext';
+import { getLocale, useLanguage } from '../contexts/LanguageContext';
+import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -117,7 +118,7 @@ export interface UploadResult {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Merges extracted personal data into localStorage userProfile.
+ * Merges extracted personal data into IndexedDB userProfile.
  * Only OVERWRITES fields that have real extracted values.
  * Does NOT clear fields that weren't found in the document.
  */
@@ -210,6 +211,7 @@ async function populateUserProfile(extracted: AIParsedUserProfile): Promise<stri
 // ═══════════════════════════════════════════════════════════════
 
 export function useDataUpload() {
+  const { language } = useLanguage();
   const [state, setState] = useState<UploadState>({
     step: 'idle',
     progress: 0,
@@ -367,7 +369,7 @@ export function useDataUpload() {
 
       // ── Step 2: Create nutrition plan ──
       setStep('creating_plan', 30);
-      const label = `${sourceLabel} — ${new Date().toLocaleDateString(getLocale((localStorage.getItem('appLanguage') as any) || 'hu'))}`;
+      const label = `${sourceLabel} — ${new Date().toLocaleDateString(getLocale(language))}`;
       let planId: string;
       let totalWeeks: number;
       let totalDays = 0;
@@ -525,7 +527,7 @@ export function useDataUpload() {
 
       // ── Step 7: Update calorie target if extracted ──
       if (parsed.userProfile.calorie_target) {
-        localStorage.setItem('totalConsumedCalories', JSON.stringify({
+        await setSetting('totalConsumedCalories', JSON.stringify({
           target: parsed.userProfile.calorie_target,
           updatedAt: nowISO(),
         }));
@@ -533,7 +535,7 @@ export function useDataUpload() {
 
       // ── Step 8: Store weight in weightHistory ──
       if (parsed.userProfile.weight) {
-        const weightHistoryRaw = localStorage.getItem('weightHistory');
+        const weightHistoryRaw = await getSetting('weightHistory');
         const weightHistory = weightHistoryRaw ? JSON.parse(weightHistoryRaw) : [];
         const today = new Date().toISOString().split('T')[0];
         const alreadyExists = weightHistory.some((e: any) => e.date === today);
@@ -543,7 +545,7 @@ export function useDataUpload() {
             weight: parsed.userProfile.weight,
             week: 1,
           });
-          localStorage.setItem('weightHistory', JSON.stringify(weightHistory));
+          await setSetting('weightHistory', JSON.stringify(weightHistory));
         }
       }
 
@@ -564,7 +566,7 @@ export function useDataUpload() {
         confidence: parsed.confidence,
         extractedFields,
       });
-      const autoPublished = setStagingActive();
+      const autoPublished = await setStagingActive();
       if (autoPublished) {
         console.log('[Upload] Auto-published plan:', label);
       } else {
@@ -604,7 +606,7 @@ export function useDataUpload() {
       const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
       setState(prev => ({ ...prev, step: 'error', error: message }));
     }
-  }, []);
+  }, [language]);
 
   /**
    * FAST MODE: only extracts foods from the parsed nutrition plan

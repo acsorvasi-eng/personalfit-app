@@ -7,6 +7,7 @@ import { Recipe, recipeDatabase, calculateRecipeNutrition, searchRecipes, isLike
 import { PageHeader } from "./PageHeader";
 import { useCalorieTracker } from "../hooks/useCalorieTracker";
 import { recognizeFoodFromText, searchFoodKnowledge, AIRecognitionResult, FoodItem, searchCompoundFoods, CompoundFood, CompoundFoodVariant, calculateCompoundFoodNutrition } from "../data/aiFoodKnowledge";
+import { getSetting, setSetting } from "../backend/services/SettingsService";
 
 interface LoggedMeal {
   id: string;
@@ -40,14 +41,15 @@ export function LogMeal() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
-  const [loggedMeals, setLoggedMeals] = useState<LoggedMeal[]>(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const stored = localStorage.getItem(`loggedMeals_${today}`);
-    if (stored) {
-      try { return JSON.parse(stored); } catch { return []; }
-    }
-    return [];
-  });
+  const [loggedMeals, setLoggedMeals] = useState<LoggedMeal[]>([]);
+  const today = new Date().toISOString().split('T')[0];
+  useEffect(() => {
+    getSetting(`loggedMeals_${today}`).then((stored) => {
+      if (stored) {
+        try { setLoggedMeals(JSON.parse(stored)); } catch { /* ignore */ }
+      }
+    });
+  }, [today]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [recognizedFood, setRecognizedFood] = useState<RecognizedFood | null>(null);
   const [isRecognizing, setIsRecognizing] = useState(false);
@@ -176,13 +178,12 @@ export function LogMeal() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Persist logged meals to localStorage whenever they change
+  // Persist logged meals to IndexedDB whenever they change
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    localStorage.setItem(`loggedMeals_${today}`, JSON.stringify(loggedMeals));
+    setSetting(`loggedMeals_${today}`, JSON.stringify(loggedMeals)).catch(() => {});
     const totalCalories = loggedMeals.reduce((sum, meal) => sum + meal.calories, 0);
-    localStorage.setItem('totalConsumedCalories', totalCalories.toString());
-  }, [loggedMeals]);
+    setSetting('totalConsumedCalories', totalCalories.toString()).catch(() => {});
+  }, [loggedMeals, today]);
 
   // Auto-calculate calories for product
   const calculatedProductNutrition = useMemo(() => {

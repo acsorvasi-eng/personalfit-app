@@ -20,6 +20,8 @@ import { Brain, Mic, MicOff, X, Sparkles } from "lucide-react";
 import { useCalorieTracker } from "../hooks/useCalorieTracker";
 import { usePlanData, type WeekData } from "../hooks/usePlanData";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getSetting, setSetting } from "../backend/services/SettingsService";
+import { getUserProfile } from "../backend/services/UserProfileService";
 // mealPlan import removed — all data from uploads only
 
 // ─── Template interpolation helper ────────────────────────────────
@@ -195,15 +197,17 @@ const MOCK_INVENTORY = [
 function buildAIContext(
   calorieData: { consumed: number; target: number; remaining: number },
   planData: WeekData[] = [],
-  t: (key: string) => string
+  t: (key: string) => string,
+  waterRaw: string | null = null,
+  workoutRaw: string | null = null,
+  profile: { name?: string } | null = null
 ): AIContext {
   // Water
   let waterIntake = 0;
   try {
     const today = new Date().toISOString().split("T")[0];
-    const waterData = localStorage.getItem("waterTracking");
-    if (waterData) {
-      const data = JSON.parse(waterData);
+    if (waterRaw) {
+      const data = JSON.parse(waterRaw);
       waterIntake = data[today] || 0;
     }
   } catch {}
@@ -213,9 +217,8 @@ function buildAIContext(
   let workoutMin = 0;
   try {
     const today = new Date().toISOString().split("T")[0];
-    const workoutData = localStorage.getItem("workoutTracking");
-    if (workoutData) {
-      const data = JSON.parse(workoutData);
+    if (workoutRaw) {
+      const data = JSON.parse(workoutRaw);
       if (data[today]) {
         workoutCal = data[today].calories || 0;
         workoutMin = data[today].minutes || 0;
@@ -268,14 +271,7 @@ function buildAIContext(
   const alerts = MOCK_INVENTORY.filter(i => i.status === "low" || i.status === "empty") as { name: string; status: "low" | "empty" }[];
 
   // User name
-  let name = t('dashboard.user');
-  try {
-    const profile = localStorage.getItem("userProfile");
-    if (profile) {
-      const data = JSON.parse(profile);
-      if (data.name) name = data.name;
-    }
-  } catch {}
+  const name = profile?.name ? profile.name : t('dashboard.user');
 
   return {
     consumed: calorieData.consumed,
@@ -326,15 +322,14 @@ function buildGreeting(ctx: AIContext, t: (key: string) => string): string {
 }
 
 // ─── Process command (NLU) ─────────────────────────────────────────
-function setTodayWaterIntake(totalMl: number) {
+async function setTodayWaterIntake(totalMl: number) {
   try {
     const today = new Date().toISOString().split("T")[0];
-    const raw = localStorage.getItem("waterTracking");
+    const raw = await getSetting("waterTracking");
     const data = raw ? JSON.parse(raw) : {};
     const clamped = Math.max(0, Math.min(totalMl, 5000));
     data[today] = clamped;
-    localStorage.setItem("waterTracking", JSON.stringify(data));
-    // Notify other parts of the app (Layout, UnifiedMenu, etc.)
+    await setSetting("waterTracking", JSON.stringify(data));
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new Event("waterTrackerSync"));
   } catch {
@@ -375,7 +370,7 @@ function processCommand(text: string, ctx: AIContext, flow: ActiveFlow | null, l
       if (/l|liter|litre/.test(unit)) {
         ml = value * 1000;
       }
-      setTodayWaterIntake(ml);
+      void setTodayWaterIntake(ml);
       const litres = (ml / 1000).toFixed(1);
       return {
         response: `Értettem. Ma ${litres} liter vízfogyasztással számolok.`,
@@ -840,7 +835,18 @@ export function FuturisticDashboard() {
   const calorieData = useCalorieTracker();
   const { planData } = usePlanData();
   const { t, language } = useLanguage();
-  const ctx = useMemo(() => buildAIContext(calorieData, planData, t), [calorieData, planData, t]);
+  const [waterRaw, setWaterRaw] = useState<string | null>(null);
+  const [workoutRaw, setWorkoutRaw] = useState<string | null>(null);
+  const [profile, setProfile] = useState<{ name?: string } | null>(null);
+  useEffect(() => {
+    getSetting("waterTracking").then(setWaterRaw);
+    getSetting("workoutTracking").then(setWorkoutRaw);
+    getUserProfile().then(setProfile);
+  }, []);
+  const ctx = useMemo(
+    () => buildAIContext(calorieData, planData, t, waterRaw, workoutRaw, profile),
+    [calorieData, planData, t, waterRaw, workoutRaw, profile]
+  );
 
   // Keep micActiveRef in sync
   useEffect(() => { micActiveRef.current = micActive; }, [micActive]);
@@ -855,12 +861,8 @@ export function FuturisticDashboard() {
   const MAX_LOG_ENTRIES = 20;
   useEffect(() => {
     if (messages.length === 0) return;
-    try {
-      const toStore = messages.slice(-MAX_LOG_ENTRIES).map(m => ({ role: m.role, text: m.text, ts: Date.now() }));
-      localStorage.setItem(AI_LEARNING_LOG_KEY, JSON.stringify(toStore));
-    } catch {
-      // ignore
-    }
+    const toStore = messages.slice(-MAX_LOG_ENTRIES).map(m => ({ role: m.role, text: m.text, ts: Date.now() }));
+    setSetting(AI_LEARNING_LOG_KEY, JSON.stringify(toStore)).catch(() => {});
   }, [messages]);
 
   // ─── processRef kept fresh ───

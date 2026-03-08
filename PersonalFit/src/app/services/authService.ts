@@ -7,6 +7,7 @@
  */
 
 import { auth } from '../../firebase';
+import { getSetting, setSetting, removeSetting } from '../backend/services/SettingsService';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -56,13 +57,13 @@ function isFirebaseConfigError(err: any): boolean {
 
 /**
  * Create a local-only demo user.  No Firebase interaction.
- * The user object is stored in localStorage like a real session.
+ * The user object is stored in app settings (IndexedDB) like a real session.
  */
-function createDemoUser(
+async function createDemoUser(
   email: string,
   displayName?: string,
   isFirstLogin = true
-): AuthUser {
+): Promise<AuthUser> {
   // Deterministic ID so the same email always yields the same user
   const id = 'demo_' + email.replace(/[^a-zA-Z0-9]/g, '_');
   const user: AuthUser = {
@@ -79,7 +80,7 @@ function createDemoUser(
     'To enable real auth, go to Firebase Console → Authentication → Sign-in method and enable Email/Password and/or Google, ' +
     'then add your app domain to the Authorized domains list.'
   );
-  storeUser(user);
+  await storeUser(user);
   return user;
 }
 
@@ -136,7 +137,7 @@ export async function registerWithEmail(
     }
 
     const appUser = firebaseUserToAuthUser(fbUser, true);
-    storeUser(appUser);
+    await storeUser(appUser);
     return appUser;
   } catch (err: any) {
     // Firebase Auth not configured → fall back to demo mode
@@ -160,13 +161,12 @@ export async function loginWithEmail(
 
     // Returning user
     const appUser = firebaseUserToAuthUser(fbUser, false);
-    storeUser(appUser);
+    await storeUser(appUser);
     return appUser;
   } catch (err: any) {
     // Firebase Auth not configured → fall back to demo mode
     if (isFirebaseConfigError(err)) {
-      // Check if this "user" has logged in before (demo session exists)
-      const existing = getStoredUser();
+      const existing = await getStoredUser();
       const isFirst = !existing || existing.email !== email;
       return createDemoUser(email, undefined, isFirst);
     }
@@ -207,12 +207,12 @@ export async function loginWithGoogle(): Promise<AuthUser> {
       isFirstLogin,
     };
 
-    storeUser(appUser);
+    await storeUser(appUser);
     return appUser;
   } catch (popupError: any) {
     // Firebase Auth not configured → fall back to demo mode immediately
     if (isFirebaseConfigError(popupError)) {
-      return createDemoUser('demo@sixth-halt.app', 'Demo User', true);
+      return await createDemoUser('demo@sixth-halt.app', 'Demo User', true);
     }
 
     // Popup blocked by browser/sandbox → try redirect, then demo fallback
@@ -270,7 +270,7 @@ export async function checkGoogleRedirectResult(): Promise<AuthUser | null> {
       isFirstLogin,
     };
 
-    storeUser(appUser);
+    await storeUser(appUser);
     return appUser;
   } catch (err) {
     console.error('[Auth] getRedirectResult error:', err);
@@ -311,7 +311,7 @@ export async function changeEmail(
   const updatedUser = firebaseUserToAuthUser(fbUser, false);
   // Email may not reflect immediately on the fbUser object, force it:
   updatedUser.email = newEmail;
-  storeUser(updatedUser);
+  await storeUser(updatedUser);
   return updatedUser;
 }
 
@@ -347,13 +347,13 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
 // Session helpers
 // ═══════════════════════════════════════════════════════════════
 
-function storeUser(user: AuthUser): void {
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+async function storeUser(user: AuthUser): Promise<void> {
+  await setSetting(AUTH_STORAGE_KEY, JSON.stringify(user));
 }
 
-export function getStoredUser(): AuthUser | null {
+export async function getStoredUser(): Promise<AuthUser | null> {
   try {
-    const data = localStorage.getItem(AUTH_STORAGE_KEY);
+    const data = await getSetting(AUTH_STORAGE_KEY);
     return data ? JSON.parse(data) : null;
   } catch {
     return null;
@@ -361,31 +361,32 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export async function logout(): Promise<void> {
-  // Sign out from Firebase (no-op if not signed in)
   try {
     await signOut(auth);
   } catch {
     // Ignore — may not have active Firebase session (e.g. Google sim)
   }
-  localStorage.removeItem(AUTH_STORAGE_KEY);
-  localStorage.removeItem(TERMS_STORAGE_KEY);
-  localStorage.removeItem(ONBOARDING_STORAGE_KEY);
-  localStorage.removeItem('hasSeenSplash');
-  localStorage.removeItem('subscriptionData');
+  await Promise.all([
+    removeSetting(AUTH_STORAGE_KEY),
+    removeSetting(TERMS_STORAGE_KEY),
+    removeSetting(ONBOARDING_STORAGE_KEY),
+    removeSetting('hasSeenSplash'),
+    removeSetting('subscriptionData'),
+  ]);
 }
 
-export function hasAcceptedTerms(): boolean {
-  return localStorage.getItem(TERMS_STORAGE_KEY) === 'true';
+export async function hasAcceptedTerms(): Promise<boolean> {
+  return (await getSetting(TERMS_STORAGE_KEY)) === 'true';
 }
 
-export function acceptTerms(): void {
-  localStorage.setItem(TERMS_STORAGE_KEY, 'true');
+export async function acceptTerms(): Promise<void> {
+  await setSetting(TERMS_STORAGE_KEY, 'true');
 }
 
-export function hasCompletedOnboarding(): boolean {
-  return localStorage.getItem(ONBOARDING_STORAGE_KEY) === 'true';
+export async function hasCompletedOnboarding(): Promise<boolean> {
+  return (await getSetting(ONBOARDING_STORAGE_KEY)) === 'true';
 }
 
-export function completeOnboarding(): void {
-  localStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+export async function completeOnboarding(): Promise<void> {
+  await setSetting(ONBOARDING_STORAGE_KEY, 'true');
 }

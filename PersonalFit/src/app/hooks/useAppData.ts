@@ -62,9 +62,8 @@ export function useAppData(): AppDataState {
       // explicitly activated.
       let forceNoPlan = false;
       try {
-        if (typeof localStorage !== 'undefined') {
-          forceNoPlan = localStorage.getItem('forceNoActivePlan') === '1';
-        }
+        const { getSetting } = await import('../backend/services/SettingsService');
+        forceNoPlan = (await getSetting('forceNoActivePlan')) === '1';
       } catch {
         forceNoPlan = false;
       }

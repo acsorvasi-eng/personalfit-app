@@ -27,7 +27,7 @@ import type {
 } from '../models';
 import * as FoodCatalogService from './FoodCatalogService';
 import { isCleanFoodName } from './AIParserService';
-import { legacyGetItem, legacyRemoveItem } from '../../../storage/legacyLocalStorage';
+import { getSetting, removeSetting } from './SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // NORMALIZE TO 4 WEEKS (for import from 1–3 week documents)
@@ -82,12 +82,10 @@ export async function getActivePlan(): Promise<NutritionPlanEntity | undefined> 
   // somehow survived in IndexedDB. The flag is cleared whenever a new
   // plan is explicitly activated.
   try {
-    const forceNoPlan = legacyGetItem('forceNoActivePlan');
-    if (forceNoPlan === '1') {
-      return undefined;
-    }
+    const forceNoPlan = await getSetting('forceNoActivePlan');
+    if (forceNoPlan === '1') return undefined;
   } catch {
-    // localStorage not available – ignore and fall back to DB
+    // ignore and fall back to DB
   }
 
   const db = await getDB();
@@ -150,9 +148,8 @@ export async function activatePlan(planId: string): Promise<void> {
 
   notifyDBChange({ store: 'nutrition_plans', action: 'put', key: planId });
 
-  // Any explicit activation means we're out of "reset" mode.
   try {
-    legacyRemoveItem('forceNoActivePlan');
+    await removeSetting('forceNoActivePlan');
   } catch {
     // ignore
   }

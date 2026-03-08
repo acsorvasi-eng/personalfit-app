@@ -17,6 +17,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { getSetting, setSetting, removeSetting } from '../backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -44,13 +45,9 @@ export interface StagingInfo {
 
 const STAGING_KEY = 'uploadStaging';
 
-// ═══════════════════════════════════════════════════════════════
-// STORAGE HELPERS
-// ═══════════════════════════════════════════════════════════════
-
-function readStaging(): StagingInfo | null {
+async function readStaging(): Promise<StagingInfo | null> {
   try {
-    const raw = localStorage.getItem(STAGING_KEY);
+    const raw = await getSetting(STAGING_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -59,13 +56,15 @@ function readStaging(): StagingInfo | null {
 }
 
 function writeStaging(info: StagingInfo): void {
-  localStorage.setItem(STAGING_KEY, JSON.stringify(info));
-  window.dispatchEvent(new Event('stagingUpdated'));
+  setSetting(STAGING_KEY, JSON.stringify(info)).then(() => {
+    window.dispatchEvent(new Event('stagingUpdated'));
+  });
 }
 
 function clearStagingStorage(): void {
-  localStorage.removeItem(STAGING_KEY);
-  window.dispatchEvent(new Event('stagingUpdated'));
+  removeSetting(STAGING_KEY).then(() => {
+    window.dispatchEvent(new Event('stagingUpdated'));
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -109,17 +108,16 @@ export function stagePlan(params: {
 
 /**
  * Set staging state to 'active' (publish) without user action.
- * Used by upload pipeline to auto-publish after successful import.
  * Returns true if staging was found and updated.
  */
-export function setStagingActive(): boolean {
+export async function setStagingActive(): Promise<boolean> {
   try {
-    const raw = localStorage.getItem(STAGING_KEY);
+    const raw = await getSetting(STAGING_KEY);
     if (!raw) return false;
     const staging: StagingInfo = JSON.parse(raw);
     staging.state = 'active';
     staging.publishedAt = new Date().toISOString();
-    localStorage.setItem(STAGING_KEY, JSON.stringify(staging));
+    await setSetting(STAGING_KEY, JSON.stringify(staging));
     window.dispatchEvent(new Event('stagingUpdated'));
     window.dispatchEvent(new Event('profileUpdated'));
     window.dispatchEvent(new Event('storage'));
@@ -134,19 +132,25 @@ export function setStagingActive(): boolean {
 // ═══════════════════════════════════════════════════════════════
 
 export function useStagingManager() {
-  const [info, setInfo] = useState<StagingInfo | null>(readStaging);
+  const [info, setInfo] = useState<StagingInfo | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // Re-read on storage/custom events
+  const reload = useCallback(() => {
+    readStaging().then(setInfo);
+  }, []);
+
   useEffect(() => {
-    const reload = () => setInfo(readStaging());
+    reload();
+  }, [reload]);
+
+  useEffect(() => {
     window.addEventListener('storage', reload);
     window.addEventListener('stagingUpdated', reload);
     return () => {
       window.removeEventListener('storage', reload);
       window.removeEventListener('stagingUpdated', reload);
     };
-  }, []);
+  }, [reload]);
 
   const hasStagedPlan = info?.state === 'staged';
   const hasPublishedPlan = info?.state === 'active';

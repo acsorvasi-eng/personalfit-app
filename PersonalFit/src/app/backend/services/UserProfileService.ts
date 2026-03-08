@@ -1,5 +1,4 @@
 import { getDB } from '../db';
-import { legacyGetItem, legacySetItem } from '../../../storage/legacyLocalStorage';
 
 /** Single meal window: name + start/end time as "HH:MM" */
 export interface MealWindow {
@@ -97,37 +96,12 @@ function getDefaultProfile(): StoredUserProfile {
 }
 
 /**
- * Core source of truth a felhasználói profilhoz.
- * Jelenleg IndexedDB + (átmenetileg) localStorage szinkronban tartása,
- * hogy a régi komponensek se törjenek el. Később a localStorage réteg
- * eltávolítható lesz.
+ * Core source of truth for user profile. IndexedDB only.
  */
 export async function getUserProfile(): Promise<StoredUserProfile> {
   const db = await getDB();
-
-  // Első lépés: próbáljuk az IndexedDB-t
   const existing = await db.get<StoredUserProfile>('user_profile', PROFILE_ID);
-  if (existing) {
-    return existing;
-  }
-
-  // Ha nincs a DB-ben, de van localStorage-ban, migráljuk át
-  try {
-    const saved = legacyGetItem('userProfile');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const migrated: StoredUserProfile = {
-        ...getDefaultProfile(),
-        ...parsed,
-        id: PROFILE_ID,
-      };
-      await db.put('user_profile', migrated);
-      return migrated;
-    }
-  } catch {
-    // ignore parse errors, fallback to default
-  }
-
+  if (existing) return existing;
   const fresh = getDefaultProfile();
   await db.put('user_profile', fresh);
   return fresh;
@@ -143,27 +117,6 @@ export async function saveUserProfile(partial: Partial<StoredUserProfile>): Prom
   };
 
   await db.put('user_profile', updated);
-
-  // Átmeneti kompatibilitás: tartsuk szinkronban a localStorage-ot is.
-  try {
-    const legacy = {
-      name: updated.name,
-      age: updated.age,
-      weight: updated.weight,
-      height: updated.height,
-      bloodPressure: updated.bloodPressure,
-      activityLevel: updated.activityLevel,
-      goal: updated.goal,
-      allergies: updated.allergies,
-      dietaryPreferences: updated.dietaryPreferences,
-      avatar: updated.avatar,
-      calorieTarget: updated.calorieTarget,
-    };
-    legacySetItem('userProfile', JSON.stringify(legacy));
-  } catch {
-    // ignore localStorage issues
-  }
-
   return updated;
 }
 

@@ -77,6 +77,7 @@ export function LoginScreen() {
     isAuthenticated,
     isLoading,
     getNextRoute,
+    hasCompletedFullFlow,
   } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>('register');
@@ -99,15 +100,8 @@ export function LoginScreen() {
 
   // Prefer Sign Up view for first-time users, Sign In for returning users
   useEffect(() => {
-    try {
-      const hasCompletedFlowBefore = localStorage.getItem('hasCompletedFullFlow') === 'true';
-      if (hasCompletedFlowBefore) {
-        setMode('signin');
-      }
-    } catch {
-      // localStorage might be unavailable in some environments; ignore and keep default mode
-    }
-  }, []);
+    if (hasCompletedFullFlow) setMode('signin');
+  }, [hasCompletedFullFlow]);
 
   // If user is already logged in, don't show the login screen again.
   useEffect(() => {

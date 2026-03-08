@@ -13,7 +13,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDB } from '../backend/db';
 import type { StoreName } from '../backend/db';
 import { Activity, Database, ChevronDown, ChevronUp, X, RefreshCw, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-
+import { getSetting } from '../backend/services/SettingsService';
+import { getUserProfile } from '../backend/services/UserProfileService';
 import { useLanguage, getLocale } from '../contexts/LanguageContext';
 
 interface StoreHealth {
@@ -169,7 +170,7 @@ export function PipelineDiagnostics() {
       }
 
       // Check 7: Staging state
-      const stagingRaw = localStorage.getItem('uploadStaging');
+      const stagingRaw = await getSetting('uploadStaging');
       if (stagingRaw) {
         try {
           const staging = JSON.parse(stagingRaw);
@@ -197,25 +198,15 @@ export function PipelineDiagnostics() {
       }
 
       // Check 8: User profile
-      const profileRaw = localStorage.getItem('userProfile');
-      if (profileRaw) {
-        try {
-          const profile = JSON.parse(profileRaw);
-          const fields = Object.entries(profile).filter(([, v]) => v && v !== 0 && v !== '').length;
-          newChecks.push({
-            id: 'profile',
-            label: 'Felhasznaloi profil',
-            status: fields > 2 ? 'pass' : 'warn',
-            detail: `${fields} kitoltott mezo`,
-          });
-        } catch {
-          newChecks.push({
-            id: 'profile',
-            label: 'Felhasznaloi profil',
-            status: 'fail',
-            detail: 'Ervenytelen profil adat',
-          });
-        }
+      const profile = await getUserProfile();
+      if (profile) {
+        const fields = Object.entries(profile).filter(([, v]) => v && v !== 0 && v !== '').length;
+        newChecks.push({
+          id: 'profile',
+          label: 'Felhasznaloi profil',
+          status: fields > 2 ? 'pass' : 'warn',
+          detail: `${fields} kitoltott mezo`,
+        });
       } else {
         newChecks.push({
           id: 'profile',

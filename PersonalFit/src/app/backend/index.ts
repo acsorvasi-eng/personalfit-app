@@ -41,7 +41,7 @@
  * │  versions | user_profile | daily_history              │
  * │                                                      │
  * │  + BroadcastChannel for cross-tab sync               │
- * │  + localStorage for lightweight config               │
+ * │  + settings store (IndexedDB) for config             │
  * └─────────────────────────────────────────────────────┘
  *
  * DATA FLOW:

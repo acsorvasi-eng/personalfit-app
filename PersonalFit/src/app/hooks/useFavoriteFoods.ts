@@ -3,17 +3,17 @@
  * useFavoriteFoods — Favorite Foods Persistence Hook (Firestore)
  * ====================================================================
  * Manages the user's favorite food IDs with Firestore as the
- * primary persistence layer and localStorage as offline cache.
+ * primary persistence layer and IndexedDB settings as offline cache.
  *
  * Firestore path: user_favorites/{deviceId}  →  { foodIds: string[] }
- * LocalStorage cache key: "sh-favorite-foods"
+ * Settings cache key: "sh-favorite-foods"
  *
  * Features:
  *   - Real-time sync via onSnapshot
  *   - Optimistic local state updates (instant UI)
- *   - Offline-first: localStorage provides instant initial render
+ *   - Offline-first: settings store provides initial render
  *   - Auth-aware: uses Firebase Auth UID when available, otherwise
- *     a stable anonymous device ID stored in localStorage
+ *     a stable anonymous device ID stored in settings
  *   - Haptic feedback pattern: [10, 20] on toggle
  */
 
@@ -27,6 +27,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -40,25 +41,18 @@ const DEVICE_ID_KEY = 'sh-device-id';
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-/** Get or create a stable device ID for anonymous users */
-function getDeviceId(): string {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
+async function getDeviceId(): Promise<string> {
+  let id = await getSetting(DEVICE_ID_KEY);
   if (!id) {
     id = `anon-${crypto.randomUUID()}`;
-    localStorage.setItem(DEVICE_ID_KEY, id);
+    await setSetting(DEVICE_ID_KEY, id);
   }
   return id;
 }
 
-/** Resolve the Firestore document ID: auth UID if signed in, else device ID */
-function resolveDocId(uid: string | null): string {
-  return uid || getDeviceId();
-}
-
-/** Load favorites from localStorage (offline cache / instant initial render) */
-function loadFromCache(): Set<string> {
+async function loadFromCache(): Promise<Set<string>> {
   try {
-    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    const raw = await getSetting(LOCAL_CACHE_KEY);
     if (!raw) return new Set();
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) return new Set(parsed);
@@ -68,13 +62,8 @@ function loadFromCache(): Set<string> {
   }
 }
 
-/** Write favorites to localStorage cache */
 function writeToCache(ids: Set<string>) {
-  try {
-    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(Array.from(ids)));
-  } catch {
-    // Storage full or unavailable
-  }
+  setSetting(LOCAL_CACHE_KEY, JSON.stringify(Array.from(ids))).catch(() => {});
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -82,12 +71,19 @@ function writeToCache(ids: Set<string>) {
 // ═══════════════════════════════════════════════════════════════
 
 export function useFavoriteFoods() {
-  // Instant initial render from localStorage cache
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => loadFromCache());
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [uid, setUid] = useState<string | null>(auth.currentUser?.uid ?? null);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
   const unsubSnapshotRef = useRef<Unsubscribe | null>(null);
 
-  // ── Track auth state ──────────────────────────────────────
+  const docId = uid || deviceId || '';
+
+  // Load cache and device ID on mount
+  useEffect(() => {
+    loadFromCache().then(setFavoriteIds);
+    getDeviceId().then(setDeviceId);
+  }, []);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setUid(user?.uid ?? null);
@@ -95,12 +91,11 @@ export function useFavoriteFoods() {
     return () => unsub();
   }, []);
 
-  // ── Real-time Firestore listener ──────────────────────────
+  // Real-time Firestore listener
   useEffect(() => {
-    // Clean up previous listener
+    if (!docId) return;
     unsubSnapshotRef.current?.();
 
-    const docId = resolveDocId(uid);
     const docRef = doc(db, FIRESTORE_COLLECTION, docId);
 
     const unsub = onSnapshot(
@@ -112,34 +107,30 @@ export function useFavoriteFoods() {
           setFavoriteIds(ids);
           writeToCache(ids);
         }
-        // If doc doesn't exist yet, keep current local state
       },
       (error) => {
         console.warn('[useFavoriteFoods] Firestore listener error, using cache:', error.message);
-        // On error, fall back to cached data (already in state)
       }
     );
 
     unsubSnapshotRef.current = unsub;
 
-    // On first mount with a new docId, ensure the Firestore doc exists
-    // by merging the local cache into it (handles offline→online migration)
     (async () => {
       try {
         const snap = await getDoc(docRef);
         if (!snap.exists()) {
-          const cached = loadFromCache();
+          const cached = await loadFromCache();
           if (cached.size > 0) {
             await setDoc(docRef, { foodIds: Array.from(cached) });
           }
         }
       } catch {
-        // Offline or permissions — will sync when snapshot reconnects
+        // Offline or permissions
       }
     })();
 
     return () => unsub();
-  }, [uid]);
+  }, [docId]);
 
   // ── isFavorite ────────────────────────────────────────────
   const isFavorite = useCallback(
@@ -150,28 +141,20 @@ export function useFavoriteFoods() {
   // ── toggleFavorite (optimistic + Firestore write) ─────────
   const toggleFavorite = useCallback(
     (id: string) => {
+      if (!docId) return;
       setFavoriteIds((prev) => {
         const next = new Set(prev);
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-
-        // Optimistic cache update
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
         writeToCache(next);
-
-        // Persist to Firestore (fire-and-forget)
-        const docId = resolveDocId(uid);
         const docRef = doc(db, FIRESTORE_COLLECTION, docId);
         setDoc(docRef, { foodIds: Array.from(next) }).catch((err) => {
           console.warn('[useFavoriteFoods] Firestore write failed:', err.message);
         });
-
         return next;
       });
     },
-    [uid]
+    [docId]
   );
 
   const favoriteCount = favoriteIds.size;

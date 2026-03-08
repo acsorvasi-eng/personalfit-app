@@ -73,7 +73,7 @@ export function SplashScreen() {
     navigate('/onboarding');
   };
 
-  const handleSecretLogoBypass = () => {
+  const handleSecretLogoBypass = async () => {
     // Dev-only hidden shortcut: double-click logo to bypass login
     if (!(import.meta.env.DEV || window.location.hostname === 'localhost')) return;
 
@@ -88,18 +88,18 @@ export function SplashScreen() {
     };
 
     try {
-      localStorage.setItem('authUser', JSON.stringify(devUser));
-      localStorage.setItem('hasAcceptedTerms', 'true');
-      localStorage.setItem('hasCompletedOnboarding', 'true');
-      localStorage.setItem('hasSeenSplash', 'true');
-      localStorage.setItem('hasPlanSetup', 'true');
-      localStorage.setItem('hasCompletedFullFlow', 'true');
+      const { setSetting } = await import('../backend/services/SettingsService');
+      await Promise.all([
+        setSetting('authUser', JSON.stringify(devUser)),
+        setSetting('hasAcceptedTerms', 'true'),
+        setSetting('hasCompletedOnboarding', 'true'),
+        setSetting('hasSeenSplash', 'true'),
+        setSetting('hasPlanSetup', 'true'),
+        setSetting('hasCompletedFullFlow', 'true'),
+      ]);
     } catch {
-      // If localStorage fails, just fall back to normal flow
       return;
     }
-
-    // Full reload so AuthProvider re-reads localStorage and ProtectedRoute sees user
     window.location.href = '/';
   };
 

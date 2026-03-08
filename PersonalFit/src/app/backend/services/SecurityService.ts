@@ -17,23 +17,17 @@
  */
 
 import { getDB } from '../db';
-import { legacyGetItem, legacySetItem } from '../../../storage/legacyLocalStorage';
-
-// ═══════════════════════════════════════════════════════════════
-// KEY DERIVATION
-// ═══════════════════════════════════════════════════════════════
+import { getSetting, setSetting } from './SettingsService';
 
 const SALT_KEY = 'nutriplan_encryption_salt';
 const KEY_ITERATIONS = 100000;
 const KEY_LENGTH = 256;
 
 async function getSalt(): Promise<Uint8Array> {
-  const stored = legacyGetItem(SALT_KEY);
-  if (stored) {
-    return new Uint8Array(JSON.parse(stored));
-  }
+  const stored = await getSetting(SALT_KEY);
+  if (stored) return new Uint8Array(JSON.parse(stored));
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  legacySetItem(SALT_KEY, JSON.stringify(Array.from(salt)));
+  await setSetting(SALT_KEY, JSON.stringify(Array.from(salt)));
   return salt;
 }
 
@@ -128,7 +122,12 @@ export function clearCachedKey(): void {
  */
 export async function exportAllData(): Promise<string> {
   const db = await getDB();
-
+  const [userProfile, weightHistory, dailyHistory, themeMode] = await Promise.all([
+    getSetting('userProfile'),
+    getSetting('weightHistory'),
+    getSetting('dailyHistory'),
+    getSetting('themeMode'),
+  ]);
   const exportData = {
     export_date: new Date().toISOString(),
     format_version: '1.0',
@@ -147,14 +146,8 @@ export async function exportAllData(): Promise<string> {
       user_profile: await db.getAll('user_profile'),
       daily_history: await db.getAll('daily_history'),
     },
-    local_storage: {
-      userProfile: legacyGetItem('userProfile'),
-      weightHistory: legacyGetItem('weightHistory'),
-      dailyHistory: legacyGetItem('dailyHistory'),
-      themeMode: legacyGetItem('themeMode'),
-    },
+    settings_snapshot: { userProfile, weightHistory, dailyHistory, themeMode },
   };
-
   return JSON.stringify(exportData, null, 2);
 }
 

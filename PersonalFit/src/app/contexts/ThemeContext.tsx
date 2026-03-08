@@ -1,12 +1,10 @@
 /**
  * ThemeContext - Sötét/Világos mód kezelés
- * 
- * A felhasználó által választott téma localStorage-ban mentődik ('themeMode' kulcs).
- * A .dark class a <html> elemre kerül, ami aktiválja a theme.css dark változóit
- * és a Tailwind dark: variánsokat.
+ * Theme is persisted in IndexedDB via SettingsService.
  */
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -23,12 +21,17 @@ const STORAGE_KEY = 'themeMode';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'dark' || saved === 'light') return saved;
-    // Check system preference
-    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
     return 'light';
   });
+  const [themeLoaded, setThemeLoaded] = useState(false);
+
+  useEffect(() => {
+    getSetting(STORAGE_KEY).then((saved) => {
+      if (saved === 'dark' || saved === 'light') setThemeState(saved);
+      setThemeLoaded(true);
+    });
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -37,8 +40,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+    if (themeLoaded) setSetting(STORAGE_KEY, theme).catch(() => {});
+  }, [theme, themeLoaded]);
 
   const toggleTheme = useCallback(() => {
     setThemeState(prev => prev === 'dark' ? 'light' : 'dark');

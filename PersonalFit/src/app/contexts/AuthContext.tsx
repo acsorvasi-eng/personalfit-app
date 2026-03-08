@@ -24,6 +24,7 @@ import {
   createSubscription,
   cancelSubscription as cancelSub,
 } from '../services/paymentService';
+import { getSetting, setSetting } from '../backend/services/SettingsService';
 
 interface AuthContextType {
   // User state
@@ -51,6 +52,11 @@ interface AuthContextType {
 
   // Flow helpers
   getNextRoute: () => string;
+  appFirstUsageDate: string | null;
+  hasCompletedFullFlow: boolean;
+  hasPlanSetup: boolean;
+  setHasPlanSetup: (v: boolean) => void;
+  setHasCompletedFullFlow: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,6 +86,11 @@ const AUTH_FALLBACK: AuthContextType = {
   subscribe: () => Promise.reject(new Error('AuthProvider not mounted')),
   cancelSubscription: () => Promise.reject(new Error('AuthProvider not mounted')),
   getNextRoute: () => '/splash',
+  appFirstUsageDate: null,
+  hasCompletedFullFlow: false,
+  hasPlanSetup: false,
+  setHasPlanSetup: () => {},
+  setHasCompletedFullFlow: () => {},
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -90,29 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [appFirstUsageDate, setAppFirstUsageDate] = useState<string | null>(null);
+  const [hasCompletedFullFlow, setHasCompletedFullFlowState] = useState(false);
+  const [hasPlanSetup, setHasPlanSetup] = useState(false);
 
-  // Initialize state from localStorage on mount
+  // Initialize state from IndexedDB on mount
   useEffect(() => {
-    const storedUser = getStoredUser();
-    const storedSub = getSubscription();
-
-    setUser(storedUser);
-    setHasSeenSplash(localStorage.getItem('hasSeenSplash') === 'true');
-    setOnboardingCompleted(checkOnboarding());
-    setTermsAccepted(checkTerms());
-    setSubscriptionActive(checkSubscription());
-    setSubscription(storedSub);
-
-    // ─── Returning user detection ───
-    // If appFirstUsageDate exists, this is a returning user.
-    // Record first usage date if not set yet.
-    if (!localStorage.getItem('appFirstUsageDate')) {
-      localStorage.setItem('appFirstUsageDate', new Date().toISOString());
-    }
-
-    // ─── Check for Google redirect result ───
-    // If user signed in via redirect (popup was blocked), handle the result here.
-    // Guard: if getRedirectResult() never resolves (e.g. Firebase/network hang), stop loading after 3s.
     let settled = false;
     const stopLoading = () => {
       if (!settled) {
@@ -121,6 +115,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
     const timeoutId = setTimeout(stopLoading, 3000);
+
+    (async () => {
+      const [storedUser, storedSub, seenSplash, onboarding, terms, subActive, firstUsage, fullFlow, planSetup] = await Promise.all([
+        getStoredUser(),
+        getSubscription(),
+        getSetting('hasSeenSplash'),
+        checkOnboarding(),
+        checkTerms(),
+        checkSubscription(),
+        getSetting('appFirstUsageDate'),
+        getSetting('hasCompletedFullFlow'),
+        getSetting('hasPlanSetup'),
+      ]);
+      setUser(storedUser);
+      setHasSeenSplash(seenSplash === 'true');
+      setOnboardingCompleted(onboarding);
+      setTermsAccepted(terms);
+      setSubscriptionActive(subActive);
+      setSubscription(storedSub);
+      setAppFirstUsageDate(firstUsage);
+      setHasCompletedFullFlowState(fullFlow === 'true');
+      setHasPlanSetup(planSetup === 'true');
+      if (!firstUsage) {
+        const now = new Date().toISOString();
+        await setSetting('appFirstUsageDate', now);
+        setAppFirstUsageDate(now);
+      }
+    })()
+      .then(() => stopLoading())
+      .catch(() => stopLoading());
 
     console.log('[Auth] checkGoogleRedirectResult starting');
     checkGoogleRedirectResult()
@@ -133,6 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[Auth] checkGoogleRedirectResult done');
         clearTimeout(timeoutId);
       });
+  }, []);
+
+  const setHasCompletedFullFlow = useCallback((v: boolean) => {
+    setHasCompletedFullFlowState(v);
+    setSetting('hasCompletedFullFlow', v ? 'true' : 'false').catch(() => {});
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
@@ -164,17 +193,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const markSplashSeen = useCallback(() => {
-    localStorage.setItem('hasSeenSplash', 'true');
+    setSetting('hasSeenSplash', 'true').catch(() => {});
     setHasSeenSplash(true);
   }, []);
 
-  const markOnboardingComplete = useCallback(() => {
-    storeOnboarding();
+  const markOnboardingComplete = useCallback(async () => {
+    await storeOnboarding();
     setOnboardingCompleted(true);
   }, []);
 
-  const markTermsAccepted = useCallback(() => {
-    storeTerms();
+  const markTermsAccepted = useCallback(async () => {
+    await storeTerms();
     setTermsAccepted(true);
   }, []);
 
@@ -189,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const cancelSubscription = useCallback(async () => {
     await cancelSub();
     setSubscriptionActive(false);
-    const updated = getSubscription();
+    const updated = await getSubscription();
     setSubscription(updated);
   }, []);
 
@@ -200,35 +229,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * skip the splash screen automatically.
    */
   const getNextRoute = useCallback((): string => {
-    // ─── Returning user fast-path ───
-    // If user has completed the entire flow before (user exists, terms accepted),
-    // skip splash and onboarding entirely on subsequent visits
-    const appFirstUsage = localStorage.getItem('appFirstUsageDate');
-    const hasCompletedFlowBefore = localStorage.getItem('hasCompletedFullFlow') === 'true';
-
-    if (hasCompletedFlowBefore && appFirstUsage) {
-      // Returning user — go straight to main app
-      return '/';
-    }
-
+    if (hasCompletedFullFlow && appFirstUsageDate) return '/';
     if (!hasSeenSplash) return '/splash';
     if (!onboardingCompleted) return '/onboarding';
     if (!user) return '/login';
     if (!termsAccepted) return '/terms';
-
-    // Check if user has set up a plan yet (before marking flow complete)
-    const hasPlanSetup = localStorage.getItem('hasPlanSetup') === 'true';
     if (!hasPlanSetup) return '/plan-setup';
-
-    // Mark that user has completed the full flow (for future returns)
-    if (!hasCompletedFlowBefore) {
-      localStorage.setItem('hasCompletedFullFlow', 'true');
-    }
-
-    // Subscription is no longer part of the onboarding flow.
-    // Users get a 10-day free trial, then need to subscribe from Profile.
+    if (!hasCompletedFullFlow) setHasCompletedFullFlow(true);
     return '/';
-  }, [hasSeenSplash, onboardingCompleted, user, termsAccepted]);
+  }, [hasSeenSplash, onboardingCompleted, user, termsAccepted, hasPlanSetup, hasCompletedFullFlow, appFirstUsageDate, setHasCompletedFullFlow]);
 
   return (
     <AuthContext.Provider
@@ -251,6 +260,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         subscribe,
         cancelSubscription,
         getNextRoute,
+        appFirstUsageDate,
+        hasCompletedFullFlow,
+        hasPlanSetup,
+        setHasPlanSetup: (v) => {
+          setHasPlanSetup(v);
+          setSetting('hasPlanSetup', v ? 'true' : 'false').catch(() => {});
+        },
+        setHasCompletedFullFlow,
       }}
     >
       {children}

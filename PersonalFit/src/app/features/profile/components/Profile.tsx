@@ -27,6 +27,7 @@ import { useStagingManager } from "../../../hooks/useStagingManager";
 import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
 import { getUserProfile, saveUserProfile } from "../../../backend/services/UserProfileService";
+import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ProfileData {
@@ -78,29 +79,29 @@ export function Profile() {
   const { logout, user } = useAuth();
   const { consumed } = useCalorieTracker();
   const { t } = useLanguage();
-  const [profile, setProfile] = useState<ProfileData>(() => {
-    const saved = localStorage.getItem('userProfile');
-    if (saved) return JSON.parse(saved);
-    return {
-      name: "", age: 0, metabolicAge: 0, weight: 0, height: 0,
-      bloodPressure: "", activityLevel: "", goal: "",
-      allergies: "", dietaryPreferences: "", avatar: ""
-    };
-  });
-
-  const [weightHistory, setWeightHistory] = useState<WeightEntry[]>(() => {
-    const saved = localStorage.getItem('weightHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // ─── Weight Goal ────────────────────────────────────────────────
-  const [weightGoal, setWeightGoal] = useState<WeightGoal>(() => {
-    const saved = localStorage.getItem('weightGoal');
-    return saved ? JSON.parse(saved) : { targetKg: 0, months: 0, startDate: '', startWeight: 0 };
-  });
+  const defaultProfile: ProfileData = {
+    name: "", age: 0, metabolicAge: 0, weight: 0, height: 0,
+    bloodPressure: "", activityLevel: "", goal: "",
+    allergies: "", dietaryPreferences: "", avatar: ""
+  };
+  const [profile, setProfile] = useState<ProfileData>(defaultProfile);
+  const [weightHistory, setWeightHistory] = useState<WeightEntry[]>([]);
+  const defaultWeightGoal: WeightGoal = { targetKg: 0, months: 0, startDate: '', startWeight: 0 };
+  const [weightGoal, setWeightGoal] = useState<WeightGoal>(defaultWeightGoal);
+  const [workoutDataRaw, setWorkoutDataRaw] = useState<string | null>(null);
   const [isGoalEditing, setIsGoalEditing] = useState(false);
   const [goalDraftKg, setGoalDraftKg] = useState('');
   const [goalDraftMonths, setGoalDraftMonths] = useState('');
+
+  useEffect(() => {
+    getSetting('weightHistory').then((saved) => {
+      if (saved) try { setWeightHistory(JSON.parse(saved)); } catch { /* ignore */ }
+    });
+    getSetting('weightGoal').then((saved) => {
+      if (saved) try { setWeightGoal(JSON.parse(saved)); } catch { /* ignore */ }
+    });
+    getSetting('workoutTracking').then(setWorkoutDataRaw);
+  }, []);
 
   // Első betöltéskor frissítsük a profilt az IndexedDB-ből is.
   useEffect(() => {
@@ -138,7 +139,7 @@ export function Profile() {
           metabolicAge: stored.metabolicAge ?? (stored as any).metabolicAge ?? 0,
         }));
       } catch {
-        // ha hiba van, marad a localStorage alap
+        // ignore
       }
     })();
   }, []);
@@ -156,12 +157,10 @@ export function Profile() {
     const newEntry: WeightEntry = { date: todayStr, weight: kg, week: weekNum };
     const newHistory = [...filtered, newEntry].sort((a, b) => a.date.localeCompare(b.date));
     setWeightHistory(newHistory);
-    localStorage.setItem('weightHistory', JSON.stringify(newHistory));
+    setSetting('weightHistory', JSON.stringify(newHistory)).catch(() => {});
 
-    // Also update profile.weight and water goal (weight × 35 ml)
     const updatedProfile = { ...profile, weight: kg, waterGoalMl: Math.round(kg * 35) };
     setProfile(updatedProfile);
-    localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
     saveUserProfile({ weight: kg, waterGoalMl: Math.round(kg * 35) }).then(() => {
       try {
         window.dispatchEvent(new Event('profileUpdated'));
@@ -221,19 +220,14 @@ export function Profile() {
           gmonUploadedAt: stored.gmonUploadedAt,
         }));
       } catch {
-        const saved = localStorage.getItem('userProfile');
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            setProfile(parsed);
-          } catch { /* ignore parse errors */ }
-        }
+        getSetting('userProfile').then((saved) => {
+          if (saved) try { setProfile(JSON.parse(saved)); } catch { /* ignore */ }
+        });
       }
     })();
-    const wh = localStorage.getItem('weightHistory');
-    if (wh) {
-      try { setWeightHistory(JSON.parse(wh)); } catch { /* ignore */ }
-    }
+    getSetting('weightHistory').then((wh) => {
+      if (wh) try { setWeightHistory(JSON.parse(wh)); } catch { /* ignore */ }
+    });
   }, []);
 
   useEffect(() => {
@@ -273,11 +267,12 @@ export function Profile() {
   const dailyCalories = Math.round(bmr * activityMultiplier);
 
   const today = new Date().toISOString().split('T')[0];
-  const workoutData = localStorage.getItem('workoutTracking');
   let workoutCalories = 0;
-  if (workoutData) {
-    const data = JSON.parse(workoutData);
-    if (data[today]) workoutCalories = data[today].totalCalories || 0;
+  if (workoutDataRaw) {
+    try {
+      const data = JSON.parse(workoutDataRaw);
+      if (data[today]) workoutCalories = data[today].totalCalories || 0;
+    } catch { /* ignore */ }
   }
 
   const targetCalories = profile.calorieTarget ?? (
@@ -413,7 +408,6 @@ export function Profile() {
   const handleAvatarSave = (croppedImage: string) => {
     const updated = { ...profile, avatar: croppedImage };
     setProfile(updated);
-    localStorage.setItem('userProfile', JSON.stringify(updated));
     saveUserProfile({ avatar: croppedImage }).then(() => {
       try {
         window.dispatchEvent(new Event('profileUpdated'));
@@ -439,14 +433,12 @@ export function Profile() {
         onClose={() => setIsUploadOpen(false)}
         onComplete={() => {
           appData.refresh();
-          // Re-read profile from localStorage after upload
-          const saved = localStorage.getItem('userProfile');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            setProfile(parsed);
-          }
-          const wh = localStorage.getItem('weightHistory');
-          if (wh) setWeightHistory(JSON.parse(wh));
+          getUserProfile().then((stored) => {
+            setProfile(prev => ({ ...prev, name: stored.name, age: stored.age, weight: stored.weight, height: stored.height, bloodPressure: stored.bloodPressure, activityLevel: stored.activityLevel, goal: stored.goal, allergies: stored.allergies, dietaryPreferences: stored.dietaryPreferences, avatar: stored.avatar, birthDate: stored.birthDate, gender: stored.gender, calorieTarget: stored.calorieTarget, waterGoalMl: stored.waterGoalMl, weeklyWorkoutGoal: stored.weeklyWorkoutGoal, macroProteinPct: stored.macroProteinPct, macroCarbsPct: stored.macroCarbsPct, macroFatPct: stored.macroFatPct, bodyFat: stored.bodyFat, muscleMass: stored.muscleMass, visceralFat: stored.visceralFat, boneMass: stored.boneMass, waterPercent: stored.waterPercent, bmi: stored.bmi, bmr: stored.bmr, gmonUploadedAt: stored.gmonUploadedAt, metabolicAge: stored.metabolicAge ?? (stored as any).metabolicAge ?? 0 }));
+          });
+          getSetting('weightHistory').then((wh) => {
+            if (wh) try { setWeightHistory(JSON.parse(wh)); } catch { /* ignore */ }
+          });
         }}
       />
 
@@ -487,7 +479,6 @@ export function Profile() {
           onNameSave={(name) => {
             const updated = { ...profile, name };
             setProfile(updated);
-            localStorage.setItem('userProfile', JSON.stringify(updated));
             saveUserProfile({ name }).then(() => {
               try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
             });
@@ -495,7 +486,6 @@ export function Profile() {
           onAgeSave={(age) => {
             const updated = { ...profile, age };
             setProfile(updated);
-            localStorage.setItem('userProfile', JSON.stringify(updated));
             saveUserProfile({ age }).then(() => {
               try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
             });
@@ -550,7 +540,7 @@ export function Profile() {
               <InlineEditStat label={t('profile.weight')} value={profile.weight} unit="kg" type="number" prominent onSave={(v) => { const numVal = Number(v); if (numVal > 0) logWeight(numVal); }} />
               <div className="grid grid-cols-2 gap-2">
                 <InlineEditStat label={t('profile.height')} value={profile.height} unit="cm" type="number" onSave={(v) => { setProfile((p) => ({ ...p, height: Number(v) })); saveUserProfile({ height: Number(v) }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
-                <InlineEditStat label={t('profile.targetWeight')} value={weightGoal.targetKg} unit="kg" type="number" onSave={(v) => { const kg = Number(v); setWeightGoal((g) => ({ ...g, targetKg: kg })); localStorage.setItem('weightGoal', JSON.stringify({ ...weightGoal, targetKg: kg })); }} />
+                <InlineEditStat label={t('profile.targetWeight')} value={weightGoal.targetKg} unit="kg" type="number" onSave={(v) => { const kg = Number(v); setWeightGoal((g) => ({ ...g, targetKg: kg })); setSetting('weightGoal', JSON.stringify({ ...weightGoal, targetKg: kg })).catch(() => {}); }} />
               </div>
               {/* BMI: from GMON or calculated */}
               <div className="pt-2 border-t border-gray-100 dark:border-[#2a2a2a]">
@@ -764,7 +754,7 @@ export function Profile() {
                     startWeight: profile.weight
                   };
                   setWeightGoal(newGoal);
-                  localStorage.setItem('weightGoal', JSON.stringify(newGoal));
+                  setSetting('weightGoal', JSON.stringify(newGoal)).catch(() => {});
                   setIsGoalEditing(false);
                   if (navigator.vibrate) navigator.vibrate(10);
                 }}
@@ -1131,7 +1121,8 @@ function SettingsTabContent(props: {
   const { user, subscriptionActive } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
-  const trial = getTrialInfo();
+  const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
+  useEffect(() => { getTrialInfo().then(setTrial); }, []);
   const isDark = theme === 'dark';
 
   return (
@@ -1720,8 +1711,8 @@ function SubscriptionManagement() {
   const { t } = useLanguage();
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-
-  const trial = getTrialInfo();
+  const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
+  useEffect(() => { getTrialInfo().then(setTrial); }, []);
 
   const handleCancelSubscription = async () => {
     setIsCancelling(true);

@@ -42,12 +42,12 @@ import {
 const TRIAL_DAYS = 10;
 const TRIAL_STORAGE_KEY = 'appFirstUsageDate';
 
-function getTrialInfo() {
-  const stored = localStorage.getItem(TRIAL_STORAGE_KEY);
+async function getTrialInfo() {
+  const { getSetting, setSetting } = await import('../../backend/services/SettingsService');
+  const stored = await getSetting(TRIAL_STORAGE_KEY);
   if (!stored) {
-    // First ever usage — start the trial now
     const now = new Date().toISOString();
-    localStorage.setItem(TRIAL_STORAGE_KEY, now);
+    await setSetting(TRIAL_STORAGE_KEY, now);
     return { daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: now };
   }
   const start = new Date(stored);
@@ -91,7 +91,15 @@ export function SubscriptionScreen() {
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
 
-  const trial = useMemo(() => getTrialInfo(), []);
+  const [trial, setTrial] = useState<{
+    daysUsed: number;
+    daysRemaining: number;
+    isExpired: boolean;
+    startDate: string;
+  }>({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
+  useEffect(() => {
+    getTrialInfo().then(setTrial);
+  }, []);
 
   // If already subscribed, redirect
   useEffect(() => {
