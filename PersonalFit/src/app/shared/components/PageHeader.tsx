@@ -69,13 +69,14 @@ export function PageHeader({
             width: "2rem",
             height: "2rem",
             borderRadius: "50%",
-            background: "rgba(255,255,255,0.2)",
+            background: "rgba(255,255,255,0.25)",
             border: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
             backdropFilter: "blur(4px)",
+            zIndex: 10,
           }}
           aria-label="Close"
         >

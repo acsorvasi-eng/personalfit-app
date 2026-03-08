@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { usePlanData } from "../hooks/usePlanData";
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { PageHeader } from "./PageHeader";
@@ -6,9 +7,15 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { getLocaleMonth, getLocaleDayShort } from "../contexts/LanguageContext";
 
 export function MonthlyMenu() {
+  const navigate = useNavigate();
   const today = new Date();
   const { planData } = usePlanData();
   const { t, language, locale } = useLanguage();
+
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
@@ -95,6 +102,7 @@ export function MonthlyMenu() {
         subtitle={`${getMonthName(selectedMonth)} ${selectedYear} - 28 ${t('menu.dayPlan')}`}
         gradientFrom="from-blue-400"
         gradientTo="to-indigo-500"
+        onClose={handleClose}
         stats={[
           {
             label: t('monthly.daysCount'),

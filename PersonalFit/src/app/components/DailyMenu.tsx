@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { usePlanData } from "../hooks/usePlanData";
 import { ChevronRight, Check, Clock, AlertCircle, Droplet, ChevronDown, Utensils, Calendar } from "lucide-react";
 import { PageHeader } from "./PageHeader";
@@ -6,8 +7,14 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { getLocaleDayNarrow } from "../contexts/LanguageContext";
 
 export function DailyMenu() {
+  const navigate = useNavigate();
   const { t, language, locale } = useLanguage();
   const { planData } = usePlanData();
+
+  const handleClose = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/menu");
+  };
   // Get real current date
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -258,6 +265,7 @@ export function DailyMenu() {
         })}
         gradientFrom="from-blue-400"
         gradientTo="to-emerald-500"
+        onClose={handleClose}
         stats={[
           {
             label: t("daily.consumed"),
