@@ -31,6 +31,7 @@ import { getUserProfile, saveUserProfile } from "../../../backend/services/UserP
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 import { SleepSetup } from "../../sleep/components/SleepSetup";
 import { SleepService } from "../../../backend/services/SleepService";
+import { showToast } from "../../../shared/components/Toast";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ProfileData {
@@ -168,8 +169,9 @@ export function Profile() {
       try {
         window.dispatchEvent(new Event('profileUpdated'));
       } catch {
-        // ignore
+        /* ignore */
       }
+      showToast(t('toast.saved'));
     });
 
     // Haptic feedback — meal check pattern
@@ -417,6 +419,7 @@ export function Profile() {
       } catch {
         // ignore
       }
+      showToast(t('toast.saved'));
     });
   };
 
@@ -452,6 +455,7 @@ export function Profile() {
         onComplete={() => {
           appData.refresh();
           reReadProfile();
+          showToast(t('toast.gmonLoaded'));
         }}
       />
 
@@ -484,6 +488,7 @@ export function Profile() {
             setProfile(updated);
             saveUserProfile({ name }).then(() => {
               try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+              showToast(t('toast.saved'));
             });
           }}
           onAgeSave={(age) => {
@@ -491,6 +496,7 @@ export function Profile() {
             setProfile(updated);
             saveUserProfile({ age }).then(() => {
               try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+              showToast(t('toast.saved'));
             });
           }}
           onAvatarClick={() => avatarInputRef.current?.click()}
@@ -519,12 +525,12 @@ export function Profile() {
         <DSMCard>
           <DSMSectionTitle icon={User} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.personalData')} className="mb-3" />
           <div className="space-y-3">
-            <EditableFieldRow label={t('profile.birthDate')} value={profile.birthDate || ''} type="date" onSave={(v) => { setProfile((p) => ({ ...p, birthDate: v })); saveUserProfile({ birthDate: v || undefined }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+            <EditableFieldRow label={t('profile.birthDate')} value={profile.birthDate || ''} type="date" onSave={(v) => { setProfile((p) => ({ ...p, birthDate: v })); saveUserProfile({ birthDate: v || undefined }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
             <div className="pt-2 pb-1">
               <label className="text-[10px] text-gray-500 dark:text-gray-400 block mb-1.5">{t('profile.gender')}</label>
               <div className="flex flex-wrap gap-2">
                 {(['male', 'female', 'other'] as const).map((g) => (
-                  <button key={g} type="button" onClick={() => { setProfile((p) => ({ ...p, gender: g })); saveUserProfile({ gender: g }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.gender === g ? '#f3f4f6' : 'transparent', color: profile.gender === g ? '#111827' : '#6b7280', fontWeight: profile.gender === g ? 600 : 400, fontSize: '0.8125rem' }}>{t(`profile.gender${g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other'}`)}</button>
+                  <button key={g} type="button" onClick={() => { setProfile((p) => ({ ...p, gender: g })); saveUserProfile({ gender: g }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.gender === g ? '#f3f4f6' : 'transparent', color: profile.gender === g ? '#111827' : '#6b7280', fontWeight: profile.gender === g ? 600 : 400, fontSize: '0.8125rem' }}>{t(`profile.gender${g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other'}`)}</button>
                 ))}
               </div>
             </div>
@@ -542,7 +548,7 @@ export function Profile() {
             <div className="space-y-3">
               <InlineEditStat label={t('profile.weight')} value={profile.weight} unit="kg" type="number" prominent onSave={(v) => { const numVal = Number(v); if (numVal > 0) logWeight(numVal); }} />
               <div className="grid grid-cols-2 gap-2">
-                <InlineEditStat label={t('profile.height')} value={profile.height} unit="cm" type="number" onSave={(v) => { setProfile((p) => ({ ...p, height: Number(v) })); saveUserProfile({ height: Number(v) }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+                <InlineEditStat label={t('profile.height')} value={profile.height} unit="cm" type="number" onSave={(v) => { setProfile((p) => ({ ...p, height: Number(v) })); saveUserProfile({ height: Number(v) }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
                 <InlineEditStat label={t('profile.targetWeight')} value={weightGoal.targetKg} unit="kg" type="number" onSave={(v) => { const kg = Number(v); setWeightGoal((g) => ({ ...g, targetKg: kg })); setSetting('weightGoal', JSON.stringify({ ...weightGoal, targetKg: kg })).catch(() => {}); }} />
               </div>
               {/* BMI: from GMON or calculated */}
@@ -554,10 +560,10 @@ export function Profile() {
                 <BMIBar value={Number(bmi)} t={t} />
                 <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{getBMILabel(Number(bmi), t)}</div>
               </div>
-              <InlineEditStat label={t('profile.bodyFat')} value={profile.bodyFat ?? 0} unit="%" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bodyFat: n })); saveUserProfile({ bodyFat: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
-              <InlineEditStat label={t('profile.muscleMass')} value={profile.muscleMass ?? 0} unit="kg" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, muscleMass: n })); saveUserProfile({ muscleMass: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
-              <InlineEditStat label={t('profile.metabolicAge')} value={profile.metabolicAge ?? 0} unit={t('profileExtra.yearUnit')} type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, metabolicAge: n })); saveUserProfile({ metabolicAge: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
-              <InlineEditStat label={t('profile.bmr')} value={profile.bmr ?? 0} unit="kcal" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bmr: n })); saveUserProfile({ bmr: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+              <InlineEditStat label={t('profile.bodyFat')} value={profile.bodyFat ?? 0} unit="%" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bodyFat: n })); saveUserProfile({ bodyFat: n }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
+              <InlineEditStat label={t('profile.muscleMass')} value={profile.muscleMass ?? 0} unit="kg" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, muscleMass: n })); saveUserProfile({ muscleMass: n }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
+              <InlineEditStat label={t('profile.metabolicAge')} value={profile.metabolicAge ?? 0} unit={t('profileExtra.yearUnit')} type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, metabolicAge: n })); saveUserProfile({ metabolicAge: n }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
+              <InlineEditStat label={t('profile.bmr')} value={profile.bmr ?? 0} unit="kcal" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bmr: n })); saveUserProfile({ bmr: n }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
             </div>
         </DSMCard>
 
@@ -572,7 +578,7 @@ export function Profile() {
               { key: 'Magas', labelKey: 'profile.activityActive' },
               { key: 'Nagyon magas', labelKey: 'profile.activityVeryActive' },
             ].map(({ key, labelKey }) => (
-              <button key={key} type="button" onClick={() => { setProfile((p) => ({ ...p, activityLevel: key })); saveUserProfile({ activityLevel: key }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.activityLevel === key ? '#f3f4f6' : 'transparent', color: profile.activityLevel === key ? '#111827' : '#6b7280', fontWeight: profile.activityLevel === key ? 600 : 400, fontSize: '0.8125rem' }}>{t(labelKey)}</button>
+              <button key={key} type="button" onClick={() => { setProfile((p) => ({ ...p, activityLevel: key })); saveUserProfile({ activityLevel: key }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.activityLevel === key ? '#f3f4f6' : 'transparent', color: profile.activityLevel === key ? '#111827' : '#6b7280', fontWeight: profile.activityLevel === key ? 600 : 400, fontSize: '0.8125rem' }}>{t(labelKey)}</button>
             ))}
           </div>
         </DSMCard>
@@ -797,9 +803,13 @@ export function Profile() {
                   dailyCalories={dailyCalories}
                   onProfileUpdate={(partial) => {
                     setProfile((p) => ({ ...p, ...partial }));
-                    saveUserProfile(partial as any).then(() => { try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ } });
+                    saveUserProfile(partial as any).then(() => {
+                      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+                      showToast(t('toast.saved'));
+                    });
                   }}
                   t={t}
+                  showToast={showToast}
                 />
               )}
 
@@ -909,12 +919,14 @@ function ProfileGoalsTab({
   dailyCalories,
   onProfileUpdate,
   t,
+  showToast,
 }: {
   profile: ProfileData;
   targetCalories: number;
   dailyCalories: number;
   onProfileUpdate: (partial: Partial<ProfileData>) => void;
   t: (key: string) => string;
+  showToast: (message: string, type?: 'success' | 'info' | 'warning') => void;
 }) {
   const kcal = profile.calorieTarget ?? targetCalories;
   const proteinPct = profile.macroProteinPct ?? 30;
@@ -942,30 +954,36 @@ function ProfileGoalsTab({
     });
   }, []);
 
-  const handleWakeTimeChange = (time: string) => {
+  const handleWakeTimeChange = async (time: string) => {
     setWakeTime(time);
     const options = SleepService.getBedtimeOptions(time);
     setBedtimeOptions(options);
     const preferred = options.find((o) => o.cycleCount === 6);
+    const newBedtime = preferred?.bedtime ?? selectedBedtime;
+    const newCycles = preferred?.cycleCount ?? selectedCycles;
     if (preferred) {
       setSelectedBedtime(preferred.bedtime);
       setSelectedCycles(preferred.cycleCount);
     }
-    void SleepService.saveSleepSettings({
+    await SleepService.saveSleepSettings({
       wakeTime: time,
-      selectedBedtime: preferred?.bedtime ?? selectedBedtime,
-      selectedCycles: preferred?.cycleCount ?? selectedCycles,
+      selectedBedtime: newBedtime,
+      selectedCycles: newCycles,
     });
+    showToast(t('toast.sleepSaved'));
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
   };
 
-  const handleBedtimeSelect = (bedtime: string, cycles: number) => {
+  const handleBedtimeSelect = async (bedtime: string, cycles: number) => {
     setSelectedBedtime(bedtime);
     setSelectedCycles(cycles);
-    void SleepService.saveSleepSettings({
+    await SleepService.saveSleepSettings({
       wakeTime,
       selectedBedtime: bedtime,
       selectedCycles: cycles,
     });
+    showToast(t('toast.sleepSaved'));
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
   };
 
   const proteinG = Math.round((kcal * (proteinPct / 100)) / 4);
@@ -1255,7 +1273,7 @@ function SettingsTabContent(props: {
                 <button
                   key={lang.code}
                   type="button"
-                  onClick={() => { setLanguage(lang.code); if (navigator.vibrate) navigator.vibrate(10); }}
+                  onClick={() => { setLanguage(lang.code); showToast(t('toast.languageChanged')); if (navigator.vibrate) navigator.vibrate(10); }}
                   style={{
                     padding: '0.4rem 0.75rem',
                     borderRadius: 999,
@@ -1718,6 +1736,7 @@ function LanguageSelectorCard() {
               type="button"
               onClick={() => {
                 setLanguage(lang.code);
+                showToast(t('toast.languageChanged'));
                 if (navigator.vibrate) navigator.vibrate(10);
               }}
               className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all cursor-pointer ${

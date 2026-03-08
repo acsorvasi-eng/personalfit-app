@@ -81,6 +81,12 @@ const ro: LocalePartial = {
   'macros.protein': 'Proteine',
   'macros.carbs': 'Carbohidrați',
   'macros.fat': 'Grăsimi',
+
+  'toast.saved': 'Salvat ✓',
+  'toast.sleepSaved': 'Setări somn salvate ✓',
+  'toast.languageChanged': 'Limbă schimbată ✓',
+  'toast.mealSettingsSaved': 'Setări masă salvate ✓',
+  'toast.gmonLoaded': 'Date GMON încărcate ✓',
 };
 
 export default ro;

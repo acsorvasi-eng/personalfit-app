@@ -81,6 +81,12 @@ const en: LocalePartial = {
   'macros.protein': 'Protein',
   'macros.carbs': 'Carbs',
   'macros.fat': 'Fat',
+
+  'toast.saved': 'Saved ✓',
+  'toast.sleepSaved': 'Sleep settings saved ✓',
+  'toast.languageChanged': 'Language changed ✓',
+  'toast.mealSettingsSaved': 'Meal settings saved ✓',
+  'toast.gmonLoaded': 'GMON data loaded ✓',
 };
 
 export default en;

@@ -11,6 +11,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { useDailyReset } from "../hooks/useDailyReset";
 import { useBackendInit } from "../hooks/useBackendInit";
 import { PipelineDiagnostics } from "./PipelineDiagnostics";
+import { ToastContainer } from "../shared/components/Toast";
 
 function RootLayoutInner() {
   // Monitor midnight crossing, archive daily data & reset counters
@@ -47,6 +48,7 @@ function RootLayoutInner() {
       <div id="main-content">
         <Outlet />
       </div>
+      <ToastContainer />
     </div>
   );
 }

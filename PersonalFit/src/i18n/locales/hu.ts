@@ -84,6 +84,12 @@ const hu = {
   'macros.protein': 'Fehérje',
   'macros.carbs': 'Szénhidrát',
   'macros.fat': 'Zsír',
+
+  'toast.saved': 'Mentve ✓',
+  'toast.sleepSaved': 'Alvás beállítás mentve ✓',
+  'toast.languageChanged': 'Nyelv megváltoztatva ✓',
+  'toast.mealSettingsSaved': 'Étkezési beállítás mentve ✓',
+  'toast.gmonLoaded': 'GMON adatok betöltve ✓',
 } as const;
 
 export default hu;

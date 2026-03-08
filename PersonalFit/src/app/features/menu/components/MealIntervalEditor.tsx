@@ -8,8 +8,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { Check } from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { showToast } from "../../../shared/components/Toast";
 import { PageHeader } from "../../../shared/components/PageHeader";
 import { PageFooter, PageFooterPrimaryButton } from "../../../shared/components/PageFooter";
 import { SNACKS, snackLabel, type SnackItem } from "../../../../i18n/snacks";
@@ -165,8 +165,8 @@ export function MealIntervalEditor() {
       const allowedSnacks = isIFModel(mealModel) ? [] : selectedSnackIds;
       await saveMealSettings({ mealCount, meals: updated, allowedSnacks, mealModel });
       window.dispatchEvent(new Event("mealSettingsUpdated"));
+      showToast(t("toast.mealSettingsSaved"));
       setSleepSuggestion(null);
-      toast.success(t("mealEditor.saved"));
     } finally {
       setSaving(false);
     }
@@ -211,7 +211,7 @@ export function MealIntervalEditor() {
       await saveMealSettings(payload);
       window.dispatchEvent(new Event("mealSettingsUpdated"));
       if (navigator.vibrate) navigator.vibrate([10, 20]);
-      toast.success(t("mealEditor.saved"));
+      showToast(t("toast.mealSettingsSaved"));
       navigate(-1);
     } finally {
       setSaving(false);
