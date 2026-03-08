@@ -21,9 +21,11 @@
  */
 
 import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 // Worker URL resolved at runtime via CDN (the ?url Vite import breaks in sandbox)
 import * as MeasurementSvc from '../backend/services/MeasurementService';
 import * as VersionControlSvc from '../backend/services/VersionControlService';
+import { updateFromGmon, type GmonParsedData } from '../backend/services/UserProfileService';
 import { generateId, nowISO } from '../backend/db';
 import type {
   AIParsedBodyComposition,
@@ -31,7 +33,7 @@ import type {
   GmonMetrics,
 } from '../backend/models';
 
-import { getLocale } from '../contexts/LanguageContext';
+import { getLocale, useLanguage } from '../contexts/LanguageContext';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -290,6 +292,7 @@ function generateDemoBodyComposition(): AIParsedBodyComposition {
 // ═══════════════════════════════════════════════════════════════
 
 export function useBodyCompositionUpload() {
+  const { t } = useLanguage();
   const [state, setState] = useState<BodyCompUploadState>({
     step: 'idle',
     progress: 0,
@@ -353,13 +356,37 @@ export function useBodyCompositionUpload() {
         }
       }
 
-      // v2: Extract real body composition data
+      // v2: Extract real body composition data — try API first for profile auto-fill
       setStep('extracting_metrics', 35);
       let parsed: AIParsedBodyComposition;
+      let gmonApiResult: GmonParsedData | null = null;
 
       if (rawText.trim().length > 20) {
+        try {
+          const apiRes = await fetch('/api/parse-gmon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: rawText }),
+          });
+          if (apiRes.ok) {
+            const json = await apiRes.json();
+            const resultStr = json.result;
+            if (resultStr) {
+              gmonApiResult = JSON.parse(resultStr) as GmonParsedData;
+              await updateFromGmon(gmonApiResult);
+            }
+          }
+        } catch (e) {
+          console.warn('[BodyComp] parse-gmon API failed:', e);
+        }
+
         parsed = parseBodyComposition(rawText);
-        // Check if we got ANY useful data
+        if (gmonApiResult) {
+          if (gmonApiResult.weight_kg != null) parsed.weight = gmonApiResult.weight_kg;
+          if (gmonApiResult.body_fat_percent != null) parsed.body_fat_percentage = gmonApiResult.body_fat_percent;
+          if (gmonApiResult.muscle_mass_kg != null) parsed.muscle_mass = gmonApiResult.muscle_mass_kg;
+          if (gmonApiResult.bmi != null) parsed.bmi = gmonApiResult.bmi;
+        }
         const hasData = parsed.weight || parsed.body_fat_percentage || parsed.muscle_mass || parsed.bmi;
         if (!hasData) {
           warnings.push('Nem sikerült testösszetétel adatokat kinyerni — demo adatok használata');
@@ -391,9 +418,8 @@ export function useBodyCompositionUpload() {
         notes: `${isGmon ? 'GMON riport' : 'Testösszetétel elemzés'} — PDF-ből kinyerve (${file.name})`,
       });
 
-      // Update userProfile weight + BMI from body composition data
       setStep('updating_engine', 85);
-      if (parsed.weight || parsed.bmi) {
+      if (!gmonApiResult && (parsed.weight || parsed.bmi)) {
         try {
           const raw = localStorage.getItem('userProfile');
           const profile = raw ? JSON.parse(raw) : {
@@ -406,7 +432,6 @@ export function useBodyCompositionUpload() {
             profile.weight = parsed.weight;
             updated = true;
           }
-          // If height is extractable from BMI + weight, back-calculate it
           if (parsed.bmi && parsed.weight && !profile.height) {
             const heightM = Math.sqrt(parsed.weight / parsed.bmi);
             const heightCm = Math.round(heightM * 100);
@@ -421,6 +446,15 @@ export function useBodyCompositionUpload() {
             window.dispatchEvent(new Event('profileUpdated'));
           }
         } catch { /* non-critical */ }
+      }
+
+      if (gmonApiResult) {
+        const parts: string[] = [];
+        if (gmonApiResult.weight_kg != null) parts.push(`${t('profile.weight')}: ${gmonApiResult.weight_kg}kg`);
+        if (gmonApiResult.body_fat_percent != null) parts.push(`${t('bodyCompUpload.bodyFatLabel')}: ${gmonApiResult.body_fat_percent}%`);
+        if (gmonApiResult.bmi != null) parts.push(`BMI: ${gmonApiResult.bmi}`);
+        const details = parts.length ? parts.join(' · ') : '';
+        toast.success(t('bodyCompUpload.gmonLoaded'), { description: details });
       }
 
       // Version control
@@ -478,7 +512,7 @@ export function useBodyCompositionUpload() {
       const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
       setState(prev => ({ ...prev, step: 'error', error: message }));
     }
-  }, []);
+  }, [t]);
 
   const processText = useCallback(async (text: string) => {
     try {

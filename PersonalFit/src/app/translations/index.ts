@@ -500,6 +500,8 @@ export const translations = {
       bmiOverweight: 'Túlsúly',
       bmiObese: 'Elhízás',
       bodyMetrics: 'Testméretek',
+      bmr: 'Alapanyagcsere',
+      gmonBadge: 'GMON',
     },
     
     // Categories
@@ -856,6 +858,7 @@ export const translations = {
       muscleMassResult: 'Izomtömeg',
       visceralLabel: 'Zsigeri',
       gmonImported: 'GMON adatok importálva',
+      gmonLoaded: 'GMON adatok betöltve ✓',
       gmonDetails: 'Anyagcsere, szerv pontszámok, testvíz, fázisszög és csontok feldolgozva.',
       doneButton: 'Kész — Alkalmazás frissítése',
       unknownError: 'Ismeretlen hiba',
@@ -1704,6 +1707,8 @@ export const translations = {
       bmiOverweight: 'Overweight',
       bmiObese: 'Obese',
       bodyMetrics: 'Body metrics',
+      bmr: 'BMR',
+      gmonBadge: 'GMON',
     },
 
     categories: {
@@ -2053,6 +2058,7 @@ export const translations = {
       muscleMassResult: 'Muscle Mass',
       visceralLabel: 'Visceral',
       gmonImported: 'GMON data imported',
+      gmonLoaded: 'GMON data loaded ✓',
       gmonDetails: 'Metabolism, organ scores, body water, phase angle and bones processed.',
       doneButton: 'Done — Update app',
       unknownError: 'Unknown error',
@@ -2891,6 +2897,8 @@ export const translations = {
       bmiOverweight: 'Supraponderal',
       bmiObese: 'Obezitate',
       bodyMetrics: 'Mărimi corporale',
+      bmr: 'Rata metabolică bazală',
+      gmonBadge: 'GMON',
     },
 
     categories: {
@@ -3240,6 +3248,7 @@ export const translations = {
       muscleMassResult: 'Masă musculară',
       visceralLabel: 'Visceral',
       gmonImported: 'Date GMON importate',
+      gmonLoaded: 'Date GMON încărcate ✓',
       gmonDetails: 'Metabolism, scoruri organe, apă corporală, unghi de fază și oase procesate.',
       doneButton: 'Gata — Actualizare aplicație',
       unknownError: 'Eroare necunoscută',

@@ -49,6 +49,14 @@ interface ProfileData {
   macroProteinPct?: number;
   macroCarbsPct?: number;
   macroFatPct?: number;
+  bodyFat?: number;
+  muscleMass?: number;
+  visceralFat?: number;
+  boneMass?: number;
+  waterPercent?: number;
+  bmi?: number;
+  bmr?: number;
+  gmonUploadedAt?: string;
 }
 
 interface WeightEntry {
@@ -103,7 +111,6 @@ export function Profile() {
           ...prev,
           name: stored.name,
           age: stored.age,
-          metabolicAge: (stored as any).metabolicAge || 0,
           weight: stored.weight,
           height: stored.height,
           bloodPressure: stored.bloodPressure,
@@ -120,6 +127,15 @@ export function Profile() {
           macroProteinPct: stored.macroProteinPct,
           macroCarbsPct: stored.macroCarbsPct,
           macroFatPct: stored.macroFatPct,
+          bodyFat: stored.bodyFat,
+          muscleMass: stored.muscleMass,
+          visceralFat: stored.visceralFat,
+          boneMass: stored.boneMass,
+          waterPercent: stored.waterPercent,
+          bmi: stored.bmi,
+          bmr: stored.bmr,
+          gmonUploadedAt: stored.gmonUploadedAt,
+          metabolicAge: stored.metabolicAge ?? (stored as any).metabolicAge ?? 0,
         }));
       } catch {
         // ha hiba van, marad a localStorage alap
@@ -142,11 +158,11 @@ export function Profile() {
     setWeightHistory(newHistory);
     localStorage.setItem('weightHistory', JSON.stringify(newHistory));
 
-    // Also update profile.weight
-    const updatedProfile = { ...profile, weight: kg };
+    // Also update profile.weight and water goal (weight × 35 ml)
+    const updatedProfile = { ...profile, weight: kg, waterGoalMl: Math.round(kg * 35) };
     setProfile(updatedProfile);
     localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-    saveUserProfile({ weight: kg }).then(() => {
+    saveUserProfile({ weight: kg, waterGoalMl: Math.round(kg * 35) }).then(() => {
       try {
         window.dispatchEvent(new Event('profileUpdated'));
       } catch {
@@ -178,7 +194,7 @@ export function Profile() {
           ...prev,
           name: stored.name,
           age: stored.age,
-          metabolicAge: (stored as any).metabolicAge || 0,
+          metabolicAge: stored.metabolicAge ?? (stored as any).metabolicAge ?? 0,
           weight: stored.weight,
           height: stored.height,
           bloodPressure: stored.bloodPressure,
@@ -195,6 +211,14 @@ export function Profile() {
           macroProteinPct: stored.macroProteinPct,
           macroCarbsPct: stored.macroCarbsPct,
           macroFatPct: stored.macroFatPct,
+          bodyFat: stored.bodyFat,
+          muscleMass: stored.muscleMass,
+          visceralFat: stored.visceralFat,
+          boneMass: stored.boneMass,
+          waterPercent: stored.waterPercent,
+          bmi: stored.bmi,
+          bmr: stored.bmr,
+          gmonUploadedAt: stored.gmonUploadedAt,
         }));
       } catch {
         const saved = localStorage.getItem('userProfile');
@@ -234,7 +258,7 @@ export function Profile() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Calculations ───
-  const bmi = profile.height > 0 ? (profile.weight / ((profile.height / 100) ** 2)).toFixed(1) : '0';
+  const bmi = profile.bmi != null ? String(profile.bmi) : (profile.height > 0 ? (profile.weight / ((profile.height / 100) ** 2)).toFixed(1) : '0');
 
   const bmr = profile.weight > 0 && profile.height > 0 && profile.age > 0
     ? (profile.age < 40
@@ -514,16 +538,21 @@ export function Profile() {
           </div>
         </DSMCard>
 
-        {/* Body metrics + BMI bar */}
+        {/* Body metrics + BMI bar + GMON fields */}
         <DSMCard>
-          <DSMSectionTitle icon={Activity} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.bodyMetrics')} className="mb-3" />
+          <div className="flex items-center gap-2 mb-3">
+            <DSMSectionTitle icon={Activity} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.bodyMetrics')} className="mb-0" />
+            {profile.gmonUploadedAt && (
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal" style={{ fontWeight: 500 }}>{t('profile.gmonBadge')}</span>
+            )}
+          </div>
             <div className="space-y-3">
               <InlineEditStat label={t('profile.weight')} value={profile.weight} unit="kg" type="number" prominent onSave={(v) => { const numVal = Number(v); if (numVal > 0) logWeight(numVal); }} />
               <div className="grid grid-cols-2 gap-2">
-                <InlineEditStat label={t('profile.height')} value={profile.height} unit="cm" type="number" onSave={(v) => { const updated = { ...profile, height: Number(v) }; setProfile(updated); saveUserProfile({ height: Number(v) }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+                <InlineEditStat label={t('profile.height')} value={profile.height} unit="cm" type="number" onSave={(v) => { setProfile((p) => ({ ...p, height: Number(v) })); saveUserProfile({ height: Number(v) }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
                 <InlineEditStat label={t('profile.targetWeight')} value={weightGoal.targetKg} unit="kg" type="number" onSave={(v) => { const kg = Number(v); setWeightGoal((g) => ({ ...g, targetKg: kg })); localStorage.setItem('weightGoal', JSON.stringify({ ...weightGoal, targetKg: kg })); }} />
               </div>
-              {/* BMI with color bar */}
+              {/* BMI: from GMON or calculated */}
               <div className="pt-2 border-t border-gray-100 dark:border-[#2a2a2a]">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] text-gray-500 dark:text-gray-400">BMI</span>
@@ -532,6 +561,10 @@ export function Profile() {
                 <BMIBar value={Number(bmi)} t={t} />
                 <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{getBMILabel(Number(bmi), t)}</div>
               </div>
+              <InlineEditStat label={t('profile.bodyFat')} value={profile.bodyFat ?? 0} unit="%" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bodyFat: n })); saveUserProfile({ bodyFat: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+              <InlineEditStat label={t('profile.muscleMass')} value={profile.muscleMass ?? 0} unit="kg" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, muscleMass: n })); saveUserProfile({ muscleMass: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+              <InlineEditStat label={t('profile.metabolicAge')} value={profile.metabolicAge ?? 0} unit={t('profileExtra.yearUnit')} type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, metabolicAge: n })); saveUserProfile({ metabolicAge: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
+              <InlineEditStat label={t('profile.bmr')} value={profile.bmr ?? 0} unit="kcal" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bmr: n })); saveUserProfile({ bmr: n }).then(() => window.dispatchEvent(new Event('profileUpdated'))); }} />
             </div>
         </DSMCard>
 

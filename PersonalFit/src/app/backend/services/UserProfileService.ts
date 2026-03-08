@@ -51,6 +51,31 @@ export interface StoredUserProfile {
   macroProteinPct?: number;
   macroCarbsPct?: number;
   macroFatPct?: number;
+  /** From GMON / body composition */
+  bodyFat?: number;
+  muscleMass?: number;
+  visceralFat?: number;
+  boneMass?: number;
+  waterPercent?: number;
+  bmi?: number;
+  metabolicAge?: number;
+  bmr?: number;
+  /** ISO date of last GMON upload (for "GMON" badge) */
+  gmonUploadedAt?: string;
+}
+
+/** Parsed GMON/body composition from API */
+export interface GmonParsedData {
+  weight_kg: number | null;
+  height_cm: number | null;
+  body_fat_percent: number | null;
+  muscle_mass_kg: number | null;
+  visceral_fat: number | null;
+  bone_mass_kg: number | null;
+  water_percent: number | null;
+  bmi: number | null;
+  metabolic_age: number | null;
+  basal_metabolic_rate: number | null;
 }
 
 const PROFILE_ID = 'current';
@@ -139,6 +164,40 @@ export async function saveUserProfile(partial: Partial<StoredUserProfile>): Prom
     // ignore localStorage issues
   }
 
+  return updated;
+}
+
+/**
+ * Merge GMON/body composition parsed data into profile.
+ * Non-null values overwrite; sets gmonUploadedAt; updates water goal when weight changes.
+ */
+export async function updateFromGmon(data: GmonParsedData): Promise<StoredUserProfile> {
+  const current = await getUserProfile();
+  const partial: Partial<StoredUserProfile> = {
+    gmonUploadedAt: new Date().toISOString(),
+  };
+  if (data.weight_kg != null && data.weight_kg > 0) {
+    partial.weight = data.weight_kg;
+    partial.waterGoalMl = Math.round(data.weight_kg * 35);
+  }
+  if (data.height_cm != null && data.height_cm > 0) partial.height = data.height_cm;
+  if (data.body_fat_percent != null) partial.bodyFat = data.body_fat_percent;
+  if (data.muscle_mass_kg != null) partial.muscleMass = data.muscle_mass_kg;
+  if (data.visceral_fat != null) partial.visceralFat = data.visceral_fat;
+  if (data.bone_mass_kg != null) partial.boneMass = data.bone_mass_kg;
+  if (data.water_percent != null) partial.waterPercent = data.water_percent;
+  if (data.bmi != null) partial.bmi = data.bmi;
+  if (data.metabolic_age != null) partial.metabolicAge = data.metabolic_age;
+  if (data.basal_metabolic_rate != null) partial.bmr = data.basal_metabolic_rate;
+
+  const updated = await saveUserProfile({ ...current, ...partial });
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new Event('profileUpdated'));
+    } catch {
+      // ignore
+    }
+  }
   return updated;
 }
 
