@@ -185,6 +185,41 @@ export async function deletePlan(planId: string): Promise<void> {
   notifyDBChange({ store: 'nutrition_plans', action: 'delete', key: planId });
 }
 
+/**
+ * Clear all meal data (days, meals, meal items, shopping list) for an
+ * existing plan, but keep the plan entity itself.
+ */
+export async function clearPlan(planId: string): Promise<void> {
+  const db = await getDB();
+
+  // Delete related meal items
+  const meals = await db.getAllFromIndex<MealEntity>('meals', 'by-plan', planId);
+  for (const meal of meals) {
+    const items = await db.getAllFromIndex<MealItemEntity>('meal_items', 'by-meal', meal.id);
+    for (const item of items) {
+      await db.delete('meal_items', item.id);
+    }
+    await db.delete('meals', meal.id);
+  }
+
+  // Delete meal days
+  const days = await db.getAllFromIndex<MealDayEntity>('meal_days', 'by-plan', planId);
+  for (const day of days) {
+    await db.delete('meal_days', day.id);
+  }
+
+  // Delete shopping list items for this plan
+  const shoppingItems = await db.getAllFromIndex('shopping_list', 'by-plan', planId);
+  for (const item of shoppingItems) {
+    await db.delete('shopping_list', (item as any).id);
+  }
+
+  notifyDBChange({ store: 'meal_days', action: 'delete', key: planId });
+  notifyDBChange({ store: 'meals', action: 'delete', key: planId });
+  notifyDBChange({ store: 'meal_items', action: 'delete', key: planId });
+  notifyDBChange({ store: 'shopping_list', action: 'delete', key: planId });
+}
+
 // ═══════════════════════════════════════════════════════════════
 // MEAL DAY OPERATIONS
 // ═══════════════════════════════════════════════════════════════
@@ -676,6 +711,239 @@ export async function importFromAIParse(
   notifyDBChange({ store: 'meal_days', action: 'put' });
 
   return { ...plan, stats };
+}
+
+/**
+ * Append new days and their meals/items to an existing plan. Foods are
+ * resolved/created in the same way as in importFromAIParse, but no new
+ * NutritionPlan entity is created.
+ */
+async function appendToPlanInternal(
+  plan: NutritionPlanEntity,
+  parsed: AIParsedNutritionPlan
+): Promise<ImportStats> {
+  const db = await getDB();
+  const stats: ImportStats = {
+    totalIngredients: 0,
+    matchedExisting: 0,
+    createdNew: 0,
+    skippedEmpty: 0,
+    totalMeals: 0,
+    totalDays: 0,
+    totalMealItems: 0,
+    errors: [],
+  };
+
+  // Existing day keys to avoid duplicates (week-day combination)
+  const existingDays = await getMealDaysForPlan(plan.id);
+  const existingDayKeys = new Set(existingDays.map(d => `${d.week}-${d.day}`));
+
+  const foodIdCache = new Map<string, string>();
+  const foodDataCache = new Map<string, {
+    calories_per_100g: number;
+    protein_per_100g: number;
+    carbs_per_100g: number;
+    fat_per_100g: number;
+  }>();
+
+  // Seed caches from existing foods used by this plan to avoid re-resolving.
+  const planMeals = await getMealsForPlan(plan.id);
+  for (const meal of planMeals) {
+    const items = await db.getAllFromIndex<MealItemEntity>('meal_items', 'by-meal', meal.id);
+    for (const item of items) {
+      const key = String(item.food_name || '').toLowerCase();
+      if (!key || foodIdCache.has(key)) continue;
+      const food = await db.get<any>('foods', item.food_id);
+      if (!food) continue;
+      foodIdCache.set(key, item.food_id);
+      foodDataCache.set(key, {
+        calories_per_100g: food.calories_per_100g,
+        protein_per_100g: food.protein_per_100g,
+        carbs_per_100g: food.carbs_per_100g,
+        fat_per_100g: food.fat_per_100g,
+      });
+    }
+  }
+
+  const mealsToRecalc = new Set<string>();
+
+  for (const weekDays of parsed.weeks) {
+    for (const dayData of weekDays) {
+      const dayKey = `${dayData.week}-${dayData.day}`;
+      if (existingDayKeys.has(dayKey)) {
+        continue;
+      }
+
+      const mealDay = await createMealDay({
+        nutrition_plan_id: plan.id,
+        week: dayData.week,
+        day: dayData.day,
+        day_label: dayData.day_label,
+        is_training_day: dayData.is_training_day,
+      });
+      stats.totalDays++;
+
+      for (let mealIdx = 0; mealIdx < dayData.meals.length; mealIdx++) {
+        const mealData = dayData.meals[mealIdx];
+        const meal = await createMeal({
+          meal_day_id: mealDay.id,
+          nutrition_plan_id: plan.id,
+          meal_type: mealData.meal_type,
+          name: mealData.name,
+          description: '',
+          is_primary: true,
+          sort_order: mealIdx,
+        });
+        stats.totalMeals++;
+        mealsToRecalc.add(meal.id);
+
+        for (const ingData of mealData.ingredients) {
+          const atomicNames = getAtomicIngredientNames(ingData.name);
+          if (atomicNames.length === 0) continue;
+
+          const perQuantity =
+            atomicNames.length > 1 && ingData.quantity_grams > 0
+              ? Math.max(Math.round(ingData.quantity_grams / atomicNames.length), 1)
+              : ingData.quantity_grams;
+
+          for (const displayName of atomicNames) {
+            const key = displayName.toLowerCase();
+            let foodId = foodIdCache.get(key);
+            let foodData = foodDataCache.get(key);
+
+            if (!foodId || !foodData) {
+              stats.totalIngredients++;
+
+              const searchResults = await FoodCatalogService.searchFoods(displayName);
+              if (searchResults.length > 0) {
+                const found = searchResults[0];
+                foodId = found.id;
+                foodData = {
+                  calories_per_100g: found.calories_per_100g,
+                  protein_per_100g: found.protein_per_100g,
+                  carbs_per_100g: found.carbs_per_100g,
+                  fat_per_100g: found.fat_per_100g,
+                };
+                foodIdCache.set(key, foodId);
+                foodDataCache.set(key, foodData);
+                stats.matchedExisting++;
+              } else {
+                const cal = ingData.estimated_calories_per_100g ?? 100;
+                const pro = ingData.estimated_protein_per_100g ?? 5;
+                const carb = ingData.estimated_carbs_per_100g ?? 15;
+                const fat = ingData.estimated_fat_per_100g ?? 3;
+                const semanticCat = FoodCatalogService.inferSemanticCategoryFromName(displayName);
+                const cat = FoodCatalogService.semanticCategoryToFoodCategory(semanticCat);
+
+                try {
+                  const newFood = await FoodCatalogService.createFood({
+                    name: displayName,
+                    description: `AI parser által kinyert összetevő (merge)`,
+                    category: cat,
+                    calories_per_100g: cal,
+                    protein_per_100g: pro,
+                    carbs_per_100g: carb,
+                    fat_per_100g: fat,
+                    source: 'ai_generated',
+                  });
+                  foodId = newFood.id;
+                  foodData = {
+                    calories_per_100g: cal,
+                    protein_per_100g: pro,
+                    carbs_per_100g: carb,
+                    fat_per_100g: fat,
+                  };
+                  foodIdCache.set(key, foodId);
+                  foodDataCache.set(key, foodData);
+                  stats.createdNew++;
+                  console.log(`[NutritionPlanSvc] Created food (merge): "${displayName}" (${cal} kcal, ${pro}g P, ${carb}g C, ${fat}g F)`);
+                } catch (err: any) {
+                  if (err?.message?.includes('Duplikált')) {
+                    const retrySearch = await FoodCatalogService.searchFoods(displayName);
+                    if (retrySearch.length > 0) {
+                      const found = retrySearch[0];
+                      foodId = found.id;
+                      foodData = {
+                        calories_per_100g: found.calories_per_100g,
+                        protein_per_100g: found.protein_per_100g,
+                        carbs_per_100g: found.carbs_per_100g,
+                        fat_per_100g: found.fat_per_100g,
+                      };
+                      foodIdCache.set(key, foodId);
+                      foodDataCache.set(key, foodData);
+                      stats.matchedExisting++;
+                    }
+                  } else {
+                    stats.errors.push(`Hiba "${displayName}" létrehozásakor (merge): ${err?.message || err}`);
+                    console.warn(`[NutritionPlanSvc] Error creating food (merge) "${displayName}":`, err);
+                  }
+                }
+              }
+            }
+
+            if (!foodId || !foodData) {
+              stats.skippedEmpty++;
+              continue;
+            }
+
+            await addMealItemBare({
+              meal_id: meal.id,
+              food_id: foodId,
+              food_name: displayName,
+              quantity_grams: perQuantity,
+              unit: ingData.unit,
+              calories_per_100g: foodData.calories_per_100g,
+              protein_per_100g: foodData.protein_per_100g,
+              carbs_per_100g: foodData.carbs_per_100g,
+              fat_per_100g: foodData.fat_per_100g,
+            });
+            stats.totalMealItems++;
+          }
+        }
+      }
+    }
+  }
+
+  for (const mealId of mealsToRecalc) {
+    await recalculateMealTotals(mealId);
+  }
+
+  notifyDBChange({ store: 'foods', action: 'put' });
+  notifyDBChange({ store: 'meals', action: 'put' });
+  notifyDBChange({ store: 'meal_items', action: 'put' });
+  notifyDBChange({ store: 'meal_days', action: 'put' });
+
+  return stats;
+}
+
+/**
+ * Import into an existing plan with merge / overwrite semantics.
+ */
+export async function importIntoExistingPlan(
+  planId: string,
+  parsed: AIParsedNutritionPlan,
+  mode: 'merge' | 'overwrite',
+  label: string
+): Promise<NutritionPlanEntity & { stats: ImportStats }> {
+  const db = await getDB();
+  const existing = await db.get<NutritionPlanEntity>('nutrition_plans', planId);
+  if (!existing) {
+    return importFromAIParse(parsed, label);
+  }
+
+  if (mode === 'overwrite') {
+    await clearPlan(planId);
+    const normalized = normalizePlanToFourWeeks(parsed);
+    const stats = await appendToPlanInternal(existing, normalized);
+    const updated = await db.get<NutritionPlanEntity>('nutrition_plans', planId) ?? existing;
+    return { ...updated, stats };
+  }
+
+  // merge mode: append only new days/foods
+  const normalized = normalizePlanToFourWeeks(parsed);
+  const stats = await appendToPlanInternal(existing, normalized);
+  const updated = await db.get<NutritionPlanEntity>('nutrition_plans', planId) ?? existing;
+  return { ...updated, stats };
 }
 
 export interface ImportStats {

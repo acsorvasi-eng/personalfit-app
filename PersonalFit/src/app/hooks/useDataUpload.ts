@@ -46,7 +46,7 @@ import * as FoodCatalogSvc from '../backend/services/FoodCatalogService';
 import { parseBaseIngredients, normalizeIngredientName, isSingleBaseIngredientName } from '../backend/services/FoodCatalogService';
 import { getDB, nowISO } from '../backend/db';
 // REMOVED: import { mealPlan } from '../data/mealData'; — no more hardcoded demo data
-import type { MealType } from '../backend/models';
+import type { MealType, NutritionPlanEntity } from '../backend/models';
 import { stagePlan, setStagingActive } from './useStagingManager';
 import { getLocale, useLanguage } from '../contexts/LanguageContext';
 import { getSetting, setSetting } from '../backend/services/SettingsService';
@@ -430,7 +430,8 @@ export function useDataUpload() {
    */
   const processExtractedData = useCallback(async (
     parsed: AIParsedDocument,
-    sourceLabel: string
+    sourceLabel: string,
+    mode: 'merge' | 'overwrite' = 'overwrite',
   ) => {
     try {
       const allWarnings = [...parsed.warnings];
@@ -454,7 +455,34 @@ export function useDataUpload() {
       if (parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0) {
         // Use real extracted nutrition plan
         setStep('populating_foods', 40);
-        const plan = await NutritionPlanSvc.importFromAIParse(parsed.nutritionPlan, label);
+        const activePlan = await NutritionPlanSvc.getActivePlan();
+        let plan:
+          | (NutritionPlanEntity & { stats: NutritionPlanSvc.ImportStats })
+          | (NutritionPlanEntity & { stats: NutritionPlanSvc.ImportStats });
+
+        if (activePlan && mode === 'merge') {
+          // Append new data into existing active plan
+          const merged = await NutritionPlanSvc.importIntoExistingPlan(
+            activePlan.id,
+            parsed.nutritionPlan,
+            'merge',
+            label,
+          );
+          plan = merged as any;
+        } else if (activePlan && mode === 'overwrite') {
+          // Overwrite data inside existing active plan
+          const overwritten = await NutritionPlanSvc.importIntoExistingPlan(
+            activePlan.id,
+            parsed.nutritionPlan,
+            'overwrite',
+            label,
+          );
+          plan = overwritten as any;
+        } else {
+          const imported = await NutritionPlanSvc.importFromAIParse(parsed.nutritionPlan, label);
+          plan = imported as any;
+        }
+
         planId = plan.id;
         totalWeeks = parsed.nutritionPlan.detected_weeks;
         newFoodsCount = plan.stats.createdNew;
