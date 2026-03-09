@@ -142,19 +142,22 @@ ${cleanedText.substring(0, 3000)}`;
 }
 
 /**
- * STEP 3 helper: Generate a 28-day plan from options using simple rotation logic.
+ * STEP 3 helper: Generate a 28-day plan from options using rotation logic.
+ * Uses:
+ * - breakfast_options
+ * - lunch_protein + lunch_carb_training / lunch_carb_rest
+ * - dinner_options
+ * - post_workout (training days only)
  */
 function generate28DayPlanFromOptions(options: any, mealCount: number): any[] {
-  const trainingDays = [1, 3, 4, 6]; // Mon, Wed, Thu, Sat (1-based dayOfWeek)
+  const trainingDays = [1, 3, 4, 6]; // Hétfő, Szerda, Csütörtök, Szombat (1-based)
 
   const breakfasts = Array.isArray(options?.breakfast_options) ? options.breakfast_options : [];
-  const lunchProteins = Array.isArray(options?.lunch_protein_options) ? options.lunch_protein_options : [];
-  const lunchCarbTraining = Array.isArray(options?.lunch_carb_training_options)
-    ? options.lunch_carb_training_options
-    : [];
-  const lunchCarbRest = Array.isArray(options?.lunch_carb_rest_options) ? options.lunch_carb_rest_options : [];
+  const lunchProteins = Array.isArray(options?.lunch_protein) ? options.lunch_protein : [];
+  const lunchCarbTraining = Array.isArray(options?.lunch_carb_training) ? options.lunch_carb_training : [];
+  const lunchCarbRest = Array.isArray(options?.lunch_carb_rest) ? options.lunch_carb_rest : [];
   const dinners = Array.isArray(options?.dinner_options) ? options.dinner_options : [];
-  const snacks = Array.isArray(options?.snack_options) ? options.snack_options : [];
+  const postWorkout = options?.post_workout || null;
 
   const days: any[] = [];
 
@@ -173,7 +176,7 @@ function generate28DayPlanFromOptions(options: any, mealCount: number): any[] {
       });
     }
 
-    // Lunch protein + carb (if mealCount >= 2 and we have options)
+    // Lunch protein + carb
     if (mealCount >= 2 && lunchProteins.length > 0 && (lunchCarbTraining.length > 0 || lunchCarbRest.length > 0)) {
       const protein = lunchProteins[i % lunchProteins.length] || {};
       const carbSource = isTraining ? lunchCarbTraining : lunchCarbRest;
@@ -191,7 +194,7 @@ function generate28DayPlanFromOptions(options: any, mealCount: number): any[] {
       });
     }
 
-    // Dinner (if mealCount >= 3 and we have options)
+    // Dinner
     if (mealCount >= 3 && dinners.length > 0) {
       const dinner = dinners[i % dinners.length] || {};
       meals.push({
@@ -201,14 +204,13 @@ function generate28DayPlanFromOptions(options: any, mealCount: number): any[] {
       });
     }
 
-    // Snack post-workout (if mealCount >= 4)
+    // Snack — post-workout only on training days
     if (mealCount >= 4 && isTraining) {
-      if (snacks.length > 0) {
-        const snack = snacks[i % snacks.length] || {};
+      if (postWorkout) {
         meals.push({
           name: 'Edzés utáni',
-          items: Array.isArray(snack.items) ? snack.items : ['30g fehérjepor', '1 banán'],
-          kcal: typeof snack.kcal === 'number' ? snack.kcal : 220,
+          items: Array.isArray(postWorkout.items) ? postWorkout.items : ['30g fehérjepor', '1 banán'],
+          kcal: typeof postWorkout.kcal === 'number' ? postWorkout.kcal : 220,
         });
       } else {
         meals.push({
@@ -334,46 +336,59 @@ ${cleanedText.substring(0, 45000)}`;
     };
   }
 
-  // STEP 2B: Options-based engine
-  const optionsPrompt = `You are a nutrition coach. This is an OPTIONS-BASED meal plan with breakfast variants, lunch A/B/C columns, and dinner options.
+  // STEP 2B: Options-based engine (VICTUS-style multi-column PDFs)
+  const optionsPrompt = `You are a nutrition data extractor. This text comes from a multi-column PDF table where columns got merged into single lines.
 
-Extract ALL options into these categories:
+The document structure is:
+- REGGELI section: 4 columns merged → "Reggel-edzés napokon" has 2 sub-columns, "Reggel-pihenő napokon" has 2 sub-columns. Each ✓ item is a separate breakfast option ingredient.
+- EBÉD section: A oszlop = protein sources, B oszlop = edzésnap köretek, C oszlop = pihenőnap köretek
+- VACSORA section: Multiple dinner option columns merged together, each ➢ starts a new option
+- NASSOLÁS section: Snack options
+
+YOUR TASK: Reconstruct the original structure by grouping items that belong together.
+
+For breakfast: Group consecutive ✓ items that form a complete meal (typically 3-5 items). 
+For lunch: Separate A/B/C columns by the labels "A –", "B –", "C –"
+For dinner: Each ➢ item or group of ➢ items is one dinner option
+For snacks: Items after "Nassolás" header
+
+Return this JSON (no markdown):
 {
+  "plan_type": "options",
   "breakfast_options": [
-    {"items": ["60g tk kenyér", "10g vaj", "90g csirkemell sonka", "1 alma"], "kcal": 450},
-    ...all breakfast variants...
+    {"id": 1, "items": ["60g teljes kiőrlésű kenyér", "10g vaj", "90g csirkemell sonka", "1 alma"], "kcal": 420, "day_type": "training"},
+    {"id": 2, "items": ["250g joghurt", "50g zabpehely", "1 kis kanál kakaó", "1 narancs"], "kcal": 380, "day_type": "training"},
+    ...extract ALL breakfast variants...
   ],
-  "lunch_protein_options": [
-    {"name": "Csirkemell", "items": ["220g csirkemell grill"], "kcal": 360},
-    ...all A column options...
+  "lunch_protein": [
+    {"id": 1, "name": "Csirkemell", "items": ["220g csirkemell grill/párolt"], "kcal": 330},
+    {"id": 2, "name": "Csirkecomb", "items": ["180g csirkecomb grill/párolt"], "kcal": 280},
+    ...all A oszlop items...
   ],
-  "lunch_carb_training_options": [
-    {"name": "Főtt krumpli", "items": ["180g főtt krumpli rozmarinnal"], "kcal": 180},
-    ...all B column options (training days)...
+  "lunch_carb_training": [
+    {"id": 1, "name": "Főtt krumpli", "items": ["180g natúr főtt krumpli rozmarinnal"], "kcal": 150},
+    ...all B oszlop items...
   ],
-  "lunch_carb_rest_options": [
-    {"name": "Mangold főzelék", "items": ["200g mangold főzelék"], "kcal": 120},
-    ...all C column options (rest days)...
+  "lunch_carb_rest": [
+    {"id": 1, "name": "Mangold főzelék", "items": ["200g mangold főzelék", "1 ek tökmagolaj"], "kcal": 120},
+    ...all C oszlop items...
   ],
   "dinner_options": [
-    {"items": ["250g zöldség saláta", "90g juhsajt"], "kcal": 380},
-    ...all dinner variants...
+    {"id": 1, "items": ["250g zöldség saláta", "90g juhsajt"], "kcal": 350},
+    {"id": 2, "items": ["300g görög saláta", "csirkemell", "1 ek kendermag"], "kcal": 420},
+    ...all dinner options...
   ],
   "snack_options": [
-    {"items": ["40g dió"], "kcal": 240},
+    {"id": 1, "items": ["40g dió"], "kcal": 240},
+    {"id": 2, "items": ["140g joghurt"], "kcal": 100},
     ...
   ],
-  "ingredients": ["csirkemell", "juhsajt", "brokkoli", ...]
+  "post_workout": {"items": ["30g fehérjepor", "1 banán"], "kcal": 220},
+  "ingredients": ["csirkemell", "joghurt", "tojás", "avokádó", ...]
 }
 
-Rules:
-- Extract EVERY option, do not skip any
-- Training days (edzésnap): Hétfő, Szerda, Csütörtök, Szombat
-- Rest days (pihenőnap): Kedd, Péntek, Vasárnap
-- Output ONLY valid JSON, no markdown
-
 TEXT:
-${cleanedText.substring(0, 45000)}`;
+${cleanedText}`;
 
   const optionsMessage = await client.messages.create({
     model: 'claude-haiku-4-5',
@@ -397,14 +412,15 @@ ${cleanedText.substring(0, 45000)}`;
   const options = JSON.parse(optionsMatch[0]) as {
     ingredients?: string[];
     breakfast_options?: any[];
-    lunch_protein_options?: any[];
-    lunch_carb_training_options?: any[];
-    lunch_carb_rest_options?: any[];
+    lunch_protein?: any[];
+    lunch_carb_training?: any[];
+    lunch_carb_rest?: any[];
     dinner_options?: any[];
     snack_options?: any[];
+    post_workout?: { items?: string[]; kcal?: number };
   };
 
-  // For now, default to 3 meals/day when generating from options.
+  // For now, default to 3 meals/day (Reggeli, Ebéd, Vacsora) + Edzés utáni snack on training days.
   const generatedDays = generate28DayPlanFromOptions(options, 3);
   const ingredients = filterCleanIngredients(Array.isArray(options.ingredients) ? options.ingredients : []);
   const weeks = convert30DayPlanToWeeks(generatedDays);
