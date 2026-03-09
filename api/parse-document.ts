@@ -107,32 +107,53 @@ async function parseDocumentToIngredientsAndPlan(cleanedText: string): Promise<{
   detected_weeks: number;
   detected_days_per_week: number;
 }> {
-  const prompt = `You are a nutrition coach. The input text may be in ANY language (Hungarian, Romanian, English, Chinese, etc). Always extract food names and output the meal plan in HUNGARIAN regardless of input language. Extract TWO outputs from the Hungarian meal plan text below.
+  const prompt = `You are a nutrition data extractor. Parse this Hungarian meal plan PDF text.
 
-OUTPUT 1 — ingredients:
-- Extract EVERY individual food ingredient from the entire text (expected roughly 50–80 unique ingredients for a full 4-week plan).
-- The text may contain multi-column tables; ingredients can appear in ANY column or cell. Scan ALL columns and ALL lines, not just the first column.
-- Return a JSON array of ATOMIC base ingredient names ONLY. No quantities, no units, no descriptions.
-- Names MUST be in Hungarian. If the source uses English names (e.g. "walnut"), translate to the correct Hungarian base ingredient (e.g. "dió").
-- Include meats, fish, vegetables, fruits, dairy, grains, nuts, seeds, legumes, oils, and other real foods. Do NOT skip anything that looks like an ingredient.
-- Each name must be a single base food, max 25 characters.
+The input may be in ANY language. Output MUST be in Hungarian.
 
-GOOD: "tojás", "csirkemell", "lazac", "avokádó", "zab", "túró", "brokkoli", "dió", "banán", "olívaolaj", "kesudió"
-BAD: "3 tojás", "180g lazac", "Protein + egészséges zsír", "Napi összesen", any string with φ ~ } { < > * =
+CRITICAL RULES:
+1. Meal names MUST be: "Reggeli", "Ebéd", "Vacsora", "Edzés utáni" — nothing else
+2. Items MUST be individual ingredients with quantity, e.g: "3 tojás (180g)", "60g tk kenyér", "½ avokádó (70g)"
+3. NEVER merge the meal name into the item string — "EbédSovány protein" is WRONG
+4. Extract ALL 28 days (4 weeks × 7 days)
+5. Each meal must have SEPARATE items array — one ingredient per array element
 
-OUTPUT 2 — plan:
-- A JSON array of exactly 30 days. Each day:
-  - day: 1..30
-  - dayOfWeek: "Hétfő" | "Kedd" | "Szerda" | "Csütörtök" | "Péntek" | "Szombat" | "Vasárnap"
-  - type: "edzés" | "pihenő"
-  - totalKcal: number (MUST NOT exceed ${DAILY_CALORIE_TARGET} — user's daily target)
-  - meals: array of { name: "Reggeli"|"Ebéd"|"Vacsora"|"Edzés utáni", items: string[], kcal: number }
-    - items: strings WITH quantities, e.g. "3 tojás (180g)", "60g tk kenyér", "½ avokádó (70g)", "220g csirkemell"
+Return ONLY this JSON (no markdown, no explanation):
+{
+  "ingredients": ["tojás","csirkemell","lazac",...],
+  "plan": [
+    {
+      "day": 1,
+      "dayOfWeek": "Hétfő",
+      "type": "edzés",
+      "totalKcal": 2150,
+      "meals": [
+        {
+          "name": "Reggeli",
+          "items": ["3 tojás (180g)", "60g tk kenyér", "½ avokádó (70g)"],
+          "kcal": 520
+        },
+        {
+          "name": "Ebéd", 
+          "items": ["220g csirkemell", "180g főtt krumpli", "200g brokkoli"],
+          "kcal": 610
+        },
+        {
+          "name": "Vacsora",
+          "items": ["180g lazac", "250g saláta", "1 ek olivaolaj"],
+          "kcal": 520
+        },
+        {
+          "name": "Edzés utáni",
+          "items": ["30g fehérjepor", "1 banán (120g)"],
+          "kcal": 220
+        }
+      ]
+    }
+  ]
+}
 
-Return ONLY valid JSON in this exact shape (no markdown):
-{"ingredients":["tojás","csirkemell",...],"plan":[{"day":1,"dayOfWeek":"Hétfő","type":"edzés","totalKcal":2000,"meals":[{"name":"Reggeli","items":["3 tojás (180g)","60g tk kenyér"],"kcal":520},...]},...]}
-
-TEXT:
+TEXT TO PARSE:
 ${cleanedText.substring(0, 45000)}`;
 
   const message = await client.messages.create({
