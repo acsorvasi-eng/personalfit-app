@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -72,7 +73,31 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { content, text } = req.body;
+  const { content, text, pdf_base64, meal_count = 3, daily_kcal = DAILY_CALORIE_TARGET } = req.body;
+
+  // If base64 PDF provided → try Gemini first
+  if (pdf_base64) {
+    try {
+      const geminiResult = await parseWithGemini(pdf_base64, meal_count, daily_kcal);
+      console.log(
+        `[parse-document] Gemini engine (${geminiResult.plan_type}) : ${geminiResult.ingredients.length} ingredients, ${geminiResult.weeks.length} weeks`
+      );
+      return res.status(200).json({
+        result: JSON.stringify({
+          ingredients: geminiResult.ingredients,
+          detected_weeks: geminiResult.detected_weeks,
+          detected_days_per_week: geminiResult.detected_days_per_week,
+          weeks: geminiResult.weeks,
+        }),
+        plan_type: geminiResult.plan_type,
+        engine: 'gemini',
+      });
+    } catch (err: any) {
+      console.error('[gemini] failed, falling back to Claude:', err?.message || err);
+      // fall through to Claude-based text engine below
+    }
+  }
+
   const rawText: string = content || text || '';
 
   if (!rawText) {
@@ -96,8 +121,8 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       result: JSON.stringify(result),
       plan_type: payload.plan_type,
+      engine: 'claude',
     });
-
   } catch (error: any) {
     console.error('[parse-document] Error:', error);
     return res.status(500).json({ error: error.message || 'Failed to parse document' });
@@ -234,6 +259,19 @@ function generate28DayPlanFromOptions(options: any, mealCount: number): any[] {
   }
 
   return days;
+}
+
+/**
+ * Helper for Gemini: turn parsed options/weekly structure into a 28-day plan.
+ */
+function generate28DayPlan(parsed: any, mealCount: number, _dailyKcal: number): any[] {
+  // If Gemini already produced a day-by-day plan, trust it.
+  if (Array.isArray(parsed?.plan) && parsed.plan.length > 0) {
+    return parsed.plan;
+  }
+
+  // Otherwise, assume options-based structure and synthesize days from options.
+  return generate28DayPlanFromOptions(parsed, mealCount);
 }
 
 /**
@@ -431,6 +469,90 @@ ${cleanedText}`;
     detected_weeks: weeks.length,
     detected_days_per_week: 7,
     plan_type: 'options',
+  };
+}
+
+/**
+ * Gemini 2.0 Flash parser for base64-encoded PDFs.
+ */
+async function parseWithGemini(
+  pdfBase64: string,
+  mealCount: number,
+  dailyKcal: number
+): Promise<{
+  ingredients: string[];
+  weeks: any[][];
+  detected_weeks: number;
+  detected_days_per_week: number;
+  plan_type: 'weekly' | 'options';
+}> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not set');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+  const prompt = `You are a nutrition expert. Analyze this meal plan PDF and extract ALL food options.
+
+The PDF may have multiple columns (training days / rest days), option lists (A/B/C columns), or a structured weekly plan.
+
+Extract and return this JSON (no markdown, no explanation):
+{
+  "plan_type": "weekly" | "options",
+  "breakfast_options": [
+    {"id": 1, "items": ["60g teljes kiőrlésű kenyér", "10g vaj", "90g csirkemell sonka"], "kcal": 420, "day_type": "any"}
+  ],
+  "lunch_protein": [
+    {"id": 1, "name": "Csirkemell", "items": ["220g csirkemell grillezve"], "kcal": 330}
+  ],
+  "lunch_carb_training": [
+    {"id": 1, "name": "Főtt krumpli", "items": ["180g főtt krumpli rozmarinnal"], "kcal": 150}
+  ],
+  "lunch_carb_rest": [
+    {"id": 1, "name": "Mangold főzelék", "items": ["200g mangold főzelék", "1 ek tökmagolaj"], "kcal": 120}
+  ],
+  "dinner_options": [
+    {"id": 1, "items": ["250g zöldség saláta", "90g juhsajt"], "kcal": 350}
+  ],
+  "snack_options": [
+    {"id": 1, "items": ["40g dió"], "kcal": 240}
+  ],
+  "post_workout": {"items": ["30g fehérjepor", "1 banán"], "kcal": 220},
+  "ingredients": ["csirkemell", "joghurt", "tojás"],
+  "daily_kcal_target": ${dailyKcal},
+  "meal_count": ${mealCount}
+}
+
+Rules:
+- Extract EVERY option, skip nothing
+- Keep food names in Hungarian
+- Training days: Monday, Wednesday, Thursday, Saturday
+- Rest days: Tuesday, Friday, Sunday
+- Kcal values should be realistic estimates`;
+
+  const response = await model.generateContent([
+    { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+    prompt,
+  ]);
+
+  const responseText = response.response.text();
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON in Gemini response');
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  const days = generate28DayPlan(parsed, mealCount, dailyKcal);
+  const weeks = convert30DayPlanToWeeks(days);
+
+  const ingredients = filterCleanIngredients(Array.isArray(parsed.ingredients) ? parsed.ingredients : []);
+
+  return {
+    ingredients,
+    weeks,
+    detected_weeks: weeks.length,
+    detected_days_per_week: 7,
+    plan_type: parsed.plan_type === 'weekly' ? 'weekly' : 'options',
   };
 }
 
