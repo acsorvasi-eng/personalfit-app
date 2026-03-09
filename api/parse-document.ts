@@ -494,15 +494,33 @@ async function parseWithGemini(
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-  const prompt = `You are a nutrition expert. Analyze this meal plan PDF and extract ALL food options.
+  const prompt = `You are a nutrition data extractor. Analyze this meal plan PDF carefully.
 
-The PDF may have multiple columns (training days / rest days), option lists (A/B/C columns), or a structured weekly plan.
+CRITICAL RULES:
+1. ALL food names MUST be in Hungarian (avocado → avokádó, broccoli → brokkoli, walnut → dió)
+2. Extract EVERY single ingredient — expected 80-100 unique items from this document
+3. Each ingredient must be atomic — no compound names like "zucchini-paradicsom", split them
+4. Categories MUST be correct:
+   - Feherje: csirkemell, pulykamell, hal, tojás, túró, sonka, fehérjepor
+   - Tejtermek: joghurt, kefir, sajt, mozzarella, feta, vaj, krémsajt
+   - Zoldseg: brokkoli, spenót, paradicsom, paprika, avokádó, uborka, káposzta, zeller, gomba, cékla, cukkini, mangold, spárga, póréhagyma, karalábé, karfiol, padlizsán, sárgarépa
+   - Gyumolcs: alma, banán, narancs, kivi, eper, málna, gesztenye, áfonya
+   - Komplex_szenhidrat: tk kenyér, zabpehely, rozspehely, quinoa, laska, tortilla, rizs, pirítós
+   - Egeszseges_zsir: olívaolaj, kókuszolaj, tökmagolaj, dió, mandula, kesudió, avokádó
+   - Mag: napraforgómag, tökmag, kendermag, chia, lenmag
+   - Huvelyes: lencse, bab, paszuly, zöldborsó
 
-Extract and return this JSON (no markdown, no explanation):
+Return ONLY this JSON (no markdown, no explanation):
 {
-  "plan_type": "weekly" | "options",
+  "plan_type": "options",
+  "ingredients": [
+    {"name": "csirkemell", "category": "Feherje"},
+    {"name": "avokádó", "category": "Zoldseg"},
+    {"name": "joghurt", "category": "Tejtermek"},
+    ...EVERY ingredient from the PDF, 80-100 items...
+  ],
   "breakfast_options": [
-    {"id": 1, "items": ["60g teljes kiőrlésű kenyér", "10g vaj", "90g csirkemell sonka"], "kcal": 420, "day_type": "any"}
+    {"id": 1, "items": ["60g teljes kiőrlésű kenyér", "10g vaj", "90g csirkemell sonka", "1 alma"], "kcal": 420}
   ],
   "lunch_protein": [
     {"id": 1, "name": "Csirkemell", "items": ["220g csirkemell grillezve"], "kcal": 330}
@@ -519,18 +537,8 @@ Extract and return this JSON (no markdown, no explanation):
   "snack_options": [
     {"id": 1, "items": ["40g dió"], "kcal": 240}
   ],
-  "post_workout": {"items": ["30g fehérjepor", "1 banán"], "kcal": 220},
-  "ingredients": ["csirkemell", "joghurt", "tojás"],
-  "daily_kcal_target": ${dailyKcal},
-  "meal_count": ${mealCount}
-}
-
-Rules:
-- Extract EVERY option, skip nothing
-- Keep food names in Hungarian
-- Training days: Monday, Wednesday, Thursday, Saturday
-- Rest days: Tuesday, Friday, Sunday
-- Kcal values should be realistic estimates`;
+  "post_workout": {"items": ["30g fehérjepor", "1 banán"], "kcal": 220}
+}`;
 
   const response = await model.generateContent([
     { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
@@ -545,7 +553,11 @@ Rules:
   const days = generate28DayPlan(parsed, mealCount, dailyKcal);
   const weeks = convert30DayPlanToWeeks(days);
 
-  const ingredients = filterCleanIngredients(Array.isArray(parsed.ingredients) ? parsed.ingredients : []);
+  const rawIngredientObjects = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+  const ingredientNames = rawIngredientObjects
+    .map((ing: any) => (ing && typeof ing.name === 'string' ? ing.name : ''))
+    .filter(Boolean);
+  const ingredients = filterCleanIngredients(ingredientNames);
 
   return {
     ingredients,
