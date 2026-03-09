@@ -3,6 +3,11 @@
   "outputDirectory": "PersonalFit/dist",
   "installCommand": "cd PersonalFit && npm install",
   "framework": null,
+  "functions": {
+    "api/*.ts": {
+      "cwd": "PersonalFit"
+    }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
