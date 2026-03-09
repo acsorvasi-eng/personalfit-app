@@ -86,6 +86,15 @@ export const STEP_LABELS: Record<UploadStep, string> = {
   error: 'Hiba történt',
 };
 
+async function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(String(e.target?.result ?? ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export interface UploadState {
   step: UploadStep;
   progress: number; // 0-100
@@ -264,9 +273,75 @@ export function useDataUpload() {
 
       try {
         if (isPdf) {
-          // PDF: extract text with pdfjs, then try LLM first (if key/proxy), else regex parser
-          const rawText = await extractTextFromPDF(file);
-          parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
+          // PDF: prefer Gemini native PDF parser via base64, then fallback to Claude/regex
+          const [dataUrl, rawText] = await Promise.all([
+            readFileAsDataURL(file),
+            extractTextFromPDF(file),
+          ]);
+
+          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+          if (base64) {
+            try {
+              const resp = await fetch('/api/parse-document', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  pdf_base64: base64,
+                  // For now, fixed 3 meals/day + reasonable kcal target
+                  meal_count: 3,
+                  daily_kcal: 2000,
+                }),
+              });
+
+              if (!resp.ok) {
+                const errData = await resp.json().catch(() => ({}));
+                throw new Error(errData.error || `Gemini parser error: ${resp.status}`);
+              }
+
+              const data = await resp.json();
+              if (!data.result) {
+                throw new Error('Üres válasz az AI PDF parser-től');
+              }
+
+              const plan = JSON.parse(data.result);
+              const weeks = Array.isArray(plan.weeks) ? plan.weeks : [];
+              const nutritionPlan = {
+                weeks,
+                detected_weeks: plan.detected_weeks ?? weeks.length,
+                detected_days_per_week: plan.detected_days_per_week ?? (Array.isArray(weeks[0]) ? weeks[0].length : 7),
+              };
+
+              parsed = {
+                userProfile: {
+                  name: undefined,
+                  age: undefined,
+                  weight: undefined,
+                  height: undefined,
+                  bmi: undefined,
+                  gender: undefined,
+                  blood_pressure: undefined,
+                  activity_level: undefined,
+                  goal: undefined,
+                  allergies: [],
+                  dietary_preferences: [],
+                  calorie_target: plan.daily_kcal_target ?? undefined,
+                },
+                nutritionPlan,
+                measurements: [],
+                trainingDays: [],
+                warnings: [],
+                confidence: typeof plan.confidence === 'number' ? plan.confidence : 0.7,
+                rawText,
+              } as AIParsedDocument;
+            } catch (geminiError) {
+              console.warn('[Upload] Gemini PDF parser failed, falling back to Claude/regex:', geminiError);
+              parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
+            }
+          } else {
+            const rawText = await extractTextFromPDF(file);
+            parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
+          }
         } else {
           // Text/Word: read raw text, try LLM first then regex
           const rawText = await file.text();
