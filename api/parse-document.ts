@@ -139,9 +139,17 @@ ${cleanedText.substring(0, 45000)}`;
     model: 'claude-haiku-4-5',
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
+    // Ask Anthropic to return strict JSON to avoid SyntaxError in JSON.parse
+    response_format: { type: 'json' },
   });
 
-  const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+  const firstBlock = message.content[0];
+  const responseText =
+    firstBlock && 'text' in firstBlock
+      ? (firstBlock as any).text
+      : typeof (firstBlock as any)?.json === 'string'
+        ? (firstBlock as any).json
+        : JSON.stringify(firstBlock);
   const jsonMatch = responseText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error('No JSON object in LLM response');
