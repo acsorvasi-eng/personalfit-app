@@ -107,7 +107,7 @@ async function parseDocumentToIngredientsAndPlan(cleanedText: string): Promise<{
   detected_weeks: number;
   detected_days_per_week: number;
 }> {
-  const prompt = `You are a nutrition coach. Extract TWO outputs from the Hungarian meal plan text below.
+  const prompt = `You are a nutrition coach. The input text may be in ANY language (Hungarian, Romanian, English, Chinese, etc). Always extract food names and output the meal plan in HUNGARIAN regardless of input language. Extract TWO outputs from the Hungarian meal plan text below.
 
 OUTPUT 1 — ingredients:
 - Extract EVERY individual food ingredient from the entire text (expected roughly 50–80 unique ingredients for a full 4-week plan).
@@ -137,10 +137,8 @@ ${cleanedText.substring(0, 45000)}`;
 
   const message = await client.messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 8192,
+    max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
-    // Ask Anthropic to return strict JSON to avoid SyntaxError in JSON.parse
-    response_format: { type: 'json' },
   });
 
   const firstBlock = message.content[0];
