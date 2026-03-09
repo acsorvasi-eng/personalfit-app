@@ -19,7 +19,7 @@
  *   - Clean processing gate UX
  */
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, FileText, Image, X, ChevronDown,
@@ -33,6 +33,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { MergeConflictDialog } from './MergeConflictDialog';
 import { MealCountSelector } from './MealCountSelector';
 import * as NutritionPlanService from '../backend/services/NutritionPlanService';
+import * as FoodCatalogService from '../backend/services/FoodCatalogService';
+import { showToast } from '../shared/components/Toast';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -97,7 +99,8 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [showMealCount, setShowMealCount] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [mergeStats, setMergeStats] = useState<{ existingCount: number; newItems: string[] } | null>(null);
+  const [mergeStats, setMergeStats] = useState<{ foods: number; days: number; meals: number; newItems: string[] } | null>(null);
+  const [lastUploadMode, setLastUploadMode] = useState<'merge' | 'overwrite' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const upload = useDataUpload();
@@ -108,6 +111,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
   const startUpload = useCallback(async (file: File, modeOverride: 'merge' | 'overwrite') => {
     setSelectedFile(file);
     setMode('processing');
+    setLastUploadMode(modeOverride);
 
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate([10, 20]);
@@ -131,8 +135,23 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     const activePlan = await NutritionPlanService.getActivePlan();
 
     if (activePlan) {
-      const existingCount = 0;
-      setMergeStats({ existingCount, newItems: [] });
+      try {
+        const [days, meals, foodCount] = await Promise.all([
+          NutritionPlanService.getMealDaysForPlan(activePlan.id),
+          NutritionPlanService.getMealsForPlan(activePlan.id),
+          FoodCatalogService.getFoodCount(),
+        ]);
+
+        setMergeStats({
+          foods: foodCount,
+          days: days.length,
+          meals: meals.length,
+          newItems: [],
+        });
+      } catch (err) {
+        console.warn('[DataUploadSheet] Failed to load merge stats for active plan', err);
+        setMergeStats(null);
+      }
       setPendingFile(file);
       setShowMergeDialog(true);
     } else {
@@ -190,6 +209,20 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     setMode('choose');
     setSelectedFile(null);
   }, [upload]);
+
+  // ─── Toast for merge mode when new foods were added ─────────────
+  useEffect(() => {
+    if (
+      lastUploadMode === 'merge' &&
+      upload.step === 'complete' &&
+      upload.result &&
+      upload.result.newFoods > 0
+    ) {
+      const count = upload.result.newFoods;
+      showToast(`${count} új étel hozzáadva a meglévő tervhez`);
+      setLastUploadMode(null);
+    }
+  }, [lastUploadMode, upload.step, upload.result]);
 
   // ─── Auto-advance to result when complete ────────────────
   if (upload.step === 'complete' && mode === 'processing') {
@@ -344,11 +377,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
           {showMergeDialog && (
             <MergeConflictDialog
               isOpen={showMergeDialog}
-              current={
-                mergeStats
-                  ? { foods: mergeStats.existingCount, days: 0, meals: 0 }
-                  : null
-              }
+              current={mergeStats}
               next={null}
               newIngredients={mergeStats?.newItems || []}
               onOverwrite={() => {
