@@ -234,10 +234,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!onboardingCompleted) return '/onboarding';
     if (!user) return '/login';
     if (!termsAccepted) return '/terms';
-    if (!hasPlanSetup) return '/plan-setup';
     if (!hasCompletedFullFlow) setHasCompletedFullFlow(true);
     return '/';
-  }, [hasSeenSplash, onboardingCompleted, user, termsAccepted, hasPlanSetup, hasCompletedFullFlow, appFirstUsageDate, setHasCompletedFullFlow]);
+  }, [hasSeenSplash, onboardingCompleted, user, termsAccepted, hasCompletedFullFlow, appFirstUsageDate, setHasCompletedFullFlow]);
 
   return (
     <AuthContext.Provider
