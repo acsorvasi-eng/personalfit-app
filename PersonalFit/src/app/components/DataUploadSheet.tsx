@@ -31,7 +31,7 @@ import { useDataUpload, STEP_LABELS, type UploadStep } from '../hooks/useDataUpl
 import { DSMButton } from './dsm';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MergeConflictDialog } from './MergeConflictDialog';
-import { MealCountSelector } from './MealCountSelector';
+import { MealIntervals } from '../features/menu/components/MealIntervals';
 import * as NutritionPlanService from '../backend/services/NutritionPlanService';
 import * as FoodCatalogService from '../backend/services/FoodCatalogService';
 import { showToast } from '../shared/components/Toast';
@@ -402,11 +402,9 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
           )}
 
           {showMealCount && (
-            <MealCountSelector
-              isOpen={showMealCount}
-              onSelect={(count) => {
+            <MealIntervals
+              onSave={() => {
                 setShowMealCount(false);
-                // TODO: save meal count to profile / settings
               }}
               onClose={() => setShowMealCount(false)}
             />
