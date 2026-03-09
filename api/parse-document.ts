@@ -492,9 +492,13 @@ async function parseWithGemini(
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    generationConfig: { maxOutputTokens: 8192 },
+  });
 
-  const prompt = `You are a nutrition data extractor. Analyze this meal plan PDF carefully.
+  // Call 2 – structured meal options / plan
+  const planPrompt = `You are a nutrition data extractor. Analyze this meal plan PDF carefully.
 
 CRITICAL RULES:
 1. ALL food names MUST be in Hungarian (avocado → avokádó, broccoli → brokkoli, walnut → dió)
@@ -540,9 +544,48 @@ Return ONLY this JSON (no markdown, no explanation):
   "post_workout": {"items": ["30g fehérjepor", "1 banán"], "kcal": 220}
 }`;
 
+  // Call 1 – focused ingredient extraction (maximal coverage, 80–100 items)
+  const ingredientPrompt = `You are a food ingredient extractor. List EVERY single food ingredient from this meal plan PDF.
+
+Rules:
+- Output ONLY a JSON array of objects: [{"name": "csirkemell", "category": "Feherje"}, ...]
+- ALL names in Hungarian
+- Include EVERYTHING: meats, fish, eggs, dairy, vegetables, fruits, grains, nuts, seeds, oils, spices, condiments
+- Atomic ingredients only (no compound names)
+- Expected count: 80-100 items
+- Categories: Feherje, Tejtermek, Zoldseg, Gyumolcs, Komplex_szenhidrat, Egeszseges_zsir, Mag, Huvelyes
+
+From this PDF extract ALL of these and more:
+csirkemell, pulykamell, csirkecomb, hal, tojás, bacon, sonka, tehéntúró, joghurt, kefir, mozzarella, feta, juhsajt, krémsajt, telemia, vaj, brokkoli, spenót, paradicsom, paprika, avokádó, uborka, káposzta, zeller, gomba, cékla, cukkini, mangold, spárga, póréhagyma, karalábé, karfiol, padlizsán, sárgarépa, saláta, olajbogyó, alma, banán, narancs, kivi, eper, málna, gesztenye, áfonya, tk kenyér, zabpehely, rozspehely, quinoa, laska, tortilla, rizs, olívaolaj, kókuszolaj, tökmagolaj, dió, mandula, kesudió, napraforgómag, tökmag, kendermag, chia, mogyoróvaj, fehérjepor, kakaó, fahéj, citromlé, zakuszka
+
+Return ONLY the JSON array, no other text.`;
+
+  // First: try to get a maximally complete ingredient list
+  let ingredientNames: string[] = [];
+  try {
+    const ingredientResp = await model.generateContent([
+      { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+      ingredientPrompt,
+    ]);
+    const ingredientText = ingredientResp.response.text();
+    const ingredientJsonMatch = ingredientText.match(/\[[\s\S]*\]/);
+    if (!ingredientJsonMatch) {
+      throw new Error('No JSON array in Gemini ingredient response');
+    }
+    const ingredientParsed = JSON.parse(ingredientJsonMatch[0]);
+    if (Array.isArray(ingredientParsed)) {
+      ingredientNames = ingredientParsed
+        .map((ing: any) => (ing && typeof ing.name === 'string' ? ing.name : ''))
+        .filter(Boolean);
+    }
+  } catch (err) {
+    console.warn('[parse-document] Gemini ingredient extraction failed, will fall back to plan ingredients:', err);
+  }
+
+  // Second: get structured options / plan
   const response = await model.generateContent([
     { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
-    prompt,
+    planPrompt,
   ]);
 
   const responseText = response.response.text();
@@ -553,10 +596,13 @@ Return ONLY this JSON (no markdown, no explanation):
   const days = generate28DayPlan(parsed, mealCount, dailyKcal);
   const weeks = convert30DayPlanToWeeks(days);
 
-  const rawIngredientObjects = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
-  const ingredientNames = rawIngredientObjects
-    .map((ing: any) => (ing && typeof ing.name === 'string' ? ing.name : ''))
-    .filter(Boolean);
+  // If the focused ingredient call failed or returned nothing, fall back to any ingredients from the plan JSON
+  if (ingredientNames.length === 0 && Array.isArray(parsed.ingredients)) {
+    ingredientNames = (parsed.ingredients as any[])
+      .map((ing: any) => (ing && typeof ing.name === 'string' ? ing.name : ''))
+      .filter(Boolean);
+  }
+
   const ingredients = filterCleanIngredients(ingredientNames);
 
   return {
