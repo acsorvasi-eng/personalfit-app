@@ -30,6 +30,9 @@ import {
 import { useDataUpload, STEP_LABELS, type UploadStep } from '../hooks/useDataUpload';
 import { DSMButton } from './dsm';
 import { useLanguage } from '../contexts/LanguageContext';
+import { MergeConflictDialog } from './MergeConflictDialog';
+import { MealCountSelector } from './MealCountSelector';
+import * as NutritionPlanService from '../backend/services/NutritionPlanService';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -91,6 +94,10 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
   const [strategy, setStrategy] = useState<'foodsOnly' | 'full'>('full');
   const [textInput, setTextInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [showMealCount, setShowMealCount] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [mergeStats, setMergeStats] = useState<{ existingCount: number; newItems: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const upload = useDataUpload();
@@ -98,7 +105,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
 
   // ─── Handlers ──────────────────────────────────────────────
 
-  const handleFileSelect = useCallback(async (file: File) => {
+  const startUpload = useCallback(async (file: File, modeOverride: 'merge' | 'overwrite') => {
     setSelectedFile(file);
     setMode('processing');
 
@@ -110,9 +117,28 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
       // @ts-ignore runtime check above
       await upload.uploadFileFoodsOnly(file);
     } else {
-      await upload.uploadFile(file);
+      // Teljes terv import a megadott móddal
+      await upload.uploadFile(file, modeOverride);
     }
+
+    setShowMealCount(true);
   }, [upload, strategy]);
+
+  const handleFileSelect = useCallback(async (file: File) => {
+    setSelectedFile(file);
+
+    // Ellenőrizzük, hogy van-e már aktív étrendterv
+    const activePlan = await NutritionPlanService.getActivePlan();
+
+    if (activePlan) {
+      const existingCount = 0;
+      setMergeStats({ existingCount, newItems: [] });
+      setPendingFile(file);
+      setShowMergeDialog(true);
+    } else {
+      await startUpload(file, 'overwrite');
+    }
+  }, [startUpload]);
 
   const handleTextSubmit = useCallback(async () => {
     if (!textInput.trim()) return;
@@ -314,6 +340,48 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
               className="hidden"
             />
           </motion.div>
+
+          {showMergeDialog && (
+            <MergeConflictDialog
+              isOpen={showMergeDialog}
+              current={
+                mergeStats
+                  ? { foods: mergeStats.existingCount, days: 0, meals: 0 }
+                  : null
+              }
+              next={null}
+              newIngredients={mergeStats?.newItems || []}
+              onOverwrite={() => {
+                setShowMergeDialog(false);
+                if (pendingFile) {
+                  startUpload(pendingFile, 'overwrite');
+                  setPendingFile(null);
+                }
+              }}
+              onMerge={() => {
+                setShowMergeDialog(false);
+                if (pendingFile) {
+                  startUpload(pendingFile, 'merge');
+                  setPendingFile(null);
+                }
+              }}
+              onCancel={() => {
+                setShowMergeDialog(false);
+                setPendingFile(null);
+              }}
+            />
+          )}
+
+          {showMealCount && (
+            <MealCountSelector
+              isOpen={showMealCount}
+              onSelect={(count) => {
+                setShowMealCount(false);
+                // TODO: save meal count to profile / settings
+              }}
+              onClose={() => setShowMealCount(false)}
+            />
+          )}
         </>
       )}
     </AnimatePresence>

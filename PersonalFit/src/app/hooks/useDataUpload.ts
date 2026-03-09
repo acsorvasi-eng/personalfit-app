@@ -250,8 +250,10 @@ export function useDataUpload() {
    *
    * For PDFs: use AIParser.parseUploadedFile (pdfjs-dist) to get clean text.
    * For non-PDF files: read raw text and use unified regex-based parser.
+   *
+   * The optional `mode` controls how new data is merged into an existing plan.
    */
-  const uploadFile = useCallback(async (file: File) => {
+  const uploadFile = useCallback(async (file: File, mode: 'merge' | 'overwrite' = 'overwrite') => {
     try {
       setState({
         step: 'reading_file',
@@ -377,7 +379,7 @@ export function useDataUpload() {
       }
 
       // FULL MODE: teljes terv import
-      return processExtractedData(parsed, file.name);
+      return processExtractedData(parsed, file.name, mode);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
       setState(prev => ({ ...prev, step: 'error', error: message }));
