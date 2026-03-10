@@ -194,6 +194,19 @@ function CalendarStrip({
     );
   }, [language, today]);
 
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const selectedRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    }
+  }, [selectedDate]);
+
   return (
     <div className="bg-white/80 dark:bg-card/80 backdrop-blur-sm border-b border-gray-100/60 dark:border-[#2a2a2a]/60" role="region" aria-label={t("calendar.calendarView")}>
       {/* Month nav — subtle & elegant */}
@@ -250,7 +263,12 @@ function CalendarStrip({
       </div>
 
       {/* Compact 7-day strip */}
-      <div className="flex items-center gap-2 px-3 pb-3 overflow-x-auto scroll-smooth" role="listbox" aria-label={t("calendar.weekDays")}>
+      <div
+        ref={listRef}
+        className="flex items-center gap-2 px-3 pb-3 overflow-x-auto scroll-smooth"
+        role="listbox"
+        aria-label={t("calendar.weekDays")}
+      >
         {days.map((date, idx) => {
           const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
           const isToday = dateStr === todayStr;
@@ -265,6 +283,7 @@ function CalendarStrip({
 
           return (
             <motion.button
+              ref={isSelected ? selectedRef : undefined}
               key={dateStr}
               onClick={() => onSelectDate(date)}
               role="option"

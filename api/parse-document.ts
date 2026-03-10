@@ -120,12 +120,13 @@ export default async function handler(req: any, res: any) {
     console.log(
       `[parse-document] Done (${payload.plan_type}) : ${payload.ingredients.length} ingredients, ${payload.weeks.length} weeks`
     );
-    const stats = computePlanStats(payload.weeks, payload.ingredients);
+    const computedStats = computePlanStats(payload.weeks, payload.ingredients);
+    console.log('[API] computed stats:', JSON.stringify(computedStats));
     return res.status(200).json({
       result: JSON.stringify(result),
       plan_type: payload.plan_type,
       engine: 'claude',
-      stats,
+      stats: computedStats,
     });
   } catch (error: any) {
     console.error('[parse-document] Error:', error);

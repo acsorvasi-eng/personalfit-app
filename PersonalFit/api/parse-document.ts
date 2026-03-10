@@ -136,11 +136,12 @@ async function parseDocumentToIngredientsAndPlan(cleanedText: string): Promise<{
   const prompt = `You are a nutrition coach. Extract TWO outputs from the Hungarian meal plan text below.
 
 OUTPUT 1 — ingredients:
-- Extract EVERY individual food ingredient from the entire text (expected roughly 50–80 unique ingredients for a full 4-week plan).
+- Extract EVERY individual food ingredient from the entire text (target 80–120 unique ingredients for a full 28-day plan).
 - The text may contain multi-column tables; ingredients can appear in ANY column or cell. Scan ALL columns and ALL lines, not just the first column.
 - Return a JSON array of ATOMIC base ingredient names ONLY. No quantities, no units, no descriptions.
-- Names MUST be in Hungarian. If the source uses English names (e.g. "walnut"), translate to the correct Hungarian base ingredient (e.g. "dió").
+- ALL names MUST be in Hungarian. If the source uses English names (e.g. "walnut", "potato", "broccoli", "avocado", "zucchini"), translate to the correct Hungarian base ingredient (e.g. "dió", "krumpli", "brokkoli", "avokádó", "cukkini").
 - Include meats, fish, vegetables, fruits, dairy, grains, nuts, seeds, legumes, oils, and other real foods. Do NOT skip anything that looks like an ingredient.
+- Do NOT combine ingredients into one token: "cukkini-paradicsom" is WRONG. Instead extract them as two separate ingredients: "cukkini" and "paradicsom".
 - Each name must be a single base food, max 25 characters.
 
 GOOD: "tojás", "csirkemell", "lazac", "avokádó", "zab", "túró", "brokkoli", "dió", "banán", "olívaolaj", "kesudió"
