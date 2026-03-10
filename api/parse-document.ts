@@ -602,61 +602,35 @@ async function parseWithGemini(
     generationConfig: { maxOutputTokens: 8192 },
   });
 
-  // Call 2 – structured meal options / plan
-  const planPrompt = `You are a nutrition data extractor. Analyze this meal plan PDF carefully.
-
-CRITICAL RULES:
-1. ALL food names MUST be in Hungarian (avocado → avokádó, broccoli → brokkoli, walnut → dió)
-2. Extract EVERY single ingredient — expected 80-100 unique items from this document
-3. Each ingredient must be atomic — no compound names like "zucchini-paradicsom", split them
-4. Categories MUST be correct:
-   - Feherje: csirkemell, pulykamell, hal, tojás, túró, sonka, fehérjepor
-   - Tejtermek: joghurt, kefir, sajt, mozzarella, feta, vaj, krémsajt
-   - Zoldseg: brokkoli, spenót, paradicsom, paprika, avokádó, uborka, káposzta, zeller, gomba, cékla, cukkini, mangold, spárga, póréhagyma, karalábé, karfiol, padlizsán, sárgarépa
-   - Gyumolcs: alma, banán, narancs, kivi, eper, málna, gesztenye, áfonya
-   - Komplex_szenhidrat: tk kenyér, zabpehely, rozspehely, quinoa, laska, tortilla, rizs, pirítós
-   - Egeszseges_zsir: olívaolaj, kókuszolaj, tökmagolaj, dió, mandula, kesudió, avokádó
-   - Mag: napraforgómag, tökmag, kendermag, chia, lenmag
-   - Huvelyes: lencse, bab, paszuly, zöldborsó
-
-CRITICAL: ALL food names MUST be in Hungarian.
-walnut → dió, potato → krumpli, yogurt → joghurt,
-celery → zeller, cottage cheese → túró.
-Category rules:
-- zeller = Zoldseg (NOT Protein)
-- dió = Egeszseges_zsir
-- joghurt = Tejtermek
-- fehérjepor = Feherje
-
-Return ONLY this JSON (no markdown, no explanation):
+  // Call 2 – flat 28-day plan (no options structure)
+  const planPrompt = `Parse this meal plan PDF. Return ONLY this exact JSON structure, no markdown:
 {
-  "plan_type": "options",
-  "ingredients": [
-    {"name": "csirkemell", "category": "Feherje"},
-    {"name": "avokádó", "category": "Zoldseg"},
-    {"name": "joghurt", "category": "Tejtermek"},
-    ...EVERY ingredient from the PDF, 80-100 items...
+  "plan": [
+    {
+      "day": 1,
+      "dayOfWeek": "Hétfő", 
+      "type": "edzés",
+      "meals": [
+        {"name": "Reggeli", "items": ["3 tojás", "60g tk kenyér", "½ avokádó"], "kcal": 520},
+        {"name": "Ebéd", "items": ["220g csirkemell", "180g főtt krumpli", "200g brokkoli"], "kcal": 610},
+        {"name": "Vacsora", "items": ["180g lazac", "250g saláta", "1 ek olívaolaj"], "kcal": 520},
+        {"name": "Edzés utáni", "items": ["30g fehérjepor", "1 banán"], "kcal": 220}
+      ]
+    }
   ],
-  "breakfast_options": [
-    {"id": 1, "items": ["60g teljes kiőrlésű kenyér", "10g vaj", "90g csirkemell sonka", "1 alma"], "kcal": 420}
-  ],
-  "lunch_protein": [
-    {"id": 1, "name": "Csirkemell", "items": ["220g csirkemell grillezve"], "kcal": 330}
-  ],
-  "lunch_carb_training": [
-    {"id": 1, "name": "Főtt krumpli", "items": ["180g főtt krumpli rozmarinnal"], "kcal": 150}
-  ],
-  "lunch_carb_rest": [
-    {"id": 1, "name": "Mangold főzelék", "items": ["200g mangold főzelék", "1 ek tökmagolaj"], "kcal": 120}
-  ],
-  "dinner_options": [
-    {"id": 1, "items": ["250g zöldség saláta", "90g juhsajt"], "kcal": 350}
-  ],
-  "snack_options": [
-    {"id": 1, "items": ["40g dió"], "kcal": 240}
-  ],
-  "post_workout": {"items": ["30g fehérjepor", "1 banán"], "kcal": 220}
-}`;
+  "ingredients": ["tojás", "tk kenyér", "avokádó", "csirkemell"]
+}
+
+Requirements:
+- Extract ALL 28 days of the plan (4 weeks × 7 days).
+- For each day, set "day" (1-28), "dayOfWeek" ("Hétfő"..."Vasárnap"), and "type" ("edzés" or "pihenő").
+- For each meal, set:
+  - name: exactly one of "Reggeli", "Ebéd", "Vacsora", "Edzés utáni"
+  - items: array of ingredient strings in Hungarian with quantities (e.g. "3 tojás", "60g tk kenyér").
+  - kcal: approximate kcal for that meal (integer).
+- "ingredients": flat list of ALL unique base ingredients across the whole document, Hungarian names only.
+- ALL names MUST be in Hungarian (walnut → dió, potato → krumpli, yogurt → joghurt, celery → zeller, cottage cheese → túró).
+- Do NOT return any explanation or markdown, ONLY valid JSON matching the structure above.`;
 
   // Call 1 – focused ingredient extraction (maximal coverage, 80–100 items)
   const ingredientPrompt = `You are a food ingredient extractor. List EVERY single food ingredient from this meal plan PDF.
@@ -707,6 +681,14 @@ Return ONLY the JSON array, no other text.`;
   if (!jsonMatch) throw new Error('No JSON in Gemini response');
 
   const parsed = JSON.parse(jsonMatch[0]);
+  console.log('[gemini] parsed keys:', Object.keys(parsed || {}));
+  console.log('[gemini] parsed.plan length:', Array.isArray((parsed as any)?.plan) ? (parsed as any).plan.length : 0);
+  try {
+    console.log('[gemini] parsed.plan[0]:', JSON.stringify((parsed as any)?.plan?.[0]).substring(0, 300));
+  } catch {
+    console.log('[gemini] parsed.plan[0]: <unserializable>');
+  }
+  console.log('[gemini] breakfast_options:', Array.isArray((parsed as any)?.breakfast_options) ? (parsed as any).breakfast_options.length : 0);
   const days = generate28DayPlan(parsed, mealCount, dailyKcal);
   const weeks = convert30DayPlanToWeeks(days);
   console.log('[gemini] days generated:', days.length);
