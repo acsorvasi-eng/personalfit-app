@@ -1,7 +1,7 @@
 {
   "buildCommand": "cd PersonalFit && npm run build",
   "outputDirectory": "PersonalFit/dist",
-  "installCommand": "cd PersonalFit && npm install",
+  "installCommand": "npm install && cd PersonalFit && npm install",
   "framework": null,
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
