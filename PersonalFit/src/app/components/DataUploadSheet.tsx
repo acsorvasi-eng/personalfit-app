@@ -381,7 +381,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
               stats={upload.importStats}
               onContinue={() => {
                 setShowImportProgress(false);
-                setShowMealCount(true);
+                handleDone();
               }}
             />
           )}

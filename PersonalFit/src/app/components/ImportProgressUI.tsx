@@ -231,10 +231,9 @@ export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgres
                     <button
                       type="button"
                       onClick={onContinue}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-blue-500 via-sky-400 to-teal-400 shadow-md shadow-sky-500/30"
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-500 shadow-md shadow-emerald-500/30"
                     >
-                      <span>Tovább</span>
-                      <span>→</span>
+                      <span>📤 Publikálás</span>
                     </button>
                   </div>
                 </motion.div>

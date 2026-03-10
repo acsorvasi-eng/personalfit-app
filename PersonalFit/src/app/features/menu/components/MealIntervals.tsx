@@ -316,7 +316,7 @@ export function MealIntervals({
               <Check className="w-4 h-4" />
               {saving
                 ? t("menu.saving") || "Mentés..."
-                : t("menu.saveIntervals") || "Mentés"}
+                : (t("menu.saveIntervals") || "✓ Mentés")}
             </button>
           </div>
         </motion.div>

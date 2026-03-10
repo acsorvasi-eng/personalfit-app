@@ -90,7 +90,11 @@ async function loadWorkoutSchedule(): Promise<WorkoutScheduleMap> {
   } catch { return {}; }
 }
 
-function getWeekdayType(date: Date, scheduleMap?: WorkoutScheduleMap): 'training' | 'swim' | 'rest' | 'active' {
+function getWeekdayType(
+  date: Date,
+  scheduleMap: WorkoutScheduleMap | undefined,
+  hasPlanData: boolean
+): 'training' | 'swim' | 'rest' | 'active' {
   // First check the workout schedule from the calendar planner
   if (scheduleMap) {
     const key = date.toISOString().split('T')[0];
@@ -101,6 +105,10 @@ function getWeekdayType(date: Date, scheduleMap?: WorkoutScheduleMap): 'training
       return 'training';
     }
   }
+  // If there is no active plan data at all (fresh app or after full reset),
+  // treat every day as rest — no colored dots.
+  if (!hasPlanData) return 'rest';
+
   // Fallback to static schedule from meal plan
   const jsDay = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   const planDay = jsDay === 0 ? 6 : jsDay - 1; // 0=Mon, ..., 6=Sun
@@ -119,6 +127,7 @@ function CalendarStrip({
   onPrevMonth,
   onNextMonth,
   scheduleMap = {},
+  hasPlanData,
 }: {
   selectedDate: Date;
   calendarMonth: number;
@@ -127,6 +136,7 @@ function CalendarStrip({
   onPrevMonth: () => void;
   onNextMonth: () => void;
   scheduleMap?: WorkoutScheduleMap;
+  hasPlanData: boolean;
 }) {
   const { language, t } = useLanguage();
   const today = new Date();
@@ -167,7 +177,7 @@ function CalendarStrip({
           const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
           const isToday = dateStr === todayStr;
           const isSelected = idx === 3;
-          const dayType = getWeekdayType(date, scheduleMap);
+          const dayType = getWeekdayType(date, scheduleMap, hasPlanData);
           const dayNum = date.getDate();
           const dayShort = getLocaleDayNarrow(date, language);
 
@@ -890,6 +900,7 @@ export function UnifiedMenu() {
             onPrevMonth={goToPrevMonth}
             onNextMonth={goToNextMonth}
             scheduleMap={workoutScheduleMap}
+            hasPlanData={hasPlanData}
           />
         </div>
 
@@ -1053,6 +1064,7 @@ export function UnifiedMenu() {
           onPrevMonth={goToPrevMonth}
           onNextMonth={goToNextMonth}
           scheduleMap={workoutScheduleMap}
+          hasPlanData={hasPlanData}
         />
       </div>
 

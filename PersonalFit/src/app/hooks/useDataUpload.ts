@@ -310,12 +310,14 @@ export function useDataUpload() {
                 throw new Error(errData.error || `Gemini parser error: ${resp.status}`);
               }
 
-              const data = await resp.json();
-              if (!data.result) {
+              const response = await resp.json();
+              console.log('[upload] API response:', JSON.stringify(response).substring(0, 500));
+              console.log('[upload] stats:', response.stats);
+              if (!response.result) {
                 throw new Error('Üres válasz az AI PDF parser-től');
               }
 
-              const plan = JSON.parse(data.result);
+              const plan = JSON.parse(response.result);
               const weeks = Array.isArray(plan.weeks) ? plan.weeks : [];
               const nutritionPlan = {
                 weeks,
@@ -346,15 +348,15 @@ export function useDataUpload() {
                 rawText,
               } as AIParsedDocument;
 
-              if (data.stats) {
+              if (response.stats) {
                 setState(prev => ({
                   ...prev,
                   importStats: {
-                    days_count: data.stats.days_count ?? 0,
-                    meals_count: data.stats.meals_count ?? 0,
-                    foods_count: data.stats.foods_count ?? 0,
-                    training_days: data.stats.training_days ?? 0,
-                    rest_days: data.stats.rest_days ?? 0,
+                    days_count: response.stats.days_count ?? 0,
+                    meals_count: response.stats.meals_count ?? 0,
+                    foods_count: response.stats.foods_count ?? 0,
+                    training_days: response.stats.training_days ?? 0,
+                    rest_days: response.stats.rest_days ?? 0,
                   },
                 }));
               }
