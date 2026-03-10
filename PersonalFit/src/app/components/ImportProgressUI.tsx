@@ -16,7 +16,7 @@ interface ImportProgressUIProps {
   onContinue: () => void;
 }
 
-const STEP_TIMINGS = [0, 1500, 3000, 5000]; // ms
+const STEP_TIMINGS = [0, 1500, 3000]; // ms for 3 visible steps
 
 export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgressUIProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -35,9 +35,9 @@ export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgres
     if (isLoading) {
       setStartTime(Date.now());
       setStepIndex(0);
-    } else if (!isLoading && stats) {
-      // Immediately mark all steps complete when backend finishes
-      setStepIndex(4);
+    } else if (!isLoading) {
+      // Immediately mark all visible steps complete when backend finishes
+      setStepIndex(3);
     }
   }, [isLoading, stats]);
 
@@ -94,12 +94,13 @@ export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgres
       { label: "PDF elemzése folyamatban...", icon: "📄" },
       { label: "Ételek felismerése...", icon: "🥗" },
       { label: "Menük összeállítása...", icon: "📋" },
-      { label: "Napok és típusok elemzése...", icon: "📅" },
     ],
     []
   );
 
-  const showSummary = !isLoading && !!stats;
+  // Phase 2 summary appears as soon as loading finishes,
+  // even if stats haven't arrived yet (they can update live).
+  const showSummary = !isLoading;
 
   return (
     <AnimatePresence>
@@ -177,7 +178,7 @@ export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgres
 
             {/* Summary card */}
             <AnimatePresence>
-              {showSummary && stats && (
+              {showSummary && (
                 <motion.div
                   key="summary"
                   initial={{ opacity: 0, y: 20 }}
@@ -208,14 +209,22 @@ export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgres
                       value={animatedStats.foods_count}
                     />
                     <SummaryRow
-                      label="Edzésnapok"
+                      label={
+                        stats && stats.training_days > 0
+                          ? "Edzésnapok"
+                          : "Edzésnapok: elemzés folyamatban..."
+                      }
                       icon="🟢"
-                      value={animatedStats.training_days}
+                      value={stats && stats.training_days > 0 ? animatedStats.training_days : 0}
                     />
                     <SummaryRow
-                      label="Pihenőnapok"
+                      label={
+                        stats && stats.rest_days > 0
+                          ? "Pihenőnapok"
+                          : "Pihenőnapok: elemzés folyamatban..."
+                      }
                       icon="🔵"
-                      value={animatedStats.rest_days}
+                      value={stats && stats.rest_days > 0 ? animatedStats.rest_days : 0}
                     />
                   </div>
                   <div className="px-4 pb-4 pt-1">
