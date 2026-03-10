@@ -196,18 +196,6 @@ function CalendarStrip({
 
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // Ensure the selected day (today on first load) is centered in view.
-  useEffect(() => {
-    const el = document.querySelector<HTMLElement>('[data-selected=\"true\"]');
-    if (el) {
-      el.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      });
-    }
-  }, [selectedDate]);
-
   return (
     <div className="bg-white/80 dark:bg-card/80 backdrop-blur-sm border-b border-gray-100/60 dark:border-[#2a2a2a]/60" role="region" aria-label={t("calendar.calendarView")}>
       {/* Month nav — subtle & elegant */}
@@ -266,7 +254,7 @@ function CalendarStrip({
       {/* Compact 7-day strip */}
       <div
         ref={listRef}
-        className="flex items-center gap-2 px-3 pb-3 overflow-x-auto scroll-smooth"
+        className="flex items-center justify-around gap-2 px-3 pb-3"
         role="listbox"
         aria-label={t("calendar.weekDays")}
       >
@@ -289,9 +277,8 @@ function CalendarStrip({
               role="option"
               aria-selected={isSelected}
               aria-current={isToday ? "date" : undefined}
-              data-selected={isSelected ? "true" : undefined}
               aria-label={`${dayShort}, ${getLocaleMonth(date, language)} ${dayNum}${isToday ? ` (${t("calendar.today")})` : ''}${dayType === 'training' ? ` - ${t("calendar.trainingDay")}` : dayType === 'swim' ? ` - ${t("calendar.swimDay")}` : dayType === 'active' ? ` - ${t("calendar.activeRest")}` : ''}`}
-              className={`flex-1 min-w-[52px] max-w-[60px] flex-shrink-0 flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
+              className={`flex-1 min-w-[52px] max-w-[60px] flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
                 isSelected
                   ? 'bg-blue-500 shadow-lg shadow-blue-200/60 dark:shadow-blue-500/20'
                   : isToday
