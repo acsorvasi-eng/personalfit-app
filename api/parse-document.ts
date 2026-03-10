@@ -798,7 +798,16 @@ function parseItemToIngredient(itemStr: string): { name: string; quantity_grams:
  * First 28 days used; cap totalKcal at DAILY_CALORIE_TARGET.
  */
 function convert30DayPlanToWeeks(plan: any[]): any[][] {
-  const days = (plan || []).slice(0, 28);
+  const totalAvailableDays = Array.isArray(plan) ? plan.length : 0;
+
+  // Use actual days in the current month (28–31), never hardcode 28.
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth(); // 0–11
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const maxDays = Math.min(totalAvailableDays, daysInMonth);
+
+  const days = (plan || []).slice(0, maxDays);
   const mealTypeMap: Record<string, string> = {
     'Reggeli': 'breakfast',
     'Ebéd': 'lunch',
@@ -806,7 +815,9 @@ function convert30DayPlanToWeeks(plan: any[]): any[][] {
     'Edzés utáni': 'snack',
   };
 
-  const weeks: any[][] = [[], [], [], []];
+  const weeksCount = Math.max(1, Math.ceil(days.length / 7));
+  const weeks: any[][] = Array.from({ length: weeksCount }, () => []);
+
   for (let i = 0; i < days.length; i++) {
     const d = days[i];
     const weekIndex = Math.floor(i / 7);
