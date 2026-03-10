@@ -5,7 +5,7 @@
  * Fully localized via useLanguage hook.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'framer-motion';
 import {
@@ -24,10 +24,17 @@ import { Card, CardContent } from '../ui/card';
 
 export function TermsScreen() {
   const navigate = useNavigate();
-  const { markTermsAccepted, logout } = useAuth();
+  const { markTermsAccepted, logout, termsAccepted } = useAuth();
   const { t } = useLanguage();
   const [isAccepted, setIsAccepted] = useState(false);
   const [showDeclineWarning, setShowDeclineWarning] = useState(false);
+
+  // If terms are already accepted (e.g. after a redirect loop), skip this screen.
+  useEffect(() => {
+    if (termsAccepted) {
+      navigate('/');
+    }
+  }, [termsAccepted, navigate]);
 
   // Build sections from translations
   const TERMS_SECTIONS = [

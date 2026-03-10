@@ -216,13 +216,15 @@ function CalendarStrip({
           <ChevronDown className="w-3 h-3 text-gray-400 dark:text-gray-500" />
         </button>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleTodayClick}
-            className="px-3 py-1 rounded-full text-[11px] font-semibold text-white bg-gradient-to-r from-blue-500 via-sky-400 to-teal-400 shadow-sm shadow-sky-400/40 active:scale-95 transition-transform"
-          >
-            {todayLabel}
-          </button>
+          {!isSameDay(selectedDate, today) && (
+            <button
+              type="button"
+              onClick={handleTodayClick}
+              className="px-[12px] py-[4px] rounded-[20px] text-[13px] font-medium bg-[#f0f0f0] text-[#333333]"
+            >
+              {todayLabel}
+            </button>
+          )}
           <button onClick={onNextMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] active:bg-gray-200 dark:active:bg-[#2a2a2a] transition-colors" aria-label={t("calendar.nextMonth")}>
             <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
           </button>
@@ -248,11 +250,7 @@ function CalendarStrip({
       </div>
 
       {/* Compact 7-day strip */}
-      <div
-        className="flex items-center gap-2 px-3 pb-3 overflow-x-auto scroll-smooth snap-x snap-mandatory"
-        role="listbox"
-        aria-label={t("calendar.weekDays")}
-      >
+      <div className="flex items-center gap-2 px-3 pb-3 overflow-x-auto scroll-smooth" role="listbox" aria-label={t("calendar.weekDays")}>
         {days.map((date, idx) => {
           const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
           const isToday = dateStr === todayStr;
@@ -273,7 +271,7 @@ function CalendarStrip({
               aria-selected={isSelected}
               aria-current={isToday ? "date" : undefined}
               aria-label={`${dayShort}, ${getLocaleMonth(date, language)} ${dayNum}${isToday ? ` (${t("calendar.today")})` : ''}${dayType === 'training' ? ` - ${t("calendar.trainingDay")}` : dayType === 'swim' ? ` - ${t("calendar.swimDay")}` : dayType === 'active' ? ` - ${t("calendar.activeRest")}` : ''}`}
-              className={`snap-center flex-1 min-w-[52px] max-w-[60px] flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
+              className={`flex-1 min-w-[52px] max-w-[60px] flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
                 isSelected
                   ? 'bg-blue-500 shadow-lg shadow-blue-200/60 dark:shadow-blue-500/20'
                   : isToday
@@ -1171,7 +1169,7 @@ export function UnifiedMenu() {
             initial={{ opacity: 0, x: swipeDir === 'left' ? 80 : swipeDir === 'right' ? -80 : 0 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: swipeDir === 'left' ? -80 : swipeDir === 'right' ? 80 : 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="px-3 sm:px-4 lg:px-6 py-3 space-y-3"
           >
             {/* ── 1. Sports Day Badge — Full-width, blended into background ── */}
