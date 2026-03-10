@@ -417,15 +417,16 @@ export function useDataUpload() {
    */
   const processText = useCallback(async (text: string) => {
     try {
-      setState({
+      setState(prev => ({
+        ...prev,
         step: 'parsing',
         progress: 15,
         error: null,
         warnings: [],
         confidence: 0,
         result: null,
-        importStats: undefined,
-      });
+        // importStats intentionally preserved until user finishes/imports a new plan
+      }));
 
       // Try LLM first (if key/proxy), else regex parser
       const parsed = await parseWithLLM(text).catch(() => AIParser.parseDocumentText(text));
