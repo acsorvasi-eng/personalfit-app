@@ -1802,9 +1802,14 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
 
   // Extract the ingredient name from a string like "Csirkemell (220g)" → ["Csirkemell", "220g"]
   const parseIngredientString = (ing: string): { foodName: string; qty: string } => {
-    const match = ing.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+    let cleaned = ing;
+    // Strip leading "nap N" or "day N" prefixes from OCR
+    cleaned = cleaned.replace(/^(nap|Nap)\s+\d+\s+/u, '');
+    cleaned = cleaned.replace(/^(day|Day)\s+\d+\s+/u, '');
+
+    const match = cleaned.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
     if (match) return { foodName: match[1].trim(), qty: match[2].trim() };
-    return { foodName: ing, qty: '' };
+    return { foodName: cleaned, qty: '' };
   };
 
   // Meal name (e.g. "Lazac salátával") from plan data

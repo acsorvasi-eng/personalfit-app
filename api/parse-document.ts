@@ -563,6 +563,15 @@ CRITICAL RULES:
    - Mag: napraforgómag, tökmag, kendermag, chia, lenmag
    - Huvelyes: lencse, bab, paszuly, zöldborsó
 
+CRITICAL: ALL food names MUST be in Hungarian.
+walnut → dió, potato → krumpli, yogurt → joghurt,
+celery → zeller, cottage cheese → túró.
+Category rules:
+- zeller = Zoldseg (NOT Protein)
+- dió = Egeszseges_zsir
+- joghurt = Tejtermek
+- fehérjepor = Feherje
+
 Return ONLY this JSON (no markdown, no explanation):
 {
   "plan_type": "options",

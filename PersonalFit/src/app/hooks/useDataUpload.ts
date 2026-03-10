@@ -421,7 +421,6 @@ export function useDataUpload() {
         confidence: 0,
         result: null,
         importStats: undefined,
-        importStats: undefined,
       });
 
       // Try LLM first (if key/proxy), else regex parser
