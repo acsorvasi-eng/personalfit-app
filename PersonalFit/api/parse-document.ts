@@ -89,7 +89,33 @@ export default async function handler(req: any, res: any) {
     };
 
     console.log(`[parse-document] Done: ${payload.ingredients.length} ingredients, ${payload.weeks.length} weeks`);
-    return res.status(200).json({ result: JSON.stringify(result) });
+
+    const flatWeeks = Array.isArray(result.weeks)
+      ? (result.weeks as any[]).reduce<any[]>((acc, w) => {
+          if (Array.isArray(w)) acc.push(...w);
+          return acc;
+        }, [])
+      : [];
+
+    const totalDays = (result as any).totalDays || flatWeeks.length;
+    const totalMeals = (result as any).totalMeals || flatWeeks.reduce((sum, day) => {
+      const meals = Array.isArray((day as any)?.meals) ? (day as any).meals : [];
+      return sum + meals.length;
+    }, 0);
+    const totalIngredients = (result as any).totalIngredients || (Array.isArray(result.ingredients) ? result.ingredients.length : 0);
+
+    const stats = {
+      days_count: totalDays,
+      meals_count: totalMeals,
+      foods_count: totalIngredients,
+      training_days: (result as any).training_days || 0,
+      rest_days: (result as any).rest_days || 0,
+    };
+
+    return res.status(200).json({
+      result: JSON.stringify(result),
+      stats,
+    });
 
   } catch (error: any) {
     console.error('[parse-document] Error:', error);

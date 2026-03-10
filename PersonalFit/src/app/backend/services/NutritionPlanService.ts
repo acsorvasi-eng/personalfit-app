@@ -963,7 +963,11 @@ export interface ImportStats {
  */
 function isValidIngredientName(name: string): boolean {
   if (!name) return false;
-  const n = name.trim();
+  const original = name.trim();
+
+  // Strip leading numbers and surrounding spaces (e.g. "3 tojás" → "tojás")
+  let n = original.replace(/^[0-9\s]+/, '').trim();
+  if (!n) return false;
 
   // Fogadjuk el a 2–25 karakter közötti, "normális" szavakat; a cél az,
   // hogy ne dobjunk ki valódi alapanyagokat.
@@ -998,6 +1002,12 @@ function isValidIngredientName(name: string): boolean {
   // Csak szám / dátum / kód → nem alapanyag
   if (/^\d[\d\s:./-]*$/.test(n)) return false;
   if (/^\d{2}:\d{2}/.test(n)) return false;
+
+  // Reject names where a number is glued to a word (e.g. "zsír3")
+  if (/[a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]\d/u.test(n)) return false;
+
+  // Reject "word number word" pattern (likely composite / noisy)
+  if (/\b[ a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]+\b\s+\d+\s+\b[ a-záéíóöőúüűA-ZÁÉÍÓÖŐÚÜŰ]+\b/u.test(n)) return false;
 
   return true;
 }

@@ -151,23 +151,46 @@ export async function getDomainDB(): Promise<IDBDatabase> {
 // Generic CRUD Helpers
 // ═══════════════════════════════════════════════════════════════
 
-export async function dbGet<T>(storeName: string, key: IDBValidKey): Promise<T | undefined> {
+// Internal helper to recover gracefully when a domain store is missing.
+// If we hit a NotFoundError (e.g. old DB schema missing a new store),
+// we destroy the domain DB and retry once with a fresh schema.
+async function withDomainStore<T>(
+  storeName: string,
+  mode: IDBTransactionMode,
+  op: (tx: IDBTransaction) => Promise<T>,
+  retry = true
+): Promise<T> {
   const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const req = tx.objectStore(storeName).get(key);
-    req.onsuccess = () => resolve(req.result as T | undefined);
-    req.onerror = () => reject(req.error);
+  try {
+    const tx = db.transaction(storeName, mode);
+    return await op(tx);
+  } catch (err: any) {
+    if (retry && err && err.name === 'NotFoundError') {
+      logger.warn('[DomainDB] Missing object store, recreating DB and retrying once:', storeName);
+      await destroyDomainDB();
+      return withDomainStore(storeName, mode, op, false);
+    }
+    throw err;
+  }
+}
+
+export async function dbGet<T>(storeName: string, key: IDBValidKey): Promise<T | undefined> {
+  return withDomainStore<T | undefined>(storeName, 'readonly', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).get(key);
+      req.onsuccess = () => resolve(req.result as T | undefined);
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
 export async function dbGetAll<T>(storeName: string): Promise<T[]> {
-  const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const req = tx.objectStore(storeName).getAll();
-    req.onsuccess = () => resolve(req.result as T[]);
-    req.onerror = () => reject(req.error);
+  return withDomainStore<T[]>(storeName, 'readonly', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = () => resolve(req.result as T[]);
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
@@ -176,52 +199,52 @@ export async function dbGetByIndex<T>(
   indexName: string,
   key: IDBValidKey
 ): Promise<T[]> {
-  const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const req = tx.objectStore(storeName).index(indexName).getAll(key);
-    req.onsuccess = () => resolve(req.result as T[]);
-    req.onerror = () => reject(req.error);
+  return withDomainStore<T[]>(storeName, 'readonly', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).index(indexName).getAll(key);
+      req.onsuccess = () => resolve(req.result as T[]);
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
 export async function dbPut<T>(storeName: string, value: T): Promise<IDBValidKey> {
-  const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readwrite');
-    const req = tx.objectStore(storeName).put(value);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+  return withDomainStore<IDBValidKey>(storeName, 'readwrite', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).put(value);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
 export async function dbDelete(storeName: string, key: IDBValidKey): Promise<void> {
-  const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readwrite');
-    const req = tx.objectStore(storeName).delete(key);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+  return withDomainStore<void>(storeName, 'readwrite', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
 export async function dbClear(storeName: string): Promise<void> {
-  const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readwrite');
-    const req = tx.objectStore(storeName).clear();
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+  return withDomainStore<void>(storeName, 'readwrite', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
 export async function dbCount(storeName: string): Promise<number> {
-  const db = await getDomainDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(storeName, 'readonly');
-    const req = tx.objectStore(storeName).count();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+  return withDomainStore<number>(storeName, 'readonly', (tx) => {
+    return new Promise((resolve, reject) => {
+      const req = tx.objectStore(storeName).count();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
   });
 }
 
