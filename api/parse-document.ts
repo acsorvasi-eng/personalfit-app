@@ -83,6 +83,7 @@ export default async function handler(req: any, res: any) {
         `[parse-document] Gemini engine (${geminiResult.plan_type}) : ${geminiResult.ingredients.length} ingredients, ${geminiResult.weeks.length} weeks`
       );
       const stats = computePlanStats(geminiResult.weeks, geminiResult.ingredients);
+      console.log('[API] final stats (gemini):', JSON.stringify(stats));
       return res.status(200).json({
         result: JSON.stringify({
           ingredients: geminiResult.ingredients,
@@ -121,7 +122,7 @@ export default async function handler(req: any, res: any) {
       `[parse-document] Done (${payload.plan_type}) : ${payload.ingredients.length} ingredients, ${payload.weeks.length} weeks`
     );
     const computedStats = computePlanStats(payload.weeks, payload.ingredients);
-    console.log('[API] computed stats:', JSON.stringify(computedStats));
+    console.log('[API] final stats (claude):', JSON.stringify(computedStats));
     return res.status(200).json({
       result: JSON.stringify(result),
       plan_type: payload.plan_type,
@@ -177,6 +178,22 @@ function computePlanStats(
     training_days,
     rest_days,
   };
+}
+
+/**
+ * Known meal-name prefixes that sometimes get merged into item strings.
+ */
+const MEAL_PREFIXES = ['Reggeli', 'Ebéd', 'Ebед', 'Vacsora', 'Breakfast', 'Lunch', 'Dinner', 'Tízórai', 'Uzsonna'];
+
+function stripMealPrefix(str: string): string {
+  const s = String(str || '').trim();
+  if (!s) return s;
+  for (const prefix of MEAL_PREFIXES) {
+    if (s.startsWith(prefix)) {
+      return s.slice(prefix.length).trim();
+    }
+  }
+  return s;
 }
 
 /**
@@ -698,7 +715,7 @@ function filterCleanIngredients(names: string[]): string[] {
   const out: string[] = [];
 
   for (const raw of names) {
-    const s = String(raw ?? '').trim();
+    const s = stripMealPrefix(String(raw ?? '')).trim();
     if (!s) continue;
     if (forbidden.test(s)) continue;
 
@@ -754,7 +771,8 @@ function filterCleanIngredients(names: string[]): string[] {
  * Parse item string like "3 tojás (180g)" or "60g tk kenyér" → { name, quantity_grams }.
  */
 function parseItemToIngredient(itemStr: string): { name: string; quantity_grams: number } {
-  const s = String(itemStr || '').trim();
+  const raw = String(itemStr || '').trim();
+  const s = stripMealPrefix(raw);
   if (!s) return { name: 'Étel', quantity_grams: 50 };
 
   const inParens = s.match(/\((\d+)\s*g\)/i) || s.match(/\((\d+)g\)/i);
