@@ -106,6 +106,13 @@ export async function performFullReset(
     // Step 5: Dispatch storage event for same-tab reactivity
     window.dispatchEvent(new Event('storage'));
 
+    // Step 6: Hard reload to ensure absolutely clean runtime state
+    try {
+      window.location.reload();
+    } catch {
+      // ignore if not in browser context
+    }
+
     console.log('[Reset] Full reset complete.');
     return { success: true };
   } catch (error) {
