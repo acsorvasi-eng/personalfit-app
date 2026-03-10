@@ -195,11 +195,12 @@ function CalendarStrip({
   }, [language, today]);
 
   const listRef = useRef<HTMLDivElement | null>(null);
-  const selectedRef = useRef<HTMLButtonElement | null>(null);
 
+  // Ensure the selected day (today on first load) is centered in view.
   useEffect(() => {
-    if (selectedRef.current) {
-      selectedRef.current.scrollIntoView({
+    const el = document.querySelector<HTMLElement>('[data-selected=\"true\"]');
+    if (el) {
+      el.scrollIntoView({
         behavior: 'smooth',
         inline: 'center',
         block: 'nearest',
@@ -283,14 +284,14 @@ function CalendarStrip({
 
           return (
             <motion.button
-              ref={isSelected ? selectedRef : undefined}
               key={dateStr}
               onClick={() => onSelectDate(date)}
               role="option"
               aria-selected={isSelected}
               aria-current={isToday ? "date" : undefined}
+              data-selected={isSelected ? "true" : undefined}
               aria-label={`${dayShort}, ${getLocaleMonth(date, language)} ${dayNum}${isToday ? ` (${t("calendar.today")})` : ''}${dayType === 'training' ? ` - ${t("calendar.trainingDay")}` : dayType === 'swim' ? ` - ${t("calendar.swimDay")}` : dayType === 'active' ? ` - ${t("calendar.activeRest")}` : ''}`}
-              className={`flex-1 min-w-[52px] max-w-[60px] flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
+              className={`flex-1 min-w-[52px] max-w-[60px] flex-shrink-0 flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
                 isSelected
                   ? 'bg-blue-500 shadow-lg shadow-blue-200/60 dark:shadow-blue-500/20'
                   : isToday
