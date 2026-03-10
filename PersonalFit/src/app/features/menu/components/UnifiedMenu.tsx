@@ -141,6 +141,9 @@ function CalendarStrip({
   const { language, t } = useLanguage();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+
+  const todayLabel = language === 'hu' ? 'Ma' : (t("calendar.today") || "Today");
 
   // Generate 7 days centered on selected date
   const days = useMemo(() => {
@@ -156,30 +159,111 @@ function CalendarStrip({
   const displayMonth = getLocaleMonth(selectedDate, language);
   const displayYear = selectedDate.getFullYear();
 
+  const isSameDay = (d1: Date, d2: Date) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
+
+  const handleTodayClick = () => {
+    onSelectDate(today);
+  };
+
+  const handleMonthHeaderClick = () => {
+    setMonthPickerOpen(prev => !prev);
+  };
+
+  const handleMonthChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
+    const [y, m] = e.target.value.split('-').map(Number);
+    if (!Number.isNaN(y) && !Number.isNaN(m)) {
+      const newDate = new Date(selectedDate);
+      newDate.setFullYear(y, m, Math.min(selectedDate.getDate(), 28));
+      onSelectDate(newDate);
+      setMonthPickerOpen(false);
+    }
+  };
+
+  const monthOptions = useMemo(() => {
+    const baseYear = today.getFullYear();
+    const years = [baseYear - 1, baseYear, baseYear + 1];
+    const months = Array.from({ length: 12 }, (_, i) => i);
+    return years.flatMap(year =>
+      months.map(month => ({
+        value: `${year}-${month}`,
+        label: `${getLocaleMonth(new Date(year, month, 1), language)} ${year}`,
+      })),
+    );
+  }, [language, today]);
+
   return (
     <div className="bg-white/80 dark:bg-card/80 backdrop-blur-sm border-b border-gray-100/60 dark:border-[#2a2a2a]/60" role="region" aria-label={t("calendar.calendarView")}>
       {/* Month nav — subtle & elegant */}
-      <div className="flex items-center justify-between px-5 py-2">
+      <div className="relative flex items-center justify-between px-5 py-2">
         <button onClick={onPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] active:bg-gray-200 dark:active:bg-[#2a2a2a] transition-colors" aria-label={t("calendar.prevMonth")}>
           <ChevronLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
         </button>
-        <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 tracking-wide" aria-live="polite" aria-atomic="true">
-          {displayMonth} {displayYear}
-        </span>
-        <button onClick={onNextMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] active:bg-gray-200 dark:active:bg-[#2a2a2a] transition-colors" aria-label={t("calendar.nextMonth")}>
-          <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+        <button
+          type="button"
+          onClick={handleMonthHeaderClick}
+          className="min-w-[140px] flex items-center justify-center gap-1.5 px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] transition-colors"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-haspopup="listbox"
+          aria-expanded={monthPickerOpen}
+        >
+          <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 tracking-wide">
+            {displayMonth} {displayYear}
+          </span>
+          <ChevronDown className="w-3 h-3 text-gray-400 dark:text-gray-500" />
         </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleTodayClick}
+            className="px-3 py-1 rounded-full text-[11px] font-semibold text-white bg-gradient-to-r from-blue-500 via-sky-400 to-teal-400 shadow-sm shadow-sky-400/40 active:scale-95 transition-transform"
+          >
+            {todayLabel}
+          </button>
+          <button onClick={onNextMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] active:bg-gray-200 dark:active:bg-[#2a2a2a] transition-colors" aria-label={t("calendar.nextMonth")}>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+          </button>
+        </div>
+
+        {monthPickerOpen && (
+          <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 z-20">
+            <div className="rounded-2xl border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#050816] shadow-lg px-3 py-2">
+              <select
+                className="bg-transparent text-xs text-gray-800 dark:text-gray-100 outline-none"
+                value={`${calendarYear}-${calendarMonth}`}
+                onChange={handleMonthChange}
+              >
+                {monthOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Compact 7-day strip */}
-      <div className="flex items-center justify-center gap-1 px-3 pb-3" role="listbox" aria-label={t("calendar.weekDays")}>
+      <div
+        className="flex items-center gap-2 px-3 pb-3 overflow-x-auto scroll-smooth snap-x snap-mandatory"
+        role="listbox"
+        aria-label={t("calendar.weekDays")}
+      >
         {days.map((date, idx) => {
           const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
           const isToday = dateStr === todayStr;
-          const isSelected = idx === 3;
+          const isSelected = isSameDay(date, selectedDate);
           const dayType = getWeekdayType(date, scheduleMap, hasPlanData);
           const dayNum = date.getDate();
           const dayShort = getLocaleDayNarrow(date, language);
+          const isPast =
+            date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const isFuture =
+            date > new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
           return (
             <motion.button
@@ -189,13 +273,13 @@ function CalendarStrip({
               aria-selected={isSelected}
               aria-current={isToday ? "date" : undefined}
               aria-label={`${dayShort}, ${getLocaleMonth(date, language)} ${dayNum}${isToday ? ` (${t("calendar.today")})` : ''}${dayType === 'training' ? ` - ${t("calendar.trainingDay")}` : dayType === 'swim' ? ` - ${t("calendar.swimDay")}` : dayType === 'active' ? ` - ${t("calendar.activeRest")}` : ''}`}
-              className={`flex-1 max-w-[52px] flex flex-col items-center py-2 rounded-2xl transition-all relative ${
+              className={`snap-center flex-1 min-w-[52px] max-w-[60px] flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
                 isSelected
                   ? 'bg-blue-500 shadow-lg shadow-blue-200/60 dark:shadow-blue-500/20'
                   : isToday
                   ? 'bg-blue-50 dark:bg-blue-500/10'
                   : 'hover:bg-gray-50 dark:hover:bg-[#252525]'
-              }`}
+              } ${isPast && !isSelected ? 'opacity-50' : ''} ${isFuture && !isSelected ? 'opacity-100' : ''}`}
               whileTap={{ scale: 0.93 }}
               layout
             >
@@ -209,9 +293,13 @@ function CalendarStrip({
               }`}>
                 {dayNum}
               </span>
+              {/* Today dot */}
+              {isToday && (
+                <span className="w-1.5 h-1.5 rounded-full mt-1 bg-blue-500 dark:bg-blue-400" />
+              )}
               {/* Day type dot — only show for typed days */}
               {(dayType === 'training' || dayType === 'swim' || dayType === 'active') && (
-                <span className={`w-1.5 h-1.5 rounded-full mt-1 ${
+                <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
                   isSelected ? 'bg-white/70'
                     : dayType === 'training' ? 'bg-orange-400'
                     : dayType === 'swim' ? 'bg-cyan-400'
@@ -1351,6 +1439,41 @@ export function UnifiedMenu() {
               {mealSlots.map((slot, slotIdx) => {
                 const isFocusMeal = status.isToday && status.isInEatingWindow && status.currentMeal === slot.type;
                 const isConsumedToday = status.isToday && slot.consumed;
+
+                // Placeholder for missing dinner on days without a planned vacsora
+                if (slot.type === 'dinner' && (!slot.primary && slot.meals.length === 0)) {
+                  return (
+                    <motion.div
+                      key={slot.type}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 * slotIdx, duration: 0.3 }}
+                    >
+                      <div className="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 px-4 py-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-100 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-lg">
+                            <span>🌙</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                              Vacsora még nincs hozzáadva
+                            </span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              Adj hozzá egy vacsorát ehhez a naphoz.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-lg shadow-md shadow-emerald-500/40"
+                          onClick={() => navigate("/log-meal")}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                }
 
                 if (isConsumedToday && !isFocusMeal) {
                   return (
