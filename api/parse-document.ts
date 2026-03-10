@@ -101,6 +101,30 @@ export default async function handler(req: any, res: any) {
 
   // If base64 PDF provided → try Gemini first
   if (pdf_base64) {
+    // Deterministic HÉT / NAP parser path if caller provided extracted text
+    if (req.body.extracted_text) {
+      try {
+        const det = parseHetNapStructure(String(req.body.extracted_text || ''));
+        if (det && det.weeks.length > 0) {
+          const stats = computePlanStats(det.weeks, det.ingredients);
+          console.log('[hetNap] deterministic parse succeeded:', JSON.stringify(stats));
+          return res.status(200).json({
+            result: JSON.stringify({
+              ingredients: det.ingredients,
+              weeks: det.weeks,
+              detected_weeks: det.weeks.length,
+              detected_days_per_week: 7,
+            }),
+            plan_type: 'weekly',
+            engine: 'deterministic',
+            stats,
+          });
+        }
+      } catch (err) {
+        console.warn('[hetNap] deterministic parser failed, falling back to Gemini:', err);
+      }
+    }
+
     try {
       const geminiResult = await parseWithGemini(pdf_base64, meal_count, daily_kcal);
       console.log(
@@ -218,6 +242,99 @@ function stripMealPrefix(str: string): string {
     }
   }
   return s;
+}
+
+/**
+ * Deterministic parser for HÉT / NAP structured meal plans.
+ */
+function parseHetNapStructure(text: string): { ingredients: string[]; weeks: any[][] } | null {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  const DAY_MAP: Record<string, { hu: string; training: boolean }> = {
+    'HÉT': { hu: 'Hétfő', training: true },
+    'KED': { hu: 'Kedd', training: false },
+    'SZE': { hu: 'Szerda', training: true },
+    'CSÜ': { hu: 'Csütörtök', training: true },
+    'PÉN': { hu: 'Péntek', training: false },
+    'SZO': { hu: 'Szombat', training: false },
+    'VAS': { hu: 'Vasárnap', training: false },
+  };
+
+  const hasHetStructure = lines.some(l => /^\d+\.\s*HÉT/i.test(l));
+  if (!hasHetStructure) return null;
+
+  const days: any[] = [];
+  const ingredientSet = new Set<string>();
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const dayKey = Object.keys(DAY_MAP).find(d => line === d || line.startsWith(d + ' '));
+    if (dayKey) {
+      const next = lines[i + 1] || '';
+      const isTraining = /EDZÉS/i.test(line) || /EDZÉS/i.test(next);
+      const isRest = /PIHENŐ/i.test(line) || /PIHENŐ/i.test(next);
+      if (isTraining || isRest) {
+        const reggeli = lines[i + 2] || '';
+        const ebed = lines[i + 3] || '';
+        const vacsora = lines[i + 4] || '';
+        const utani = lines[i + 5] || '';
+
+        const parseItems = (s: string) =>
+          s
+            .split('+')
+            .map(x => x.trim())
+            .filter(x => x.length > 1 && !/^\d+$/.test(x) && !/~\d/.test(x));
+
+        const reggeliItems = parseItems(reggeli);
+        const ebedItems = parseItems(ebed);
+        const vacsoraItems = parseItems(vacsora);
+        const utaniItems = utani && !utani.startsWith('~') ? parseItems(utani) : [];
+
+        [...reggeliItems, ...ebedItems, ...vacsoraItems, ...utaniItems].forEach(item => {
+          let name = item
+            .replace(/^\d+\s*g\s+/i, '')
+            .replace(/^\d+\s*ml\s+/i, '')
+            .replace(/^\d+\s+/, '')
+            .replace(/^½\s*/, '')
+            .trim();
+          if (name.length > 1) {
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+            ingredientSet.add(name);
+          }
+        });
+
+        const meals: any[] = [
+          { name: 'Reggeli', items: reggeliItems, meal_type: 'breakfast' },
+          { name: 'Ebéd', items: ebedItems, meal_type: 'lunch' },
+          { name: 'Vacsora', items: vacsoraItems, meal_type: 'dinner' },
+        ];
+        if (utaniItems.length > 0) {
+          meals.push({ name: 'Edzés utáni', items: utaniItems, meal_type: 'snack' });
+        }
+
+        days.push({
+          day: days.length + 1,
+          dayOfWeek: DAY_MAP[dayKey].hu,
+          type: isTraining ? 'edzés' : 'pihenő',
+          is_training_day: isTraining,
+          meals,
+        });
+
+        i += utaniItems.length > 0 ? 6 : 5;
+        continue;
+      }
+    }
+    i++;
+  }
+
+  if (days.length < 7) return null;
+
+  const weeks = convert30DayPlanToWeeks(days);
+  const ingredients = Array.from(ingredientSet);
+
+  console.log('[hetNap] parsed days:', days.length, 'ingredients:', ingredients.length);
+  return { ingredients, weeks };
 }
 
 /**

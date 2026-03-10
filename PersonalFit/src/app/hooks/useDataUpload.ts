@@ -302,6 +302,7 @@ export function useDataUpload() {
                   // For now, fixed 3 meals/day + reasonable kcal target
                   meal_count: 3,
                   daily_kcal: 2000,
+                  extracted_text: rawText,
                 }),
               });
 
