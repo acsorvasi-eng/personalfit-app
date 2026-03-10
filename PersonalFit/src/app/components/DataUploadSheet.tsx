@@ -379,9 +379,15 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
             <ImportProgressUI
               isLoading={upload.isLoading}
               stats={upload.importStats}
+              mode={strategy === 'foodsOnly' ? 'quick' : 'full'}
               onContinue={() => {
                 setShowImportProgress(false);
-                handleDone();
+                if (strategy === 'foodsOnly') {
+                  // Gyors mód: lépjünk az ételek fülre.
+                  window.location.assign('/foods');
+                } else {
+                  handleDone();
+                }
               }}
             />
           )}

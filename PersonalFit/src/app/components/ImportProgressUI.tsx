@@ -14,11 +14,12 @@ interface ImportProgressUIProps {
   isLoading: boolean;
   stats?: ImportStats;
   onContinue: () => void;
+  mode?: "quick" | "full";
 }
 
 const STEP_TIMINGS = [0, 1500, 3000]; // ms for 3 visible steps
 
-export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgressUIProps) {
+export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }: ImportProgressUIProps) {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -233,7 +234,9 @@ export function ImportProgressUI({ isLoading, stats, onContinue }: ImportProgres
                       onClick={onContinue}
                       className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-500 shadow-md shadow-emerald-500/30"
                     >
-                      <span>📤 Publikálás</span>
+                      <span>
+                        {mode === "quick" ? "Tovább az ételekhez →" : "📤 Publikálás"}
+                      </span>
                     </button>
                   </div>
                 </motion.div>

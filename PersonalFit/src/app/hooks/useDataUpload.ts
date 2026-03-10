@@ -903,21 +903,155 @@ export function useDataUpload() {
 
       setStep('parsing', 10);
 
-      let parsed: AIParsedDocument;
-
       const lowerName = file.name.toLowerCase();
       const mimeType = file.type.toLowerCase();
       const isPdf = lowerName.endsWith('.pdf') || mimeType === 'application/pdf';
 
       try {
         if (isPdf) {
-          // PDF: extract text, then try LLM first, fallback to local parser
-          const rawText = await extractTextFromPDF(file);
-          parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
+          // FIX 3 — Gyors mód: használjuk az API quick módját (mode: 'quick')
+          const dataUrl = await readFileAsDataURL(file);
+          const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+          if (!base64) {
+            throw new Error('Nem sikerült a PDF-et base64 formátumba olvasni (quick mód)');
+          }
+
+          const resp = await fetch('/api/parse-document', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pdf_base64: base64,
+              mode: 'quick',
+            }),
+          });
+
+          if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.error || `Quick parser error: ${resp.status}`);
+          }
+
+          const response = await resp.json();
+          console.log('[upload/foods-only/quick] API response:', JSON.stringify(response).substring(0, 400));
+
+          const ingredientsFromApi: string[] = Array.isArray(response.ingredients)
+            ? response.ingredients
+            : [];
+
+          if (response.stats) {
+            const apiStats = response.stats;
+            console.log('[useDataUpload/foods-only] setting importStats from quick API:', apiStats);
+            setState(prev => ({
+              ...prev,
+              importStats: {
+                days_count: apiStats.days_count ?? 0,
+                meals_count: apiStats.meals_count ?? 0,
+                foods_count: apiStats.foods_count ?? 0,
+                training_days: apiStats.training_days ?? 0,
+                rest_days: apiStats.rest_days ?? 0,
+              },
+            }));
+          }
+
+          if (ingredientsFromApi.length === 0) {
+            throw new Error('A quick mód nem talált egyetlen ételt sem a PDF-ben.');
+          }
+
+          // Egyszerű foods-only pipeline a kapott hozzávaló nevekből.
+          setStep('populating_foods', 40);
+
+          const seen = new Set<string>();
+          const foodInputs: FoodCatalogSvc.CreateFoodInput[] = [];
+
+          for (const rawName of ingredientsFromApi) {
+            const cleanedName = AIParser.cleanFoodName(String(rawName || ''));
+            if (!AIParser.isCleanFoodName(cleanedName)) continue;
+
+            const atomicNames = new Set<string>();
+            for (const part of parseBaseIngredients(cleanedName)) {
+              const normalized = normalizeIngredientName(part);
+              if (!normalized) continue;
+              const lower = normalized.toLowerCase();
+              if (!isSingleBaseIngredientName(normalized)) continue;
+              atomicNames.add(lower);
+            }
+            if (atomicNames.size === 0) continue;
+
+            for (const lower of atomicNames) {
+              if (seen.has(lower)) continue;
+              seen.add(lower);
+
+              const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
+
+              const category = mapAICategoryToFoodCategory(undefined as any);
+              const calories = 100;
+              const protein = 0;
+              const carbs = 0;
+              const fat = 0;
+
+              foodInputs.push({
+                name: displayName,
+                description: 'AI-ból kinyert étel (quick mód, PDF)',
+                category,
+                calories_per_100g: calories,
+                protein_per_100g: protein,
+                carbs_per_100g: carbs,
+                fat_per_100g: fat,
+                source: 'ai_generated',
+              });
+            }
+          }
+
+          if (foodInputs.length === 0) {
+            throw new Error('Quick mód: a kinyert összetevőkből nem sikerült használható ételt képezni.');
+          }
+
+          const summary = await FoodCatalogSvc.createFoodsBatch(foodInputs);
+          console.log('[Upload/FoodsOnly/quick] Foods created:', summary.created.length, 'skipped:', summary.skipped.length);
+
+          setStep('complete', 100);
+
+          const result: UploadResult = {
+            planId: 'foods-only-quick',
+            planLabel: `${file.name} — Gyors étellista`,
+            totalWeeks: 0,
+            totalDays: 0,
+            totalMeals: 0,
+            newFoods: summary.created.length,
+            shoppingItems: 0,
+            measurementsRecorded: false,
+            trainingPlanCreated: false,
+            confidence: 0.7,
+            personalDataExtracted: false,
+            extractedFields: [],
+          };
+
+          setState(prev => ({
+            ...prev,
+            step: 'complete',
+            progress: 100,
+            result,
+          }));
+
+          return result;
         } else {
-          // Text/Word: read raw text, try LLM first, fallback to local parser
+          // Nem PDF: marad a korábbi LLM → lokális parser útvonal
+          let parsed: AIParsedDocument;
           const rawText = await file.text();
           parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
+
+          const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
+          if (!hasNutritionPlan) {
+            setState(prev => ({
+              ...prev,
+              step: 'error',
+              error: 'Nem sikerült étrendet kinyerni a dokumentumból.',
+              warnings: [...prev.warnings, ...parsed.warnings],
+            }));
+            return;
+          }
+
+          return processFoodsOnly(parsed, file.name);
         }
       } catch (extractionError) {
         console.warn('[Upload/FoodsOnly] File extraction failed:', extractionError);
@@ -930,18 +1064,8 @@ export function useDataUpload() {
         return;
       }
 
-      const hasNutritionPlan = parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0;
-      if (!hasNutritionPlan) {
-        setState(prev => ({
-          ...prev,
-          step: 'error',
-          error: 'Nem sikerült étrendet kinyerni a dokumentumból.',
-          warnings: [...prev.warnings, ...parsed.warnings],
-        }));
-        return;
-      }
-
-      return processFoodsOnly(parsed, file.name);
+      // Nem-PDF quick mód szöveges bemenetből: ezt a részt a processTextFoodsOnly ág kezeli.
+      return;
     },
     processTextFoodsOnly: async (text: string) => {
       setState({

@@ -73,7 +73,31 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { content, text, pdf_base64, meal_count = 3, daily_kcal = DAILY_CALORIE_TARGET } = req.body;
+  const { content, text, pdf_base64, meal_count = 3, daily_kcal = DAILY_CALORIE_TARGET, mode } = req.body;
+
+  // Quick mode: foods-only extraction with a single lightweight Gemini call.
+  if (pdf_base64 && mode === 'quick') {
+    try {
+      const ingredients = await parseQuickIngredients(pdf_base64);
+      const cleaned = filterCleanIngredients(ingredients);
+      const stats = {
+        days_count: 0,
+        meals_count: 0,
+        foods_count: cleaned.length,
+        training_days: 0,
+        rest_days: 0,
+      };
+      console.log('[parse-document] quick mode ingredients:', cleaned.length);
+      return res.status(200).json({
+        mode: 'quick',
+        ingredients: cleaned,
+        stats,
+      });
+    } catch (error: any) {
+      console.error('[parse-document] quick mode failed, falling back to full engine:', error);
+      // fall through to full engine below
+    }
+  }
 
   // If base64 PDF provided → try Gemini first
   if (pdf_base64) {
@@ -558,6 +582,13 @@ async function parseWithGemini(
     throw new Error('GEMINI_API_KEY is not set');
   }
 
+  // FIX 2 — log approximate PDF size for diagnostics (chunking later)
+  const pdfSizeKB = Math.round((pdfBase64.length * 0.75) / 1024);
+  console.log('[gemini] PDF size:', pdfSizeKB, 'KB');
+  if (pdfSizeKB > 500) {
+    console.warn('[gemini] LARGE PDF detected, consider chunking:', pdfSizeKB, 'KB');
+  }
+
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
@@ -688,6 +719,58 @@ Return ONLY the JSON array, no other text.`;
     detected_days_per_week: 7,
     plan_type: parsed.plan_type === 'weekly' ? 'weekly' : 'options',
   };
+}
+
+/**
+ * FIX 1 — Quick mode: lightweight foods-only Gemini parser.
+ * Returns a flat list of ingredient names (Hungarian, atomic).
+ */
+async function parseQuickIngredients(pdfBase64: string): Promise<string[]> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not set');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    generationConfig: { maxOutputTokens: 2048 },
+  });
+
+  const quickPrompt = `List EVERY food ingredient from this meal plan PDF.
+
+Rules:
+- Output ONLY a JSON array of objects: [{"name": "csirkemell", "category": "Feherje"}, ...]
+- ALL ingredient names MUST be in Hungarian (walnut → dió, potato → krumpli, yogurt → joghurt, celery → zeller, cottage cheese → túró).
+- Atomic ingredients only (no combined names like "cukkini-paradicsom").
+- No explanation, no markdown, just JSON.`;
+
+  const response = await model.generateContent([
+    { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+    quickPrompt,
+  ]);
+
+  const text = response.response.text();
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) {
+    throw new Error('No JSON array in Gemini quick response');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  if (!Array.isArray(parsed)) {
+    throw new Error('Quick response JSON is not an array');
+  }
+
+  const names = parsed
+    .map((ing: any) => {
+      if (!ing) return '';
+      if (typeof ing === 'string') return ing;
+      if (typeof ing.name === 'string') return ing.name;
+      return '';
+    })
+    .filter((v: string) => typeof v === 'string' && v.trim().length > 0);
+
+  return names;
 }
 
 /**
