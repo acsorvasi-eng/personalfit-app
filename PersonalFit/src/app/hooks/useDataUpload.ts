@@ -349,14 +349,16 @@ export function useDataUpload() {
               } as AIParsedDocument;
 
               if (response.stats) {
+                const apiStats = response.stats;
+                console.log('[useDataUpload] setting importStats from API:', apiStats);
                 setState(prev => ({
                   ...prev,
                   importStats: {
-                    days_count: response.stats.days_count ?? 0,
-                    meals_count: response.stats.meals_count ?? 0,
-                    foods_count: response.stats.foods_count ?? 0,
-                    training_days: response.stats.training_days ?? 0,
-                    rest_days: response.stats.rest_days ?? 0,
+                    days_count: apiStats.days_count ?? 0,
+                    meals_count: apiStats.meals_count ?? 0,
+                    foods_count: apiStats.foods_count ?? 0,
+                    training_days: apiStats.training_days ?? 0,
+                    rest_days: apiStats.rest_days ?? 0,
                   },
                 }));
               }
