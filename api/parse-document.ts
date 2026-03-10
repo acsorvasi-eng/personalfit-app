@@ -82,6 +82,7 @@ export default async function handler(req: any, res: any) {
       console.log(
         `[parse-document] Gemini engine (${geminiResult.plan_type}) : ${geminiResult.ingredients.length} ingredients, ${geminiResult.weeks.length} weeks`
       );
+      const stats = computePlanStats(geminiResult.weeks, geminiResult.ingredients);
       return res.status(200).json({
         result: JSON.stringify({
           ingredients: geminiResult.ingredients,
@@ -91,6 +92,7 @@ export default async function handler(req: any, res: any) {
         }),
         plan_type: geminiResult.plan_type,
         engine: 'gemini',
+        stats,
       });
     } catch (err: any) {
       console.error('[gemini] failed, falling back to Claude:', err?.message || err);
@@ -118,15 +120,62 @@ export default async function handler(req: any, res: any) {
     console.log(
       `[parse-document] Done (${payload.plan_type}) : ${payload.ingredients.length} ingredients, ${payload.weeks.length} weeks`
     );
+    const stats = computePlanStats(payload.weeks, payload.ingredients);
     return res.status(200).json({
       result: JSON.stringify(result),
       plan_type: payload.plan_type,
       engine: 'claude',
+      stats,
     });
   } catch (error: any) {
     console.error('[parse-document] Error:', error);
     return res.status(500).json({ error: error.message || 'Failed to parse document' });
   }
+}
+
+function computePlanStats(
+  weeks: any[][],
+  ingredients: string[],
+): {
+  days_count: number;
+  meals_count: number;
+  foods_count: number;
+  training_days: number;
+  rest_days: number;
+} {
+  const safeWeeks = Array.isArray(weeks) ? weeks : [];
+  const allDays = safeWeeks.reduce<any[]>((acc, w) => {
+    if (Array.isArray(w)) acc.push(...w);
+    return acc;
+  }, []);
+
+  const days_count = allDays.length;
+  const meals_count = allDays.reduce((sum, day) => {
+    const meals = Array.isArray(day?.meals) ? day.meals : [];
+    return sum + meals.length;
+  }, 0);
+
+  const foods_count = Array.isArray(ingredients) ? ingredients.length : 0;
+
+  const training_days = allDays.filter((d) => {
+    if (d?.is_training_day === true) return true;
+    const type = (d?.type || '').toString().toLowerCase();
+    return type === 'edzés' || type === 'edzes' || type === 'training';
+  }).length;
+
+  const rest_days = allDays.filter((d) => {
+    if (d?.is_training_day === false) return true;
+    const type = (d?.type || '').toString().toLowerCase();
+    return type === 'pihenő' || type === 'piheno' || type === 'rest';
+  }).length;
+
+  return {
+    days_count,
+    meals_count,
+    foods_count,
+    training_days,
+    rest_days,
+  };
 }
 
 /**

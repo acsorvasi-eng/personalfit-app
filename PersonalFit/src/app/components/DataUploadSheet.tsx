@@ -32,6 +32,7 @@ import { DSMButton } from './dsm';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MergeConflictDialog } from './MergeConflictDialog';
 import { MealIntervals } from '../features/menu/components/MealIntervals';
+import { ImportProgressUI } from './ImportProgressUI';
 import * as NutritionPlanService from '../backend/services/NutritionPlanService';
 import * as FoodCatalogService from '../backend/services/FoodCatalogService';
 import { showToast } from '../shared/components/Toast';
@@ -98,6 +99,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showMergeDialog, setShowMergeDialog] = useState(false);
   const [showMealCount, setShowMealCount] = useState(false);
+  const [showImportProgress, setShowImportProgress] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [mergeStats, setMergeStats] = useState<{ foods: number; days: number; meals: number; newItems: string[] } | null>(null);
   const [lastUploadMode, setLastUploadMode] = useState<'merge' | 'overwrite' | null>(null);
@@ -112,6 +114,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     setSelectedFile(file);
     setMode('processing');
     setLastUploadMode(modeOverride);
+    setShowImportProgress(true);
 
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate([10, 20]);
@@ -124,8 +127,6 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
       // Teljes terv import a megadott móddal
       await upload.uploadFile(file, modeOverride);
     }
-
-    setShowMealCount(true);
   }, [upload, strategy]);
 
   const handleFileSelect = useCallback(async (file: File) => {
@@ -373,6 +374,17 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
               className="hidden"
             />
           </motion.div>
+
+          {showImportProgress && (
+            <ImportProgressUI
+              isLoading={upload.isLoading}
+              stats={upload.importStats}
+              onContinue={() => {
+                setShowImportProgress(false);
+                setShowMealCount(true);
+              }}
+            />
+          )}
 
           {showMergeDialog && (
             <MergeConflictDialog

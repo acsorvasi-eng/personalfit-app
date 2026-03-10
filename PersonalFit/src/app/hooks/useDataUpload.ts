@@ -102,6 +102,13 @@ export interface UploadState {
   warnings: string[];
   confidence: number;
   result: UploadResult | null;
+  importStats?: {
+    days_count: number;
+    meals_count: number;
+    foods_count: number;
+    training_days: number;
+    rest_days: number;
+  };
 }
 
 export interface UploadResult {
@@ -228,6 +235,7 @@ export function useDataUpload() {
     warnings: [],
     confidence: 0,
     result: null,
+    importStats: undefined,
   });
 
   const setStep = (step: UploadStep, progress: number) => {
@@ -262,6 +270,7 @@ export function useDataUpload() {
         warnings: [],
         confidence: 0,
         result: null,
+        importStats: undefined,
       });
 
       setStep('parsing', 10);
@@ -336,6 +345,19 @@ export function useDataUpload() {
                 confidence: typeof plan.confidence === 'number' ? plan.confidence : 0.7,
                 rawText,
               } as AIParsedDocument;
+
+              if (data.stats) {
+                setState(prev => ({
+                  ...prev,
+                  importStats: {
+                    days_count: data.stats.days_count ?? 0,
+                    meals_count: data.stats.meals_count ?? 0,
+                    foods_count: data.stats.foods_count ?? 0,
+                    training_days: data.stats.training_days ?? 0,
+                    rest_days: data.stats.rest_days ?? 0,
+                  },
+                }));
+              }
             } catch (geminiError) {
               console.warn('[Upload] Gemini PDF parser failed, falling back to Claude/regex:', geminiError);
               parsed = await parseWithLLM(rawText).catch(() => AIParser.parseDocumentText(rawText));
@@ -398,6 +420,8 @@ export function useDataUpload() {
         warnings: [],
         confidence: 0,
         result: null,
+        importStats: undefined,
+        importStats: undefined,
       });
 
       // Try LLM first (if key/proxy), else regex parser
@@ -852,9 +876,14 @@ export function useDataUpload() {
   }, []);
 
   // NOTE: generateFromDemoData REMOVED — app works strictly from uploaded data only
+  const isLoading =
+    state.step !== 'idle' &&
+    state.step !== 'complete' &&
+    state.step !== 'error';
 
   return {
     ...state,
+    isLoading,
     uploadFile,
     processText,
     // Gyors mód – külön publikus hívók
