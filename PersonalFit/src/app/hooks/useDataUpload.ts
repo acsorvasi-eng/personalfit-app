@@ -313,6 +313,8 @@ export function useDataUpload() {
               const response = await resp.json();
               console.log('[upload] API response:', JSON.stringify(response).substring(0, 500));
               console.log('[upload] stats:', response.stats);
+              console.log('[DEBUG] response keys:', Object.keys(response || {}));
+              console.log('[DEBUG] response.stats:', JSON.stringify(response?.stats));
               if (!response.result) {
                 throw new Error('Üres válasz az AI PDF parser-től');
               }
@@ -1032,6 +1034,12 @@ export function useDataUpload() {
             progress: 100,
             result,
           }));
+
+          try {
+            window.dispatchEvent(new CustomEvent('foodsUpdated'));
+          } catch {
+            // ignore if window is not available
+          }
 
           return result;
         } else {

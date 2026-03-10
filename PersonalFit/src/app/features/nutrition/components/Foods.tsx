@@ -165,6 +165,16 @@ const DEFAULT_COLORS = {
   darkText: "dark:text-gray-400",
 };
 
+const SkeletonFoodItem = () => (
+  <div className="animate-pulse flex items-center justify-between p-4 mb-2 rounded-2xl border border-gray-100 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#151515]">
+    <div className="flex-1 mr-4">
+      <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-32 mb-2" />
+      <div className="h-3 bg-gray-100 dark:bg-[#202020] rounded w-20" />
+    </div>
+    <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-16" />
+  </div>
+);
+
 // ═══════════════════════════════════════════════════════════════
 // FALLBACK: Convert foodDatabase to PlanFood[]
 // ═══════════════════════════════════════════════════════════════
@@ -234,6 +244,7 @@ export function Foods() {
     foods: planFoods,
     categories: planCategories,
     isLoading: planLoading,
+    refresh: refreshPlanFoods,
   } = usePlanFoods();
   const { t, language } = useLanguage();
   const { isFavorite, toggleFavorite, favoriteCount } = useFavoriteFoods();
@@ -384,6 +395,16 @@ export function Foods() {
       }
     })();
   }, []);
+
+  // Reload foods explicitly when quick-mode upload finishes.
+  useEffect(() => {
+    const handler = () => {
+      console.log("[Foods] foodsUpdated event received — reloading foods");
+      refreshPlanFoods();
+    };
+    window.addEventListener("foodsUpdated", handler);
+    return () => window.removeEventListener("foodsUpdated", handler);
+  }, [refreshPlanFoods]);
 
   // Decide data source:
   //   - If van aktív tervhez kötött étel (planFoods) → azt használjuk
@@ -550,12 +571,9 @@ export function Foods() {
       {/* ═══ Food List ═══ */}
       <div className="flex-1 overflow-y-auto px-4 pb-3">
         {planLoading ? (
-          <div className="space-y-3 pt-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl bg-gray-100 dark:bg-[#252525] h-[88px] animate-pulse"
-              />
+          <div className="space-y-2 pt-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <SkeletonFoodItem key={i} />
             ))}
           </div>
         ) : filteredFoods.length === 0 ? (
