@@ -224,6 +224,13 @@ function stripMealPrefix(str: string): string {
  * STEP 1: Detect whether the text is a weekly structured plan or an options-based plan.
  */
 async function detectPlanType(cleanedText: string): Promise<'weekly' | 'options'> {
+  const lowerText = cleanedText.toLowerCase();
+  const weeklySignals = ['1. hét', '2. hét', 'nap reggeli ebéd', 'het\nedzés', 'hétfő\nedzés'];
+  if (weeklySignals.some(s => lowerText.includes(s))) {
+    console.log('[detectPlanType] weekly signals found, skipping LLM detection');
+    return 'weekly';
+  }
+
   const detectPrompt = `Analyze this meal plan text and respond with ONLY one word:
 - "weekly" if it has explicit day-by-day schedule (Hétfő, Kedd, etc with specific meals per day)
 - "options" if it has meal option lists/columns to choose from (A oszlop, B oszlop, reggeli variációk, vacsora opciók)
@@ -702,6 +709,8 @@ Return ONLY the JSON array, no other text.`;
   const parsed = JSON.parse(jsonMatch[0]);
   const days = generate28DayPlan(parsed, mealCount, dailyKcal);
   const weeks = convert30DayPlanToWeeks(days);
+  console.log('[gemini] days generated:', days.length);
+  console.log('[gemini] weeks generated:', weeks.length, weeks.map((w: any[]) => w.length));
 
   // If the focused ingredient call failed or returned nothing, fall back to any ingredients from the plan JSON
   if (ingredientNames.length === 0 && Array.isArray(parsed.ingredients)) {
