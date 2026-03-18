@@ -28,7 +28,7 @@ export function Layout() {
 
   return (
     <AppInitializer>
-      <div className="min-h-screen h-svh flex flex-col bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#121212] dark:to-[#121212] overflow-hidden">
+      <div className="min-h-screen h-svh flex flex-col bg-background overflow-hidden">
         {/* Main Content */}
         <main
           className="flex-1 overflow-hidden w-full pb-20 px-0"

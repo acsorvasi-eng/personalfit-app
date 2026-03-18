@@ -95,7 +95,7 @@ function LoaderAnimation({ t }: { t: (key: string) => string }) {
           >{e}</motion.div>
         ))}
       </div>
-      <motion.p className="font-bold text-[1.1rem] text-gray-900 dark:text-gray-100 mb-2"
+      <motion.p className="font-bold text-[1.1rem] text-foreground mb-2"
         animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.8, repeat: Infinity }}>
         {t('generatePlan.loaderText')}
       </motion.p>
@@ -105,9 +105,9 @@ function LoaderAnimation({ t }: { t: (key: string) => string }) {
 }
 
 // ─── Shared class strings ─────────────────────────────────────
-const inp = "w-full px-[13px] py-[11px] rounded-[11px] border-[1.5px] border-gray-200 text-[0.92rem] text-gray-900 bg-gray-50 outline-none dark:border-gray-700 dark:text-gray-100 dark:bg-gray-800";
-const btnPrimary = "h-[52px] rounded-[15px] bg-gradient-to-br from-indigo-500 to-violet-500 text-white font-bold text-[0.95rem] cursor-pointer flex items-center justify-center gap-2 shadow-[0_4px_18px_rgba(99,102,241,0.35)]";
-const btnBack = "w-12 h-[52px] rounded-[15px] border-[1.5px] border-gray-200 bg-gray-50 cursor-pointer flex items-center justify-center shrink-0 dark:border-gray-700 dark:bg-gray-800";
+const inp = "w-full px-[13px] py-[11px] rounded-[11px] border-[1.5px] border-border text-[0.92rem] text-foreground bg-gray-50 outline-none";
+const btnPrimary = "h-[52px] rounded-[15px] bg-primary text-white font-bold text-[0.95rem] cursor-pointer flex items-center justify-center gap-2 shadow-[0_4px_18px_rgba(99,102,241,0.35)]";
+const btnBack = "w-12 h-[52px] rounded-[15px] border-[1.5px] border-border bg-gray-50 cursor-pointer flex items-center justify-center shrink-0";
 
 function newSport(): SportEntry {
   return {
@@ -278,21 +278,21 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
         <motion.div key="fullpage"
           initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 32 }}
           transition={{ type: "spring", stiffness: 340, damping: 32 }}
-          className="fixed inset-0 z-[9000] bg-white dark:bg-gray-950 flex flex-col overflow-y-auto"
+          className="fixed inset-0 z-[9000] bg-background flex flex-col overflow-y-auto"
         >
           {/* ── Top bar ── */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800 shrink-0 sticky top-0 bg-white dark:bg-gray-950 z-10">
+          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0 sticky top-0 bg-background z-10">
             <div className="flex items-center gap-[10px]">
-              <div className="w-[38px] h-[38px] rounded-[11px] bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shrink-0">
+              <div className="w-[38px] h-[38px] rounded-[11px] bg-primary flex items-center justify-center shrink-0">
                 <Sparkles size={18} color="#fff" />
               </div>
               <div>
-                <div className="font-bold text-base text-gray-900 dark:text-gray-100 leading-tight">{t('generatePlan.title')}</div>
+                <div className="font-bold text-base text-foreground leading-tight">{t('generatePlan.title')}</div>
                 <div className="text-[0.72rem] text-gray-400">{t('generatePlan.ingredientsAvailable').replace('{n}', String(foods.length))}</div>
               </div>
             </div>
             {step !== "generating" && step !== "saving" && (
-              <button onClick={handleClose} className="w-[34px] h-[34px] rounded-full border-none bg-gray-100 dark:bg-gray-800 cursor-pointer flex items-center justify-center">
+              <button onClick={handleClose} className="w-[34px] h-[34px] rounded-full border-none bg-gray-100 cursor-pointer flex items-center justify-center">
                 <X size={16} color="#6b7280" />
               </button>
             )}
@@ -300,10 +300,10 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
 
           {/* ── Progress bar ── */}
           {wizardIndex >= 0 && (
-            <div className="px-5 pt-[10px] shrink-0 bg-white dark:bg-gray-950">
+            <div className="px-5 pt-[10px] shrink-0 bg-background">
               <div className="flex gap-[5px]">
                 {WIZARD_STEPS.map((s, i) => (
-                  <div key={s} className={`flex-1 h-[3px] rounded-sm transition-colors duration-300 ${i <= wizardIndex ? "bg-indigo-500" : "bg-gray-200 dark:bg-gray-700"}`} />
+                  <div key={s} className={`flex-1 h-[3px] rounded-sm transition-colors duration-300 ${i <= wizardIndex ? "bg-indigo-500" : "bg-gray-200"}`} />
                 ))}
               </div>
             </div>
@@ -316,41 +316,41 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {/* ══ WELCOME ══ */}
               {step === "welcome" && (
                 <motion.div key="welcome" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}>
-                  <div className="bg-gradient-to-br from-violet-100 to-violet-200 dark:from-violet-900/30 dark:to-violet-800/20 rounded-[20px] px-6 py-7 mb-5 text-center">
+                  <div className="bg-primary/5 rounded-[20px] px-6 py-7 mb-5 text-center">
                     <div className="text-5xl mb-3">🥗</div>
-                    <h2 className="m-0 mb-[10px] font-extrabold text-[1.35rem] text-violet-900 dark:text-violet-200">{t('generatePlan.welcomeTitle')}</h2>
-                    <p className="m-0 text-[0.9rem] text-violet-700 dark:text-violet-300 leading-relaxed">{t('generatePlan.welcomeSubtitle')}</p>
+                    <h2 className="m-0 mb-[10px] font-extrabold text-[1.35rem] text-primary">{t('generatePlan.welcomeTitle')}</h2>
+                    <p className="m-0 text-[0.9rem] text-primary leading-relaxed">{t('generatePlan.welcomeSubtitle')}</p>
                   </div>
 
                   {/* Profile summary — shown when data was loaded from onboarding */}
                   {profileLoaded && personalValid && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-800/50 rounded-[14px] px-4 py-[14px] mb-4">
-                      <div className="text-xs font-semibold text-green-800 dark:text-green-400 mb-[10px] uppercase tracking-[0.04em]">
+                    <div className="bg-green-50 border border-green-300 rounded-[14px] px-4 py-[14px] mb-4">
+                      <div className="text-xs font-semibold text-green-800 mb-[10px] uppercase tracking-[0.04em]">
                         ✓ {t('generatePlan.profileSummaryTitle')}
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
-                          <div className="text-[1.15rem] font-bold text-green-800 dark:text-green-400">{personal.age}</div>
+                          <div className="text-[1.15rem] font-bold text-green-800">{personal.age}</div>
                           <div className="text-[0.7rem] text-green-400">{t('generatePlan.age')}</div>
                         </div>
                         <div>
-                          <div className="text-[1.15rem] font-bold text-green-800 dark:text-green-400">{personal.heightCm} cm</div>
+                          <div className="text-[1.15rem] font-bold text-green-800">{personal.heightCm} cm</div>
                           <div className="text-[0.7rem] text-green-400">{t('generatePlan.height')}</div>
                         </div>
                         <div>
-                          <div className="text-[1.15rem] font-bold text-green-800 dark:text-green-400">{personal.weightKg} kg</div>
+                          <div className="text-[1.15rem] font-bold text-green-800">{personal.weightKg} kg</div>
                           <div className="text-[0.7rem] text-green-400">{t('generatePlan.weight')}</div>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  <div className="bg-yellow-50 dark:bg-amber-900/20 border border-yellow-300 dark:border-amber-800/50 rounded-[14px] px-4 py-[14px] mb-5">
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-[14px] px-4 py-[14px] mb-5">
                     <div className="flex gap-[10px] items-start">
                       <span className="text-lg shrink-0">ℹ️</span>
                       <div>
-                        <div className="font-bold text-[0.85rem] text-amber-800 dark:text-amber-400 mb-[6px]">{t('generatePlan.importantTitle')}</div>
-                        <p className="m-0 text-[0.82rem] text-amber-900 dark:text-amber-300 leading-[1.65]">
+                        <div className="font-bold text-[0.85rem] text-amber-800 mb-[6px]">{t('generatePlan.importantTitle')}</div>
+                        <p className="m-0 text-[0.82rem] text-amber-900 leading-[1.65]">
                           {t('generatePlan.importantText')}
                         </p>
                       </div>
@@ -362,7 +362,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                       <button onClick={handleGenerate} className={`${btnPrimary} w-full mb-[10px]`}>
                         {t('generatePlan.generateDirect')} <ArrowRight size={18} />
                       </button>
-                      <button onClick={() => setStep("personal")} className="w-full py-[11px] rounded-[13px] border-[1.5px] border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-pointer text-[0.85rem] text-gray-500 dark:text-gray-400 font-medium">
+                      <button onClick={() => setStep("personal")} className="w-full py-[11px] rounded-[13px] border-[1.5px] border-border bg-gray-50 cursor-pointer text-[0.85rem] text-foreground/60 font-medium">
                         {t('generatePlan.editProfile')}
                       </button>
                     </>
@@ -377,16 +377,16 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {/* ══ PERSONAL ══ */}
               {step === "personal" && (
                 <motion.div key="personal" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}>
-                  <h2 className="m-0 mb-1 font-extrabold text-[1.2rem] text-gray-900 dark:text-gray-100">{t('generatePlan.personalTitle')}</h2>
+                  <h2 className="m-0 mb-1 font-extrabold text-[1.2rem] text-foreground">{t('generatePlan.personalTitle')}</h2>
                   <p className="m-0 mb-5 text-[0.83rem] text-gray-400">{t('generatePlan.personalSubtitle')}</p>
 
                   {/* Gender */}
                   <div className="mb-4">
-                    <label className="text-[0.79rem] font-semibold text-gray-700 dark:text-gray-300 block mb-[7px]">{t('generatePlan.genderLabel')}</label>
+                    <label className="text-[0.79rem] font-semibold text-foreground block mb-[7px]">{t('generatePlan.genderLabel')}</label>
                     <div className="flex gap-[10px]">
                       {([{ v: "male", l: t('generatePlan.male'), e: "👨" }, { v: "female", l: t('generatePlan.female'), e: "👩" }] as any[]).map(g => (
                         <button key={g.v} onClick={() => setPersonal(p => ({ ...p, gender: g.v }))}
-                          className={`flex-1 py-[11px] px-2 rounded-[11px] border-2 ${personal.gender === g.v ? "border-indigo-500 bg-violet-100 text-violet-900 dark:bg-violet-900/30 dark:text-violet-200" : "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"} font-semibold text-[0.9rem] cursor-pointer flex items-center justify-center gap-[6px]`}
+                          className={`flex-1 py-[11px] px-2 rounded-[11px] border-2 ${personal.gender === g.v ? "border-indigo-500 bg-primary/10 text-primary" : "border-border bg-gray-50 text-foreground"} font-semibold text-[0.9rem] cursor-pointer flex items-center justify-center gap-[6px]`}
                         >{g.e} {g.l}</button>
                       ))}
                     </div>
@@ -400,7 +400,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                       { f: "weightKg", l: t('generatePlan.weight'), u: "kg", p: "75" },
                     ] as any[]).map(({ f, l, u, p }) => (
                       <div key={f}>
-                        <label className="text-[0.76rem] font-semibold text-gray-700 dark:text-gray-300 block mb-[5px]">{l}</label>
+                        <label className="text-[0.76rem] font-semibold text-foreground block mb-[5px]">{l}</label>
                         <div className="relative">
                           <input type="number" inputMode="numeric" value={(personal as any)[f]}
                             onChange={e => setPersonal(prev => ({ ...prev, [f]: e.target.value }))}
@@ -413,7 +413,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
 
                   {/* Goal */}
                   <div className="mb-6">
-                    <label className="text-[0.79rem] font-semibold text-gray-700 dark:text-gray-300 block mb-2">{t('generatePlan.goalLabel')}</label>
+                    <label className="text-[0.79rem] font-semibold text-foreground block mb-2">{t('generatePlan.goalLabel')}</label>
                     <div className="flex flex-col gap-[7px]">
                       {([
                         { v: "loss", l: t('generatePlan.goalLoss'), d: t('generatePlan.goalLossDesc'), e: "📉" },
@@ -421,11 +421,11 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                         { v: "gain", l: t('generatePlan.goalGain'), d: t('generatePlan.goalGainDesc'), e: "💪" },
                       ] as any[]).map(g => (
                         <button key={g.v} onClick={() => setPersonal(p => ({ ...p, goal: g.v }))}
-                          className={`px-[13px] py-[11px] rounded-[11px] text-left border-2 ${personal.goal === g.v ? "border-indigo-500 bg-violet-100 dark:bg-violet-900/30" : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"} cursor-pointer flex items-center gap-[11px]`}
+                          className={`px-[13px] py-[11px] rounded-[11px] text-left border-2 ${personal.goal === g.v ? "border-indigo-500 bg-primary/10" : "border-border bg-gray-50"} cursor-pointer flex items-center gap-[11px]`}
                         >
                           <span className="text-xl">{g.e}</span>
                           <div>
-                            <div className={`font-bold text-[0.88rem] ${personal.goal === g.v ? "text-violet-900 dark:text-violet-200" : "text-gray-900 dark:text-gray-100"}`}>{g.l}</div>
+                            <div className={`font-bold text-[0.88rem] ${personal.goal === g.v ? "text-primary" : "text-foreground"}`}>{g.l}</div>
                             <div className="text-[0.73rem] text-gray-400">{g.d}</div>
                           </div>
                         </button>
@@ -446,12 +446,12 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {/* ══ ACTIVITY ══ */}
               {step === "activity" && (
                 <motion.div key="activity" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}>
-                  <h2 className="m-0 mb-1 font-extrabold text-[1.2rem] text-gray-900 dark:text-gray-100">{t('generatePlan.activityTitle')}</h2>
+                  <h2 className="m-0 mb-1 font-extrabold text-[1.2rem] text-foreground">{t('generatePlan.activityTitle')}</h2>
                   <p className="m-0 mb-[18px] text-[0.83rem] text-gray-400">{t('generatePlan.activitySubtitle')}</p>
 
                   {/* Activity level */}
                   <div className="mb-5">
-                    <label className="text-[0.79rem] font-semibold text-gray-700 dark:text-gray-300 block mb-[9px]">{t('generatePlan.activityLevelLabel')}</label>
+                    <label className="text-[0.79rem] font-semibold text-foreground block mb-[9px]">{t('generatePlan.activityLevelLabel')}</label>
                     <div className="flex flex-col gap-[7px]">
                       {([
                         { v: "sedentary", l: t('generatePlan.actSedentary'), d: t('generatePlan.actSedentaryDesc'), e: "🪑" },
@@ -460,14 +460,14 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                         { v: "active", l: t('generatePlan.actActive'), d: t('generatePlan.actActiveDesc'), e: "⚡" },
                       ] as any[]).map(a => (
                         <button key={a.v} onClick={() => setActivity(p => ({ ...p, level: a.v }))}
-                          className={`px-[13px] py-[10px] rounded-[11px] text-left border-2 ${activity.level === a.v ? "border-indigo-500 bg-violet-100 dark:bg-violet-900/30" : "border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"} cursor-pointer flex items-center gap-[11px]`}
+                          className={`px-[13px] py-[10px] rounded-[11px] text-left border-2 ${activity.level === a.v ? "border-indigo-500 bg-primary/10" : "border-border bg-gray-50"} cursor-pointer flex items-center gap-[11px]`}
                         >
                           <span className="text-[19px]">{a.e}</span>
                           <div className="flex-1">
-                            <div className={`font-bold text-[0.87rem] ${activity.level === a.v ? "text-violet-900 dark:text-violet-200" : "text-gray-900 dark:text-gray-100"}`}>{a.l}</div>
+                            <div className={`font-bold text-[0.87rem] ${activity.level === a.v ? "text-primary" : "text-foreground"}`}>{a.l}</div>
                             <div className="text-[0.72rem] text-gray-400">{a.d}</div>
                           </div>
-                          <span className={`text-[0.72rem] font-bold ${activity.level === a.v ? "text-indigo-500" : "text-gray-300 dark:text-gray-600"}`}>
+                          <span className={`text-[0.72rem] font-bold ${activity.level === a.v ? "text-indigo-500" : "text-gray-300"}`}>
                             ×{ACTIVITY_MULTIPLIERS[a.v as ActivityLevel]}
                           </span>
                         </button>
@@ -480,23 +480,23 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     <div className="flex items-center justify-between mb-[10px]">
                       <div className="flex items-center gap-[7px]">
                         <Dumbbell size={15} color="#6366f1" />
-                        <span className="font-bold text-[0.88rem] text-gray-900 dark:text-gray-100">{t('generatePlan.sportSection')}</span>
+                        <span className="font-bold text-[0.88rem] text-foreground">{t('generatePlan.sportSection')}</span>
                         <span className="text-[0.71rem] text-gray-400">{t('generatePlan.sportOptional')}</span>
                       </div>
-                      <button onClick={addSport} className="flex items-center gap-[5px] py-[5px] px-[11px] rounded-full border-[1.5px] border-indigo-500 bg-violet-100 dark:bg-violet-900/30 text-indigo-500 font-semibold text-[0.77rem] cursor-pointer">
+                      <button onClick={addSport} className="flex items-center gap-[5px] py-[5px] px-[11px] rounded-full border-[1.5px] border-indigo-500 bg-primary/10 text-indigo-500 font-semibold text-[0.77rem] cursor-pointer">
                         <Plus size={13} /> {t('generatePlan.addSport')}
                       </button>
                     </div>
 
                     {activity.sports.length === 0 && (
-                      <div className="text-center py-[14px] bg-gray-50 dark:bg-gray-800/50 rounded-[11px] text-[0.8rem] text-gray-400">
+                      <div className="text-center py-[14px] bg-gray-50 rounded-[11px] text-[0.8rem] text-gray-400">
                         {t('generatePlan.noSport')}
                       </div>
                     )}
 
                     <div className="flex flex-col gap-[10px]">
                       {activity.sports.map(sport => (
-                        <div key={sport.id} className="border-[1.5px] border-gray-200 dark:border-gray-700 rounded-[13px] px-[14px] py-[13px]">
+                        <div key={sport.id} className="border-[1.5px] border-border rounded-[13px] px-[14px] py-[13px]">
                           <div className="flex items-center gap-2 mb-[10px]">
                             <input
                               type="text"
@@ -505,7 +505,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                               placeholder={t('generatePlan.sportPlaceholder')}
                               className={`${inp} flex-1`}
                             />
-                            <button onClick={() => removeSport(sport.id)} className="w-8 h-8 rounded-lg border-[1.5px] border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 cursor-pointer flex items-center justify-center shrink-0">
+                            <button onClick={() => removeSport(sport.id)} className="w-8 h-8 rounded-lg border-[1.5px] border-red-200 bg-red-50 cursor-pointer flex items-center justify-center shrink-0">
                               <Trash2 size={14} color="#ef4444" />
                             </button>
                           </div>
@@ -518,7 +518,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                                 const active = sport.days.includes(idx);
                                 return (
                                   <button key={idx} onClick={() => toggleDay(sport.id, idx)}
-                                    className={`flex-1 py-[5px] rounded-lg text-[0.73rem] font-bold border-[1.5px] ${active ? "border-indigo-500 bg-indigo-500 text-white" : "border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800"} cursor-pointer`}
+                                    className={`flex-1 py-[5px] rounded-lg text-[0.73rem] font-bold border-[1.5px] ${active ? "border-indigo-500 bg-indigo-500 text-white" : "border-border bg-gray-50 text-gray-400"} cursor-pointer`}
                                   >
                                     {label}
                                   </button>
@@ -558,47 +558,47 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {/* ══ CALC ══ */}
               {step === "calc" && (
                 <motion.div key="calc" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }}>
-                  <h2 className="m-0 mb-1 font-extrabold text-[1.2rem] text-gray-900 dark:text-gray-100">{t('generatePlan.calorieCalcTitle')}</h2>
+                  <h2 className="m-0 mb-1 font-extrabold text-[1.2rem] text-foreground">{t('generatePlan.calorieCalcTitle')}</h2>
                   <p className="m-0 mb-[18px] text-[0.83rem] text-gray-400">{t('generatePlan.calorieCalcSubtitle')}</p>
 
                   {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-[10px] px-[14px] py-[10px] mb-[14px] text-[0.82rem] text-red-600 dark:text-red-400">
+                    <div className="bg-red-50 border border-red-200 rounded-[10px] px-[14px] py-[10px] mb-[14px] text-[0.82rem] text-red-600">
                       ⚠️ {error}
                     </div>
                   )}
 
                   {/* Calorie cards */}
-                  <div className="bg-gradient-to-br from-violet-100 to-violet-200 dark:from-violet-900/30 dark:to-violet-800/20 rounded-[18px] p-[18px] mb-3">
+                  <div className="bg-primary/5 rounded-[18px] p-[18px] mb-3">
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       {[
                         { l: "BMR", v: bmr, d: t('generatePlan.bmrLabel') },
                         { l: "TDEE", v: tdee, d: t('generatePlan.tdeeLabel') },
                         { l: t('generatePlan.dailyGoal'), v: dailyTarget, d: { loss: t('generatePlan.goalLoss300'), maintain: t('generatePlan.goalMaintain0'), gain: t('generatePlan.goalGain300') }[personal.goal] },
                       ].map(({ l, v, d }) => (
-                        <div key={l} className="bg-white/60 dark:bg-white/10 rounded-[11px] px-[6px] py-[9px] text-center">
-                          <div className="text-[0.68rem] text-violet-600 dark:text-violet-400 font-semibold mb-[2px]">{l}</div>
-                          <div className="font-extrabold text-[1.15rem] text-violet-900 dark:text-violet-200">{v}</div>
-                          <div className="text-[0.63rem] text-violet-600 dark:text-violet-400">{d}</div>
+                        <div key={l} className="bg-white/60 rounded-[11px] px-[6px] py-[9px] text-center">
+                          <div className="text-[0.68rem] text-primary font-semibold mb-[2px]">{l}</div>
+                          <div className="font-extrabold text-[1.15rem] text-primary">{v}</div>
+                          <div className="text-[0.63rem] text-primary">{d}</div>
                         </div>
                       ))}
                     </div>
-                    <div className="text-[0.7rem] text-violet-600 dark:text-violet-400 font-semibold mb-[7px]">{t('generatePlan.mealDistribution')}</div>
+                    <div className="text-[0.7rem] text-primary font-semibold mb-[7px]">{t('generatePlan.mealDistribution')}</div>
                     {[{ l: t('generatePlan.mealBreakfast'), p: 25, c: "#f59e0b" }, { l: t('generatePlan.mealLunch'), p: 40, c: "#10b981" }, { l: t('generatePlan.mealDinner'), p: 35, c: "#6366f1" }].map(({ l, p, c }) => (
                       <div key={l} className="flex items-center gap-2 mb-[5px]">
-                        <div className="w-[52px] text-[0.74rem] text-gray-700 dark:text-gray-300 font-medium">{l}</div>
+                        <div className="w-[52px] text-[0.74rem] text-foreground font-medium">{l}</div>
                         <div className="flex-1 h-[6px] bg-white/50 rounded-[3px] overflow-hidden">
                           <div style={{ width: `${p}%`, background: c }} className="h-full rounded-[3px]" />
                         </div>
-                        <div className="text-[0.74rem] text-gray-700 dark:text-gray-300 font-bold w-[54px] text-right">{Math.round(dailyTarget * p / 100)} kcal</div>
+                        <div className="text-[0.74rem] text-foreground font-bold w-[54px] text-right">{Math.round(dailyTarget * p / 100)} kcal</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Water intake */}
-                  <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border-[1.5px] border-blue-200 dark:border-blue-800/50 rounded-[13px] px-[15px] py-3 mb-3">
+                  <div className="flex items-center gap-3 bg-primary/5 border-[1.5px] border-primary/30 rounded-[13px] px-[15px] py-3 mb-3">
                     <Droplets size={22} color="#3b82f6" className="shrink-0" />
                     <div>
-                      <div className="font-bold text-[0.88rem] text-blue-800 dark:text-blue-300">
+                      <div className="font-bold text-[0.88rem] text-primary">
                         {t('generatePlan.waterRecommendation').replace('{n}', String(waterL))}
                       </div>
                       <div className="text-xs text-blue-500 mt-[2px]">
@@ -609,7 +609,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                   </div>
 
                   {/* Summary */}
-                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[11px] px-[13px] py-[11px] mb-4 text-[0.8rem] text-gray-400 leading-[1.7]">
+                  <div className="bg-gray-50 rounded-[11px] px-[13px] py-[11px] mb-4 text-[0.8rem] text-gray-400 leading-[1.7]">
                     {personal.gender === "male" ? t('generatePlan.genderSumMale') : t('generatePlan.genderSumFemale')} · {personal.age} {t('generatePlan.yearUnit')} · {personal.heightCm} cm · {personal.weightKg} kg
                     {" · "}{{ sedentary: t('generatePlan.actSumSedentary'), light: t('generatePlan.actSumLight'), moderate: t('generatePlan.actSumModerate'), active: t('generatePlan.actSumActive') }[activity.level]}
                     {activity.sports.filter(s => s.days.length > 0).map(s => {
@@ -623,9 +623,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     <div className="text-[0.73rem] text-gray-400 font-semibold mb-[7px]">{t('generatePlan.ingredientsSection').replace('{n}', String(foods.length))}</div>
                     <div className="flex flex-wrap gap-[5px]">
                       {foods.slice(0, 24).map(f => (
-                        <span key={f.id} className="bg-gray-100 dark:bg-gray-800 rounded-full px-[9px] py-[3px] text-[0.76rem] text-gray-700 dark:text-gray-300 font-medium">{f.name}</span>
+                        <span key={f.id} className="bg-gray-100 rounded-full px-[9px] py-[3px] text-[0.76rem] text-foreground font-medium">{f.name}</span>
                       ))}
-                      {foods.length > 24 && <span className="bg-gray-100 dark:bg-gray-800 rounded-full px-[9px] py-[3px] text-[0.76rem] text-gray-400">{t('generatePlan.moreIngredients').replace('{n}', String(foods.length - 24))}</span>}
+                      {foods.length > 24 && <span className="bg-gray-100 rounded-full px-[9px] py-[3px] text-[0.76rem] text-gray-400">{t('generatePlan.moreIngredients').replace('{n}', String(foods.length - 24))}</span>}
                     </div>
                   </div>
 
@@ -649,7 +649,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {/* ══ PREVIEW — all 7 days ══ */}
               {step === "preview" && weekDays.length > 0 && (
                 <motion.div key="preview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                  <h2 className="m-0 mb-[6px] font-extrabold text-[1.15rem] text-gray-900 dark:text-gray-100">{t('generatePlan.previewTitle')}</h2>
+                  <h2 className="m-0 mb-[6px] font-extrabold text-[1.15rem] text-foreground">{t('generatePlan.previewTitle')}</h2>
 
                   {/* Stats */}
                   {stats && (
@@ -659,8 +659,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                         { l: t('generatePlan.statsMeals'), v: stats.meals },
                         { l: t('generatePlan.statsAvgCalories'), v: stats.avg_calories_per_day },
                       ].map(({ l, v }) => (
-                        <div key={l} className="flex-1 bg-gray-50 dark:bg-gray-800/50 rounded-[11px] px-[7px] py-[9px] text-center">
-                          <div className="font-bold text-[1.1rem] text-gray-900 dark:text-gray-100">{v}</div>
+                        <div key={l} className="flex-1 bg-gray-50 rounded-[11px] px-[7px] py-[9px] text-center">
+                          <div className="font-bold text-[1.1rem] text-foreground">{v}</div>
                           <div className="text-[0.68rem] text-gray-400">{l}</div>
                         </div>
                       ))}
@@ -672,11 +672,11 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     {weekDays.map((day: any, di: number) => {
                       const dayTotal = (day.meals ?? []).reduce((s: number, m: any) => s + (m.total_calories ?? 0), 0);
                       return (
-                        <div key={di} className="border-[1.5px] border-gray-200 dark:border-gray-700 rounded-[14px] overflow-hidden">
+                        <div key={di} className="border-[1.5px] border-border rounded-[14px] overflow-hidden">
                           {/* Day header */}
-                          <div className={`px-[14px] py-[10px] flex items-center justify-between border-b border-gray-200 dark:border-gray-700 ${day.is_training_day ? "bg-violet-100 dark:bg-violet-900/30" : "bg-gray-50 dark:bg-gray-800/50"}`}>
+                          <div className={`px-[14px] py-[10px] flex items-center justify-between border-b border-border ${day.is_training_day ? "bg-primary/10" : "bg-gray-50"}`}>
                             <div className="flex items-center gap-[7px]">
-                              <span className={`font-extrabold text-[0.92rem] ${day.is_training_day ? "text-violet-900 dark:text-violet-200" : "text-gray-900 dark:text-gray-100"}`}>
+                              <span className={`font-extrabold text-[0.92rem] ${day.is_training_day ? "text-primary" : "text-foreground"}`}>
                                 {day.day_label ?? `${di + 1}. nap`}
                               </span>
                               {day.is_training_day && (
@@ -690,13 +690,13 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                           {/* Meals */}
                           <div>
                             {(day.meals ?? []).map((meal: any, mi: number) => (
-                              <div key={mi} className={`px-[14px] py-[9px] flex items-center gap-[10px] ${mi < day.meals.length - 1 ? "border-b border-gray-100 dark:border-gray-800" : ""}`}>
+                              <div key={mi} className={`px-[14px] py-[9px] flex items-center gap-[10px] ${mi < day.meals.length - 1 ? "border-b border-gray-100" : ""}`}>
                                 <span className="text-lg shrink-0">{MEAL_EMOJI[meal.meal_type] ?? "🍽️"}</span>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-[0.7rem] text-gray-400 font-semibold">{{ breakfast: t('generatePlan.mealBreakfast'), lunch: t('generatePlan.mealLunch'), dinner: t('generatePlan.mealDinner'), snack: t('generatePlan.mealSnack') }[meal.meal_type as string] ?? meal.meal_type}</div>
-                                  <div className="text-[0.88rem] text-gray-900 dark:text-gray-100 font-bold truncate">{meal.name}</div>
+                                  <div className="text-[0.88rem] text-foreground font-bold truncate">{meal.name}</div>
                                 </div>
-                                <span className="bg-gray-100 dark:bg-gray-800 rounded-lg px-[9px] py-[3px] text-[0.77rem] text-gray-700 dark:text-gray-300 font-bold shrink-0">
+                                <span className="bg-gray-100 rounded-lg px-[9px] py-[3px] text-[0.77rem] text-foreground font-bold shrink-0">
                                   {meal.total_calories} kcal
                                 </span>
                               </div>
@@ -708,9 +708,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex gap-2 sticky bottom-0 pt-3 bg-gradient-to-t from-white dark:from-gray-950 to-transparent">
+                  <div className="flex gap-2 sticky bottom-0 pt-3 bg-gradient-to-t from-background to-transparent">
                     <button onClick={() => setStep("calc")}
-                      className="flex-1 h-[50px] rounded-[14px] border-[1.5px] border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-pointer font-semibold text-[0.88rem] text-gray-700 dark:text-gray-300 flex items-center justify-center">
+                      className="flex-1 h-[50px] rounded-[14px] border-[1.5px] border-border bg-gray-50 cursor-pointer font-semibold text-[0.88rem] text-foreground flex items-center justify-center">
                       {t('generatePlan.regenerate')}
                     </button>
                     <button onClick={handleSave} className={`${btnPrimary} [flex:2]`}>
@@ -727,7 +727,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     <circle cx="24" cy="24" r="20" stroke="#e5e7eb" strokeWidth="4" fill="none" />
                     <path d="M24 4 A20 20 0 0 1 44 24" stroke="#6366f1" strokeWidth="4" strokeLinecap="round" fill="none" />
                   </motion.svg>
-                  <p className="font-semibold text-gray-700 dark:text-gray-300">{t('generatePlan.saving')}</p>
+                  <p className="font-semibold text-foreground">{t('generatePlan.saving')}</p>
                 </motion.div>
               )}
 
@@ -735,10 +735,10 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {step === "done" && (
                 <motion.div key="done" initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="text-center py-16">
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                    className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center mx-auto mb-5">
+                    className="w-[72px] h-[72px] rounded-full bg-primary flex items-center justify-center mx-auto mb-5">
                     <Check size={32} color="#fff" strokeWidth={3} />
                   </motion.div>
-                  <div className="font-extrabold text-[1.2rem] text-gray-900 dark:text-gray-100 mb-2">{t('generatePlan.saved')}</div>
+                  <div className="font-extrabold text-[1.2rem] text-foreground mb-2">{t('generatePlan.saved')}</div>
                   <div className="text-[0.85rem] text-gray-400">{t('generatePlan.savedSubtext')}</div>
                 </motion.div>
               )}

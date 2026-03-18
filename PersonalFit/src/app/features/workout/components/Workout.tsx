@@ -522,7 +522,7 @@ export function Workout() {
                   const dayName = d.toLocaleDateString(getLocale(), { weekday: 'short', month: 'short', day: 'numeric' });
                   return (
                     <div key={day.date} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center"><Activity className="w-4 h-4 text-purple-600" /></div>
+                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center"><Activity className="w-4 h-4 text-purple-600" /></div>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-gray-900 text-sm">{dayName}</div>
                         <div className="text-[11px] text-gray-500">{day.entries.length} {t('workout.workout')} · {day.entries.map(e => e.activityIcon).join(' ')}</div>
@@ -538,7 +538,7 @@ export function Workout() {
           {/* ── EMPTY STATE ── */}
           {!hasActivity && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4"><TrendingUp className="w-10 h-10 text-orange-500" /></div>
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4"><TrendingUp className="w-10 h-10 text-orange-500" /></div>
               <h3 className="font-bold text-gray-900 text-lg mb-2">{t('workout.startExercising')}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">{t('workout.emptyHint')}</p>
             </motion.div>
@@ -567,7 +567,7 @@ export function Workout() {
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-x-2 gap-y-4" role="list" aria-label={t('workout.availableSportsList')}>
                   {ALL_SPORTS.filter(s => !collectionFilter || s.category === collectionFilter).map(sport => (
                     <button key={sport.id} onClick={() => handleSelectSport(sport)} className="flex flex-col items-center gap-1.5 group" aria-label={`${getSportName(sport)} — ${sport.caloriesPerMinute} ${t('workout.kcalPerMin')}`}>
-                      <div className="w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-pink-50 rounded-full flex items-center justify-center text-2xl border-2 border-gray-200 group-hover:border-orange-300 transition-all group-active:scale-90 shadow-sm">{sport.icon}</div>
+                      <div className="w-16 h-16 bg-gray-100 group-hover:bg-orange-50 rounded-full flex items-center justify-center text-2xl border-2 border-gray-200 group-hover:border-orange-300 transition-all group-active:scale-90 shadow-sm">{sport.icon}</div>
                       <span className="text-[11px] text-gray-700 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
                     </button>
                   ))}
@@ -587,7 +587,7 @@ export function Workout() {
               <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
               <div className="px-5 pb-6 pt-2 space-y-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-pink-100 rounded-2xl flex items-center justify-center text-3xl shadow-inner">{selectedSport.icon}</div>
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-3xl shadow-inner">{selectedSport.icon}</div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">{getSportName(selectedSport)}</h3>
                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
@@ -603,14 +603,14 @@ export function Workout() {
                   <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder={t('calendar.exampleDuration')} className="w-full px-6 py-4 border-2 border-orange-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-2xl font-bold text-center text-gray-900 bg-white" min="1" autoFocus />
                 </div>
                 {duration && parseInt(duration) > 0 && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-4 border border-orange-200">
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-primary/5 rounded-2xl p-4 border border-orange-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-gray-700">{t('workout.caloriesBurned')}</span>
                       <div className="flex items-center gap-2"><Flame className="w-5 h-5 text-orange-500" /><span className="text-2xl font-black text-orange-600">{Math.round(selectedSport.caloriesPerMinute * parseInt(duration))}</span><span className="text-sm text-gray-500 font-semibold">kcal</span></div>
                     </div>
                   </motion.div>
                 )}
-                <button onClick={handleAddWorkout} disabled={!duration || parseInt(duration) <= 0} className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.98]">
+                <button onClick={handleAddWorkout} disabled={!duration || parseInt(duration) <= 0} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-base shadow-lg hover:shadow-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.98]">
                   <Trophy className="w-5 h-5" /> {t('workout.logWorkout')}
                 </button>
               </div>

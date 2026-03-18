@@ -1045,7 +1045,7 @@ function FoodDetailSheet({
         className="fixed inset-0 z-50 bg-white flex flex-col"
       >
         {/* ─── Header ─── */}
-        <div className="flex-shrink-0 bg-gradient-to-br from-[var(--color-primary-500)] via-[var(--color-primary-600)] to-[var(--color-secondary-500)] px-5 pt-5 pb-5 relative overflow-hidden">
+        <div className="flex-shrink-0 bg-primary px-5 pt-5 pb-5 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/8 rounded-full blur-2xl" />
           <div className="absolute bottom-0 -left-6 w-28 h-28 bg-white/5 rounded-full blur-lg" />
 

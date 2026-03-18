@@ -682,7 +682,7 @@ export function ShoppingList() {
                       key={store.name}
                       className={`border-2 rounded-2xl p-4 transition-all ${
                         index === 0
-                          ? "border-blue-300 bg-gradient-to-br from-blue-50 to-teal-50"
+                          ? "border-blue-300 bg-primary/5"
                           : "border-gray-200 hover:border-purple-300"
                       }`}
                     >
@@ -754,7 +754,7 @@ export function ShoppingList() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => openInGoogleMaps(store)}
-                          className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+                          className="flex-1 bg-primary text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
                           style={{ fontWeight: 700 }}
                         >
                           <Navigation className="w-4 h-4" />
@@ -766,7 +766,7 @@ export function ShoppingList() {
                               setShowStoreView(false);
                               navigate(`/checkout?store=${encodeURIComponent(store.name)}`);
                             }}
-                            className="flex-1 bg-gradient-to-r from-blue-500 to-teal-500 text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+                            className="flex-1 bg-primary text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
                             style={{ fontWeight: 700 }}
                           >
                             <Truck className="w-4 h-4" />

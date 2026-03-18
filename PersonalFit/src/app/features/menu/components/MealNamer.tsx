@@ -263,7 +263,7 @@ export function MealNamer({
             </div>
 
             {/* Result panel */}
-            <div className="rounded-3xl border border-amber-500/40 bg-gradient-to-b from-[#26231d] via-[#17140f] to-[#14120e] px-4 py-4 space-y-2">
+            <div className="rounded-3xl border border-amber-500/40 bg-[#17140f] px-4 py-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="text-3xl">{primaryEmoji}</div>
                 {result && (

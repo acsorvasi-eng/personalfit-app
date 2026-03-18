@@ -248,12 +248,6 @@ export function MealIntervals({
             <div className="space-y-3">
               {slots.map((slot, idx) => {
                 const isError = !!validationError && !slot.time;
-                const color =
-                  idx === 0
-                    ? "from-yellow-400 to-amber-300"
-                    : idx === slots.length - 1
-                    ? "from-violet-400 to-fuchsia-400"
-                    : "";
                 return (
                   <div
                     key={idx}

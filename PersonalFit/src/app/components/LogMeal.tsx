@@ -726,7 +726,7 @@ export function LogMeal() {
                 {/* ═══ Compound Foods — Recipe Variant Items (HIGHEST PRIORITY) ═══ */}
                 {searchResults.compoundFoods.length > 0 && (
                   <div className="border-b-2 border-emerald-200">
-                    <div className="sticky top-0 bg-gradient-to-r from-emerald-50 to-teal-100 px-4 py-2 flex items-center gap-2 z-10">
+                    <div className="sticky top-0 bg-emerald-50 px-4 py-2 flex items-center gap-2 z-10">
                       <Sparkles className="w-4 h-4 text-emerald-600" />
                       <span className="text-xs font-black text-emerald-800 uppercase">
                         AI Variánsok ({searchResults.compoundFoods.length})
@@ -767,7 +767,7 @@ export function LogMeal() {
                             </div>
                           </div>
                           <div className="flex-shrink-0">
-                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2 py-1 rounded-lg text-2xs font-bold">
+                            <div className="bg-primary text-white px-2 py-1 rounded-lg text-2xs font-bold">
                               🧠 AI
                             </div>
                           </div>
@@ -780,7 +780,7 @@ export function LogMeal() {
                 {/* ═══ Smart Foods — Cooking Method Items (TOP PRIORITY) ═══ */}
                 {searchResults.smartFoods.length > 0 && (
                   <div className="border-b-2 border-amber-200">
-                    <div className="sticky top-0 bg-gradient-to-r from-amber-50 to-orange-100 px-4 py-2 flex items-center gap-2 z-10">
+                    <div className="sticky top-0 bg-amber-50 px-4 py-2 flex items-center gap-2 z-10">
                       <span className="text-sm">🍳</span>
                       <span className="text-xs font-black text-amber-800 uppercase">{t("logMealExt.howPrepared")} ({searchResults.smartFoods.length})</span>
                     </div>
@@ -824,7 +824,7 @@ export function LogMeal() {
                             </div>
                           </div>
                           <div className="flex-shrink-0">
-                            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-lg text-2xs font-bold">
+                            <div className="bg-amber-500 text-white px-2 py-1 rounded-lg text-2xs font-bold">
                               {t("logMealExt.cookingBadge")}
                             </div>
                           </div>
@@ -837,7 +837,7 @@ export function LogMeal() {
                 {/* Recipes Section */}
                 {searchResults.recipes.length > 0 && (
                   <div className="border-b border-gray-200">
-                    <div className="sticky top-0 bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-2 flex items-center gap-2">
+                    <div className="sticky top-0 bg-orange-50 px-4 py-2 flex items-center gap-2">
                       <ChefHat className="w-4 h-4 text-orange-600" />
                       <span className="text-xs font-black text-orange-700 uppercase">{t("logMealExt.recipesSection")} ({searchResults.recipes.length})</span>
                     </div>
@@ -866,7 +866,7 @@ export function LogMeal() {
 
                           {/* AI Badge */}
                           <div className="flex-shrink-0">
-                            <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
+                            <div className="bg-primary text-white px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
                               <Sparkles className="w-3 h-3" />
                               AI
                             </div>
@@ -880,7 +880,7 @@ export function LogMeal() {
                 {/* Products Section */}
                 {searchResults.products.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-2 flex items-center gap-2">
+                    <div className="sticky top-0 bg-blue-50 px-4 py-2 flex items-center gap-2">
                       <Package className="w-4 h-4 text-blue-600" />
                       <span className="text-xs font-black text-blue-700 uppercase">{t("logMealExt.productsSection")} ({searchResults.products.length})</span>
                     </div>
@@ -912,7 +912,7 @@ export function LogMeal() {
                 {/* AI Foods Section */}
                 {searchResults.aiFoods.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 flex items-center gap-2">
+                    <div className="sticky top-0 bg-purple-50 px-4 py-2 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-purple-600" />
                       <span className="text-xs font-black text-purple-700 uppercase">{t("logMealExt.aiFoodsSection")} ({searchResults.aiFoods.length})</span>
                     </div>
@@ -1020,7 +1020,7 @@ export function LogMeal() {
 
           {/* Voice Matched Results - Combined Panel */}
           {voiceMatches && (voiceMatches.recipes.length + voiceMatches.products.length > 1) && (
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-4 space-y-3">
+            <div className="bg-primary/5 border-2 border-purple-200 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-purple-600" />
@@ -1071,7 +1071,7 @@ export function LogMeal() {
               {/* Combined Add Button */}
               {(voiceMatches.recipes.length + voiceMatches.products.length) >= 2 && (
                 <div className="pt-2 border-t border-purple-200">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-3 text-white mb-2">
+                  <div className="bg-primary rounded-xl p-3 text-white mb-2">
                     <div className="text-xs font-bold mb-1 opacity-80">{t("logMealExt.totalCaloriesSummarized")}</div>
                     <div className="text-2xl font-black">
                       {(() => {
@@ -1107,7 +1107,7 @@ export function LogMeal() {
         {aiRecognition && !selectedProduct && !selectedRecipe && !selectedSmartFood && !selectedCompoundFood && !showDropdown && (
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 px-5 py-4">
+            <div className="bg-primary px-5 py-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-yellow-300" />
@@ -1127,7 +1127,7 @@ export function LogMeal() {
               <div className="space-y-3">
                 <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">{t("logMealExt.componentBreakdown")}</div>
                 {aiRecognition.components.map((component, idx) => (
-                  <div key={component.food.id} className="bg-gradient-to-r from-purple-50 to-violet-50 border-2 border-purple-200 rounded-xl p-4">
+                  <div key={component.food.id} className="bg-primary/5 border-2 border-purple-200 rounded-xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="text-3xl">{component.food.image}</div>
                       <div className="flex-1 min-w-0">
@@ -1137,7 +1137,7 @@ export function LogMeal() {
                           {component.portionLabel} ({component.portion}{component.food.unit})
                         </div>
                       </div>
-                      <div className="flex-shrink-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1.5 rounded-lg text-xs font-black">
+                      <div className="flex-shrink-0 bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-black">
                         {component.nutrition.calories} kcal
                       </div>
                     </div>
@@ -1165,7 +1165,7 @@ export function LogMeal() {
               </div>
 
               {/* Combined Total */}
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-4 text-white">
+              <div className="bg-primary rounded-xl p-4 text-white">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-black">{t("logMealExt.totalNutrition")}</span>
@@ -1208,7 +1208,7 @@ export function LogMeal() {
         {selectedCompoundFood && !selectedProduct && !selectedRecipe && !selectedSmartFood && (
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-5 py-4">
+            <div className="bg-primary px-5 py-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="text-4xl">{selectedCompoundFood.image}</div>
                 <div>
@@ -1317,7 +1317,7 @@ export function LogMeal() {
 
                   {/* Calculated Nutrition */}
                   {calculatedCompoundNutrition && (
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-4 text-white">
+                    <div className="bg-primary rounded-xl p-4 text-white">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-bold text-sm">
                           {selectedVariant.variantName}
@@ -1390,7 +1390,7 @@ export function LogMeal() {
         {selectedSmartFood && !selectedProduct && !selectedRecipe && !selectedCompoundFood && (
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-5 py-4">
+            <div className="bg-primary px-5 py-4">
               <div className="flex items-center gap-3 mb-2">
                 <div className="text-4xl">{selectedSmartFood.image}</div>
                 <div>
@@ -1461,7 +1461,7 @@ export function LogMeal() {
 
                   {/* Calculated Nutrition */}
                   {calculatedSmartNutrition && (
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white">
+                    <div className="bg-primary rounded-xl p-4 text-white">
                       <div className="flex items-center justify-between mb-3">
                         <span className="font-bold text-sm">
                           {selectedSmartFood.name} — {selectedCookingMethod.label}
@@ -1538,7 +1538,7 @@ export function LogMeal() {
               <h3 className="font-bold text-lg text-foreground">{t("logMealExt.selectedProduct")}</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-4">
+            <div className="bg-primary/5 border-2 border-blue-300 rounded-xl p-4">
               <div className="flex items-center gap-3">
                 <div className="text-4xl">{selectedProduct.image}</div>
                 <div className="flex-1">
@@ -1569,7 +1569,7 @@ export function LogMeal() {
 
             {/* Calculated Nutrition */}
             {calculatedProductNutrition && (
-              <div className="bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl p-4 text-white">
+              <div className="bg-primary rounded-xl p-4 text-white">
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-bold">{t("logMealExt.nutritionValue")}</span>
                   <Sparkles className="w-5 h-5" />
@@ -1614,7 +1614,7 @@ export function LogMeal() {
               <h3 className="font-bold text-lg text-foreground">{t("logMealExt.selectedRecipe")}</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-4">
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-4">
               <div className="flex items-center gap-3">
                 <div className="text-4xl">{selectedRecipe.image}</div>
                 <div className="flex-1">
@@ -1664,7 +1664,7 @@ export function LogMeal() {
 
             {/* Calculated Nutrition */}
             {calculatedRecipeNutrition && (
-              <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-4 text-white">
+              <div className="bg-primary rounded-xl p-4 text-white">
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-bold">{t("logMealExt.aiCalculatedNutrition")}</span>
                   <Sparkles className="w-5 h-5 animate-pulse" />
@@ -1715,7 +1715,7 @@ export function LogMeal() {
             </div>
 
             {/* Total Nutrition */}
-            <div className="bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl p-4 text-white">
+            <div className="bg-primary rounded-xl p-4 text-white">
               <div className="text-sm font-bold mb-2">{t("logMealExt.totalLabel")}</div>
               <div className="grid grid-cols-4 gap-2 text-center">
                 <div>

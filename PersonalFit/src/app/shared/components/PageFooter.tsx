@@ -25,7 +25,7 @@ export function PageFooter({ children }: PageFooterProps) {
         zIndex: 50,
         boxSizing: "border-box",
       }}
-      className="dark:bg-[#1E1E1E] dark:border-[#2a2a2a]"
+      className=""
     >
       {children}
     </div>
@@ -51,7 +51,7 @@ export function PageFooterPrimaryButton({
         width: "100%",
         padding: "1rem",
         borderRadius: "0.75rem",
-        background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
+        background: "#2563EB",
         color: "white",
         fontSize: "1rem",
         fontWeight: 700,

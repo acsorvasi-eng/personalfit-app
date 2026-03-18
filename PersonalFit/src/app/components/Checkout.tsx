@@ -925,7 +925,7 @@ export function Checkout() {
           <div className="px-4 py-8 space-y-6 max-w-2xl mx-auto">
             {/* Success Animation */}
             <div className="flex justify-center">
-              <div className="w-28 h-28 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-2xl ring-8 ring-green-100">
+              <div className="w-28 h-28 bg-primary rounded-full flex items-center justify-center shadow-2xl ring-8 ring-green-100">
                 <CheckCircle2 className="w-14 h-14 text-white" />
               </div>
             </div>
@@ -1022,7 +1022,7 @@ export function Checkout() {
             </div>
 
             {/* Tracker */}
-            <div className="bg-gradient-to-r from-blue-500 to-teal-500 rounded-2xl p-5 text-white">
+            <div className="bg-primary rounded-2xl p-5 text-white">
               <div className="flex items-center gap-3 mb-3">
                 <Truck className="w-6 h-6" />
                 <span style={{ fontWeight: 700 }}>{t("checkout.orderStatus")}</span>
@@ -1051,7 +1051,7 @@ export function Checkout() {
             <div className="space-y-3 pb-8">
               <button
                 onClick={() => navigate("/")}
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
+                className="w-full bg-primary text-white py-4 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
                 style={{ fontWeight: 700 }}
               >
                 {t("checkout.backToHome")}
@@ -1077,7 +1077,7 @@ export function Checkout() {
               disabled={!canProceed() || isProcessing}
               className={`w-full py-4 rounded-2xl text-white flex items-center justify-center gap-3 transition-all shadow-lg ${
                 canProceed() && !isProcessing
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-xl active:scale-[0.98]"
+                  ? "bg-primary hover:shadow-xl active:scale-[0.98]"
                   : "bg-gray-300 cursor-not-allowed"
               }`}
               style={{ fontWeight: 700 }}

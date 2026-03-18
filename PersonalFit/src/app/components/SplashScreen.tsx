@@ -112,7 +112,7 @@ export function SplashScreen() {
   const selectedLang = languages.find(l => l.code === selectedLanguage) || languages[0];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-teal-600 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-primary flex flex-col overflow-hidden">
       {/* ── Ambient Background ── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-16 left-8 w-72 h-72 bg-white opacity-[0.07] rounded-full blur-3xl" />

@@ -55,8 +55,8 @@ export function TabFilter({
     }
 
     return isActive
-      ? "bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white shadow-sm font-semibold"
-      : "bg-white dark:bg-[#252525] border border-[var(--border)] text-[var(--muted-foreground)] dark:text-gray-300 hover:bg-[var(--color-gray-50)] dark:hover:bg-[#2a2a2a] hover:border-[var(--color-gray-300)] dark:hover:border-[#404040] font-medium";
+      ? "bg-primary text-white shadow-sm font-semibold"
+      : "bg-white border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--color-gray-50)] hover:border-[var(--color-gray-300)] font-medium";
   };
 
   return (

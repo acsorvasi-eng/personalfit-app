@@ -8,7 +8,7 @@ interface GuardProps {
 
 function FullScreenSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#121212] dark:to-[#121212]">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" aria-label="Loading" />
     </div>
   );

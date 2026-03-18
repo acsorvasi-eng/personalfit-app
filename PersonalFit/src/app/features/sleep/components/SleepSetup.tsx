@@ -54,14 +54,14 @@ export function SleepSetup({
       <div style={{ marginBottom: "1rem" }}>
         <h2
           id="sleep-setup-title"
-          className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+          className="text-lg font-semibold text-foreground"
           style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
         >
           <span aria-hidden>🌙</span>
           {t("sleep.title")}
         </h2>
         <p
-          className="text-sm text-gray-500 dark:text-gray-400"
+          className="text-sm text-foreground/60"
           style={{ marginTop: "0.25rem" }}
         >
           {t("sleep.subtitle")}
@@ -71,7 +71,7 @@ export function SleepSetup({
       <div style={{ marginBottom: "1.25rem" }}>
         <label
           htmlFor="sleep-wake-time"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="block text-sm font-medium text-foreground"
           style={{ marginBottom: "0.5rem" }}
         >
           {t("sleep.wakeTime")}
@@ -81,7 +81,7 @@ export function SleepSetup({
           type="time"
           value={wakeTime}
           onChange={(e) => onWakeTimeChange(e.target.value)}
-          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-base px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full rounded-lg border border-border bg-background text-foreground text-base px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           style={{
             maxWidth: "8rem",
             minHeight: "2.5rem",
@@ -91,7 +91,7 @@ export function SleepSetup({
 
       <div>
         <p
-          className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="text-sm font-medium text-foreground"
           style={{ marginBottom: "0.75rem" }}
         >
           {t("sleep.bedtimeOptions")}
@@ -120,7 +120,7 @@ export function SleepSetup({
                   cursor: "pointer",
                   boxSizing: "border-box",
                 }}
-                className="dark:bg-opacity-50"
+                className=""
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
                   <span
@@ -140,7 +140,7 @@ export function SleepSetup({
                         fontWeight: 700,
                         color: "#111827",
                       }}
-                      className="dark:text-gray-100"
+                      className=""
                     >
                       {opt.bedtime}
                     </div>
@@ -150,7 +150,7 @@ export function SleepSetup({
                         color: "#6b7280",
                         marginTop: "0.125rem",
                       }}
-                      className="dark:text-gray-400"
+                      className=""
                     >
                       {opt.sleepDuration}
                     </div>
@@ -172,7 +172,7 @@ export function SleepSetup({
                       padding: "0.125rem 0.5rem",
                       borderRadius: 999,
                     }}
-                    className="dark:bg-gray-700 dark:text-gray-300"
+                    className=""
                   >
                     {opt.cycleCount} {t("sleep.cycles")}
                   </span>

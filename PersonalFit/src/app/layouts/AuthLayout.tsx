@@ -10,7 +10,7 @@ import { Outlet } from 'react-router';
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-[#121212] dark:via-[#121212] dark:to-[#121212]">
+    <div className="min-h-screen bg-background">
       <Outlet />
     </div>
   );
