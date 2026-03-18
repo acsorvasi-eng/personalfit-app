@@ -235,8 +235,8 @@ export function MealIntervalEditor() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#121212]">
-        <div className="animate-pulse text-gray-500 dark:text-gray-400">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse text-gray-500">
           {t("mealInterval.saving")}
         </div>
       </div>
@@ -255,7 +255,7 @@ export function MealIntervalEditor() {
         overflow: "hidden",
         background: "var(--color-gray-50, #f9fafb)",
       }}
-      className="bg-gray-50 dark:bg-[#121212]"
+      className="bg-gray-50"
     >
       <div className="flex-shrink-0">
         <PageHeader
@@ -288,9 +288,8 @@ export function MealIntervalEditor() {
                 flexDirection: "column",
                 gap: 12,
               }}
-              className="dark:bg-indigo-950/30 dark:border-indigo-700/50"
             >
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#3730a3" }} className="dark:text-indigo-300">
+              <div style={{ fontSize: 14, fontWeight: 600, color: "#3730a3" }}>
                 {t("mealEditor.sleepBanner")}
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -332,7 +331,7 @@ export function MealIntervalEditor() {
           )}
 
           {/* Section 1: Meal model dropdown */}
-          <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
+          <section style={cardStyle}>
             <h2
               style={{
                 fontSize: 13,
@@ -360,7 +359,6 @@ export function MealIntervalEditor() {
                 color: "#111827",
                 background: "#fff",
               }}
-              className="dark:bg-[#252525] dark:border-[#2a2a2a] dark:text-gray-100"
             >
               {MEAL_MODELS.map((m) => (
                 <option key={m} value={m}>
@@ -371,7 +369,7 @@ export function MealIntervalEditor() {
           </section>
 
           {/* Section 2: Meal time inputs */}
-          <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
+          <section style={cardStyle}>
             <h2
               style={{
                 fontSize: 13,
@@ -400,7 +398,7 @@ export function MealIntervalEditor() {
                     paddingBottom: ROW_GAP,
                     borderBottom: index < meals.length - 1 ? "1px solid #f3f4f6" : "none",
                   }}
-                  className="dark:border-[#2a2a2a]"
+                  className=""
                 >
                   {!isIFModel(mealModel) && (
                     <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 600, color: "#111827" }}>
@@ -426,7 +424,7 @@ export function MealIntervalEditor() {
                         background: "#fff",
                         color: "#111827",
                       }}
-                      className="dark:bg-[#121212] dark:border-[#2a2a2a] dark:text-gray-100"
+                      className=""
                     />
                     <span style={{ color: "#9ca3af" }}>–</span>
                     <input
@@ -442,7 +440,7 @@ export function MealIntervalEditor() {
                         background: "#fff",
                         color: "#111827",
                       }}
-                      className="dark:bg-[#121212] dark:border-[#2a2a2a] dark:text-gray-100"
+                      className=""
                     />
                   </div>
                 </motion.div>
@@ -456,7 +454,7 @@ export function MealIntervalEditor() {
           </section>
 
           {/* Section 3: Snacks (max 2) or IF message */}
-          <section style={cardStyle} className="dark:bg-[#1E1E1E] dark:shadow-none">
+          <section style={cardStyle}>
             <h2
               style={{
                 fontSize: 13,
@@ -503,12 +501,11 @@ export function MealIntervalEditor() {
                           alignItems: "center",
                           gap: 8,
                           background: selected
-                            ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                            ? "var(--primary)"
                             : "#f9fafb",
-                          borderColor: selected ? "#059669" : "#e5e7eb",
+                          borderColor: selected ? "var(--primary)" : "#e5e7eb",
                           color: selected ? "white" : "#374151",
                         }}
-                        className="dark:bg-[#252525] dark:border-[#2a2a2a] dark:text-gray-200"
                       >
                         <span>{snack.emoji}</span>
                         <span>{snack.name}</span>

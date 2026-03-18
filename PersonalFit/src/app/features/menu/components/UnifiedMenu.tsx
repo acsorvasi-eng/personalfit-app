@@ -14,6 +14,7 @@ import { WaterButton } from "../../../components/dsm";
 import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
+import { GenerateMealPlanSheet } from "../../nutrition/components/GenerateMealPlanSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, getUserProfile, type MealSettings } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
@@ -197,25 +198,25 @@ function CalendarStrip({
   const listRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <div className="bg-white/80 dark:bg-card/80 backdrop-blur-sm border-b border-gray-100/60 dark:border-[#2a2a2a]/60" role="region" aria-label={t("calendar.calendarView")}>
+    <div className="bg-background backdrop-blur-sm border-b border-border" role="region" aria-label={t("calendar.calendarView")}>
       {/* Month nav — subtle & elegant */}
       <div className="relative flex items-center justify-between px-5 py-2">
-        <button onClick={onPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] active:bg-gray-200 dark:active:bg-[#2a2a2a] transition-colors" aria-label={t("calendar.prevMonth")}>
-          <ChevronLeft className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+        <button onClick={onPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label={t("calendar.prevMonth")}>
+          <ChevronLeft className="w-3.5 h-3.5 text-gray-400" />
         </button>
         <button
           type="button"
           onClick={handleMonthHeaderClick}
-          className="min-w-[140px] flex items-center justify-center gap-1.5 px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] transition-colors"
+          className="min-w-[140px] flex items-center justify-center gap-1.5 px-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
           aria-live="polite"
           aria-atomic="true"
           aria-haspopup="listbox"
           aria-expanded={monthPickerOpen}
         >
-          <span className="text-[13px] font-semibold text-gray-700 dark:text-gray-300 tracking-wide">
+          <span className="text-[13px] font-semibold text-gray-700 tracking-wide">
             {displayMonth} {displayYear}
           </span>
-          <ChevronDown className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+          <ChevronDown className="w-3 h-3 text-gray-400" />
         </button>
         <div className="flex items-center gap-2">
           {!isSameDay(selectedDate, today) && (
@@ -227,16 +228,16 @@ function CalendarStrip({
               {todayLabel}
             </button>
           )}
-          <button onClick={onNextMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#252525] active:bg-gray-200 dark:active:bg-[#2a2a2a] transition-colors" aria-label={t("calendar.nextMonth")}>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+          <button onClick={onNextMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label={t("calendar.nextMonth")}>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
           </button>
         </div>
 
         {monthPickerOpen && (
           <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 z-20">
-            <div className="rounded-2xl border border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#050816] shadow-lg px-3 py-2">
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-lg px-3 py-2">
               <select
-                className="bg-transparent text-xs text-gray-800 dark:text-gray-100 outline-none"
+                className="bg-transparent text-xs text-gray-800 outline-none"
                 value={`${calendarYear}-${calendarMonth}`}
                 onChange={handleMonthChange}
               >
@@ -280,10 +281,10 @@ function CalendarStrip({
               aria-label={`${dayShort}, ${getLocaleMonth(date, language)} ${dayNum}${isToday ? ` (${t("calendar.today")})` : ''}${dayType === 'training' ? ` - ${t("calendar.trainingDay")}` : dayType === 'swim' ? ` - ${t("calendar.swimDay")}` : dayType === 'active' ? ` - ${t("calendar.activeRest")}` : ''}`}
               className={`flex-1 min-w-[52px] max-w-[60px] flex flex-col items-center py-2 px-2 rounded-full transition-all relative ${
                 isSelected
-                  ? 'bg-blue-500 shadow-lg shadow-blue-200/60 dark:shadow-blue-500/20'
+                  ? 'bg-primary shadow-lg'
                   : isToday
-                  ? 'bg-blue-50 dark:bg-blue-500/10'
-                  : 'hover:bg-gray-50 dark:hover:bg-[#252525]'
+                  ? 'bg-primary/10'
+                  : 'hover:bg-gray-50'
               } ${isPast && !isSelected ? 'opacity-50' : ''} ${isFuture && !isSelected ? 'opacity-100' : ''}`}
               whileTap={{ scale: 0.93 }}
               layout
@@ -294,13 +295,13 @@ function CalendarStrip({
                 {dayShort}
               </span>
               <span className={`text-[15px] font-bold ${
-                isSelected ? 'text-white' : isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-200'
+                isSelected ? 'text-white' : isToday ? 'text-primary' : 'text-gray-800'
               }`}>
                 {dayNum}
               </span>
               {/* Today dot */}
               {isToday && (
-                <span className="w-1.5 h-1.5 rounded-full mt-1 bg-blue-500 dark:bg-blue-400" />
+                <span className="w-1.5 h-1.5 rounded-full mt-1 bg-primary" />
               )}
               {/* Day type dot — only show for typed days */}
               {(dayType === 'training' || dayType === 'swim' || dayType === 'active') && (
@@ -330,6 +331,7 @@ export function UnifiedMenu() {
   const appData = useAppData();
   const { planData, hasData: hasPlanData } = usePlanData();
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
+  const [generateSheetOpen, setGenerateSheetOpen] = useState(false);
   const [workoutScheduleMap, setWorkoutScheduleMap] = useState<WorkoutScheduleMap>({});
 
   useEffect(() => {
@@ -964,9 +966,6 @@ export function UnifiedMenu() {
             icon={UtensilsCrossed}
             title={t("menu.title")}
             subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
-            gradientFrom="from-blue-400"
-            gradientVia="via-emerald-400"
-            gradientTo="to-teal-500"
             action={<FuturisticDashboard />}
             stats={[
               {
@@ -1012,28 +1011,28 @@ export function UnifiedMenu() {
               transition={{ duration: 0.3 }}
               className={`-mx-3 sm:-mx-4 lg:-mx-6 px-4 sm:px-5 lg:px-7 py-3 ${
                 isTrainingDay
-                  ? 'bg-gradient-to-r from-orange-50/80 via-amber-50/60 to-orange-50/80 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-orange-950/30'
+                  ? 'bg-orange-50/80'
                   : isSwimDay
-                  ? 'bg-gradient-to-r from-cyan-50/80 via-teal-50/60 to-cyan-50/80 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-cyan-950/30'
-                  : 'bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-blue-50/80 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-blue-950/30'
+                  ? 'bg-cyan-50/80'
+                  : 'bg-blue-50/80'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
-                  isTrainingDay ? 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-500/20 dark:to-amber-500/20' : isSwimDay ? 'bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-500/20 dark:to-teal-500/20' : 'bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-500/20 dark:to-indigo-500/20'
+                  isTrainingDay ? 'bg-orange-100' : isSwimDay ? 'bg-cyan-100' : 'bg-blue-100'
                 }`}>
-                  {isTrainingDay ? <Dumbbell className="w-5 h-5 text-orange-600 dark:text-orange-400" /> : isSwimDay ? <Waves className="w-5 h-5 text-cyan-600 dark:text-cyan-400" /> : <Moon className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                  {isTrainingDay ? <Dumbbell className="w-5 h-5 text-orange-600" /> : isSwimDay ? <Waves className="w-5 h-5 text-cyan-600" /> : <Moon className="w-5 h-5 text-blue-600" />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800 dark:text-orange-300' : isSwimDay ? 'text-cyan-800 dark:text-cyan-300' : 'text-blue-800 dark:text-blue-300'}`}>
+                    <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800' : isSwimDay ? 'text-cyan-800' : 'text-blue-800'}`}>
                       {dayLabel}
                     </span>
-                    <span className={`text-[12px] font-medium ${isTrainingDay ? 'text-orange-500 dark:text-orange-400' : isSwimDay ? 'text-cyan-500 dark:text-cyan-400' : 'text-blue-500 dark:text-blue-400'}`}>
+                    <span className={`text-xs font-medium ${isTrainingDay ? 'text-orange-500' : isSwimDay ? 'text-cyan-500' : 'text-blue-500'}`}>
                       • {isTrainingDay ? t("menu.higherCarbs") : t("menu.lowerCarbs")}
                     </span>
                   </div>
-                  <p className={`text-[11px] mt-0.5 ${isTrainingDay ? 'text-orange-400 dark:text-orange-500/70' : isSwimDay ? 'text-cyan-400 dark:text-cyan-500/70' : 'text-blue-400 dark:text-blue-500/70'}`}>
+                  <p className={`text-[11px] mt-0.5 ${isTrainingDay ? 'text-orange-400' : isSwimDay ? 'text-cyan-400' : 'text-blue-400'}`}>
                     {t("menu.day")} {((dayOfMonth - 1) % 28) + 1}
                   </p>
                 </div>
@@ -1060,7 +1059,40 @@ export function UnifiedMenu() {
               </div>
             )}
 
-            <div className="space-y-3">
+            {/* ── Empty State CTA ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-primary/5 rounded-2xl p-5 border border-primary/20 text-center"
+            >
+              <div className="text-3xl mb-2">🥗</div>
+              <h3 className="text-base font-bold text-foreground mb-1">
+                {t("empty.emptyMenuTitle")}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {t("empty.emptyMenuDesc")}
+              </p>
+              <button
+                onClick={() => setGenerateSheetOpen(true)}
+                className="w-full bg-primary hover:bg-primary/90 active:bg-primary/80 text-white font-semibold rounded-xl py-3 text-sm transition-colors mb-3"
+              >
+                {t("empty.generateBtn")}
+              </button>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400">{t("empty.orDivider")}</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <button
+                onClick={() => setUploadSheetOpen(true)}
+                className="w-full border border-gray-200 text-gray-600 font-medium rounded-xl py-3 text-sm hover:bg-gray-50 transition-colors"
+              >
+                {t("empty.uploadBtn")}
+              </button>
+            </motion.div>
+
+            <div className="space-y-3 opacity-40 pointer-events-none">
               <EmptyMealCard
                 title={t("menu.breakfast")}
                 time="06:00 - 08:00"
@@ -1087,15 +1119,13 @@ export function UnifiedMenu() {
           onClose={() => setUploadSheetOpen(false)}
           onComplete={() => appData.refresh()}
         />
-
-        {/* Exactly ONE water button: rest = inside rest card; meal = floating. Never both. */}
-        <AnimatePresence>
-          {!aiPanelOpen && status.isInEatingWindow && (
-            <div style={{ position: 'fixed', bottom: '5rem', right: '1rem', zIndex: 40 }}>
-              <WaterButton className="max-w-[200px]" />
-            </div>
-          )}
-        </AnimatePresence>
+        <GenerateMealPlanSheet
+          open={generateSheetOpen}
+          onClose={() => setGenerateSheetOpen(false)}
+          foods={[]}
+          dailyCalorieTarget={calorieTarget}
+          onSaved={() => { setGenerateSheetOpen(false); appData.refresh(); }}
+        />
       </div>
     );
   }
@@ -1110,10 +1140,10 @@ export function UnifiedMenu() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="absolute top-2 left-4 right-4 z-50 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg"
+            className="absolute top-2 left-4 right-4 z-50 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg"
           >
-            <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <span className="text-[13px] text-amber-800 dark:text-amber-200 font-medium">{windowFeedback}</span>
+            <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span className="text-[13px] text-amber-800 font-medium">{windowFeedback}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1124,9 +1154,6 @@ export function UnifiedMenu() {
           icon={UtensilsCrossed}
           title={t("menu.title")}
           subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
-          gradientFrom="from-blue-400"
-          gradientVia="via-emerald-400"
-          gradientTo="to-teal-500"
           action={<FuturisticDashboard />}
           stats={[
             {
@@ -1186,28 +1213,28 @@ export function UnifiedMenu() {
               transition={{ duration: 0.3 }}
               className={`-mx-3 sm:-mx-4 lg:-mx-6 px-4 sm:px-5 lg:px-7 py-3 ${
                 isTrainingDay
-                  ? 'bg-gradient-to-r from-orange-50/80 via-amber-50/60 to-orange-50/80 dark:from-orange-950/30 dark:via-amber-950/20 dark:to-orange-950/30'
+                  ? 'bg-orange-50/80'
                   : isSwimDay
-                  ? 'bg-gradient-to-r from-cyan-50/80 via-teal-50/60 to-cyan-50/80 dark:from-cyan-950/30 dark:via-teal-950/20 dark:to-cyan-950/30'
-                  : 'bg-gradient-to-r from-blue-50/80 via-indigo-50/60 to-blue-50/80 dark:from-blue-950/30 dark:via-indigo-950/20 dark:to-blue-950/30'
+                  ? 'bg-cyan-50/80'
+                  : 'bg-blue-50/80'
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm ${
-                  isTrainingDay ? 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-500/20 dark:to-amber-500/20' : isSwimDay ? 'bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-500/20 dark:to-teal-500/20' : 'bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-500/20 dark:to-indigo-500/20'
+                  isTrainingDay ? 'bg-orange-100' : isSwimDay ? 'bg-cyan-100' : 'bg-blue-100'
                 }`}>
-                  {isTrainingDay ? <Dumbbell className="w-5 h-5 text-orange-600 dark:text-orange-400" /> : isSwimDay ? <Waves className="w-5 h-5 text-cyan-600 dark:text-cyan-400" /> : <Moon className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+                  {isTrainingDay ? <Dumbbell className="w-5 h-5 text-orange-600" /> : isSwimDay ? <Waves className="w-5 h-5 text-cyan-600" /> : <Moon className="w-5 h-5 text-blue-600" />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800 dark:text-orange-300' : isSwimDay ? 'text-cyan-800 dark:text-cyan-300' : 'text-blue-800 dark:text-blue-300'}`}>
+                    <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800' : isSwimDay ? 'text-cyan-800' : 'text-blue-800'}`}>
                       {dayLabel}
                     </span>
-                    <span className={`text-[12px] font-medium ${isTrainingDay ? 'text-orange-500 dark:text-orange-400' : isSwimDay ? 'text-cyan-500 dark:text-cyan-400' : 'text-blue-500 dark:text-blue-400'}`}>
+                    <span className={`text-xs font-medium ${isTrainingDay ? 'text-orange-500' : isSwimDay ? 'text-cyan-500' : 'text-blue-500'}`}>
                       • {isTrainingDay ? t("menu.higherCarbs") : t("menu.lowerCarbs")}
                     </span>
                   </div>
-                  <p className={`text-[11px] mt-0.5 ${isTrainingDay ? 'text-orange-400 dark:text-orange-500/70' : isSwimDay ? 'text-cyan-400 dark:text-cyan-500/70' : 'text-blue-400 dark:text-blue-500/70'}`}>
+                  <p className={`text-[11px] mt-0.5 ${isTrainingDay ? 'text-orange-400' : isSwimDay ? 'text-cyan-400' : 'text-blue-400'}`}>
                     {t("menu.day")} {((dayOfMonth - 1) % 28) + 1} • {mealData.week + 1}. {t("menu.week")}
                     {hasScheduledWorkout && scheduledWorkouts.some(w => w.plannedDuration) && (
                       <span className="ml-1">
@@ -1429,11 +1456,11 @@ export function UnifiedMenu() {
             {!status.isToday && (
               <div className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border ${
                 status.isPast
-                  ? 'bg-gray-50 dark:bg-gray-50/50 border-gray-200 text-gray-500'
-                  : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/40 text-blue-600 dark:text-blue-400'
+                  ? 'bg-gray-50 border-gray-200 text-gray-500'
+                  : 'bg-primary/5 border-primary/20 text-primary'
               }`}>
                 <Clock className="w-4 h-4" />
-                <span className="text-[14px] font-medium">
+                <span className="text-sm font-medium">
                   {status.isPast ? t("menu.pastDay") : t("menu.upcomingDay")}
                 </span>
               </div>
@@ -1454,23 +1481,23 @@ export function UnifiedMenu() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.05 * slotIdx, duration: 0.3 }}
                     >
-                      <div className="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-slate-200 to-slate-100 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-lg">
+                          <div className="w-9 h-9 rounded-2xl bg-slate-100 flex items-center justify-center text-lg">
                             <span>🌙</span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            <span className="text-sm font-semibold text-slate-800">
                               Vacsora még nincs hozzáadva
                             </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="text-[11px] text-slate-500">
                               Adj hozzá egy vacsorát ehhez a naphoz.
                             </span>
                           </div>
                         </div>
                         <button
                           type="button"
-                          className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-lg shadow-md shadow-emerald-500/40"
+                          className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary text-white text-lg shadow-md"
                           onClick={() => navigate("/log-meal")}
                         >
                           +
@@ -1789,7 +1816,7 @@ function RestTimerCard({
           {/* 7. Next meal */}
           <div className="flex items-center justify-center gap-1.5 py-1">
             <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1e3a5f" }} />
-            <span className="font-bold text-[12px]" style={{ color: "#1e3a5f" }}>
+            <span className="font-bold text-xs" style={{ color: "#1e3a5f" }}>
               {t("menu.nextMeal")}: {nextMealTimeStr} {nextMealTitle ? `(${nextMealTitle})` : ""}
             </span>
           </div>
@@ -1824,26 +1851,26 @@ function RestTimerCard({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 max-w-sm w-full"
+              className="bg-background rounded-2xl shadow-xl border border-border p-6 max-w-sm w-full"
             >
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-lg font-bold text-foreground mb-2">
                 {t("mealEditor.dialogTitle")}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-sm text-gray-500 mb-6">
                 {t("mealEditor.dialogMessage")}
               </p>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => setConfirmOpen(false)}
-                  className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium"
+                  className="flex-1 py-3 rounded-xl border border-border text-foreground font-medium"
                 >
                   {t("mealEditor.cancel")}
                 </button>
                 <button
                   type="button"
                   onClick={handleEdit}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 text-white font-semibold"
+                  className="flex-1 py-3 rounded-xl bg-primary text-white font-semibold"
                 >
                   {t("mealEditor.edit")}
                 </button>
@@ -1870,17 +1897,17 @@ function ConsumedMealCompact({ title, icon, time }: {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-card rounded-2xl border border-green-200/60 dark:border-green-500/20 shadow-sm overflow-hidden opacity-70"
+      className="bg-background rounded-2xl border border-green-200/60 shadow-sm overflow-hidden opacity-70"
     >
       <div className="flex items-center gap-3 px-4 py-3.5">
         <div className="w-10 h-10 bg-green-500 rounded-2xl flex items-center justify-center flex-shrink-0">
           <Check className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-bold text-[15px] text-green-700 dark:text-green-400 line-through">{title}</h4>
+          <h4 className="font-bold text-[15px] text-green-700 line-through">{title}</h4>
           <div className="flex items-center gap-1 mt-0.5">
-            <Clock className="w-3 h-3 text-gray-400 dark:text-gray-500" />
-            <span className="text-[12px] text-gray-400 dark:text-gray-500">{time}</span>
+            <Clock className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-400">{time}</span>
           </div>
         </div>
       </div>
@@ -1965,28 +1992,28 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
 
   const cardClass =
     variant === 'active'
-      ? 'bg-blue-50/60 dark:bg-blue-500/10 ring-2 ring-blue-300/50 dark:ring-blue-500/30 shadow-lg'
+      ? 'bg-primary/5 ring-2 ring-primary/30 shadow-lg'
     : variant === 'consumed'
-      ? 'bg-white dark:bg-card border border-green-200/60 dark:border-green-500/20 shadow-sm opacity-70'
-    : 'bg-white dark:bg-card border border-gray-100/60 dark:border-[#2a2a2a] shadow-sm';
+      ? 'bg-background border border-green-200/60 shadow-sm opacity-70'
+    : 'bg-background border border-gray-100/60 shadow-sm';
 
   const iconBgClass =
     variant === 'active'
-      ? 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-500/20 dark:to-blue-500/30'
+      ? 'bg-primary/10'
     : variant === 'consumed'
       ? 'bg-green-500'
     : isPassed && isToday
-      ? 'bg-gray-100 dark:bg-gray-800'
-    : 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/20';
+      ? 'bg-gray-100'
+    : 'bg-amber-50';
 
   const titleClass =
     variant === 'active'
-      ? 'text-blue-700 dark:text-blue-400'
+      ? 'text-primary'
     : variant === 'consumed'
-      ? 'text-green-700 dark:text-green-400 line-through'
+      ? 'text-green-700 line-through'
     : isPassed && isToday
-      ? 'text-gray-400 dark:text-gray-500'
-    : 'text-gray-900 dark:text-gray-100';
+      ? 'text-gray-400'
+    : 'text-foreground';
 
   return (
     <>
@@ -1999,7 +2026,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
         {/* Eating window banner */}
         {isFocus && canCheck && (
           <motion.div
-            className="bg-gradient-to-r from-blue-400 to-teal-400 dark:from-blue-500 dark:to-teal-500 px-4 py-1.5 flex items-center gap-2"
+            className="bg-primary px-4 py-1.5 flex items-center gap-2"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -2017,7 +2044,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
           tabIndex={0}
           onClick={handleCardTap}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardTap(); } }}
-          className="w-full text-left px-4 py-3 active:bg-gray-50/50 dark:active:bg-white/5 transition-colors cursor-pointer"
+          className="w-full text-left px-4 py-3 active:bg-gray-50/50 transition-colors cursor-pointer"
         >
           {/* Row 1: Icon + meal type + calorie badge + chevron */}
           <div className="flex items-center gap-3">
@@ -2028,14 +2055,14 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
               <div className="flex items-center gap-2">
                 <h4 className={`font-bold text-[15px] ${titleClass}`}>{title}</h4>
                 {totalKcal > 0 && (
-                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+                  <span className="text-[11px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
                     {totalKcal} kcal
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
-                <Clock className="w-3 h-3 text-gray-400 dark:text-gray-500" />
-                <span className="text-[12px] text-gray-400 dark:text-gray-500">{time}</span>
+                <Clock className="w-3 h-3 text-gray-400" />
+                <span className="text-xs text-gray-400">{time}</span>
               </div>
             </div>
             <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }} className="flex-shrink-0">
@@ -2047,8 +2074,8 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
           {mealName && (
             <div className="mt-2 ml-[52px] flex items-center gap-2">
               <UtensilsCrossed className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span className="text-[13px] text-gray-700 dark:text-gray-300 truncate">{mealName}</span>
-              <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 rounded-md flex-shrink-0 ml-auto">
+              <span className="text-[13px] text-gray-700 truncate">{mealName}</span>
+              <span className="text-2xs font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0 ml-auto">
                 1 {t("mealDetail.serving") || 'adag'}
               </span>
             </div>
@@ -2068,37 +2095,37 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
               <div className="px-4 pb-4 space-y-2">
                 {/* Description line */}
                 {mealDesc && (
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 ml-1 mb-1 italic">{mealDesc}</p>
+                  <p className="text-[11px] text-gray-400 ml-1 mb-1 italic">{mealDesc}</p>
                 )}
 
                 {/* ── Structured ingredient rows (from IndexedDB upload) ── */}
                 {details && details.length > 0 ? (
                   details.map((ing, idx) => (
-                    <div key={idx} className="bg-gray-50/80 dark:bg-[#1E1E1E] rounded-xl px-3 py-2.5 border border-gray-100/60 dark:border-[#2a2a2a]">
+                    <div key={idx} className="bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100/60">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-[13px] font-medium text-gray-800 dark:text-gray-200 truncate">{ing.name}</span>
+                          <span className="text-[13px] font-medium text-gray-800 truncate">{ing.name}</span>
                           <span className="text-[11px] text-gray-400 flex-shrink-0">({ing.quantity})</span>
                         </div>
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                        <span className="text-[11px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
                           {Math.round(ing.calories)} kcal
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-1.5">
                         <div className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400">{t("menu.proteinG")}</span>
-                          <span className="text-[10px] font-medium text-red-600 dark:text-red-400">{ing.protein.toFixed(1)}g</span>
+                          <span className="text-2xs text-gray-500">{t("menu.proteinG")}</span>
+                          <span className="text-2xs font-medium text-red-600">{ing.protein.toFixed(1)}g</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400">{t("menu.carbsG")}</span>
-                          <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">{ing.carbs.toFixed(1)}g</span>
+                          <span className="text-2xs text-gray-500">{t("menu.carbsG")}</span>
+                          <span className="text-2xs font-medium text-amber-600">{ing.carbs.toFixed(1)}g</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400">{t("menu.fatG")}</span>
-                          <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">{ing.fat.toFixed(1)}g</span>
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          <span className="text-2xs text-gray-500">{t("menu.fatG")}</span>
+                          <span className="text-2xs font-medium text-primary">{ing.fat.toFixed(1)}g</span>
                         </div>
                       </div>
                     </div>
@@ -2113,53 +2140,53 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                     const perC = +(mealCarbs / count).toFixed(1);
                     const perF = +(mealFat / count).toFixed(1);
                     return (
-                      <div key={idx} className="bg-gray-50/80 dark:bg-[#1E1E1E] rounded-xl px-3 py-2.5 border border-gray-100/60 dark:border-[#2a2a2a]">
+                      <div key={idx} className="bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100/60">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="text-[13px] font-medium text-gray-800 dark:text-gray-200 truncate">{foodName}</span>
+                            <span className="text-[13px] font-medium text-gray-800 truncate">{foodName}</span>
                             {qty && <span className="text-[11px] text-gray-400 flex-shrink-0">({qty})</span>}
                           </div>
-                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                          <span className="text-[11px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
                             ~{perKcal} kcal
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1.5">
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{t("menu.proteinG")}</span>
-                            <span className="text-[10px] font-medium text-red-600 dark:text-red-400">{perP}g</span>
+                            <span className="text-2xs text-gray-500">{t("menu.proteinG")}</span>
+                            <span className="text-2xs font-medium text-red-600">{perP}g</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{t("menu.carbsG")}</span>
-                            <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">{perC}g</span>
+                            <span className="text-2xs text-gray-500">{t("menu.carbsG")}</span>
+                            <span className="text-2xs font-medium text-amber-600">{perC}g</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                            <span className="text-[10px] text-gray-500 dark:text-gray-400">{t("menu.fatG")}</span>
-                            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">{perF}g</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            <span className="text-2xs text-gray-500">{t("menu.fatG")}</span>
+                            <span className="text-2xs font-medium text-primary">{perF}g</span>
                           </div>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="text-[12px] text-gray-400 dark:text-gray-500 text-center py-2">
+                  <div className="text-xs text-gray-400 text-center py-2">
                     {t("mealDetail.ingredients") || 'Nincs összetevő adat'}
                   </div>
                 )}
 
                 {/* ── Total summary bar ── */}
                 {totalKcal > 0 && (
-                  <div className="flex items-center justify-between bg-gradient-to-r from-blue-50/80 to-indigo-50/60 dark:from-blue-500/8 dark:to-indigo-500/8 rounded-xl px-3 py-2.5 border border-blue-100/50 dark:border-blue-500/15">
+                  <div className="flex items-center justify-between bg-primary/5 rounded-xl px-3 py-2.5 border border-primary/15">
                     <div className="flex items-center gap-1.5">
-                      <Flame className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                      <span className="text-[12px] font-bold text-blue-700 dark:text-blue-400">{totalKcal} kcal</span>
+                      <Flame className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-bold text-primary">{totalKcal} kcal</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-medium text-red-600 dark:text-red-400">{typeof mealProtein === 'number' ? mealProtein.toFixed(1) : mealProtein}g F</span>
-                      <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">{typeof mealCarbs === 'number' ? mealCarbs.toFixed(1) : mealCarbs}g Sz</span>
-                      <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">{typeof mealFat === 'number' ? mealFat.toFixed(1) : mealFat}g Zs</span>
+                      <span className="text-2xs font-medium text-red-600">{typeof mealProtein === 'number' ? mealProtein.toFixed(1) : mealProtein}g F</span>
+                      <span className="text-2xs font-medium text-amber-600">{typeof mealCarbs === 'number' ? mealCarbs.toFixed(1) : mealCarbs}g Sz</span>
+                      <span className="text-2xs font-medium text-primary">{typeof mealFat === 'number' ? mealFat.toFixed(1) : mealFat}g Zs</span>
                     </div>
                   </div>
                 )}
@@ -2168,11 +2195,11 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                 {canEdit && !checked && allOptions.length > 1 && (
                   <motion.button
                     onClick={(e) => { e.stopPropagation(); setSwapOpen(true); }}
-                    className="w-full flex items-center justify-center gap-2 bg-purple-50 dark:bg-purple-500/10 rounded-xl px-4 py-2.5 border border-purple-200/60 dark:border-purple-500/20 active:bg-purple-100 dark:active:bg-purple-500/15 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 bg-primary/5 rounded-xl px-4 py-2.5 border border-primary/20 active:bg-primary/10 transition-colors"
                     whileTap={{ scale: 0.98 }}
                   >
-                    <ArrowRightLeft className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                    <span className="text-[12px] font-bold text-purple-700 dark:text-purple-400">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
+                    <ArrowRightLeft className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
                   </motion.button>
                 )}
               </div>
@@ -2254,23 +2281,23 @@ function MealDetailSheet({
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-[#121212]"
+      className="fixed inset-0 z-50 flex flex-col bg-background"
       initial={{ opacity: 0, y: "100%" }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: "100%" }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       {/* ── Top bar ── */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-gray-100 dark:border-[#2a2a2a]">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-border">
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-[#252525] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors"
+          className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
           aria-label={t("mealDetail.close")}
         >
-          <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
         <div className="text-center">
-          <h2 className="font-bold text-[16px] text-gray-900 dark:text-gray-100">{title}</h2>
+          <h2 className="font-bold text-base text-foreground">{title}</h2>
           <div className="flex items-center justify-center gap-1 mt-0.5">
             <Clock className="w-3 h-3 text-gray-400" />
             <span className="text-[11px] text-gray-400">{time}</span>
@@ -2287,69 +2314,69 @@ function MealDetailSheet({
           <div className="flex gap-2">
             <div className={`flex-1 rounded-xl p-3 border ${
               isTrainingDay
-                ? 'bg-orange-50 dark:bg-orange-500/10 border-orange-200/60 dark:border-orange-500/20'
-                : 'bg-blue-50 dark:bg-blue-500/10 border-blue-200/60 dark:border-blue-500/20'
+                ? 'bg-orange-50 border-orange-200/60'
+                : 'bg-primary/5 border-primary/20'
             }`}>
               <div className="flex items-center gap-2 mb-1">
                 {isTrainingDay
-                  ? <Dumbbell className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                  : <Moon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  ? <Dumbbell className="w-4 h-4 text-orange-600" />
+                  : <Moon className="w-4 h-4 text-primary" />
                 }
-                <span className={`text-[12px] font-bold ${
-                  isTrainingDay ? 'text-orange-700 dark:text-orange-400' : 'text-blue-700 dark:text-blue-400'
+                <span className={`text-xs font-bold ${
+                  isTrainingDay ? 'text-orange-700' : 'text-primary'
                 }`}>
                   {dayLabel}
                 </span>
               </div>
               <p className={`text-[11px] ${
-                isTrainingDay ? 'text-orange-500 dark:text-orange-500/70' : 'text-blue-500 dark:text-blue-500/70'
+                isTrainingDay ? 'text-orange-500' : 'text-primary/70'
               }`}>
                 {isTrainingDay ? t("mealDetail.higherCarbs") : t("mealDetail.lowerCarbs")}
               </p>
             </div>
-            <div className="flex-1 rounded-xl p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200/60 dark:border-blue-500/20">
+            <div className="flex-1 rounded-xl p-3 bg-primary/5 border border-primary/20">
               <div className="flex items-center gap-2 mb-1">
-                <Flame className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-[12px] font-bold text-blue-700 dark:text-blue-400">{t("mealDetail.calorieBudget")}</span>
+                <Flame className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold text-primary">{t("mealDetail.calorieBudget")}</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-[17px] font-bold text-blue-800 dark:text-blue-300">~{mealAllowance}</span>
-                <span className="text-[11px] text-blue-500 dark:text-blue-500/70">kcal</span>
+                <span className="text-[17px] font-bold text-primary">~{mealAllowance}</span>
+                <span className="text-[11px] text-primary/70">kcal</span>
               </div>
             </div>
           </div>
 
           {/* ── Current meal: name + total calories ── */}
           {selectedMeal && (
-            <div className="rounded-2xl bg-gradient-to-br from-blue-50/80 to-cyan-50/60 dark:from-blue-500/10 dark:to-cyan-500/5 border border-blue-200/50 dark:border-blue-500/20 p-4">
+            <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4">
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-500/10 dark:to-amber-500/20 flex items-center justify-center text-2xl flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-2xl flex-shrink-0">
                   {icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-[16px] text-gray-900 dark:text-gray-100 mb-1">{selectedMeal.name}</h3>
-                  <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed">{selectedMeal.description}</p>
+                  <h3 className="font-bold text-base text-foreground mb-1">{selectedMeal.name}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{selectedMeal.description}</p>
                 </div>
               </div>
 
               {/* Total calories + macro ring */}
-              <div className="flex items-center justify-between bg-white/70 dark:bg-[#1E1E1E]/70 rounded-xl p-3 border border-blue-100/60 dark:border-blue-500/15">
+              <div className="flex items-center justify-between bg-white/70 rounded-xl p-3 border border-primary/10">
                 <div>
-                  <span className="text-[24px] font-black text-blue-700 dark:text-blue-400">{totalKcal}</span>
-                  <span className="text-[13px] text-blue-500 dark:text-blue-500/70 ml-1">kcal</span>
+                  <span className="text-2xl font-black text-primary">{totalKcal}</span>
+                  <span className="text-[13px] text-primary/70 ml-1">kcal</span>
                 </div>
                 <div className="flex gap-4">
                   <div className="text-center">
-                    <div className="text-[14px] font-bold text-red-600 dark:text-red-400">{macros.protein}g</div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">🥩 {t("menu.proteinG")}</div>
+                    <div className="text-sm font-bold text-red-600">{macros.protein}g</div>
+                    <div className="text-2xs text-gray-400 uppercase tracking-wider">🥩 {t("menu.proteinG")}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-[14px] font-bold text-amber-600 dark:text-amber-400">{macros.carbs}g</div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">🌾 {t("menu.carbsG")}</div>
+                    <div className="text-sm font-bold text-amber-600">{macros.carbs}g</div>
+                    <div className="text-2xs text-gray-400 uppercase tracking-wider">🌾 {t("menu.carbsG")}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400">{macros.fat}g</div>
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider">🫒 {t("menu.fatG")}</div>
+                    <div className="text-sm font-bold text-primary">{macros.fat}g</div>
+                    <div className="text-2xs text-gray-400 uppercase tracking-wider">🫒 {t("menu.fatG")}</div>
                   </div>
                 </div>
               </div>
@@ -2360,8 +2387,8 @@ function MealDetailSheet({
           {selectedMeal?.ingredients && selectedMeal.ingredients.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Utensils className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-[12px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t("mealDetail.ingredients") || 'Összetevők'}</span>
+                <Utensils className="w-4 h-4 text-gray-500" />
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("mealDetail.ingredients") || 'Összetevők'}</span>
               </div>
               <div className="space-y-2">
                 {selectedMeal.ingredients.map((ing: string, idx: number) => {
@@ -2372,17 +2399,17 @@ function MealDetailSheet({
                   const perIngFat = Math.round(macros.fat / selectedMeal.ingredients.length);
 
                   return (
-                    <div key={idx} className="flex items-center gap-3 bg-gray-50 dark:bg-[#1E1E1E] rounded-xl px-3 py-2.5 border border-gray-100 dark:border-[#2a2a2a]">
-                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-[#252525] flex items-center justify-center text-sm border border-gray-100 dark:border-[#2a2a2a]">
+                    <div key={idx} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-sm border border-gray-100">
                         🍽️
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[13px] font-medium text-gray-800 dark:text-gray-200">{ing}</span>
+                        <span className="text-[13px] font-medium text-gray-800">{ing}</span>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-gray-400">~{perIngKcal} kcal</span>
-                          <span className="text-[10px] text-red-400">P {perIngProtein}g</span>
-                          <span className="text-[10px] text-amber-400">C {perIngCarbs}g</span>
-                          <span className="text-[10px] text-emerald-400">F {perIngFat}g</span>
+                          <span className="text-2xs text-gray-400">~{perIngKcal} kcal</span>
+                          <span className="text-2xs text-red-400">P {perIngProtein}g</span>
+                          <span className="text-2xs text-amber-400">C {perIngCarbs}g</span>
+                          <span className="text-2xs text-primary">F {perIngFat}g</span>
                         </div>
                       </div>
                     </div>
@@ -2397,15 +2424,15 @@ function MealDetailSheet({
             <div>
               <motion.button
                 onClick={() => setShowAlternatives(!showAlternatives)}
-                className="w-full flex items-center justify-between bg-purple-50 dark:bg-purple-500/10 rounded-xl px-4 py-3 border border-purple-200/60 dark:border-purple-500/20 active:bg-purple-100 dark:active:bg-purple-500/15 transition-colors"
+                className="w-full flex items-center justify-between bg-primary/5 rounded-xl px-4 py-3 border border-primary/20 active:bg-primary/10 transition-colors"
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <UtensilsCrossed className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-[13px] font-bold text-purple-700 dark:text-purple-400">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
+                  <UtensilsCrossed className="w-4 h-4 text-primary" />
+                  <span className="text-[13px] font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
                 </div>
                 <motion.div animate={{ rotate: showAlternatives ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                  <ChevronDown className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                  <ChevronDown className="w-4 h-4 text-primary" />
                 </motion.div>
               </motion.button>
 
@@ -2419,7 +2446,7 @@ function MealDetailSheet({
                     className="overflow-hidden"
                   >
                     <div className="space-y-2 pt-3">
-                      <span className="text-[11px] text-gray-400 dark:text-gray-500">{t("mealDetail.tapToChoose")}</span>
+                      <span className="text-[11px] text-gray-400">{t("mealDetail.tapToChoose")}</span>
                       {allOptions.map((meal, idx) => {
                         const isSelected = selectedMeal?.id === meal.id;
                         const kcal = parseKcal(meal.calories);
@@ -2431,8 +2458,8 @@ function MealDetailSheet({
                             onClick={() => onSelect(meal.id)}
                             className={`w-full text-left rounded-xl p-3.5 transition-all ${
                               isSelected
-                                ? 'bg-blue-50 dark:bg-blue-500/10 border-2 border-blue-400 dark:border-blue-500/40'
-                                : 'bg-white dark:bg-[#252525] border border-gray-100 dark:border-[#2a2a2a] hover:border-blue-200 dark:hover:border-blue-500/30 active:bg-gray-50 dark:active:bg-[#2a2a2a]'
+                                ? 'bg-primary/5 border-2 border-primary'
+                                : 'bg-white border border-gray-100 hover:border-primary/30 active:bg-gray-50'
                             }`}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -2444,32 +2471,32 @@ function MealDetailSheet({
                                   </div>
                                 )}
                                 <span className={`text-[11px] font-bold uppercase tracking-wider ${
-                                  idx === 0 ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'
+                                  idx === 0 ? 'text-primary' : 'text-gray-600'
                                 }`}>
                                   {idx === 0 ? `🥗 ${t("mealDetail.dietPlanLabel")}` : t("mealDetail.alternativeN").replace('{n}', String(idx))}
                                 </span>
                               </div>
-                              <span className={`text-[12px] font-bold px-2 py-0.5 rounded-lg ${
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${
                                 isSelected
-                                  ? 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400'
+                                  ? 'bg-primary/10 text-primary'
                                   : isOverBudget
-                                  ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
-                                  : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-600 dark:text-gray-400'
+                                  ? 'bg-red-50 text-red-600'
+                                  : 'bg-gray-100 text-gray-600'
                               }`}>
                                 {meal.calories}
                               </span>
                             </div>
 
-                            <h5 className="font-semibold text-[13px] text-gray-900 dark:text-gray-100 mb-0.5">{meal.name}</h5>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">{meal.description}</p>
+                            <h5 className="font-semibold text-[13px] text-foreground mb-0.5">{meal.name}</h5>
+                            <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">{meal.description}</p>
 
                             {meal.ingredients && meal.ingredients.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {meal.ingredients.slice(0, 4).map((ing: string, i: number) => (
-                                  <span key={i} className="text-[10px] bg-gray-50 dark:bg-[#1E1E1E] text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-md">{ing}</span>
+                                  <span key={i} className="text-2xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{ing}</span>
                                 ))}
                                 {meal.ingredients.length > 4 && (
-                                  <span className="text-[10px] bg-gray-50 dark:bg-[#1E1E1E] text-gray-400 dark:text-gray-500 px-2 py-0.5 rounded-md">+{meal.ingredients.length - 4}</span>
+                                  <span className="text-2xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-md">+{meal.ingredients.length - 4}</span>
                                 )}
                               </div>
                             )}
@@ -2485,9 +2512,9 @@ function MealDetailSheet({
 
           {/* Info when no edit possible */}
           {(!canEdit || checked) && allOptions.length > 1 && (
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#252525] border border-gray-100 dark:border-[#2a2a2a]">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
               <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span className="text-[11px] text-gray-400 dark:text-gray-500">
+              <span className="text-[11px] text-gray-400">
                 {checked ? t("mealDetail.mealConsumed") : t("mealDetail.altWindowExpired")}
               </span>
             </div>
@@ -2513,40 +2540,40 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
 
   return (
     <motion.div
-      className="bg-white dark:bg-card rounded-lg overflow-hidden shadow-sm border-l-4 border-l-emerald-400 dark:border-l-emerald-500 mt-2"
+      className="bg-background rounded-lg overflow-hidden shadow-sm border-l-4 border-l-primary mt-2"
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100 }} transition={{ duration: 0.25 }}
     >
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10 px-3 py-1.5 flex items-center gap-2">
+      <div className="bg-primary/10 px-3 py-1.5 flex items-center gap-2">
         <span className="text-sm">✅</span>
-        <span className="text-[12px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">{t("menu.alsoConsumed")}</span>
+        <span className="text-xs font-bold text-primary uppercase tracking-wider">{t("menu.alsoConsumed")}</span>
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/20 dark:to-teal-500/20">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg bg-primary/10">
               {meal.image || '🍽️'}
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">{meal.name}</h4>
+              <h4 className="font-semibold text-sm text-foreground">{meal.name}</h4>
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Clock className="w-3 h-3" /><span>{timeStr}</span>
               </div>
             </div>
           </div>
-          <button onClick={onRemove} aria-label={`${meal.name} ${t("mealDetail.remove")}`} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0">
+          <button onClick={onRemove} aria-label={`${meal.name} ${t("mealDetail.remove")}`} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
-        <div className="rounded-lg p-2 bg-emerald-50/60 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/15">
+        <div className="rounded-lg p-2 bg-primary/5 border border-primary/20">
           <div className="flex justify-between items-start mb-1">
-            <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{meal.quantity} {t("menu.serving")}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15">{meal.calories} kcal</span>
+            <span className="font-medium text-foreground text-sm">{meal.quantity} {t("menu.serving")}</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded text-primary bg-primary/10">{meal.calories} kcal</span>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
-            <span className="text-xs bg-white dark:bg-[#252525] px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-[#2a2a2a]">🥩 {meal.protein}g {t("menu.proteinG")}</span>
-            <span className="text-xs bg-white dark:bg-[#252525] px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-[#2a2a2a]">🌾 {meal.carbs}g {t("menu.carbsG")}</span>
-            <span className="text-xs bg-white dark:bg-[#252525] px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-[#2a2a2a]">🫒 {meal.fat}g {t("menu.fatG")}</span>
+            <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🥩 {meal.protein}g {t("menu.proteinG")}</span>
+            <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🌾 {meal.carbs}g {t("menu.carbsG")}</span>
+            <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🫒 {meal.fat}g {t("menu.fatG")}</span>
           </div>
         </div>
       </div>
@@ -2560,25 +2587,25 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
 
 function EmptyMealCard({ title, time, icon }: { title: string; time: string; icon: string }) {
   return (
-    <div className="w-full bg-white dark:bg-card rounded-2xl border border-dashed border-gray-200 dark:border-[#2a2a2a]/80 px-4 py-3.5 flex items-center justify-between">
+    <div className="w-full bg-background rounded-2xl border border-dashed border-gray-200 px-4 py-3.5 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gray-50 dark:bg-[#252525] flex items-center justify-center text-lg">
+        <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center text-lg">
           <span aria-hidden="true">{icon}</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+          <span className="text-sm font-semibold text-gray-800">
             {title}
           </span>
-          <span className="text-[11px] text-gray-500 dark:text-gray-400">
+          <span className="text-[11px] text-gray-500">
             {time}
           </span>
         </div>
       </div>
       <div className="flex flex-col items-end gap-0.5">
-        <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
+        <span className="text-xs font-semibold text-gray-400">
           –
         </span>
-        <span className="text-[10px] text-gray-400 dark:text-gray-500">
+        <span className="text-2xs text-gray-400">
           kcal
         </span>
       </div>

@@ -203,7 +203,7 @@ export function MealNamer({
                       <div className="font-semibold text-[11px]">
                         {opt.label}
                       </div>
-                      <div className="text-[10px] opacity-80 mt-0.5 line-clamp-2">
+                      <div className="text-2xs opacity-80 mt-0.5 line-clamp-2">
                         {opt.description}
                       </div>
                     </button>
@@ -285,7 +285,7 @@ export function MealNamer({
                   {result?.name || "Várakozás az AI névre..."}
                 </p>
                 {result?.subtitle && (
-                  <p className="text-[12px] text-amber-100/80 italic">
+                  <p className="text-xs text-amber-100/80 italic">
                     {result.subtitle}
                   </p>
                 )}
@@ -301,7 +301,7 @@ export function MealNamer({
                 type="button"
                 onClick={handleGenerate}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-[13px] font-semibold text-white bg-gradient-to-r from-sky-500 via-teal-400 to-emerald-400 shadow-lg shadow-teal-500/30 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-[13px] font-semibold text-white bg-primary shadow-sm disabled:opacity-60"
               >
                 <Sparkles className="w-4 h-4" />
                 {loading ? "AI név generálása..." : "✨ Generálj nevet"}

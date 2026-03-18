@@ -195,13 +195,13 @@ export function MealIntervals({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -40, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 26 }}
-          className="relative w-full max-w-lg mx-auto mt-6 mb-4 bg-white dark:bg-[#050816] rounded-3xl shadow-2xl border border-sky-500/40 overflow-hidden"
+          className="relative w-full max-w-lg mx-auto mt-6 mb-4 bg-background rounded-3xl shadow-2xl border border-border overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-sky-500/40 bg-gradient-to-r from-sky-500 via-cyan-400 to-teal-400">
+          <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-border bg-primary">
             <div>
-              <p className="text-[11px] font-semibold text-sky-50/80 uppercase tracking-wide">
+              <p className="text-[11px] font-semibold text-white/80 uppercase tracking-wide">
                 {t("menu.mealIntervalsTitle") || "Étkezési intervallumok"}
               </p>
               <h2 className="text-base font-bold text-white mt-0.5">
@@ -212,7 +212,7 @@ export function MealIntervals({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-sky-900/40 flex items-center justify-center text-sky-50/80 hover:bg-sky-900/70 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white/80 hover:bg-white/30 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -222,7 +222,7 @@ export function MealIntervals({
           <div className="px-5 pt-4 pb-4 space-y-4 max-h-[70vh] overflow-y-auto">
             {/* Count selector */}
             <div className="space-y-2">
-              <label className="text-[12px] font-medium text-slate-700 dark:text-slate-200 flex items-center gap-1">
+              <label className="text-xs font-medium text-foreground flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
                 <span>
                   {t("menu.mealCountLabel") || "Napi étkezések száma"}
@@ -232,7 +232,7 @@ export function MealIntervals({
                 <select
                   value={count}
                   onChange={(e) => handleCountChange(Number(e.target.value) || 3)}
-                  className="w-full appearance-none rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#050816] px-3 py-2 pr-8 text-sm text-slate-900 dark:text-slate-100"
+                  className="w-full appearance-none rounded-2xl border border-border bg-background px-3 py-2 pr-8 text-sm text-foreground"
                 >
                   {[1, 2, 3, 4, 5].map((c) => (
                     <option key={c} value={c}>
@@ -253,18 +253,18 @@ export function MealIntervals({
                     ? "from-yellow-400 to-amber-300"
                     : idx === slots.length - 1
                     ? "from-violet-400 to-fuchsia-400"
-                    : "from-sky-400 to-teal-400";
+                    : "";
                 return (
                   <div
                     key={idx}
                     className={`rounded-2xl border ${
                       isError
-                        ? "border-red-400 bg-red-50/40 dark:border-red-500/60 dark:bg-red-900/20"
-                        : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/40"
+                        ? "border-red-400 bg-red-50/40"
+                        : "border-border bg-surface"
                     } px-3 py-3 flex items-center gap-3`}
                   >
                     <div
-                      className={`w-9 h-9 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center text-lg`}
+                      className={`w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-lg`}
                     >
                       <span>{slot.emoji}</span>
                     </div>
@@ -275,7 +275,7 @@ export function MealIntervals({
                         onChange={(e) =>
                           handleSlotChange(idx, "label", e.target.value)
                         }
-                        className="w-full bg-transparent border-none outline-none text-sm font-semibold text-slate-900 dark:text-slate-50"
+                        className="w-full bg-transparent border-none outline-none text-sm font-semibold text-foreground"
                       />
                       <div className="flex items-center gap-2">
                         <input
@@ -284,9 +284,9 @@ export function MealIntervals({
                           onChange={(e) =>
                             handleSlotChange(idx, "time", e.target.value)
                           }
-                          className="px-2 py-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#050816] text-xs text-slate-900 dark:text-slate-100"
+                          className="px-2 py-1 rounded-xl border border-border bg-background text-xs text-foreground"
                         />
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[11px] text-gray-500">
                           {idx + 1}/{slots.length}
                         </span>
                       </div>
@@ -311,7 +311,7 @@ export function MealIntervals({
               type="button"
               onClick={handleSave}
               disabled={saving || loading}
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-500 shadow-lg shadow-teal-500/30 disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-primary shadow-lg disabled:opacity-60"
             >
               <Check className="w-4 h-4" />
               {saving
