@@ -17,7 +17,7 @@
  */
 
 import { ReactNode } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,137 +41,37 @@ import { getUserProfile } from "../../backend/services/UserProfileService";
 // ====================================================================
 
 export const DSM_TOKENS = {
-  // --- FONTS ---
-  fonts: {
-    base: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    display: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  },
-
-  // --- COLORS ---
   colors: {
-    // Primary brand palette (Sixth-Halt Blue)
-    primary: {
-      50: "#eef4ff",
-      100: "#d9e6ff",
-      200: "#b3ccff",
-      300: "#809fff",
-      400: "#4d73ff",
-      500: "#3366FF",
-      600: "#2952cc",
-      700: "#1f3d99",
-      800: "#142966",
-      900: "#0a1433",
-    },
-    // Accent (emerald)
-    emerald: { 400: "#34d399", 500: "#10b981", 600: "#059669" },
-    // Accent (teal / secondary)
-    teal: { 400: "#2dd4bf", 500: "#14b8a6", 600: "#0d9488" },
-    // Secondary (Sixth-Halt Teal)
-    secondary: {
-      50: "#e6faf5",
-      100: "#b3f0e0",
-      200: "#80e6cc",
-      300: "#4ddcb8",
-      400: "#1ad2a3",
-      500: "#12CFA6",
-      600: "#0ea685",
-      700: "#0b7c63",
-    },
-    // Neutrals
-    gray: {
-      50: "#f9fafb", 100: "#f3f4f6", 200: "#e5e7eb", 300: "#d1d5db",
-      400: "#9ca3af", 500: "#6b7280", 600: "#4b5563", 700: "#374151",
-      800: "#1f2937", 900: "#111827",
-    },
-    // Semantic
-    blue: { 50: "#eff6ff", 100: "#dbeafe", 300: "#93c5fd", 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb" },
-    purple: { 50: "#faf5ff", 100: "#f3e8ff", 400: "#c084fc", 500: "#a855f7", 600: "#9333ea", 700: "#7e22ce" },
-    amber: { 50: "#fffbeb", 100: "#fef3c7", 300: "#fcd34d", 400: "#fbbf24", 500: "#f59e0b", 600: "#d97706" },
-    orange: { 400: "#fb923c", 500: "#f97316", 600: "#ea580c" },
-    red: { 50: "#fef2f2", 100: "#fee2e2", 200: "#fecaca", 300: "#fca5a5", 400: "#f87171", 500: "#ef4444", 600: "#dc2626", 700: "#b91c1c" },
-    yellow: { 300: "#fde047", 400: "#facc15", 500: "#eab308", 900: "#713f12" },
-    green: { 50: "#f0fdf4", 100: "#dcfce7", 200: "#bbf7d0", 400: "#4ade80", 500: "#22c55e", 600: "#16a34a", 700: "#15803d" },
-    white: "#ffffff",
-    black: "#000000",
+    primary:      '#2563EB',
+    primaryHover: '#1D4ED8',
+    primaryLight: '#EFF6FF',
+    success:      '#10B981',
+    warning:      '#F59E0B',
+    error:        '#EF4444',
+    gray900:      '#0F172A',
+    gray600:      '#475569',
+    gray400:      '#94A3B8',
+    gray200:      '#E2E8F0',
+    gray100:      '#F1F5F9',
+    gray50:       '#F8FAFC',
+    white:        '#FFFFFF',
   },
-
-  // --- GRADIENTS (commonly used) ---
-  gradients: {
-    primary: "from-[#3366FF] to-[#12CFA6]",
-    primaryBr: "from-[#3366FF] via-[#2952cc] to-[#12CFA6]",
-    purpleBlue: "from-purple-600 to-blue-600",
-    amberOrange: "from-amber-500 to-orange-500",
-    bodyApp: "from-[var(--color-primary-50)] to-white",
-    water: "from-blue-400 to-blue-500",
+  fonts: {
+    heading: "'Outfit', sans-serif",
+    body:    "'Inter', sans-serif",
   },
-
-  // --- SPACING ---
   spacing: {
-    xs: "0.25rem",   // 4px
-    sm: "0.5rem",    // 8px
-    md: "0.75rem",   // 12px
-    base: "1rem",    // 16px
-    lg: "1.25rem",   // 20px
-    xl: "1.5rem",    // 24px
-    "2xl": "2rem",   // 32px
-    "3xl": "2.5rem", // 40px
-    "4xl": "3rem",   // 48px
+    xs: '4px', sm: '8px', md: '12px', lg: '16px',
+    xl: '20px', '2xl': '24px', '3xl': '32px', '4xl': '48px',
   },
-
-  // --- BORDER RADIUS ---
   radius: {
-    sm: "0.375rem",  // 6px
-    md: "0.5rem",    // 8px
-    lg: "0.75rem",   // 12px
-    xl: "1rem",      // 16px
-    "2xl": "1.25rem",// 20px
-    "3xl": "1.5rem", // 24px
-    full: "9999px",
+    sm: '8px', md: '12px', lg: '16px', xl: '20px',
+    '2xl': '24px', full: '9999px',
   },
-
-  // --- SHADOWS ---
   shadows: {
-    sm: "0 1px 2px 0 rgba(0,0,0,0.05)",
-    base: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1)",
-    md: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
-    lg: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
-    xl: "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
-    "2xl": "0 25px 50px -12px rgba(0,0,0,0.25)",
-    primary: "0 10px 15px -3px rgba(51,102,255,0.2), 0 4px 6px -4px rgba(51,102,255,0.1)",
-    green: "0 10px 15px -3px rgba(34,197,94,0.2), 0 4px 6px -4px rgba(34,197,94,0.1)",
-  },
-
-  // --- Z-INDEX LAYERS ---
-  zIndex: {
-    base: 0,
-    dropdown: 10,
-    sticky: 20,
-    fixed: 30,
-    modalBackdrop: 40,
-    modal: 50,
-    popover: 60,
-    tooltip: 70,
-  },
-
-  // --- TRANSITIONS ---
-  transitions: {
-    fast: "150ms cubic-bezier(0.4, 0, 0.2, 1)",
-    base: "200ms cubic-bezier(0.4, 0, 0.2, 1)",
-    slow: "300ms cubic-bezier(0.4, 0, 0.2, 1)",
-    slower: "500ms cubic-bezier(0.4, 0, 0.2, 1)",
-  },
-
-  // --- HAPTIC PATTERNS ---
-  haptics: {
-    longPress: [15, 30, 50],
-    mealCheck: [10, 20],
-    alternativeSelect: 10,
-  },
-
-  // --- BOTTOM NAV ---
-  nav: {
-    height: "64px",        // bottom nav bar height
-    safeAreaBottom: "16px", // safe area inset
+    sm:      '0 1px 3px rgba(0,0,0,0.06)',
+    md:      '0 4px 6px rgba(0,0,0,0.08)',
+    primary: '0 4px 14px rgba(37,99,235,0.25)',
   },
 } as const;
 
@@ -180,21 +80,17 @@ export const DSM_TOKENS = {
 // ====================================================================
 
 // --- DSMCard ---
-// Standard white card container used across all screens.
 interface DSMCardProps {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
-  padding?: "none" | "sm" | "md" | "lg";
-  border?: string;
   onClick?: () => void;
 }
 
-export function DSMCard({ children, className = "", padding = "md", border = "border-gray-100", onClick }: DSMCardProps) {
-  const pad = { none: "", sm: "p-3", md: "p-4", lg: "p-5" }[padding];
+export function DSMCard({ children, className = '', onClick }: DSMCardProps) {
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-card rounded-2xl shadow-sm border ${border} dark:border-border ${pad} ${onClick ? "cursor-pointer" : ""} ${className}`}
+      className={`bg-background rounded-2xl border border-border shadow-sm p-4 ${onClick ? 'cursor-pointer' : ''} ${className}`}
     >
       {children}
     </div>
@@ -202,116 +98,108 @@ export function DSMCard({ children, className = "", padding = "md", border = "bo
 }
 
 // --- DSMButton ---
-// Standardized button with variants matching the app's design language.
-type ButtonVariant = "primary" | "secondary" | "destructive" | "ghost" | "gradient" | "gradientAmber" | "gradientPurple" | "outline";
-type ButtonSize = "sm" | "md" | "lg";
-
 interface DSMButtonProps {
-  children: ReactNode;
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  disabled?: boolean;
-  loading?: boolean;
-  icon?: LucideIcon;
-  className?: string;
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   fullWidth?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
-  type?: "button" | "submit";
+  children: React.ReactNode;
+  type?: 'button' | 'submit' | 'reset';
+  className?: string;
 }
 
-const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-md",
-  secondary: "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)] text-[var(--color-primary-700)] dark:text-[#809fff] border border-[var(--color-primary-200)] dark:border-[rgba(51,102,255,0.2)] hover:bg-[var(--color-primary-100)] dark:hover:bg-[rgba(51,102,255,0.2)]",
-  destructive: "bg-red-500 text-white hover:bg-red-600 shadow-md",
-  ghost: "bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-muted",
-  gradient: "bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white hover:from-[#2952cc] hover:to-[#0ea685] shadow-md",
-  gradientAmber: "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md",
-  gradientPurple: "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-md",
-  outline: "bg-white dark:bg-card text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-muted",
-};
-
-const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-xs rounded-lg gap-1.5",
-  md: "px-4 py-2.5 text-sm rounded-xl gap-2",
-  lg: "px-6 py-3.5 rounded-xl gap-2.5",
-};
-
 export function DSMButton({
-  children, variant = "primary", size = "md", disabled, loading, icon: Icon,
-  className = "", fullWidth, onClick, type = "button",
+  variant = 'primary',
+  fullWidth = true,
+  disabled = false,
+  onClick,
+  children,
+  type = 'button',
+  className = '',
 }: DSMButtonProps) {
+  const base = 'h-11 rounded-xl px-4 text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2';
+  const width = fullWidth ? 'w-full' : 'w-auto';
+  const variants = {
+    primary:   'bg-primary text-white hover:bg-primary-hover active:scale-95',
+    secondary: 'bg-white border border-border text-gray-900 hover:bg-surface active:scale-95',
+    ghost:     'bg-transparent text-primary hover:bg-primary-light active:scale-95',
+    danger:    'bg-error text-white hover:opacity-90 active:scale-95',
+  };
+  const disabledCls = 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60';
+
   return (
     <button
       type={type}
-      onClick={onClick}
-      disabled={disabled || loading}
-      className={`font-bold transition-all flex items-center justify-center
-        ${BUTTON_VARIANTS[variant]} ${BUTTON_SIZES[size]}
-        ${fullWidth ? "w-full" : ""}
-        ${disabled ? "opacity-50 cursor-not-allowed shadow-none" : ""}
-        ${className}`}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={`${base} ${width} ${disabled ? disabledCls : variants[variant]} ${className}`}
     >
-      {loading ? <RotateCw className="w-5 h-5 animate-spin" /> : Icon && <Icon className="w-5 h-5" />}
       {children}
     </button>
   );
 }
 
 // --- DSMIconButton ---
-// Circular icon-only button.
 interface DSMIconButtonProps {
-  icon: LucideIcon;
   onClick?: () => void;
-  size?: "sm" | "md" | "lg";
-  variant?: "default" | "glass" | "danger" | "active";
-  label?: string;
+  active?: boolean;
+  children: React.ReactNode;
   className?: string;
-  disabled?: boolean;
 }
 
-export function DSMIconButton({ icon: Icon, onClick, size = "md", variant = "default", label, className = "", disabled }: DSMIconButtonProps) {
-  const sizeClass = { sm: "w-7 h-7", md: "w-9 h-9", lg: "w-10 h-10" }[size];
-  const iconSize = { sm: "w-3.5 h-3.5", md: "w-4 h-4", lg: "w-5 h-5" }[size];
-  const variantClass = {
-    default: "bg-white/10 backdrop-blur text-white/70 hover:bg-white/20",
-    glass: "bg-black/40 backdrop-blur text-white/70 hover:bg-black/60",
-    danger: "bg-red-500 text-white",
-    active: "bg-purple-600 text-white",
-  }[variant];
-
+export function DSMIconButton({ onClick, active = false, children, className = '' }: DSMIconButtonProps) {
   return (
     <button
       onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      className={`${sizeClass} rounded-full flex items-center justify-center transition-all ${variantClass} ${disabled ? "opacity-30" : ""} ${className}`}
+      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-150 ${
+        active
+          ? 'bg-primary-light text-primary'
+          : 'bg-surface text-gray-900 hover:bg-gray-100'
+      } ${className}`}
     >
-      <Icon className={iconSize} />
+      {children}
     </button>
   );
 }
 
 // --- DSMInput ---
-// Standard text input field.
 interface DSMInputProps {
-  value: string;
-  onChange: (value: string) => void;
+  label?: string;
+  error?: string;
   placeholder?: string;
-  autoFocus?: boolean;
-  className?: string;
+  value: string;
+  onChange: (v: string) => void;
   type?: string;
+  className?: string;
 }
 
-export function DSMInput({ value, onChange, placeholder, autoFocus, className = "", type = "text" }: DSMInputProps) {
+export function DSMInput({
+  label,
+  error,
+  placeholder,
+  value,
+  onChange,
+  type = 'text',
+  className = '',
+}: DSMInputProps) {
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      autoFocus={autoFocus}
-      className={`w-full px-3.5 py-2.5 border-2 border-gray-200 dark:border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-200)] dark:focus:ring-[rgba(51,102,255,0.3)] focus:border-[var(--color-primary-400)] dark:focus:border-[var(--primary)] bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${className}`}
-    />
+    <div className={`flex flex-col ${className}`}>
+      {label && (
+        <label className="text-xs font-medium text-gray-600 mb-1">{label}</label>
+      )}
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={e => onChange(e.target.value)}
+        className={`bg-surface border rounded-xl h-11 px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-150 ${
+          error ? 'border-error focus:border-error' : 'border-border focus:border-primary'
+        }`}
+      />
+      {error && (
+        <span className="text-xs text-error mt-1">{error}</span>
+      )}
+    </div>
   );
 }
 
@@ -363,14 +251,14 @@ export function DSMProgressBar({
   const pct = Math.min(100, Math.max(0, (value / max) * 100));
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className={`flex-1 ${height} bg-gray-100 dark:bg-[#252525] rounded-full overflow-hidden`}>
+      <div className={`flex-1 ${height} bg-gray-100 rounded-full overflow-hidden`}>
         <div
           className={`${height} transition-all duration-500 rounded-full ${color}`}
           style={{ width: `${pct}%` }}
         />
       </div>
       {showLabel && (
-        <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500">{label || `${Math.round(pct)}%`}</span>
+        <span className="text-[11px] font-medium text-gray-400">{label || `${Math.round(pct)}%`}</span>
       )}
     </div>
   );
@@ -391,7 +279,7 @@ export function DSMSectionTitle({ icon: Icon, iconColor = "text-purple-600", tit
     <div className={`flex items-center justify-between ${className}`}>
       <div className="flex items-center gap-2">
         {Icon && <Icon className={`w-5 h-5 ${iconColor}`} />}
-        <h2 className="font-bold text-gray-900 dark:text-gray-100" style={{ fontSize: "1.05rem" }}>{title}</h2>
+        <h2 className="font-bold text-gray-900" style={{ fontSize: "1.05rem" }}>{title}</h2>
       </div>
       {action}
     </div>
@@ -409,14 +297,14 @@ interface DSMHintProps {
 }
 
 const HINT_BG = {
-  info: "bg-blue-50 dark:bg-blue-500/10 border-blue-200/60 dark:border-blue-500/20 text-blue-700 dark:text-blue-400",
-  warning: "bg-amber-50 dark:bg-amber-500/10 border-amber-200/60 dark:border-amber-500/20 text-amber-700 dark:text-amber-400",
-  error: "bg-red-50 dark:bg-red-500/10 border-red-200/60 dark:border-red-500/20 text-red-700 dark:text-red-400",
+  info: "bg-blue-50 border-blue-200/60 text-blue-700",
+  warning: "bg-amber-50 border-amber-200/60 text-amber-700",
+  error: "bg-red-50 border-red-200/60 text-red-700",
 };
 const HINT_ICON_BG = {
-  info: "bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400",
-  warning: "bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  error: "bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400",
+  info: "bg-blue-100 text-blue-600",
+  warning: "bg-amber-100 text-amber-600",
+  error: "bg-red-100 text-red-600",
 };
 const HINT_TAIL_COLOR = {
   info: "#f0fdf4",
@@ -448,73 +336,45 @@ export function DSMHint({ icon: Icon, text, variant = "info", className = "", ta
 // ====================================================================
 
 // --- BottomNav ---
-// The 5-tab bottom navigation bar extracted from Layout.tsx.
 interface BottomNavProps {
   t: (key: string) => string;
 }
 
-interface NavLinkProps {
-  to: string;
-  icon: React.ElementType;
-  label: string;
-  active: boolean;
-}
-
-function NavLinkItem({ to, icon: Icon, label, active }: NavLinkProps) {
-  return (
-    <Link
-      to={to}
-      className="flex flex-col items-center justify-center gap-0.5 py-1 flex-1 relative"
-      aria-current={active ? "page" : undefined}
-      aria-label={label}
-    >
-      {/* Icon container - elevated circle for active */}
-      <div className={`relative w-12 h-12 sm:w-[52px] sm:h-[52px] rounded-full flex items-center justify-center transition-all duration-300 ${
-        active
-          ? "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.15)] shadow-[0_2px_12px_rgba(51,102,255,0.25)] -translate-y-0.5"
-          : "bg-transparent"
-      }`}>
-        {/* Active ring */}
-        {active && (
-          <div className="absolute inset-0 rounded-full border-2 border-[var(--color-primary-200)] dark:border-[rgba(51,102,255,0.3)]" />
-        )}
-        <Icon
-          className={`w-[22px] h-[22px] sm:w-6 sm:h-6 transition-colors duration-200 ${
-            active ? "text-[var(--color-primary-600)] dark:text-[#809fff]" : "text-gray-400 dark:text-gray-500"
-          }`}
-          strokeWidth={active ? 2.2 : 1.8}
-        />
-      </div>
-      {/* Label */}
-      <span className={`text-[11px] sm:text-xs text-center leading-tight transition-colors duration-200 ${
-        active ? "text-[var(--color-primary-700)] dark:text-[#809fff] font-semibold" : "text-gray-400 dark:text-gray-500 font-medium"
-      }`}>
-        {label}
-      </span>
-    </Link>
-  );
-}
-
 export function BottomNav({ t }: BottomNavProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Match active state more broadly for sub-routes
-  const isActive = (path: string) => {
-    if (path === "/") return location.pathname === "/";
-    return location.pathname.startsWith(path);
-  };
+  const tabs = [
+    { path: '/foods', icon: Apple, label: t('nav.foods') },
+    { path: '/shopping', icon: ShoppingCart, label: t('nav.shopping') },
+    { path: '/', icon: UtensilsCrossed, label: t('nav.menu') },
+    { path: '/workout', icon: Dumbbell, label: t('nav.sports') },
+    { path: '/profile', icon: User, label: t('nav.profile') },
+  ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40" role="navigation" aria-label={t("nav.menu")}>
-      {/* Frosted glass background */}
-      <div className="bg-white/95 dark:bg-background/95 backdrop-blur-lg border-t border-gray-200/80 dark:border-border/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-        <div className="mx-auto flex items-end px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] sm:px-3 w-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
-          <NavLinkItem to="/foods" icon={Apple} label={t("nav.foods")} active={isActive("/foods")} />
-          <NavLinkItem to="/shopping" icon={ShoppingCart} label={t("nav.shopping")} active={isActive("/shopping")} />
-          <NavLinkItem to="/" icon={UtensilsCrossed} label={t("nav.menu")} active={isActive("/")} />
-          <NavLinkItem to="/workout" icon={Dumbbell} label={t("nav.sports")} active={isActive("/workout")} />
-          <NavLinkItem to="/profile" icon={User} label={t("nav.profile")} active={isActive("/profile")} />
-        </div>
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border pb-safe">
+      <div className="h-16 flex items-stretch max-w-lg mx-auto">
+        {tabs.map((tab) => {
+          const active = location.pathname === tab.path ||
+            (tab.path !== '/' && location.pathname.startsWith(tab.path));
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors duration-150"
+            >
+              <Icon
+                size={22}
+                className={active ? 'text-primary' : 'text-gray-400'}
+              />
+              <span className={`text-2xs font-medium ${active ? 'text-primary' : 'text-gray-400'}`}>
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );
@@ -578,10 +438,10 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
         relative flex items-center gap-2 pl-2 pr-3 py-2 rounded-2xl
         border-2 shadow-lg backdrop-blur-md transition-all cursor-pointer select-none
         ${isFull
-          ? "bg-blue-100/90 dark:bg-blue-900/40 border-blue-400 dark:border-blue-500/50 shadow-blue-300/40 dark:shadow-blue-500/20"
+          ? "bg-blue-100/90 border-blue-400 shadow-blue-300/40"
           : isEmpty
-            ? "bg-white/80 dark:bg-card/80 border-cyan-300/60 dark:border-cyan-500/30 shadow-cyan-200/30 dark:shadow-cyan-500/10"
-            : "bg-blue-50/90 dark:bg-blue-950/40 border-blue-300 dark:border-blue-600/40 shadow-blue-200/30 dark:shadow-blue-500/15"
+            ? "bg-white/80 border-cyan-300/60 shadow-cyan-200/30"
+            : "bg-blue-50/90 border-blue-300 shadow-blue-200/30"
         }
       `}
       {...longPressTimer}
@@ -589,7 +449,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
       {/* Pulse ring when empty — attracts attention */}
       {isEmpty && (
         <motion.div
-          className="absolute inset-0 rounded-2xl border-2 border-cyan-400/50 dark:border-cyan-400/30"
+          className="absolute inset-0 rounded-2xl border-2 border-cyan-400/50"
           animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0, 0.6] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -598,7 +458,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
       {/* Celebration ring when full */}
       {isFull && (
         <motion.div
-          className="absolute inset-0 rounded-2xl border-2 border-blue-400/60 dark:border-blue-400/40"
+          className="absolute inset-0 rounded-2xl border-2 border-blue-400/60"
           animate={{ scale: [1, 1.05, 1], opacity: [0.8, 0.3, 0.8] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -676,7 +536,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
               animate={{ opacity: 0, y: -14 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.7 }}
-              className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 dark:text-blue-400 pointer-events-none whitespace-nowrap"
+              className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-bold text-blue-500 pointer-events-none whitespace-nowrap"
             >
               +250
             </motion.div>
@@ -688,18 +548,18 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
       <div className="flex flex-col items-start min-w-0">
         <span className={`text-[11px] font-bold leading-tight ${
           isFull
-            ? "text-blue-600 dark:text-blue-400"
-            : "text-cyan-700 dark:text-cyan-400"
+            ? "text-blue-600"
+            : "text-cyan-700"
         }`}>
           <Droplets className="w-3 h-3 inline-block mr-0.5 -mt-0.5" />
           {waterLabel}
         </span>
         <span className={`text-xs font-bold leading-tight ${
           isFull
-            ? "text-blue-500 dark:text-blue-300"
+            ? "text-blue-500"
             : isEmpty
-              ? "text-gray-400 dark:text-gray-500"
-              : "text-blue-500 dark:text-blue-400"
+              ? "text-gray-400"
+              : "text-blue-500"
         }`}>
           {isEmpty ? "+250ml" : isFull ? `${liters}L ✓` : `${liters}L`}
         </span>
@@ -818,20 +678,28 @@ export function WaterButton({
 // ====================================================================
 
 // --- DSMModal ---
-// Centered popup modal with dark blur backdrop.
 interface DSMModalProps {
   open: boolean;
   onClose: () => void;
+  title?: string;
   children: ReactNode;
   maxWidth?: string;
 }
 
-export function DSMModal({ open, onClose, children, maxWidth = "max-w-xs" }: DSMModalProps) {
+export function DSMModal({ open, onClose, title, children, maxWidth = "max-w-lg" }: DSMModalProps) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div className={`relative w-full ${maxWidth} bg-white dark:bg-card rounded-2xl p-5 shadow-2xl`} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end justify-center" onClick={onClose}>
+      <div className={`bg-background rounded-t-3xl px-4 pt-4 pb-safe w-full ${maxWidth}`} onClick={(e) => e.stopPropagation()}>
+        <div className="w-8 h-1 rounded-full bg-gray-200 mx-auto mb-4" />
+        {title && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-h2 font-heading font-semibold text-gray-900">{title}</h2>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+              <X size={20} />
+            </button>
+          </div>
+        )}
         {children}
       </div>
     </div>
@@ -858,12 +726,12 @@ export function DSMConfirmDialog({
   if (!open) return null;
   return (
     <DSMModal open={open} onClose={onClose}>
-      <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">{title}</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{message}</p>
+      <h3 className="font-bold text-gray-900 mb-2">{title}</h3>
+      <p className="text-sm text-gray-600 mb-4">{message}</p>
       <div className="flex gap-3">
         <button
           onClick={onClose}
-          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-[#2a2a2a] text-gray-600 dark:text-gray-400"
+          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-600"
         >
           {cancelLabel}
         </button>
@@ -928,7 +796,7 @@ export function DSMNotification({
     success: "bg-green-500",
     warning: "bg-amber-500",
     error: "bg-red-500",
-    confirm: "bg-gray-800 dark:bg-card",
+    confirm: "bg-gray-800",
   }[variant];
 
   return (
@@ -982,51 +850,28 @@ export function DSMNotification({
 }
 
 // --- DSMSubPageHeader ---
-// Sub-page navigation header with gradient background, X close (top right), title/subtitle, and optional action.
 interface DSMSubPageHeaderProps {
   title: string;
-  subtitle?: string;
-  onClose: () => void;
-  action?: ReactNode;
-  gradientFrom?: string;
-  gradientTo?: string;
+  onBack?: () => void;
+  rightActions?: React.ReactNode;
 }
 
-export function DSMSubPageHeader({
-  title, subtitle, onClose, action,
-  gradientFrom = "from-[#3366FF]", gradientTo = "to-[#12CFA6]",
-}: DSMSubPageHeaderProps) {
-  const { t } = useLanguage();
+export function DSMSubPageHeader({ title, onBack, rightActions }: DSMSubPageHeaderProps) {
   return (
-    <div
-      className="w-full rounded-none m-0 text-white py-4 relative"
-      style={{
-        width: '100%',
-        borderRadius: 0,
-        margin: 0,
-        padding: '1rem',
-        paddingTop: 'max(1rem, env(safe-area-inset-top, 16px))',
-        background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)',
-      }}
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-[max(1rem,env(safe-area-inset-top,16px))] right-4 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all backdrop-blur-sm"
-        aria-label={t("ui.close")}
-      >
-        <X className="w-4.5 h-4.5 text-white" />
-      </button>
-      <div className="w-full pr-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-bold" style={{ fontSize: "1.1rem" }}>{title}</h1>
-            {subtitle && <p className="text-xs text-white/70">{subtitle}</p>}
-          </div>
-          {action}
-        </div>
+    <header className="sticky top-0 z-40 w-full bg-background border-b border-border">
+      <div className="h-14 flex items-center gap-3 px-4">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface text-gray-900 hover:bg-gray-100 transition-colors shrink-0"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+        <h2 className="flex-1 text-h2 font-heading font-semibold text-gray-900 truncate">{title}</h2>
+        {rightActions && <div className="flex items-center gap-2">{rightActions}</div>}
       </div>
-    </div>
+    </header>
   );
 }
 
