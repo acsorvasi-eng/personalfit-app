@@ -49,7 +49,7 @@ export function DSMProfileTabs({ tabs, defaultTab, children, className = "", ari
           margin: "1rem 0",
           gap: 2,
         } : undefined}
-        className={!isPill ? "flex bg-gray-100 dark:bg-[#252525] rounded-xl p-1 mb-4" : ""}
+        className={!isPill ? "flex bg-gray-100 rounded-xl p-1 mb-4" : ""}
       >
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -89,14 +89,14 @@ export function DSMProfileTabs({ tabs, defaultTab, children, className = "", ari
               id={`tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex-1 py-2 px-3 rounded-lg text-xs transition-all ${
-                isActive ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"
+                isActive ? "text-gray-900" : "text-gray-500"
               }`}
               style={{ fontWeight: isActive ? 700 : 500 }}
             >
               {isActive && (
                 <motion.div
                   layoutId="profile-tab-indicator"
-                  className="absolute inset-0 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-sm"
+                  className="absolute inset-0 bg-white rounded-lg shadow-sm"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}

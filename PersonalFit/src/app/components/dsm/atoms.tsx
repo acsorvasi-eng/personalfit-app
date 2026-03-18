@@ -40,16 +40,16 @@ const TEXT_VARIANT_MAP: Record<TextVariant, string> = {
   body: "text-sm",
   caption: "text-xs",
   overline: "text-[11px] uppercase tracking-wider",
-  micro: "text-[10px]",
+  micro: "text-2xs",
 };
 
 const TEXT_COLOR_MAP: Record<TextColor, string> = {
-  default: "text-gray-900 dark:text-gray-100",
-  muted: "text-gray-500 dark:text-gray-400",
-  primary: "text-[var(--color-primary-600)] dark:text-[#809fff]",
-  success: "text-emerald-600 dark:text-emerald-400",
-  warning: "text-amber-600 dark:text-amber-400",
-  error: "text-red-600 dark:text-red-400",
+  default: "text-gray-900",
+  muted: "text-gray-500",
+  primary: "text-[var(--primary-hover)]",
+  success: "text-emerald-600",
+  warning: "text-amber-600",
+  error: "text-red-600",
   white: "text-white",
 };
 
@@ -90,20 +90,20 @@ interface DSMChipProps {
 }
 
 const CHIP_COLORS: Record<ChipColor, { filled: string; outlined: string; soft: string }> = {
-  green:   { filled: "bg-green-500 text-white",   outlined: "border-green-300 dark:border-green-500/30 text-green-700 dark:text-green-400",      soft: "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400" },
-  blue:    { filled: "bg-blue-500 text-white",     outlined: "border-blue-300 dark:border-blue-500/30 text-blue-700 dark:text-blue-400",        soft: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400" },
-  amber:   { filled: "bg-amber-500 text-white",    outlined: "border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-400",      soft: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400" },
-  red:     { filled: "bg-red-500 text-white",      outlined: "border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400",          soft: "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400" },
-  purple:  { filled: "bg-purple-500 text-white",   outlined: "border-purple-300 dark:border-purple-500/30 text-purple-700 dark:text-purple-400",    soft: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400" },
-  gray:    { filled: "bg-gray-500 text-white",     outlined: "border-gray-300 dark:border-[#333] text-gray-700 dark:text-gray-400",        soft: "bg-gray-100 dark:bg-[#252525] text-gray-600 dark:text-gray-400" },
-  emerald: { filled: "bg-emerald-500 text-white",  outlined: "border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400",  soft: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
-  orange:  { filled: "bg-orange-500 text-white",   outlined: "border-orange-300 dark:border-orange-500/30 text-orange-700 dark:text-orange-400",    soft: "bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400" },
-  teal:    { filled: "bg-teal-500 text-white",     outlined: "border-teal-300 dark:border-teal-500/30 text-teal-700 dark:text-teal-400",        soft: "bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400" },
-  cyan:    { filled: "bg-cyan-500 text-white",     outlined: "border-cyan-300 dark:border-cyan-500/30 text-cyan-700 dark:text-cyan-400",        soft: "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400" },
+  green:   { filled: "bg-green-500 text-white",   outlined: "border-green-300 text-green-700",      soft: "bg-green-50 text-green-700" },
+  blue:    { filled: "bg-blue-500 text-white",     outlined: "border-blue-300 text-blue-700",        soft: "bg-blue-50 text-blue-700" },
+  amber:   { filled: "bg-amber-500 text-white",    outlined: "border-amber-300 text-amber-700",      soft: "bg-amber-50 text-amber-700" },
+  red:     { filled: "bg-red-500 text-white",      outlined: "border-red-300 text-red-700",          soft: "bg-red-50 text-red-700" },
+  purple:  { filled: "bg-purple-500 text-white",   outlined: "border-purple-300 text-purple-700",    soft: "bg-purple-50 text-purple-700" },
+  gray:    { filled: "bg-gray-500 text-white",     outlined: "border-gray-300 text-gray-700",        soft: "bg-gray-100 text-gray-600" },
+  emerald: { filled: "bg-emerald-500 text-white",  outlined: "border-emerald-300 text-emerald-700",  soft: "bg-emerald-50 text-emerald-700" },
+  orange:  { filled: "bg-orange-500 text-white",   outlined: "border-orange-300 text-orange-700",    soft: "bg-orange-50 text-orange-700" },
+  teal:    { filled: "bg-teal-500 text-white",     outlined: "border-teal-300 text-teal-700",        soft: "bg-teal-50 text-teal-700" },
+  cyan:    { filled: "bg-cyan-500 text-white",     outlined: "border-cyan-300 text-cyan-700",        soft: "bg-cyan-50 text-cyan-700" },
 };
 
 const CHIP_SIZES: Record<string, string> = {
-  xs: "px-1.5 py-0.5 text-[10px] gap-0.5 rounded-md",
+  xs: "px-1.5 py-0.5 text-2xs gap-0.5 rounded-md",
   sm: "px-2 py-0.5 text-[11px] gap-1 rounded-lg",
   md: "px-3 py-1 text-xs gap-1.5 rounded-full",
 };
@@ -115,7 +115,7 @@ export function DSMChip({
   const colorStyle = CHIP_COLORS[color][variant];
   const borderClass = variant === "outlined" ? "border" : "";
   const interactiveClass = onClick ? "cursor-pointer hover:opacity-80 active:scale-95 transition-all" : "";
-  const activeClass = active ? "ring-2 ring-offset-1 ring-[var(--color-primary-400)]" : "";
+  const activeClass = active ? "ring-2 ring-offset-1 ring-[var(--primary)]" : "";
   const Tag = onClick ? "button" : "span";
 
   return (
@@ -144,7 +144,7 @@ interface DSMAvatarProps {
 }
 
 const AVATAR_SIZES: Record<string, { container: string; text: string; icon: string }> = {
-  xs: { container: "w-6 h-6",   text: "text-[10px]", icon: "w-3 h-3" },
+  xs: { container: "w-6 h-6",   text: "text-2xs", icon: "w-3 h-3" },
   sm: { container: "w-8 h-8",   text: "text-xs",     icon: "w-4 h-4" },
   md: { container: "w-10 h-10", text: "text-sm",     icon: "w-5 h-5" },
   lg: { container: "w-12 h-12", text: "text-base",   icon: "w-6 h-6" },
@@ -153,7 +153,7 @@ const AVATAR_SIZES: Record<string, { container: string; text: string; icon: stri
 
 export function DSMAvatar({
   src, name, size = "md", className = "", emoji, icon: Icon,
-  bgColor = "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.15)]", onClick,
+  bgColor = "bg-[var(--primary-light)]", onClick,
 }: DSMAvatarProps) {
   const s = AVATAR_SIZES[size];
   const initials = name ? name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "";
@@ -171,9 +171,9 @@ export function DSMAvatar({
       ) : emoji ? (
         <span className={s.text}>{emoji}</span>
       ) : Icon ? (
-        <Icon className={`${s.icon} text-[var(--color-primary-600)] dark:text-[#809fff]`} />
+        <Icon className={`${s.icon} text-[var(--primary-hover)]`} />
       ) : (
-        <span className={`${s.text} text-[var(--color-primary-700)] dark:text-[#809fff] font-bold`}>{initials || "?"}</span>
+        <span className={`${s.text} text-[var(--primary-hover)] font-bold`}>{initials || "?"}</span>
       )}
     </Tag>
   );
@@ -197,20 +197,20 @@ const DIVIDER_SPACING: Record<string, string> = {
 
 export function DSMDivider({ className = "", label, vertical, spacing = "md" }: DSMDividerProps) {
   if (vertical) {
-    return <div className={`w-px bg-gray-200 dark:bg-[#2a2a2a] self-stretch ${className}`} />;
+    return <div className={`w-px bg-gray-200 self-stretch ${className}`} />;
   }
 
   if (label) {
     return (
       <div className={`flex items-center gap-3 ${DIVIDER_SPACING[spacing]} ${className}`}>
-        <div className="flex-1 h-px bg-gray-200 dark:bg-[#2a2a2a]" />
-        <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">{label}</span>
-        <div className="flex-1 h-px bg-gray-200 dark:bg-[#2a2a2a]" />
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-[11px] text-gray-400 font-medium">{label}</span>
+        <div className="flex-1 h-px bg-gray-200" />
       </div>
     );
   }
 
-  return <div className={`h-px bg-gray-200 dark:bg-[#2a2a2a] ${DIVIDER_SPACING[spacing]} ${className}`} />;
+  return <div className={`h-px bg-gray-200 ${DIVIDER_SPACING[spacing]} ${className}`} />;
 }
 
 // ─── DSMTag ─────────────────────────────────────────────────────────
@@ -225,13 +225,13 @@ interface DSMTagProps {
 }
 
 const TAG_STYLES: Record<TagStatus, { bg: string; text: string; dot: string }> = {
-  active:   { bg: "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)]",   text: "text-[var(--color-primary-700)] dark:text-[#809fff]",   dot: "bg-[var(--primary)]" },
-  inactive: { bg: "bg-gray-100 dark:bg-[#252525]",   text: "text-gray-500 dark:text-gray-400",    dot: "bg-gray-400 dark:bg-gray-500" },
-  pending:  { bg: "bg-amber-50 dark:bg-amber-500/10",   text: "text-amber-700 dark:text-amber-400",   dot: "bg-amber-500" },
-  success:  { bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
-  error:    { bg: "bg-red-50 dark:bg-red-500/10",     text: "text-red-700 dark:text-red-400",     dot: "bg-red-500" },
-  warning:  { bg: "bg-amber-50 dark:bg-amber-500/10",   text: "text-amber-700 dark:text-amber-400",   dot: "bg-amber-500" },
-  trial:    { bg: "bg-teal-50 dark:bg-teal-500/10",    text: "text-teal-700 dark:text-teal-400",    dot: "bg-teal-500" },
+  active:   { bg: "bg-[var(--primary-light)]",   text: "text-[var(--primary-hover)]",   dot: "bg-[var(--primary)]" },
+  inactive: { bg: "bg-gray-100",   text: "text-gray-500",    dot: "bg-gray-400" },
+  pending:  { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500" },
+  success:  { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+  error:    { bg: "bg-red-50",     text: "text-red-700",     dot: "bg-red-500" },
+  warning:  { bg: "bg-amber-50",   text: "text-amber-700",   dot: "bg-amber-500" },
+  trial:    { bg: "bg-teal-50",    text: "text-teal-700",    dot: "bg-teal-500" },
 };
 
 export function DSMTag({ status, label, showDot = true, className = "" }: DSMTagProps) {
@@ -262,8 +262,8 @@ const ICON_SIZES: Record<string, { container: string; icon: string }> = {
 };
 
 export function DSMIcon({
-  icon: Icon, size = "md", color = "text-[var(--color-primary-600)]",
-  bgColor = "bg-[var(--color-primary-50)]", className = "",
+  icon: Icon, size = "md", color = "text-[var(--primary-hover)]",
+  bgColor = "bg-[var(--primary-light)]", className = "",
 }: DSMIconProps) {
   const s = ICON_SIZES[size];
   return (
@@ -320,12 +320,12 @@ export function DSMEmptyState({ emoji, icon: Icon, title, description, action, c
     <div className={`flex flex-col items-center justify-center py-10 px-6 text-center ${className}`}>
       {emoji && <div className="text-5xl mb-4">{emoji}</div>}
       {Icon && (
-        <div className="w-16 h-16 bg-gray-100 dark:bg-[#252525] rounded-2xl flex items-center justify-center mb-4">
-          <Icon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+          <Icon className="w-8 h-8 text-gray-400" />
         </div>
       )}
-      <h3 className="text-gray-900 dark:text-gray-100 mb-1" style={{ fontWeight: 700 }}>{title}</h3>
-      {description && <p className="text-sm text-gray-400 dark:text-gray-500 max-w-xs">{description}</p>}
+      <h3 className="text-gray-900 mb-1" style={{ fontWeight: 700 }}>{title}</h3>
+      {description && <p className="text-sm text-gray-400 max-w-xs">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -342,7 +342,7 @@ interface DSMGradientTextProps {
 }
 
 export function DSMGradientText({
-  from = "from-[#3366FF]",
+  from = "from-[#2563EB]",
   via,
   to = "to-[#12CFA6]",
   className = "",
@@ -366,7 +366,7 @@ interface DSMSkeletonProps {
 }
 
 export function DSMSkeleton({ variant = "text", width, height, className = "" }: DSMSkeletonProps) {
-  const base = "animate-pulse bg-gray-200 dark:bg-[#2a2a2a] rounded";
+  const base = "animate-pulse bg-gray-200 rounded";
   const variantClass = {
     text: `h-4 ${width || "w-full"} rounded-md`,
     circle: `${width || "w-10"} ${height || "h-10"} rounded-full`,

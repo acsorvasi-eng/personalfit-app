@@ -67,35 +67,35 @@ export function DSMBottomSheet({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 400, damping: 40 }}
-            className={`fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1E1E1E] rounded-t-3xl shadow-2xl overflow-hidden ${className}`}
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl overflow-hidden ${className}`}
             style={{ maxHeight: SNAP_HEIGHTS[snapPoint] }}
           >
             {/* Handle */}
             {showHandle && (
               <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-[#333]" />
+                <div className="w-10 h-1 rounded-full bg-gray-300" />
               </div>
             )}
 
             {/* Header */}
             {(title || subtitle) && (
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-[#2a2a2a]">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
                 <div className="flex items-center gap-3 min-w-0">
                   {Icon && (
-                    <div className="w-9 h-9 bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)] rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-4.5 h-4.5 text-[var(--color-primary-600)] dark:text-[#809fff]" />
+                    <div className="w-9 h-9 bg-[var(--primary-light)] rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4.5 h-4.5 text-[var(--primary-hover)]" />
                     </div>
                   )}
                   <div className="min-w-0">
-                    {title && <div className="text-sm text-gray-900 dark:text-gray-100 truncate" style={{ fontWeight: 700 }}>{title}</div>}
-                    {subtitle && <div className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{subtitle}</div>}
+                    {title && <div className="text-sm text-gray-900 truncate" style={{ fontWeight: 700 }}>{title}</div>}
+                    {subtitle && <div className="text-[11px] text-gray-400 truncate">{subtitle}</div>}
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#252525] flex items-center justify-center flex-shrink-0 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors"
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 hover:bg-gray-200 transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <X className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
             )}
@@ -170,19 +170,19 @@ export function DSMCoachMark({
           transition={{ type: "spring", stiffness: 400, damping: 28 }}
           className={`absolute ${arrowClass} left-1/2 -translate-x-1/2 z-50 ${className}`}
         >
-          <div className="relative bg-white dark:bg-[#1E1E1E] text-gray-800 rounded-2xl px-4 py-3.5 shadow-xl border border-[var(--color-primary-200)]/60 dark:border-[rgba(51,102,255,0.3)] max-w-[280px] min-w-[210px]">
+          <div className="relative bg-white text-gray-800 rounded-2xl px-4 py-3.5 shadow-xl border border-[var(--primary-light)]/60 max-w-[280px] min-w-[210px]">
             {/* Speech bubble tail */}
-            <div className={`absolute left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white dark:bg-[#1E1E1E] border-[var(--color-primary-200)]/60 dark:border-[rgba(51,102,255,0.3)] rotate-45 ${
+            <div className={`absolute left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white border-[var(--primary-light)]/60 rotate-45 ${
               position === "top" ? "-bottom-[7px] border-b border-r" : "-top-[7px] border-t border-l"
             }`} />
 
             <div className="relative flex items-start gap-2.5">
-              <div className="w-8 h-8 bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)] rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-8 h-8 bg-[var(--primary-light)] rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
                 <CoachIcon className="w-4 h-4 text-[var(--primary)]" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] text-gray-900 mb-0.5" style={{ fontWeight: 700 }}>{title}</div>
-                <div className="text-[12px] text-gray-500 leading-relaxed">{message}</div>
+                <div className="text-xs text-gray-500 leading-relaxed">{message}</div>
               </div>
               <button
                 onClick={dismiss}
@@ -195,7 +195,7 @@ export function DSMCoachMark({
             {/* Got it button */}
             <button
               onClick={dismiss}
-              className="w-full mt-3 py-2 bg-gradient-to-r from-[#3366FF] to-[#12CFA6] hover:from-[#2952cc] hover:to-[#0ea685] text-white rounded-xl text-[12px] font-bold transition-colors shadow-sm"
+              className="w-full mt-3 py-2 bg-gradient-to-r from-[#2563EB] to-[#12CFA6] hover:from-[#1D4ED8] hover:to-[#0ea685] text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
             >
               Értem! 👍
             </button>
@@ -234,8 +234,8 @@ export function DSMProgressSteps({ steps, currentStep, className = "" }: DSMProg
               isCompleted
                 ? "bg-[var(--primary)] text-white"
                 : isActive
-                ? "bg-[var(--color-primary-100)] dark:bg-[rgba(51,102,255,0.15)] text-[var(--color-primary-600)] dark:text-[#809fff] ring-2 ring-[var(--color-primary-400)] ring-offset-1 dark:ring-offset-[#1E1E1E]"
-                : "bg-gray-100 dark:bg-[#252525] text-gray-400 dark:text-gray-500"
+                ? "bg-[var(--primary-light)] text-[var(--primary-hover)] ring-2 ring-[var(--primary)] ring-offset-1"
+                : "bg-gray-100 text-gray-400"
             }`}>
               {isCompleted ? (
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -251,7 +251,7 @@ export function DSMProgressSteps({ steps, currentStep, className = "" }: DSMProg
             {/* Connector line */}
             {i < steps.length - 1 && (
               <div className={`flex-1 h-0.5 rounded-full transition-all duration-500 ${
-                isCompleted ? "bg-[var(--color-primary-400)]" : "bg-gray-200 dark:bg-[#2a2a2a]"
+                isCompleted ? "bg-[var(--primary)]" : "bg-gray-200"
               }`} />
             )}
           </div>
@@ -272,7 +272,7 @@ interface DSMFeedbackPulseProps {
   className?: string;
 }
 
-export function DSMFeedbackPulse({ trigger, color = "bg-[var(--color-primary-400)]", children, className = "" }: DSMFeedbackPulseProps) {
+export function DSMFeedbackPulse({ trigger, color = "bg-[var(--primary)]", children, className = "" }: DSMFeedbackPulseProps) {
   return (
     <div className={`relative ${className}`}>
       {children}
@@ -349,7 +349,7 @@ export function DSMSwipeAction({
         dragConstraints={{ left: leftAction ? -120 : 0, right: rightAction ? 120 : 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
-        className="relative bg-white dark:bg-[#1E1E1E] z-10"
+        className="relative bg-white z-10"
       >
         {children}
       </motion.div>
@@ -379,30 +379,30 @@ export function DSMEmptyFlow({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className={`bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] p-6 text-center shadow-sm ${className}`}
+      className={`bg-white rounded-2xl border border-gray-100 p-6 text-center shadow-sm ${className}`}
     >
       {emoji && <div className="text-4xl mb-3">{emoji}</div>}
       {Icon && (
-        <div className="w-14 h-14 mx-auto bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)] rounded-2xl flex items-center justify-center mb-3">
+        <div className="w-14 h-14 mx-auto bg-[var(--primary-light)] rounded-2xl flex items-center justify-center mb-3">
           <Icon className="w-7 h-7 text-[var(--primary)]" />
         </div>
       )}
-      <h3 className="text-gray-900 dark:text-gray-100 mb-3" style={{ fontWeight: 700 }}>{title}</h3>
+      <h3 className="text-gray-900 mb-3" style={{ fontWeight: 700 }}>{title}</h3>
 
       <div className="space-y-2 mb-5">
         {steps.map((step, i) => (
           <div key={i} className="flex items-center gap-2.5 text-left">
-            <div className="w-5 h-5 bg-[var(--color-primary-100)] dark:bg-[rgba(51,102,255,0.15)] rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] text-[var(--color-primary-600)] dark:text-[#809fff] font-bold">{i + 1}</span>
+            <div className="w-5 h-5 bg-[var(--primary-light)] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-2xs text-[var(--primary-hover)] font-bold">{i + 1}</span>
             </div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{step}</span>
+            <span className="text-xs text-gray-500">{step}</span>
           </div>
         ))}
       </div>
 
       <button
         onClick={onAction}
-        className="w-full py-2.5 bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white rounded-xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+        className="w-full py-2.5 bg-gradient-to-r from-[#2563EB] to-[#12CFA6] text-white rounded-xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
         style={{ fontWeight: 700 }}
       >
         {actionLabel}

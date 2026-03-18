@@ -34,23 +34,23 @@ export function DSMFeatureRow({ text, included = true, icon, emoji, className = 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       {emoji ? (
-        <div className="w-8 h-8 bg-gray-50 dark:bg-[#252525] rounded-lg flex items-center justify-center text-base flex-shrink-0">
+        <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center text-base flex-shrink-0">
           {emoji}
         </div>
       ) : icon ? (
-        <DSMIcon icon={icon} size="sm" color={included ? "text-[var(--color-primary-600)] dark:text-[#809fff]" : "text-gray-400 dark:text-gray-500"} bgColor={included ? "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)]" : "bg-gray-100 dark:bg-[#252525]"} />
+        <DSMIcon icon={icon} size="sm" color={included ? "text-[var(--primary-hover)]" : "text-gray-400"} bgColor={included ? "bg-[var(--primary-light)]" : "bg-gray-100"} />
       ) : (
         <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-          included ? "bg-[var(--color-primary-100)] dark:bg-[rgba(51,102,255,0.15)]" : "bg-gray-100 dark:bg-[#252525]"
+          included ? "bg-[var(--primary-light)]" : "bg-gray-100"
         }`}>
           {included ? (
-            <Check className="w-3 h-3 text-[var(--color-primary-600)] dark:text-[#809fff]" />
+            <Check className="w-3 h-3 text-[var(--primary-hover)]" />
           ) : (
-            <Lock className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+            <Lock className="w-3 h-3 text-gray-400" />
           )}
         </div>
       )}
-      <span className={`text-sm ${included ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"}`}>
+      <span className={`text-sm ${included ? "text-gray-700" : "text-gray-400"}`}>
         {text}
       </span>
       {included && !emoji && !icon && (
@@ -71,13 +71,13 @@ interface DSMStatRowProps {
   className?: string;
 }
 
-export function DSMStatRow({ label, value, suffix, valueColor = "text-gray-800 dark:text-gray-200", action, className = "" }: DSMStatRowProps) {
+export function DSMStatRow({ label, value, suffix, valueColor = "text-gray-800", action, className = "" }: DSMStatRowProps) {
   return (
     <div className={`flex items-center justify-between ${className}`}>
-      <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="text-xs text-gray-500">{label}</span>
       <div className="flex items-center gap-2">
         <span className={`text-xs font-medium ${valueColor}`}>
-          {value}{suffix && <span className="text-gray-400 dark:text-gray-500 ml-0.5">{suffix}</span>}
+          {value}{suffix && <span className="text-gray-400 ml-0.5">{suffix}</span>}
         </span>
         {action}
       </div>
@@ -101,7 +101,7 @@ interface DSMListItemProps {
 }
 
 export function DSMListItem({
-  icon: Icon, emoji, iconColor = "text-[var(--color-primary-600)] dark:text-[#809fff]", iconBg = "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)]",
+  icon: Icon, emoji, iconColor = "text-[var(--primary-hover)]", iconBg = "bg-[var(--primary-light)]",
   title, subtitle, trailing, onClick, className = "", border = true,
 }: DSMListItemProps) {
   const Tag = onClick ? "button" : "div";
@@ -109,8 +109,8 @@ export function DSMListItem({
     <Tag
       onClick={onClick}
       className={`flex items-center gap-3 p-3 rounded-xl transition-all w-full text-left ${
-        border ? "bg-white dark:bg-[#1E1E1E] border border-gray-100 dark:border-[#2a2a2a]" : ""
-      } ${onClick ? "hover:bg-gray-50 dark:hover:bg-[#252525] cursor-pointer active:scale-[0.99]" : ""} ${className}`}
+        border ? "bg-white border border-gray-100" : ""
+      } ${onClick ? "hover:bg-gray-50 cursor-pointer active:scale-[0.99]" : ""} ${className}`}
     >
       {/* Leading */}
       {(Icon || emoji) && (
@@ -124,8 +124,8 @@ export function DSMListItem({
       )}
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-gray-900 dark:text-gray-100 truncate" style={{ fontWeight: 600 }}>{title}</div>
-        {subtitle && <div className="text-[11px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{subtitle}</div>}
+        <div className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>{title}</div>
+        {subtitle && <div className="text-[11px] text-gray-400 truncate mt-0.5">{subtitle}</div>}
       </div>
       {/* Trailing */}
       {trailing && <div className="flex-shrink-0">{trailing}</div>}
@@ -145,7 +145,7 @@ interface DSMNutritionBarProps {
 }
 
 export function DSMNutritionBar({ calories, protein, carbs, fat, size = "sm", className = "" }: DSMNutritionBarProps) {
-  const textSize = size === "sm" ? "text-[10px]" : "text-xs";
+  const textSize = size === "sm" ? "text-2xs" : "text-xs";
   return (
     <div className={`flex gap-1.5 flex-wrap ${className}`}>
       <DSMChip label={`${Math.round(calories)} kcal`} color="orange" variant="soft" size="xs" />
@@ -171,12 +171,12 @@ interface DSMMetricCardProps {
 }
 
 export function DSMMetricCard({
-  icon: Icon, emoji, value, label, valueColor = "text-gray-900 dark:text-gray-100",
-  iconColor = "text-[var(--color-primary-600)] dark:text-[#809fff]", iconBg = "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)]",
+  icon: Icon, emoji, value, label, valueColor = "text-gray-900",
+  iconColor = "text-[var(--primary-hover)]", iconBg = "bg-[var(--primary-light)]",
   className = "", trend,
 }: DSMMetricCardProps) {
   return (
-    <div className={`bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-100 dark:border-[#2a2a2a] p-3 ${className}`}>
+    <div className={`bg-white rounded-xl border border-gray-100 p-3 ${className}`}>
       <div className="flex items-start gap-2.5">
         {(Icon || emoji) && (
           <div className={`w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
@@ -187,12 +187,12 @@ export function DSMMetricCard({
           <div className={`text-lg ${valueColor} truncate`} style={{ fontWeight: 800 }}>
             {value}
             {trend && (
-              <span className={`text-[10px] ml-1 ${trend === "up" ? "text-green-500" : trend === "down" ? "text-red-500" : "text-gray-400 dark:text-gray-500"}`}>
+              <span className={`text-2xs ml-1 ${trend === "up" ? "text-green-500" : trend === "down" ? "text-red-500" : "text-gray-400"}`}>
                 {trend === "up" ? "+" : trend === "down" ? "-" : "~"}
               </span>
             )}
           </div>
-          <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-0.5">{label}</div>
+          <div className="text-2xs text-gray-400 font-medium mt-0.5">{label}</div>
         </div>
       </div>
     </div>
@@ -215,10 +215,10 @@ interface DSMInfoBannerProps {
 }
 
 const BANNER_STYLES: Record<BannerVariant, { bg: string; border: string; iconColor: string; icon: LucideIcon }> = {
-  info:    { bg: "bg-blue-50 dark:bg-blue-500/10",    border: "border-blue-200 dark:border-blue-500/20",    iconColor: "text-blue-500",    icon: Info },
-  success: { bg: "bg-emerald-50 dark:bg-emerald-500/10", border: "border-emerald-200 dark:border-emerald-500/20", iconColor: "text-emerald-500", icon: CheckCircle2 },
-  warning: { bg: "bg-amber-50 dark:bg-amber-500/10",   border: "border-amber-200 dark:border-amber-500/20",   iconColor: "text-amber-500",   icon: AlertTriangle },
-  error:   { bg: "bg-red-50 dark:bg-red-500/10",     border: "border-red-200 dark:border-red-500/20",     iconColor: "text-red-500",     icon: XCircle },
+  info:    { bg: "bg-blue-50",    border: "border-blue-200",    iconColor: "text-blue-500",    icon: Info },
+  success: { bg: "bg-emerald-50", border: "border-emerald-200", iconColor: "text-emerald-500", icon: CheckCircle2 },
+  warning: { bg: "bg-amber-50",   border: "border-amber-200",   iconColor: "text-amber-500",   icon: AlertTriangle },
+  error:   { bg: "bg-red-50",     border: "border-red-200",     iconColor: "text-red-500",     icon: XCircle },
 };
 
 export function DSMInfoBanner({
@@ -235,12 +235,12 @@ export function DSMInfoBanner({
           <BannerIcon className={`w-4 h-4 ${style.iconColor}`} />
         </div>
         <div className="flex-1 min-w-0">
-          {title && <div className="text-sm text-gray-900 dark:text-gray-100 mb-0.5" style={{ fontWeight: 600 }}>{title}</div>}
-          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{message}</p>
+          {title && <div className="text-sm text-gray-900 mb-0.5" style={{ fontWeight: 600 }}>{title}</div>}
+          <p className="text-xs text-gray-600 leading-relaxed">{message}</p>
           {action && <div className="mt-2">{action}</div>}
         </div>
         {dismissible && onDismiss && (
-          <button onClick={onDismiss} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0">
+          <button onClick={onDismiss} className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
             <XCircle className="w-4 h-4" />
           </button>
         )}
@@ -260,14 +260,14 @@ interface DSMActionCardProps {
 }
 
 export function DSMActionCard({
-  headerGradient = "bg-gradient-to-r from-[#3366FF] to-[#12CFA6]",
+  headerGradient = "bg-gradient-to-r from-[#2563EB] to-[#12CFA6]",
   headerIcon: Icon,
   headerLabel,
   children,
   className = "",
 }: DSMActionCardProps) {
   return (
-    <div className={`bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-sm border border-gray-100 dark:border-[#2a2a2a] overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${className}`}>
       <div className={`${headerGradient} p-3`}>
         <div className="flex items-center gap-2 text-white">
           {Icon && <Icon className="w-4 h-4" />}
@@ -296,14 +296,14 @@ interface DSMFormFieldProps {
 export function DSMFormField({ label, icon: Icon, required, error, hint, children, className = "" }: DSMFormFieldProps) {
   return (
     <div className={className}>
-      <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">
-        {Icon && <Icon className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />}
+      <label className="flex items-center gap-1.5 text-sm font-bold text-gray-700 mb-1.5">
+        {Icon && <Icon className="w-3.5 h-3.5 text-gray-400" />}
         {label}
         {required && <span className="text-red-400">*</span>}
       </label>
       {children}
-      {error && <p className="text-[10px] text-red-500 mt-1">{error}</p>}
-      {hint && !error && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{hint}</p>}
+      {error && <p className="text-2xs text-red-500 mt-1">{error}</p>}
+      {hint && !error && <p className="text-2xs text-gray-400 mt-1">{hint}</p>}
     </div>
   );
 }
@@ -334,12 +334,12 @@ export function DSMFeatureGrid({ features, columns = 2, className = "" }: DSMFea
   return (
     <div className={`grid ${gridClass} gap-3 ${className}`}>
       {features.map((f, i) => (
-        <div key={i} className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-100 dark:border-[#2a2a2a] p-3 flex flex-col items-center text-center gap-2">
-          <div className={`w-10 h-10 ${f.iconBg || "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)]"} rounded-xl flex items-center justify-center`}>
-            <f.icon className={`w-5 h-5 ${f.iconColor || "text-[var(--color-primary-600)] dark:text-[#809fff]"}`} />
+        <div key={i} className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col items-center text-center gap-2">
+          <div className={`w-10 h-10 ${f.iconBg || "bg-[var(--primary-light)]"} rounded-xl flex items-center justify-center`}>
+            <f.icon className={`w-5 h-5 ${f.iconColor || "text-[var(--primary-hover)]"}`} />
           </div>
-          <div className="text-xs text-gray-700 dark:text-gray-300" style={{ fontWeight: 600 }}>{f.label}</div>
-          {f.description && <div className="text-[10px] text-gray-400 dark:text-gray-500">{f.description}</div>}
+          <div className="text-xs text-gray-700" style={{ fontWeight: 600 }}>{f.label}</div>
+          {f.description && <div className="text-2xs text-gray-400">{f.description}</div>}
         </div>
       ))}
     </div>
@@ -369,12 +369,12 @@ export function DSMPriceDisplay({
   return (
     <div className={`flex items-baseline gap-1.5 ${className}`}>
       {originalAmount && (
-        <span className="text-gray-400 dark:text-gray-500 line-through text-sm">{originalAmount}</span>
+        <span className="text-gray-400 line-through text-sm">{originalAmount}</span>
       )}
-      <span className={`${sizeClass} text-gray-900 dark:text-gray-100`} style={{ fontWeight: 800 }}>
+      <span className={`${sizeClass} text-gray-900`} style={{ fontWeight: 800 }}>
         {amount}
       </span>
-      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+      <span className="text-xs text-gray-400 font-medium">
         {currency}{period && ` / ${period}`}
       </span>
     </div>

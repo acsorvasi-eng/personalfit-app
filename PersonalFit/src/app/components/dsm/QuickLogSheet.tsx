@@ -187,9 +187,9 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                className="w-16 h-16 bg-[var(--color-primary-100)] rounded-full flex items-center justify-center mb-3"
+                className="w-16 h-16 bg-[var(--primary-light)] rounded-full flex items-center justify-center mb-3"
               >
-                <Check className="w-8 h-8 text-[var(--color-primary-600)]" />
+                <Check className="w-8 h-8 text-[var(--primary-hover)]" />
               </motion.div>
               <p className="text-gray-900" style={{ fontWeight: 700 }}>Rogzitve!</p>
               <p className="text-xs text-gray-400 mt-1">
@@ -203,22 +203,22 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
         {!logSuccess && (
           <>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelectedItem(null); }}
                 placeholder="Keress etelt, termeketvagy receptet..."
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-200)] dark:focus:ring-[rgba(51,102,255,0.3)] focus:border-[var(--color-primary-400)] dark:focus:border-[var(--primary)] bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-light)] focus:border-[var(--primary)] bg-white text-gray-900 placeholder:text-gray-400"
                 autoComplete="off"
               />
               {query && (
                 <button
                   onClick={() => { setQuery(""); setSelectedItem(null); }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 dark:bg-[#2a2a2a] flex items-center justify-center"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center"
                 >
-                  <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                  <X className="w-3 h-3 text-gray-500" />
                 </button>
               )}
             </div>
@@ -226,13 +226,13 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
             {/* ── Quick Suggestions ── */}
             {query.length < 2 && !selectedItem && (
               <div className="space-y-2">
-                <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">Gyors valasztas</p>
+                <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Gyors valasztas</p>
                 <div className="flex flex-wrap gap-2">
                   {["Alma", "Banan", "Tojas", "Zab", "Csirkemell", "Joghurt", "Rizs", "Brokkoli"].map(item => (
                     <button
                       key={item}
                       onClick={() => setQuery(item)}
-                      className="px-3 py-1.5 bg-gray-100 dark:bg-[#252525] hover:bg-[var(--color-primary-50)] dark:hover:bg-[rgba(51,102,255,0.1)] rounded-lg text-xs text-gray-600 dark:text-gray-400 hover:text-[var(--color-primary-700)] dark:hover:text-[#809fff] transition-all"
+                      className="px-3 py-1.5 bg-gray-100 hover:bg-[var(--primary-light)] rounded-lg text-xs text-gray-600 hover:text-[var(--primary-hover)] transition-all"
                     >
                       {item}
                     </button>
@@ -248,20 +248,20 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                   <button
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--color-primary-50)] dark:hover:bg-[rgba(51,102,255,0.1)] transition-all text-left active:scale-[0.99]"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--primary-light)] transition-all text-left active:scale-[0.99]"
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      item.type === "recipe" ? "bg-amber-50 dark:bg-amber-500/10" :
-                      item.type === "ai" ? "bg-purple-50 dark:bg-purple-500/10" : "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)]"
+                      item.type === "recipe" ? "bg-amber-50" :
+                      item.type === "ai" ? "bg-purple-50" : "bg-[var(--primary-light)]"
                     }`}>
-                      {item.type === "recipe" ? <ChefHat className="w-4 h-4 text-amber-600 dark:text-amber-400" /> :
-                       item.type === "ai" ? <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" /> :
-                       <Package className="w-4 h-4 text-[var(--color-primary-600)] dark:text-[#809fff]" />}
+                      {item.type === "recipe" ? <ChefHat className="w-4 h-4 text-amber-600" /> :
+                       item.type === "ai" ? <Sparkles className="w-4 h-4 text-purple-600" /> :
+                       <Package className="w-4 h-4 text-[var(--primary-hover)]" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-gray-900 dark:text-gray-100 truncate" style={{ fontWeight: 600 }}>{item.name}</div>
+                      <div className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>{item.name}</div>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500">{item.calories} kcal</span>
+                        <span className="text-2xs text-gray-400">{item.calories} kcal</span>
                         <DSMChip
                           label={item.type === "recipe" ? "Recept" : item.type === "ai" ? "AI" : "Termek"}
                           color={item.type === "recipe" ? "amber" : item.type === "ai" ? "purple" : "blue"}
@@ -270,7 +270,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                         />
                       </div>
                     </div>
-                    <Plus className="w-4 h-4 text-gray-300 dark:text-gray-500 flex-shrink-0" />
+                    <Plus className="w-4 h-4 text-gray-300 flex-shrink-0" />
                   </button>
                 ))}
               </div>
@@ -279,9 +279,9 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
             {/* ── Empty State ── */}
             {query.length >= 2 && results.length === 0 && (
               <div className="py-6 text-center">
-                <AlertCircle className="w-8 h-8 text-gray-300 dark:text-gray-500 mx-auto mb-2" />
-                <p className="text-sm text-gray-400 dark:text-gray-500">Nincs talalat: "{query}"</p>
-                <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-1">Probald maskepp iras</p>
+                <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">Nincs talalat: "{query}"</p>
+                <p className="text-2xs text-gray-300 mt-1">Probald maskepp iras</p>
               </div>
             )}
 
@@ -292,20 +292,20 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)] rounded-xl p-4 border border-[var(--color-primary-200)] dark:border-[rgba(51,102,255,0.2)] space-y-3"
+                  className="bg-[var(--primary-light)] rounded-xl p-4 border border-[var(--primary-light)] space-y-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        selectedItem.type === "recipe" ? "bg-amber-100 dark:bg-amber-500/15" :
-                        selectedItem.type === "ai" ? "bg-purple-100 dark:bg-purple-500/15" : "bg-[var(--color-primary-100)] dark:bg-[rgba(51,102,255,0.15)]"
+                        selectedItem.type === "recipe" ? "bg-amber-100" :
+                        selectedItem.type === "ai" ? "bg-purple-100" : "bg-[var(--primary-light)]"
                       }`}>
-                        {selectedItem.type === "recipe" ? <ChefHat className="w-4 h-4 text-amber-600 dark:text-amber-400" /> :
-                         selectedItem.type === "ai" ? <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" /> :
-                         <Package className="w-4 h-4 text-[var(--color-primary-600)] dark:text-[#809fff]" />}
+                        {selectedItem.type === "recipe" ? <ChefHat className="w-4 h-4 text-amber-600" /> :
+                         selectedItem.type === "ai" ? <Sparkles className="w-4 h-4 text-purple-600" /> :
+                         <Package className="w-4 h-4 text-[var(--primary-hover)]" />}
                       </div>
                       <div>
-                        <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>{selectedItem.name}</div>
+                        <div className="text-sm text-gray-900" style={{ fontWeight: 700 }}>{selectedItem.name}</div>
                         <DSMNutritionBar
                           calories={selectedItem.calories}
                           protein={selectedItem.protein}
@@ -317,16 +317,16 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                     </div>
                     <button
                       onClick={() => setSelectedItem(null)}
-                      className="w-6 h-6 rounded-full bg-white dark:bg-[#252525] flex items-center justify-center"
+                      className="w-6 h-6 rounded-full bg-white flex items-center justify-center"
                     >
-                      <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                      <X className="w-3 h-3 text-gray-500" />
                     </button>
                   </div>
 
                   {/* Quantity (for products only) */}
                   {selectedItem.type !== "recipe" && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">Mennyiseg:</label>
+                      <label className="text-xs text-gray-500 flex-shrink-0">Mennyiseg:</label>
                       <div className="flex items-center gap-1">
                         {["50", "100", "150", "200"].map(q => (
                           <button
@@ -335,7 +335,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                             className={`px-2.5 py-1 rounded-lg text-xs transition-all ${
                               quantity === q
                                 ? "bg-[var(--primary)] text-white"
-                                : "bg-white dark:bg-[#252525] text-gray-600 dark:text-gray-400 hover:bg-[var(--color-primary-100)] dark:hover:bg-[rgba(51,102,255,0.15)]"
+                                : "bg-white text-gray-600 hover:bg-[var(--primary-light)]"
                             }`}
                             style={{ fontWeight: quantity === q ? 700 : 500 }}
                           >
@@ -346,7 +346,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                           type="number"
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
-                          className="w-14 px-2 py-1 border border-gray-200 dark:border-[#2a2a2a] rounded-lg text-xs text-center bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100"
+                          className="w-14 px-2 py-1 border border-gray-200 rounded-lg text-xs text-center bg-white text-gray-900"
                           min="1"
                           max="2000"
                         />
@@ -358,7 +358,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                   <button
                     onClick={handleLog}
                     disabled={isLogging}
-                    className="w-full py-3 bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white rounded-xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-gradient-to-r from-[#2563EB] to-[#12CFA6] text-white rounded-xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                     style={{ fontWeight: 700 }}
                   >
                     {isLogging ? (
