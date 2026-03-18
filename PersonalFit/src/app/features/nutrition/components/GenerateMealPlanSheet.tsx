@@ -708,7 +708,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex gap-2 sticky bottom-0 pt-3 bg-gradient-to-t from-background to-transparent">
+                  <div className="flex gap-2 sticky bottom-0 pt-3 bg-background">
                     <button onClick={() => setStep("calc")}
                       className="flex-1 h-[50px] rounded-[14px] border-[1.5px] border-border bg-gray-50 cursor-pointer font-semibold text-[0.88rem] text-foreground flex items-center justify-center">
                       {t('generatePlan.regenerate')}
