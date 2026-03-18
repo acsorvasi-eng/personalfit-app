@@ -35,14 +35,23 @@
   --color-error:               var(--error);
 
   /* legacy aliases — keep to avoid breaking shadcn/ui components */
-  --color-card:                var(--background);
-  --color-card-foreground:     var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
   --color-muted:               var(--surface);
   --color-muted-foreground:    var(--gray-600);
   --color-popover:             var(--background);
   --color-popover-foreground:  var(--foreground);
-  --color-input-bg:            var(--surface);
   --color-ring:                var(--primary);
+  --color-primary-foreground:       var(--primary-foreground);
+  --color-secondary:                var(--secondary);
+  --color-secondary-foreground:     var(--secondary-foreground);
+  --color-accent:                   var(--accent);
+  --color-accent-foreground:        var(--accent-foreground);
+  --color-destructive:              var(--destructive);
+  --color-destructive-foreground:   var(--destructive-foreground);
+  --color-input:                    var(--input);
+  --color-input-background:         var(--input-background);
+  --color-switch-background:        var(--switch-background);
 }
 
 @utility scrollbar-hide {
