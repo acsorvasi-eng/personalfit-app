@@ -34,12 +34,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    // Dark mode is disabled — ensure 'dark' class is never present on <html>
+    document.documentElement.classList.remove('dark');
     if (themeLoaded) setSetting(STORAGE_KEY, theme).catch(() => {});
   }, [theme, themeLoaded]);
 
