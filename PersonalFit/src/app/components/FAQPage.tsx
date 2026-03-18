@@ -79,7 +79,7 @@ export function FAQPage() {
           <div key={section.category}>
             <div className="flex items-center gap-2 mb-3">
               <HelpCircle className="w-4 h-4 text-emerald-500" />
-              <h3 className="text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>{section.category}</h3>
+              <h3 className="text-gray-900" style={{ fontWeight: 700 }}>{section.category}</h3>
             </div>
             <div className="space-y-2">
               {section.items.map((item, idx) => {
@@ -88,21 +88,21 @@ export function FAQPage() {
                 return (
                   <div
                     key={key}
-                    className="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm overflow-hidden"
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                   >
                     <button
                       onClick={() => toggleItem(key)}
                       className="w-full flex items-center justify-between px-4 py-3.5 text-left"
                       aria-expanded={isOpen}
                     >
-                      <span className="text-sm text-gray-800 dark:text-gray-200 pr-3" style={{ fontWeight: 600 }}>{item.q}</span>
+                      <span className="text-sm text-gray-800 pr-3" style={{ fontWeight: 600 }}>{item.q}</span>
                       <ChevronDown
-                        className={`w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
                     {isOpen && (
-                      <div className="px-4 pb-3.5 border-t border-gray-50 dark:border-[#2a2a2a]">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed pt-3">{item.a}</p>
+                      <div className="px-4 pb-3.5 border-t border-gray-50">
+                        <p className="text-xs text-gray-600 leading-relaxed pt-3">{item.a}</p>
                       </div>
                     )}
                   </div>
@@ -113,12 +113,12 @@ export function FAQPage() {
         ))}
 
         <div className="text-center py-6">
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <p className="text-xs text-gray-400">
             {t("faq.notFoundAnswer")}
           </p>
           <button
             onClick={() => navigate('/contact')}
-            className="mt-2 text-xs text-emerald-600 dark:text-emerald-400"
+            className="mt-2 text-xs text-emerald-600"
             style={{ fontWeight: 600 }}
           >
             {t("faq.contactLink")}

@@ -44,12 +44,12 @@ const VARIANT_STYLE: Record<EmptyStateVariant, {
   icon: React.ElementType;
   iconBg: string;
 }> = {
-  foods: { icon: Apple, iconBg: 'from-blue-400 to-teal-500' },
-  menu: { icon: UtensilsCrossed, iconBg: 'from-emerald-400 to-teal-500' },
-  shopping: { icon: ShoppingCart, iconBg: 'from-blue-400 to-indigo-500' },
-  workout: { icon: Dumbbell, iconBg: 'from-orange-400 to-red-500' },
-  measurements: { icon: Ruler, iconBg: 'from-purple-400 to-pink-500' },
-  generic: { icon: FileUp, iconBg: 'from-gray-400 to-gray-500' },
+  foods: { icon: Apple, iconBg: 'bg-primary' },
+  menu: { icon: UtensilsCrossed, iconBg: 'bg-primary' },
+  shopping: { icon: ShoppingCart, iconBg: 'bg-primary' },
+  workout: { icon: Dumbbell, iconBg: 'bg-primary' },
+  measurements: { icon: Ruler, iconBg: 'bg-primary' },
+  generic: { icon: FileUp, iconBg: 'bg-gray-400' },
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -90,18 +90,18 @@ export function EmptyState({ variant, onUpload, className = '' }: EmptyStateProp
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', damping: 15, delay: 0.1 }}
-        className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${style.iconBg} flex items-center justify-center shadow-lg mb-5`}
+        className={`w-20 h-20 rounded-3xl ${style.iconBg} flex items-center justify-center shadow-lg mb-5`}
       >
         <style.icon className="w-10 h-10 text-white" />
       </motion.div>
 
       {/* Title */}
-      <h3 className="text-gray-900 dark:text-gray-100 mb-2" style={{ fontSize: '1.15rem', fontWeight: 700 }}>
+      <h3 className="text-gray-900 mb-2" style={{ fontSize: '1.15rem', fontWeight: 700 }}>
         {title}
       </h3>
 
       {/* Description */}
-      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed mb-5">
+      <p className="text-sm text-gray-500 max-w-xs leading-relaxed mb-5">
         {desc}
       </p>
 
@@ -114,10 +114,10 @@ export function EmptyState({ variant, onUpload, className = '' }: EmptyStateProp
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 + i * 0.1 }}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 dark:bg-[#252525] rounded-lg text-[11px] text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-[#2a2a2a]"
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 rounded-lg text-[11px] text-gray-600 border border-gray-100"
               style={{ fontWeight: 500 }}
             >
-              <Sparkles className="w-3 h-3 text-blue-500 dark:text-blue-400" />
+              <Sparkles className="w-3 h-3 text-blue-500" />
               {feature}
             </motion.span>
           ))}
@@ -141,7 +141,7 @@ export function EmptyState({ variant, onUpload, className = '' }: EmptyStateProp
           {t('empty.uploadBtn')}
         </DSMButton>
 
-        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2.5">
+        <p className="text-2xs text-gray-400 mt-2.5">
           {t('empty.uploadHint')}
         </p>
       </motion.div>
@@ -153,7 +153,7 @@ export function EmptyState({ variant, onUpload, className = '' }: EmptyStateProp
             key={i}
             animate={{ opacity: [0.3, 1, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
-            className="w-1.5 h-1.5 rounded-full bg-blue-400 dark:bg-blue-500"
+            className="w-1.5 h-1.5 rounded-full bg-blue-400"
           />
         ))}
       </div>

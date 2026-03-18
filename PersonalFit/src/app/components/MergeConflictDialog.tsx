@@ -49,7 +49,7 @@ export function MergeConflictDialog({
           >
             <div className="overflow-hidden rounded-3xl bg-slate-950 shadow-2xl border border-amber-500/40">
               {/* Header */}
-              <div className="px-5 pt-4 pb-3 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 flex items-center justify-between">
+              <div className="px-5 pt-4 pb-3 bg-primary flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-2xl bg-black/20 flex items-center justify-center">
                     <AlertTriangle className="w-5 h-5 text-amber-50" />
@@ -75,7 +75,7 @@ export function MergeConflictDialog({
               {/* Body */}
               <div className="px-5 pt-4 pb-4 space-y-4 bg-slate-950">
                 {/* Stats row */}
-                <div className="grid grid-cols-2 gap-3 text-[12px]">
+                <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="rounded-2xl border border-slate-700/80 bg-slate-900/80 p-3">
                     <p className="text-[11px] font-medium text-slate-400 mb-1">
                       Jelenlegi terved

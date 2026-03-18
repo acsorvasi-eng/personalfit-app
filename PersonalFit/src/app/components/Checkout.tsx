@@ -274,16 +274,13 @@ export function Checkout() {
   );
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-b from-gray-50 to-white">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       {/* Header */}
       <div className="flex-shrink-0">
         <PageHeader
           onClose={handleClose}
           title={step === "confirmation" ? t("checkout.orderPlaced") : `${t("checkout.orderTitle")} - ${storeName}`}
           subtitle={step === "confirmation" ? `#${orderId}` : localizedSteps[stepIndex]?.label}
-          gradientFrom="from-blue-500"
-          gradientVia="via-indigo-500"
-          gradientTo="to-purple-600"
           stats={[
             {
               label: `${consumed} / ${target} kcal`,
@@ -331,7 +328,7 @@ export function Checkout() {
                       )}
                     </div>
                     <span
-                      className={`text-[10px] font-bold ${
+                      className={`text-2xs font-bold ${
                         isActive ? "text-indigo-600" : isDone ? "text-green-600" : "text-gray-400"
                       }`}
                     >
@@ -358,7 +355,7 @@ export function Checkout() {
         {step === "cart" && (
           <div className="px-4 py-5 space-y-4 max-w-2xl mx-auto">
             {/* Store badge */}
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl p-4 text-white flex items-center gap-3">
+            <div className="bg-primary rounded-2xl p-4 text-white flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Store className="w-6 h-6 text-white" />
               </div>
@@ -408,7 +405,7 @@ export function Checkout() {
                             <div>
                               <div className="text-gray-900" style={{ fontWeight: 700 }}>{item.product.name}</div>
                               <div className="text-sm text-gray-500">{item.product.brand}</div>
-                              <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold mt-1 inline-block">
+                              <span className="text-2xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold mt-1 inline-block">
                                 {item.product.store}
                               </span>
                             </div>
@@ -457,16 +454,16 @@ export function Checkout() {
                           </div>
 
                           <div className="flex gap-2 mt-2 flex-wrap">
-                            <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-2xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-bold">
                               {nutrition.calories} kcal
                             </span>
-                            <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-2xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold">
                               {nutrition.protein}g {t("checkout.protein")}
                             </span>
-                            <span className="text-[10px] bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-2xs bg-yellow-50 text-yellow-600 px-2 py-0.5 rounded-full font-bold">
                               {nutrition.carbs}g {t("checkout.carbs")}
                             </span>
-                            <span className="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-2xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-bold">
                               {nutrition.fat}g {t("checkout.fat")}
                             </span>
                           </div>
@@ -477,7 +474,7 @@ export function Checkout() {
                 })}
 
                 {/* Nutrition total */}
-                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-200">
+                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/20">
                   <h3 className="font-bold text-gray-800 text-sm mb-2 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-orange-500" />
                     {t("checkout.totalNutrition")}
@@ -485,25 +482,25 @@ export function Checkout() {
                   <div className="grid grid-cols-4 gap-2">
                     <div className="text-center">
                       <div className="text-lg text-orange-600" style={{ fontWeight: 800 }}>{Math.round(totalNutrition.calories)}</div>
-                      <div className="text-[10px] text-gray-500 font-bold">kcal</div>
+                      <div className="text-2xs text-gray-500 font-bold">kcal</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg text-red-600" style={{ fontWeight: 800 }}>{Math.round(totalNutrition.protein)}g</div>
-                      <div className="text-[10px] text-gray-500 font-bold">{t("checkout.protein")}</div>
+                      <div className="text-2xs text-gray-500 font-bold">{t("checkout.protein")}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg text-yellow-600" style={{ fontWeight: 800 }}>{Math.round(totalNutrition.carbs)}g</div>
-                      <div className="text-[10px] text-gray-500 font-bold">{t("menu.carbs")}</div>
+                      <div className="text-2xs text-gray-500 font-bold">{t("menu.carbs")}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg text-purple-600" style={{ fontWeight: 800 }}>{Math.round(totalNutrition.fat)}g</div>
-                      <div className="text-[10px] text-gray-500 font-bold">{t("checkout.fat")}</div>
+                      <div className="text-2xs text-gray-500 font-bold">{t("checkout.fat")}</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Price Summary */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-200">
+                <div className="bg-primary/5 rounded-2xl p-5 border border-primary/20">
                   <h3 className="font-bold text-gray-800 text-sm mb-3 flex items-center gap-2">
                     <ReceiptText className="w-4 h-4 text-indigo-500" />
                     {t("checkout.priceSummary")}
@@ -695,7 +692,7 @@ export function Checkout() {
                     <Calendar className="w-4 h-4 text-gray-400" />
                     <h3 className="font-bold text-gray-700 text-sm">{dayLabel}</h3>
                     {slots[0].express && (
-                      <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold">
+                      <span className="text-2xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold">
                         {t("checkout.express")} +5 lei
                       </span>
                     )}
@@ -804,7 +801,7 @@ export function Checkout() {
 
             {/* Card Form */}
             {paymentMethod === "card" && (
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl space-y-4">
+              <div className="bg-gray-900 rounded-2xl p-6 text-white shadow-xl space-y-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-gray-400 font-bold tracking-widest">{t("checkout.cardBrand")}</span>
                   <div className="flex gap-2">
@@ -858,9 +855,9 @@ export function Checkout() {
             )}
 
             {paymentMethod === "cash" && (
-              <div className="bg-amber-50 dark:bg-amber-500/10 rounded-xl p-4 border border-amber-200 dark:border-amber-500/20">
-                <p className="text-sm text-amber-800 dark:text-amber-200 font-bold">{t("checkout.cashPayment")}</p>
-                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+              <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                <p className="text-sm text-amber-800 font-bold">{t("checkout.cashPayment")}</p>
+                <p className="text-xs text-amber-700 mt-1">
                   {t("checkout.cashPaymentDesc")}
                 </p>
               </div>
@@ -888,7 +885,7 @@ export function Checkout() {
             </div>
 
             {/* Final Order Summary */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-200">
+            <div className="bg-primary/5 rounded-2xl p-5 border border-primary/20">
               <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                 <ReceiptText className="w-4 h-4 text-indigo-500" />
                 {t("checkout.orderSummary")}
@@ -942,7 +939,7 @@ export function Checkout() {
 
             {/* Order ID */}
             <div className="text-center">
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-5 border border-indigo-200 inline-block">
+              <div className="bg-primary/5 rounded-2xl p-5 border border-primary/20 inline-block">
                 <div className="text-xs text-gray-500 font-bold mb-1">{t("checkout.orderNumber")}</div>
                 <div className="text-2xl text-indigo-600 tracking-wider" style={{ fontWeight: 800 }}>
                   {orderId}

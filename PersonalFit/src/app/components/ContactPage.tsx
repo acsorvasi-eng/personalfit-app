@@ -44,28 +44,28 @@ export function ContactPage() {
           <ContactInfoCard
             icon={Mail}
             iconColor="text-blue-500"
-            bg="bg-blue-50 dark:bg-blue-500/10"
+            bg="bg-blue-50"
             label="E-mail"
             value="info@etrendterv.hu"
           />
           <ContactInfoCard
             icon={MapPin}
             iconColor="text-emerald-500"
-            bg="bg-emerald-50 dark:bg-emerald-500/10"
+            bg="bg-emerald-50"
             label={t('contact.locationLabel')}
             value={t('contact.locationValue')}
           />
           <ContactInfoCard
             icon={Clock}
             iconColor="text-amber-500"
-            bg="bg-amber-50 dark:bg-amber-500/10"
+            bg="bg-amber-50"
             label={t('contact.responseTimeLabel')}
             value={t('contact.responseTimeValue')}
           />
           <ContactInfoCard
             icon={MessageCircle}
             iconColor="text-purple-500"
-            bg="bg-purple-50 dark:bg-purple-500/10"
+            bg="bg-purple-50"
             label={t('contact.languageLabel')}
             value={t('contact.languageValue')}
           />
@@ -77,43 +77,43 @@ export function ContactPage() {
 
           {submitted ? (
             <div className="text-center py-8">
-              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="w-7 h-7 text-emerald-500" />
               </div>
-              <h3 className="text-gray-900 dark:text-gray-100 mb-1" style={{ fontWeight: 700 }}>{t('contact.messageSent')}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('contact.willReply')}</p>
+              <h3 className="text-gray-900 mb-1" style={{ fontWeight: 700 }}>{t('contact.messageSent')}</h3>
+              <p className="text-xs text-gray-500">{t('contact.willReply')}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">{t('contact.nameLabel')}</label>
+                <label className="text-2xs text-gray-500 uppercase tracking-wider mb-1 block">{t('contact.nameLabel')}</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t('contact.namePlaceholder')}
                   required
-                  className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">E-mail</label>
+                <label className="text-2xs text-gray-500 uppercase tracking-wider mb-1 block">E-mail</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="pelda@email.com"
                   required
-                  className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">{t('contact.subjectLabel')}</label>
+                <label className="text-2xs text-gray-500 uppercase tracking-wider mb-1 block">{t('contact.subjectLabel')}</label>
                 <select
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 >
                   <option value="">{t('contact.selectTopic')}</option>
                   <option value="general">{t('contact.general')}</option>
@@ -125,14 +125,14 @@ export function ContactPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 block">{t('contact.messageLabel')}</label>
+                <label className="text-2xs text-gray-500 uppercase tracking-wider mb-1 block">{t('contact.messageLabel')}</label>
                 <textarea
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder={t('contact.messagePlaceholder')}
                   required
                   rows={4}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500 resize-none"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 resize-none"
                 />
               </div>
               <DSMButton variant="gradient" size="md" fullWidth icon={Send} type="submit">
@@ -143,7 +143,7 @@ export function ContactPage() {
         </DSMCard>
 
         <div className="text-center py-2">
-          <p className="text-[10px] text-gray-400 dark:text-gray-500">
+          <p className="text-2xs text-gray-400">
             {t('contact.demoNote')}
           </p>
         </div>
@@ -158,12 +158,12 @@ function ContactInfoCard({ icon: Icon, iconColor, bg, label, value }: {
   icon: React.ElementType; iconColor: string; bg: string; label: string; value: string;
 }) {
   return (
-    <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm p-3.5 text-center">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 text-center">
       <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center mx-auto mb-2`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
-      <div className="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">{label}</div>
-      <div className="text-xs text-gray-900 dark:text-gray-200" style={{ fontWeight: 600 }}>{value}</div>
+      <div className="text-2xs text-gray-500 mb-0.5">{label}</div>
+      <div className="text-xs text-gray-900" style={{ fontWeight: 600 }}>{value}</div>
     </div>
   );
 }

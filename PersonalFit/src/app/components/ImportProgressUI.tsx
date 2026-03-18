@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface ImportStats {
   days_count: number;
@@ -20,6 +21,7 @@ interface ImportProgressUIProps {
 const STEP_TIMINGS = [0, 1500, 3000]; // ms for 3 visible steps
 
 export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }: ImportProgressUIProps) {
+  const { t } = useLanguage();
   const [startTime, setStartTime] = useState<number | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -92,11 +94,11 @@ export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }
 
   const steps = useMemo(
     () => [
-      { label: "PDF elemzése folyamatban...", icon: "📄" },
-      { label: "Ételek felismerése...", icon: "🥗" },
-      { label: "Menük összeállítása...", icon: "📋" },
+      { label: t('wizard.importProgress.step1'), icon: "📄" },
+      { label: t('wizard.importProgress.step2'), icon: "🥗" },
+      { label: t('wizard.importProgress.step3'), icon: "📋" },
     ],
-    []
+    [t]
   );
 
   // Phase 2 summary appears as soon as loading finishes,
@@ -112,21 +114,21 @@ export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="w-full max-w-[380px] rounded-3xl bg-white dark:bg-[#050816] border border-slate-800/60 shadow-2xl overflow-hidden"
+          className="w-full max-w-[380px] rounded-3xl bg-white border border-slate-800/60 shadow-2xl overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.4 }}
         >
           {/* Header */}
-          <div className="px-5 pt-4 pb-3 bg-gradient-to-r from-blue-500 via-sky-400 to-teal-400">
+          <div className="px-5 pt-4 pb-3 bg-primary">
             <p className="text-xs font-semibold text-sky-50/90 tracking-wide uppercase">
-              {showSummary ? "✅ Étrend elemezve" : "AI étrend-feldolgozás"}
+              {showSummary ? t('wizard.importProgress.headerDone') : t('wizard.importProgress.headerProcessing')}
             </p>
             <h2 className="text-[17px] font-bold text-white mt-0.5">
               {showSummary
-                ? "Az étrended készen áll"
-                : "Kérlek várj, feldolgozzuk a PDF-et..."}
+                ? t('wizard.importProgress.titleDone')
+                : t('wizard.importProgress.titleProcessing')}
             </h2>
           </div>
 
@@ -140,18 +142,18 @@ export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }
                 return (
                   <motion.div
                     key={idx}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/70"
+                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 bg-slate-50 border border-slate-200/80"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
                   >
-                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-lg">
                       <span>{step.icon}</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      <p className="text-sm font-medium text-slate-800">
                         {done && idx === 0
-                          ? "PDF elemzése kész"
+                          ? t('wizard.importProgress.step1done')
                           : step.label}
                       </p>
                     </div>
@@ -186,34 +188,34 @@ export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.4 }}
-                  className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 overflow-hidden"
+                  className="rounded-3xl border border-slate-200 bg-white overflow-hidden"
                 >
-                  <div className="px-4 pt-3 pb-2 border-b border-slate-100 dark:border-slate-700/70 bg-gradient-to-r from-blue-500 via-sky-400 to-teal-400">
+                  <div className="px-4 pt-3 pb-2 border-b border-slate-100 bg-primary">
                     <p className="text-xs font-semibold text-white/90 uppercase tracking-wide">
-                      ✅ Étrend összefoglaló
+                      {t('wizard.importProgress.summaryHeader')}
                     </p>
                   </div>
                   <div className="px-4 py-3 space-y-1.5">
                     <SummaryRow
-                      label="Napok"
+                      label={t('wizard.importProgress.days')}
                       icon="📅"
                       value={animatedStats.days_count}
                     />
                     <SummaryRow
-                      label="Étkezések"
+                      label={t('wizard.importProgress.meals')}
                       icon="🍽️"
                       value={animatedStats.meals_count}
                     />
                     <SummaryRow
-                      label="Ételek"
+                      label={t('wizard.importProgress.foods')}
                       icon="🥗"
                       value={animatedStats.foods_count}
                     />
                     <SummaryRow
                       label={
                         stats && stats.training_days > 0
-                          ? "Edzésnapok"
-                          : "Edzésnapok: elemzés folyamatban..."
+                          ? t('wizard.importProgress.trainingDays')
+                          : t('wizard.importProgress.trainingDaysLoading')
                       }
                       icon="🟢"
                       value={stats && stats.training_days > 0 ? animatedStats.training_days : 0}
@@ -221,8 +223,8 @@ export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }
                     <SummaryRow
                       label={
                         stats && stats.rest_days > 0
-                          ? "Pihenőnapok"
-                          : "Pihenőnapok: elemzés folyamatban..."
+                          ? t('wizard.importProgress.restDays')
+                          : t('wizard.importProgress.restDaysLoading')
                       }
                       icon="🔵"
                       value={stats && stats.rest_days > 0 ? animatedStats.rest_days : 0}
@@ -232,10 +234,10 @@ export function ImportProgressUI({ isLoading, stats, onContinue, mode = "full" }
                     <button
                       type="button"
                       onClick={onContinue}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 via-teal-400 to-sky-500 shadow-md shadow-emerald-500/30"
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-primary shadow-sm"
                     >
                       <span>
-                        {mode === "quick" ? "Tovább az ételekhez →" : "📤 Publikálás"}
+                        {mode === "quick" ? t('wizard.importProgress.continueToFoods') : t('wizard.importProgress.publish')}
                       </span>
                     </button>
                   </div>
@@ -254,9 +256,9 @@ function SummaryRow({ label, icon, value }: { label: string; icon: string; value
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-2">
         <span className="text-base">{icon}</span>
-        <span className="text-slate-700 dark:text-slate-200">{label}</span>
+        <span className="text-slate-700">{label}</span>
       </div>
-      <span className="font-semibold text-slate-900 dark:text-slate-50">{value}</span>
+      <span className="font-semibold text-slate-900">{value}</span>
     </div>
   );
 }
