@@ -17,9 +17,9 @@
  */
 
 import { ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Apple, UtensilsCrossed, ShoppingCart, User, Dumbbell,
@@ -137,6 +137,8 @@ export function DSMButton({
   size: _size,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   icon: _icon,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  loading: _loading,
 }: DSMButtonProps) {
   const base = 'h-11 rounded-xl px-4 text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2';
   const width = fullWidth ? 'w-full' : 'w-auto';
