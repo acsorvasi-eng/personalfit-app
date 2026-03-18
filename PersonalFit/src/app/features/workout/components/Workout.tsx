@@ -185,13 +185,13 @@ const SPORT_NAME_LOCALE: Record<string, Record<string, string>> = {
 };
 
 const connectedApps: ConnectedApp[] = [
-  { id: 'polar', name: 'Polar Flow', logo: '⌚', bgColor: 'from-blue-500 to-blue-600', connected: false },
-  { id: 'strava', name: 'Strava', logo: '🏃', bgColor: 'from-orange-500 to-red-500', connected: false },
-  { id: 'garmin', name: 'Garmin Connect', logo: '⚡', bgColor: 'from-cyan-500 to-blue-600', connected: false },
-  { id: 'apple', name: 'Apple Health', logo: '🍎', bgColor: 'from-pink-500 to-rose-600', connected: false },
-  { id: 'google', name: 'Google Fit', logo: '💪', bgColor: 'from-green-500 to-emerald-600', connected: false },
-  { id: 'fitbit', name: 'Fitbit', logo: '💙', bgColor: 'from-indigo-500 to-blue-600', connected: false },
-  { id: 'suunto', name: 'Suunto', logo: '🏔️', bgColor: 'from-amber-500 to-orange-600', connected: false },
+  { id: 'polar', name: 'Polar Flow', logo: '⌚', bgColor: 'bg-blue-500', connected: false },
+  { id: 'strava', name: 'Strava', logo: '🏃', bgColor: 'bg-orange-500', connected: false },
+  { id: 'garmin', name: 'Garmin Connect', logo: '⚡', bgColor: 'bg-cyan-500', connected: false },
+  { id: 'apple', name: 'Apple Health', logo: '🍎', bgColor: 'bg-pink-500', connected: false },
+  { id: 'google', name: 'Google Fit', logo: '💪', bgColor: 'bg-green-500', connected: false },
+  { id: 'fitbit', name: 'Fitbit', logo: '💙', bgColor: 'bg-indigo-500', connected: false },
+  { id: 'suunto', name: 'Suunto', logo: '🏔️', bgColor: 'bg-amber-500', connected: false },
 ];
 
 function fuzzySearch(query: string, sports: SportItem[]): SportItem[] {
@@ -248,6 +248,7 @@ export function Workout() {
   const [duration, setDuration] = useState('');
   const [dailyWorkout, setDailyWorkout] = useState<DailyWorkout | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<DailyWorkout[]>([]);
+  const [wizardSports, setWizardSports] = useState<Array<{ sport: SportItem; defaultMinutes: number }>>([]);
   const [apps, setApps] = useState<ConnectedApp[]>(connectedApps);
   const [searchFocused, setSearchFocused] = useState(false);
   const [collectionFilter, setCollectionFilter] = useState<string | null>(null);
@@ -275,6 +276,18 @@ export function Workout() {
         if (data[key] && data[key].entries?.length > 0) history.push(data[key]);
       }
       setWorkoutHistory(history);
+    });
+    getSetting('userSports').then((raw) => {
+      if (cancelled || !raw) return;
+      try {
+        const parsed: Array<{ id: string; label: string; days: number; minutes: number }> = JSON.parse(raw);
+        const matched: Array<{ sport: SportItem; defaultMinutes: number }> = [];
+        for (const s of parsed) {
+          const results = fuzzySearch(s.label, ALL_SPORTS);
+          if (results.length > 0) matched.push({ sport: results[0], defaultMinutes: s.minutes });
+        }
+        setWizardSports(matched);
+      } catch {}
     });
     return () => { cancelled = true; };
   }, [today]);
@@ -350,30 +363,30 @@ export function Workout() {
   // ─── Sync Apps Modal ───
   if (showApps) {
     return (
-      <div className="h-full flex flex-col overflow-hidden bg-gray-50 dark:bg-[#121212]">
-        <div className="bg-white dark:bg-[#1E1E1E] border-b border-gray-200 dark:border-[#2a2a2a] px-4 py-4 flex items-center gap-4">
+      <div className="h-full flex flex-col overflow-hidden bg-gray-50">
+        <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center gap-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('workout.syncApps')}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{t('workout.connectAppsDesc')}</p>
+            <h2 className="text-lg font-bold text-gray-900">{t('workout.syncApps')}</h2>
+            <p className="text-xs text-gray-500">{t('workout.connectAppsDesc')}</p>
           </div>
-          <button onClick={() => setShowApps(false)} className="w-10 h-10 flex-shrink-0 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-[#252525] rounded-full transition-colors" aria-label={t('common.close')}>
-            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <button onClick={() => setShowApps(false)} className="w-10 h-10 flex-shrink-0 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors" aria-label={t('common.close')}>
+            <X className="w-5 h-5 text-gray-700" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {apps.map(app => (
-            <motion.div key={app.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-sm border border-gray-100 dark:border-[#2a2a2a] overflow-hidden">
+            <motion.div key={app.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="flex items-center gap-4 p-4">
-                <div className={`w-12 h-12 bg-gradient-to-br ${app.bgColor} rounded-xl flex items-center justify-center text-2xl shadow-md`}>{app.logo}</div>
+                <div className={`w-12 h-12 ${app.bgColor} rounded-xl flex items-center justify-center text-2xl shadow-md`}>{app.logo}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">{app.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{app.connected ? `✓ ${t('workout.linked')}` : t('workout.autoSync')}</div>
+                  <div className="font-bold text-gray-900 text-sm">{app.name}</div>
+                  <div className="text-xs text-gray-500">{app.connected ? `✓ ${t('workout.linked')}` : t('workout.autoSync')}</div>
                 </div>
-                <button onClick={() => handleAppConnect(app.id)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${app.connected ? 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-500/30' : 'bg-gray-100 dark:bg-[#252525] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#2a2a2a]'}`}>
+                <button onClick={() => handleAppConnect(app.id)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${app.connected ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'}`}>
                   {app.connected ? t('workout.disconnect') : t('workout.connect')}
                 </button>
               </div>
-              {app.connected && <div className="px-4 pb-3 pt-0"><div className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1"><Check className="w-3 h-3" /> {t('workout.autoSync')}</div></div>}
+              {app.connected && <div className="px-4 pb-3 pt-0"><div className="text-2xs text-green-600 flex items-center gap-1"><Check className="w-3 h-3" /> {t('workout.autoSync')}</div></div>}
             </motion.div>
           ))}
         </div>
@@ -382,9 +395,9 @@ export function Workout() {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-gradient-to-b from-gray-50 to-white dark:from-[#121212] dark:to-[#1E1E1E]">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       <div className="flex-shrink-0">
-        <PageHeader icon={Trophy} title={t('nav.sports')} subtitle={new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} gradientFrom="from-orange-500" gradientVia="via-red-500" gradientTo="to-pink-500" stats={[{ label: t('profile.workouts'), value: dailyWorkout?.totalDuration || 0, suffix: t('workout.min') }, { label: t('workout.syncApps'), value: "⇄", isAction: true, onClick: () => setShowApps(true) }]} />
+        <PageHeader icon={Trophy} title={t('nav.sports')} subtitle={new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} stats={[{ label: t('profile.workouts'), value: dailyWorkout?.totalDuration || 0, suffix: t('workout.min') }, { label: t('workout.syncApps'), value: "⇄", isAction: true, onClick: () => setShowApps(true) }]} />
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -398,34 +411,34 @@ export function Workout() {
 
           {/* ── AI SEARCH ── */}
           <div className="relative" role="search" aria-label={t('workout.sportSearch')}>
-            <div className={`relative flex items-center bg-white dark:bg-[#1E1E1E] rounded-2xl border-2 transition-all shadow-sm ${searchFocused ? 'border-orange-400 shadow-orange-100 dark:shadow-orange-900/20' : 'border-gray-200 dark:border-[#2a2a2a]'}`}>
-              <div className="pl-4 pr-2" aria-hidden="true">{searchQuery.length >= 3 ? <Sparkles className="w-5 h-5 text-orange-500 animate-pulse" /> : <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />}</div>
-              <input ref={searchInputRef} type="text" placeholder={t('workout.searchPlaceholder')} aria-label={t('workout.sportSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setSearchFocused(true)} onBlur={() => setTimeout(() => setSearchFocused(false), 200)} className="flex-1 py-3.5 pr-4 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none" />
-              {searchQuery && <button onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }} className="pr-4" aria-label={t('workout.clearSearch')}><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>}
+            <div className={`relative flex items-center bg-white rounded-2xl border-2 transition-all shadow-sm ${searchFocused ? 'border-orange-400 shadow-orange-100' : 'border-gray-200'}`}>
+              <div className="pl-4 pr-2" aria-hidden="true">{searchQuery.length >= 3 ? <Sparkles className="w-5 h-5 text-orange-500 animate-pulse" /> : <Search className="w-5 h-5 text-gray-400" />}</div>
+              <input ref={searchInputRef} type="text" placeholder={t('workout.searchPlaceholder')} aria-label={t('workout.sportSearch')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => setSearchFocused(true)} onBlur={() => setTimeout(() => setSearchFocused(false), 200)} className="flex-1 py-3.5 pr-4 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none" />
+              {searchQuery && <button onClick={() => { setSearchQuery(''); searchInputRef.current?.focus(); }} className="pr-4" aria-label={t('workout.clearSearch')}><X className="w-4 h-4 text-gray-400" /></button>}
             </div>
 
             {searchFocused && searchQuery.length > 0 && searchQuery.length < 3 && (
-              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="absolute left-0 right-0 top-full mt-1 z-20 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30 rounded-xl px-4 py-2.5 flex items-center gap-2">
+              <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="absolute left-0 right-0 top-full mt-1 z-20 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-orange-400" />
-                <span className="text-xs text-orange-700 dark:text-orange-300">{t('workout.minChars')}</span>
+                <span className="text-xs text-orange-700">{t('workout.minChars')}</span>
               </motion.div>
             )}
 
             <AnimatePresence>
               {searchQuery.length >= 3 && aiSuggestions.length > 0 && searchFocused && (
-                <motion.div initial={{ opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }} className="absolute left-0 right-0 top-full mt-1 z-30 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-xl border border-gray-200 dark:border-[#2a2a2a] overflow-hidden max-h-72 overflow-y-auto">
-                  <div className="px-3 py-2 bg-gradient-to-r from-orange-50 to-pink-50 dark:from-orange-500/10 dark:to-pink-500/10 border-b border-orange-100 dark:border-orange-500/20 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-orange-500" /><span className="text-[11px] font-semibold text-orange-700 dark:text-orange-300">{t('workout.aiSuggestions')}</span>
-                    <span className="text-[10px] text-orange-500 dark:text-orange-400 ml-auto">{aiSuggestions.length} {t('workout.results')}</span>
+                <motion.div initial={{ opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }} className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-h-72 overflow-y-auto">
+                  <div className="px-3 py-2 bg-orange-50 border-b border-orange-100 flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-orange-500" /><span className="text-[11px] font-semibold text-orange-700">{t('workout.aiSuggestions')}</span>
+                    <span className="text-2xs text-orange-500 ml-auto">{aiSuggestions.length} {t('workout.results')}</span>
                   </div>
                   {aiSuggestions.map(sport => (
-                    <button key={sport.id} onMouseDown={(e) => e.preventDefault()} onClick={() => handleSelectSport(sport)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-colors border-b border-gray-50 dark:border-[#252525] last:border-0 text-left">
+                    <button key={sport.id} onMouseDown={(e) => e.preventDefault()} onClick={() => handleSelectSport(sport)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-orange-50 transition-colors border-b border-gray-50 last:border-0 text-left">
                       <span className="text-2xl">{sport.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{getSportName(sport)}</div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">{getCategoryName(sport.category)} · {sport.caloriesPerMinute} {t('workout.kcalPerMin')}</div>
+                        <div className="text-sm font-semibold text-gray-900">{getSportName(sport)}</div>
+                        <div className="text-2xs text-gray-500">{getCategoryName(sport.category)} · {sport.caloriesPerMinute} {t('workout.kcalPerMin')}</div>
                       </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${sport.intensity === 'light' ? 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400' : sport.intensity === 'moderate' ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400'}`}>
+                      <span className={`text-2xs px-2 py-0.5 rounded-full font-semibold ${sport.intensity === 'light' ? 'bg-green-100 text-green-700' : sport.intensity === 'moderate' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                         {getIntensityLabel(sport.intensity)}
                       </span>
                     </button>
@@ -435,15 +448,35 @@ export function Workout() {
             </AnimatePresence>
           </div>
 
+          {/* ── MY SPORTS (from onboarding wizard) ── */}
+          {wizardSports.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-400 mb-2">{t('workout.mySports')}</p>
+              <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                {wizardSports.map(({ sport, defaultMinutes }, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setSelectedSport(sport); setDuration(String(defaultMinutes)); setShowDurationModal(true); }}
+                    className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2.5 rounded-2xl bg-white border border-gray-100 hover:border-orange-300 transition-all active:scale-95 min-w-[68px]"
+                  >
+                    <span className="text-2xl">{sport.icon}</span>
+                    <span className="text-2xs font-medium text-gray-700 text-center leading-tight line-clamp-2">{getSportName(sport)}</span>
+                    <span className="text-[9px] text-orange-500 font-semibold">{defaultMinutes} perc</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── SPORT COLLECTION BUTTON ── */}
           <div className="relative">
-            <button onClick={() => { setShowCollection(true); setCollectionFilter(null); }} className="w-full flex items-center gap-3 bg-white dark:bg-[#1E1E1E] rounded-2xl border-2 border-dashed border-gray-300 dark:border-[#333] hover:border-orange-300 dark:hover:border-orange-500/50 hover:bg-orange-50/50 dark:hover:bg-orange-500/5 px-4 py-3 transition-all group" aria-label={t('workout.addSport')}>
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-500/20 dark:to-pink-500/20 group-hover:from-orange-200 group-hover:to-pink-200 rounded-xl flex items-center justify-center transition-colors"><Plus className="w-5 h-5 text-orange-600 dark:text-orange-400" /></div>
+            <button onClick={() => { setShowCollection(true); setCollectionFilter(null); }} className="w-full flex items-center gap-3 bg-white rounded-2xl border-2 border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50 px-4 py-3 transition-all group" aria-label={t('workout.addSport')}>
+              <div className="w-10 h-10 bg-orange-100 group-hover:bg-orange-200 rounded-xl flex items-center justify-center transition-colors"><Plus className="w-5 h-5 text-orange-600" /></div>
               <div className="flex-1 text-left">
-                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('nav.sports')}</div>
-                <div className="text-[10px] text-gray-500 dark:text-gray-400">{t('workout.chooseFromSports').replace('{n}', String(ALL_SPORTS.length))}</div>
+                <div className="text-sm font-semibold text-gray-800">{t('nav.sports')}</div>
+                <div className="text-2xs text-gray-500">{t('workout.chooseFromSports').replace('{n}', String(ALL_SPORTS.length))}</div>
               </div>
-              <SlidersHorizontal className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-orange-500 transition-colors" />
+              <SlidersHorizontal className="w-4 h-4 text-gray-400 group-hover:text-orange-500 transition-colors" />
             </button>
             <DSMCoachMark id="workout-add-sport" title={t('workout.logWorkout')} message={t('workout.logHint') + ' ' + t('workout.caloriesAutoUpdate')} position="top" delay={1500} />
           </div>
@@ -452,25 +485,25 @@ export function Workout() {
 
           {/* ── TODAY'S WORKOUTS ── */}
           {dailyWorkout && dailyWorkout.entries.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-sm border border-gray-100 dark:border-[#2a2a2a] overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-[#2a2a2a]">
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm flex items-center gap-2"><Activity className="w-4 h-4 text-orange-500" /> {t('profile.workouts')}</h3>
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Activity className="w-4 h-4 text-orange-500" /> {t('profile.workouts')}</h3>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{dailyWorkout.totalDuration}{t('calendar.minShort')}</span>
                   <span className="flex items-center gap-1"><Flame className="w-3 h-3 text-orange-500" />{dailyWorkout.totalCalories}kcal</span>
                 </div>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-[#252525]">
+              <div className="divide-y divide-gray-50">
                 {dailyWorkout.entries.map((entry, index) => (
-                  <div key={index} className="group flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors">
+                  <div key={index} className="group flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
                     <span className="text-2xl flex-shrink-0">{entry.activityIcon}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">{entry.activityName}</div>
-                      <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                        <span>{entry.duration} {t('workout.min')}</span><span>·</span><span className="text-orange-600 dark:text-orange-400 font-semibold">{entry.calories} kcal</span>
+                      <div className="font-semibold text-gray-900 text-sm truncate">{entry.activityName}</div>
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                        <span>{entry.duration} {t('workout.min')}</span><span>·</span><span className="text-orange-600 font-semibold">{entry.calories} kcal</span>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteEntry(index)} aria-label={t('workout.delete')} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => handleDeleteEntry(index)} aria-label={t('workout.delete')} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
                       <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
                   </div>
@@ -481,20 +514,20 @@ export function Workout() {
 
           {/* ── RECENT HISTORY ── */}
           {workoutHistory.length > 1 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-sm border border-gray-100 dark:border-[#2a2a2a] overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2a2a2a]"><h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-purple-500" /> {t('workout.history')}</h3></div>
-              <div className="divide-y divide-gray-50 dark:divide-[#252525]">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100"><h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-purple-500" /> {t('workout.history')}</h3></div>
+              <div className="divide-y divide-gray-50">
                 {workoutHistory.filter(w => w.date !== today).slice(0, 5).map(day => {
                   const d = new Date(day.date);
                   const dayName = d.toLocaleDateString(getLocale(), { weekday: 'short', month: 'short', day: 'numeric' });
                   return (
                     <div key={day.date} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-500/20 dark:to-indigo-500/20 rounded-xl flex items-center justify-center"><Activity className="w-4 h-4 text-purple-600 dark:text-purple-400" /></div>
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl flex items-center justify-center"><Activity className="w-4 h-4 text-purple-600" /></div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">{dayName}</div>
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400">{day.entries.length} {t('workout.workout')} · {day.entries.map(e => e.activityIcon).join(' ')}</div>
+                        <div className="font-semibold text-gray-900 text-sm">{dayName}</div>
+                        <div className="text-[11px] text-gray-500">{day.entries.length} {t('workout.workout')} · {day.entries.map(e => e.activityIcon).join(' ')}</div>
                       </div>
-                      <div className="text-right"><div className="text-sm font-bold text-orange-600 dark:text-orange-400">{day.totalCalories}</div><div className="text-[10px] text-gray-400 dark:text-gray-500">{day.totalDuration}{t('calendar.minShort')}</div></div>
+                      <div className="text-right"><div className="text-sm font-bold text-orange-600">{day.totalCalories}</div><div className="text-2xs text-gray-400">{day.totalDuration}{t('calendar.minShort')}</div></div>
                     </div>
                   );
                 })}
@@ -504,10 +537,10 @@ export function Workout() {
 
           {/* ── EMPTY STATE ── */}
           {!hasActivity && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-sm border border-gray-100 dark:border-[#2a2a2a] p-8 text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-500/20 dark:to-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4"><TrendingUp className="w-10 h-10 text-orange-500" /></div>
-              <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">{t('workout.startExercising')}</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{t('workout.emptyHint')}</p>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4"><TrendingUp className="w-10 h-10 text-orange-500" /></div>
+              <h3 className="font-bold text-gray-900 text-lg mb-2">{t('workout.startExercising')}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">{t('workout.emptyHint')}</p>
             </motion.div>
           )}
         </div>
@@ -518,24 +551,24 @@ export function Workout() {
         {showCollection && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-40" onClick={() => setShowCollection(false)} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1E1E1E] rounded-t-3xl max-h-[85vh] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} role="dialog" aria-modal="true" aria-label={t('workout.collection')}>
-              <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 dark:bg-[#333] rounded-full" /></div>
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2a2a2a] flex items-center justify-between">
-                <div><h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('workout.collection')}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{ALL_SPORTS.length} {t('workout.availableSports')}</p></div>
-                <button onClick={() => setShowCollection(false)} className="w-8 h-8 bg-gray-100 dark:bg-[#252525] rounded-full flex items-center justify-center" aria-label={t('workout.close')}><X className="w-4 h-4 text-gray-600 dark:text-gray-400" /></button>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-h-[85vh] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} role="dialog" aria-modal="true" aria-label={t('workout.collection')}>
+              <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                <div><h3 className="text-lg font-bold text-gray-900">{t('workout.collection')}</h3><p className="text-xs text-gray-500">{ALL_SPORTS.length} {t('workout.availableSports')}</p></div>
+                <button onClick={() => setShowCollection(false)} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center" aria-label={t('workout.close')}><X className="w-4 h-4 text-gray-600" /></button>
               </div>
-              <div className="px-4 py-3 overflow-x-auto flex gap-2 border-b border-gray-50 dark:border-[#252525]" style={{ scrollbarWidth: 'none' }}>
-                <button onClick={() => setCollectionFilter(null)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!collectionFilter ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 dark:bg-[#252525] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#2a2a2a]'}`}>{t('workout.allFilter')}</button>
+              <div className="px-4 py-3 overflow-x-auto flex gap-2 border-b border-gray-50" style={{ scrollbarWidth: 'none' }}>
+                <button onClick={() => setCollectionFilter(null)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!collectionFilter ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t('workout.allFilter')}</button>
                 {SPORT_CATEGORIES.map(cat => (
-                  <button key={cat} onClick={() => setCollectionFilter(cat)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${collectionFilter === cat ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 dark:bg-[#252525] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#2a2a2a]'}`}>{getCategoryName(cat)}</button>
+                  <button key={cat} onClick={() => setCollectionFilter(cat)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${collectionFilter === cat ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{getCategoryName(cat)}</button>
                 ))}
               </div>
               <div className="flex-1 overflow-y-auto px-4 py-4">
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-x-2 gap-y-4" role="list" aria-label={t('workout.availableSportsList')}>
                   {ALL_SPORTS.filter(s => !collectionFilter || s.category === collectionFilter).map(sport => (
                     <button key={sport.id} onClick={() => handleSelectSport(sport)} className="flex flex-col items-center gap-1.5 group" aria-label={`${getSportName(sport)} — ${sport.caloriesPerMinute} ${t('workout.kcalPerMin')}`}>
-                      <div className="w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#252525] dark:to-[#2a2a2a] group-hover:from-orange-50 group-hover:to-pink-50 dark:group-hover:from-orange-500/15 dark:group-hover:to-pink-500/15 rounded-full flex items-center justify-center text-2xl border-2 border-gray-200 dark:border-[#2a2a2a] group-hover:border-orange-300 dark:group-hover:border-orange-500/40 transition-all group-active:scale-90 shadow-sm">{sport.icon}</div>
-                      <span className="text-[11px] text-gray-700 dark:text-gray-300 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
+                      <div className="w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 group-hover:from-orange-50 group-hover:to-pink-50 rounded-full flex items-center justify-center text-2xl border-2 border-gray-200 group-hover:border-orange-300 transition-all group-active:scale-90 shadow-sm">{sport.icon}</div>
+                      <span className="text-[11px] text-gray-700 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
                     </button>
                   ))}
                 </div>
@@ -550,30 +583,30 @@ export function Workout() {
         {showDurationModal && selectedSport && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-40" onClick={() => { setShowDurationModal(false); setSelectedSport(null); setDuration(''); }} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1E1E1E] rounded-t-3xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} role="dialog" aria-modal="true" aria-label={`${selectedSport.name} ${t('workout.durationLabel')}`}>
-              <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 dark:bg-[#333] rounded-full" /></div>
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} role="dialog" aria-modal="true" aria-label={`${selectedSport.name} ${t('workout.durationLabel')}`}>
+              <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
               <div className="px-5 pb-6 pt-2 space-y-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-pink-100 dark:from-orange-500/20 dark:to-pink-500/20 rounded-2xl flex items-center justify-center text-3xl shadow-inner">{selectedSport.icon}</div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-pink-100 rounded-2xl flex items-center justify-center text-3xl shadow-inner">{selectedSport.icon}</div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{getSportName(selectedSport)}</h3>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <h3 className="text-lg font-bold text-gray-900">{getSportName(selectedSport)}</h3>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                       <span>{getCategoryName(selectedSport.category)}</span><span>·</span><span>{selectedSport.caloriesPerMinute} {t('workout.kcalPerMin')}</span>
-                      <span className={`px-2 py-0.5 rounded-full font-semibold ${selectedSport.intensity === 'light' ? 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400' : selectedSport.intensity === 'moderate' ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400'}`}>
+                      <span className={`px-2 py-0.5 rounded-full font-semibold ${selectedSport.intensity === 'light' ? 'bg-green-100 text-green-700' : selectedSport.intensity === 'moderate' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                         {getIntensityLabel(selectedSport.intensity)}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('workout.durationMinutes')}</label>
-                  <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder={t('calendar.exampleDuration')} className="w-full px-6 py-4 border-2 border-orange-200 dark:border-orange-500/30 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-2xl font-bold text-center text-gray-900 dark:text-gray-100 bg-white dark:bg-[#252525]" min="1" autoFocus />
+                  <label className="block text-sm font-bold text-gray-700 mb-2">{t('workout.durationMinutes')}</label>
+                  <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder={t('calendar.exampleDuration')} className="w-full px-6 py-4 border-2 border-orange-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-2xl font-bold text-center text-gray-900 bg-white" min="1" autoFocus />
                 </div>
                 {duration && parseInt(duration) > 0 && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-orange-50 to-pink-50 dark:from-orange-500/10 dark:to-pink-500/10 rounded-2xl p-4 border border-orange-200 dark:border-orange-500/30">
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-orange-50 to-pink-50 rounded-2xl p-4 border border-orange-200">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('workout.caloriesBurned')}</span>
-                      <div className="flex items-center gap-2"><Flame className="w-5 h-5 text-orange-500" /><span className="text-2xl font-black text-orange-600 dark:text-orange-400">{Math.round(selectedSport.caloriesPerMinute * parseInt(duration))}</span><span className="text-sm text-gray-500 dark:text-gray-400 font-semibold">kcal</span></div>
+                      <span className="text-sm font-semibold text-gray-700">{t('workout.caloriesBurned')}</span>
+                      <div className="flex items-center gap-2"><Flame className="w-5 h-5 text-orange-500" /><span className="text-2xl font-black text-orange-600">{Math.round(selectedSport.caloriesPerMinute * parseInt(duration))}</span><span className="text-sm text-gray-500 font-semibold">kcal</span></div>
                     </div>
                   </motion.div>
                 )}

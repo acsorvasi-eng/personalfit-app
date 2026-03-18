@@ -262,14 +262,6 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
   const isRest = !hasPlan;
   const primarySport = todayPlan[0];
 
-  const gradient = hasPlan
-    ? primarySport.intensity === 'intense'
-      ? 'from-red-500 to-orange-500'
-      : primarySport.intensity === 'moderate'
-      ? 'from-orange-500 to-amber-500'
-      : 'from-cyan-500 to-blue-500'
-    : 'from-indigo-500 to-purple-500';
-
   const Icon = hasPlan ? Dumbbell : Moon;
 
   return (
@@ -281,7 +273,7 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className={`w-full bg-gradient-to-r ${gradient} rounded-2xl p-4 relative overflow-hidden text-left active:scale-[0.98] transition-transform ${className}`}
+      className={`w-full bg-primary rounded-2xl p-4 relative overflow-hidden text-left active:scale-[0.98] transition-transform ${className}`}
     >
       {/* Decorative circles */}
       <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
@@ -443,34 +435,34 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1E1E1E] rounded-t-3xl max-h-[92vh] flex flex-col"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-h-[92vh] flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           >
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-gray-300 dark:bg-[#333] rounded-full" />
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="px-5 py-3 border-b border-gray-100 dark:border-[#2a2a2a]">
+            <div className="px-5 py-3 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
+                  <h3 className="text-lg text-gray-900" style={{ fontWeight: 700 }}>
                     {t("calendar.workoutCalendar")}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {t("calendar.planWorkoutsDesc")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* View toggle */}
-                  <div className="flex bg-gray-100 dark:bg-[#252525] rounded-lg p-0.5">
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
                     <button
                       onClick={() => setView('week')}
                       className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
                         view === 'week'
-                          ? 'bg-white dark:bg-[#2a2a2a] text-orange-600 dark:text-orange-400 shadow-sm'
-                          : 'text-gray-500 dark:text-gray-400'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-500'
                       }`}
                     >
                       <CalendarDays className="w-3 h-3" />
@@ -480,8 +472,8 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                       onClick={() => setView('month')}
                       className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
                         view === 'month'
-                          ? 'bg-white dark:bg-[#2a2a2a] text-orange-600 dark:text-orange-400 shadow-sm'
-                          : 'text-gray-500 dark:text-gray-400'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-500'
                       }`}
                     >
                       <CalendarRange className="w-3 h-3" />
@@ -490,9 +482,9 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 bg-gray-100 dark:bg-[#252525] rounded-full flex items-center justify-center"
+                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
                   >
-                    <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    <X className="w-4 h-4 text-gray-600" />
                   </button>
                 </div>
               </div>
@@ -532,25 +524,25 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                   animate={{ opacity: 1, y: 0 }}
                   className="px-4 pb-4"
                 >
-                  <div className="bg-gray-50 dark:bg-[#252525] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] overflow-hidden">
+                  <div className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden">
                     {/* Day header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-[#2a2a2a]">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 600 }}>
+                        <span className="text-sm text-gray-900" style={{ fontWeight: 600 }}>
                           {(() => {
                             const d = new Date(selectedDate + 'T00:00:00');
                             return `${getLocaleMonth(d, language)} ${d.getDate()}. (${new Intl.DateTimeFormat(language, { weekday: 'long' }).format(d)})`;
                           })()}
                         </span>
                         {selectedDate === todayKey && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-orange-100 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400 rounded-full font-medium">{t("calendar.today")}</span>
+                          <span className="text-2xs px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full font-medium">{t("calendar.today")}</span>
                         )}
                       </div>
                       {selectedDayPlan.length > 0 && (
                         <button
                           onClick={() => clearDay(selectedDate)}
-                          className="text-[10px] text-red-400 hover:text-red-600 dark:hover:text-red-300 flex items-center gap-1 transition-colors"
+                          className="text-2xs text-red-400 hover:text-red-600 flex items-center gap-1 transition-colors"
                         >
                           <Trash2 className="w-3 h-3" /> {t("calendar.deleteAll")}
                         </button>
@@ -559,15 +551,15 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
 
                     {/* Planned workouts */}
                     {selectedDayPlan.length > 0 ? (
-                      <div className="divide-y divide-gray-100 dark:divide-[#2a2a2a]">
+                      <div className="divide-y divide-gray-100">
                         {selectedDayPlan.map(w => (
                           <div key={w.id} className="flex items-center gap-3 px-4 py-2.5">
                             <span className="text-xl">{w.sportIcon}</span>
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 600 }}>
+                              <div className="text-sm text-gray-900" style={{ fontWeight: 600 }}>
                                 {t('sportNames.' + w.sportId) || w.sportName}
                               </div>
-                              <div className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+                              <div className="flex items-center gap-2 text-2xs text-gray-500">
                                 <span>{t('sportNames.' + resolveCategoryKey(w.sportCategory)) || w.sportCategory}</span>
                                 {w.plannedDuration && (
                                   <>
@@ -584,9 +576,9 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                                   </>
                                 )}
                                 <span className={`px-1.5 py-0.5 rounded-full font-medium ${
-                                  w.intensity === 'light' ? 'bg-green-100 dark:bg-green-500/15 text-green-600 dark:text-green-400' :
-                                  w.intensity === 'moderate' ? 'bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                                  'bg-red-100 dark:bg-red-500/15 text-red-600 dark:text-red-400'
+                                  w.intensity === 'light' ? 'bg-green-100 text-green-600' :
+                                  w.intensity === 'moderate' ? 'bg-amber-100 text-amber-600' :
+                                  'bg-red-100 text-red-600'
                                 }`}>
                                   {w.intensity === 'light' ? t("calendar.light") : w.intensity === 'moderate' ? t("calendar.moderate") : t("calendar.intense")}
                                 </span>
@@ -594,7 +586,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                             </div>
                             <button
                               onClick={() => removeWorkout(selectedDate, w.id)}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-red-400" />
                             </button>
@@ -603,17 +595,17 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                       </div>
                     ) : (
                       <div className="px-4 py-4 text-center">
-                        <Moon className="w-6 h-6 text-indigo-300 dark:text-indigo-500 mx-auto mb-1.5" />
-                        <p className="text-xs text-gray-400 dark:text-gray-500">{t("calendar.restDayAdd")}</p>
+                        <Moon className="w-6 h-6 text-indigo-300 mx-auto mb-1.5" />
+                        <p className="text-xs text-gray-400">{t("calendar.restDayAdd")}</p>
                       </div>
                     )}
 
                     {/* Add sport section */}
                     {!showSportPicker && !selectedSport && (
-                      <div className="px-4 py-3 border-t border-gray-100 dark:border-[#2a2a2a]">
+                      <div className="px-4 py-3 border-t border-gray-100">
                         <button
                           onClick={() => setShowSportPicker(true)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 dark:hover:bg-orange-500/15 text-orange-600 dark:text-orange-400 rounded-xl text-sm font-medium transition-colors border border-orange-200 dark:border-orange-500/20"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl text-sm font-medium transition-colors border border-orange-200"
                         >
                           <Plus className="w-4 h-4" />
                           {t("calendar.addWorkout")}
@@ -626,16 +618,16 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="border-t border-gray-100 dark:border-[#2a2a2a] overflow-hidden"
+                        className="border-t border-gray-100 overflow-hidden"
                       >
                         <div className="px-4 py-3">
                           <div className="flex items-center justify-between mb-2.5">
-                            <span className="text-xs text-gray-700 dark:text-gray-300" style={{ fontWeight: 600 }}>
+                            <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>
                               {t("calendar.chooseSport")}
                             </span>
                             <button
                               onClick={() => setShowSportPicker(false)}
-                              className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              className="text-2xs text-gray-400 hover:text-gray-600"
                             >
                               {t("calendar.cancel")}
                             </button>
@@ -645,10 +637,10 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                               <button
                                 key={sport.id}
                                 onClick={() => handleAddSport(sport)}
-                                className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2a2a2a] hover:border-orange-300 dark:hover:border-orange-500/40 hover:bg-orange-50 dark:hover:bg-orange-500/10 transition-all active:scale-95"
+                                className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95"
                               >
                                 <span className="text-xl">{sport.icon}</span>
-                                <span className="text-[9px] text-gray-600 dark:text-gray-400 font-medium leading-tight text-center">{t('sportNames.' + sport.id) || sport.name}</span>
+                                <span className="text-[9px] text-gray-600 font-medium leading-tight text-center">{t('sportNames.' + sport.id) || sport.name}</span>
                               </button>
                             ))}
                           </div>
@@ -661,24 +653,24 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="border-t border-gray-100 dark:border-[#2a2a2a] overflow-hidden"
+                        className="border-t border-gray-100 overflow-hidden"
                       >
                         <div className="px-4 py-3 space-y-3">
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{selectedSport.icon}</span>
                             <div className="flex-1">
-                              <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 600 }}>{t('sportNames.' + selectedSport.id) || selectedSport.name}</div>
-                              <div className="text-[10px] text-gray-500 dark:text-gray-400">{selectedSport.caloriesPerMinute} {t("calendar.kcalPerMinLabel")}</div>
+                              <div className="text-sm text-gray-900" style={{ fontWeight: 600 }}>{t('sportNames.' + selectedSport.id) || selectedSport.name}</div>
+                              <div className="text-2xs text-gray-500">{selectedSport.caloriesPerMinute} {t("calendar.kcalPerMinLabel")}</div>
                             </div>
                             <button
                               onClick={() => { setSelectedSport(null); setShowSportPicker(true); }}
-                              className="text-[10px] text-gray-400"
+                              className="text-2xs text-gray-400"
                             >
                               {t("calendar.other")}
                             </button>
                           </div>
                           <div>
-                            <label className="text-[10px] text-gray-500 dark:text-gray-400 mb-1 block font-medium">
+                            <label className="text-2xs text-gray-500 mb-1 block font-medium">
                               {t("calendar.plannedDuration")}
                             </label>
                             <input
@@ -686,12 +678,12 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                               value={durationInput}
                               onChange={(e) => setDurationInput(e.target.value)}
                               placeholder={t("calendar.exampleDuration")}
-                              className="w-full px-3 py-2.5 border border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm text-center bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-500/30"
+                              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm text-center bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-200"
                               min="1"
                             />
                           </div>
                           {durationInput && parseInt(durationInput) > 0 && (
-                            <div className="flex items-center justify-center gap-2 text-xs text-orange-600 dark:text-orange-400">
+                            <div className="flex items-center justify-center gap-2 text-xs text-orange-600">
                               <Flame className="w-3.5 h-3.5" />
                               ~{Math.round(selectedSport.caloriesPerMinute * parseInt(durationInput))} kcal
                             </div>
@@ -699,13 +691,13 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                           <div className="flex gap-2">
                             <button
                               onClick={() => { setSelectedSport(null); setShowSportPicker(false); }}
-                              className="flex-1 py-2.5 bg-gray-100 dark:bg-[#252525] text-gray-600 dark:text-gray-400 rounded-xl text-sm font-medium"
+                              className="flex-1 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium"
                             >
                               {t("calendar.cancel")}
                             </button>
                             <button
                               onClick={handleConfirmAdd}
-                              className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                              className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 active:scale-[0.98]"
                             >
                               <Check className="w-4 h-4" />
                               {t("calendar.add")}
@@ -746,12 +738,12 @@ function WeekView({ weekDays, schedule, todayKey, selectedDate, weekLabel, onPre
     <div className="px-4 py-4">
       {/* Navigation */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={onPrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#252525] transition-colors">
-          <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <button onClick={onPrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <span className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 600 }}>{weekLabel}</span>
-        <button onClick={onNext} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#252525] transition-colors">
-          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <span className="text-sm text-gray-900" style={{ fontWeight: 600 }}>{weekLabel}</span>
+        <button onClick={onNext} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+          <ChevronRight className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
@@ -771,21 +763,21 @@ function WeekView({ weekDays, schedule, todayKey, selectedDate, weekLabel, onPre
               onClick={() => onDayTap(date)}
               className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all active:scale-95 ${
                 isSelected
-                  ? 'bg-orange-500 shadow-md shadow-orange-200 dark:shadow-orange-900/30'
+                  ? 'bg-orange-500 shadow-md shadow-orange-200'
                   : isToday
-                  ? 'bg-orange-50 dark:bg-orange-500/10 border-2 border-orange-300 dark:border-orange-500/40'
+                  ? 'bg-orange-50 border-2 border-orange-300'
                   : hasPlan
-                  ? 'bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20'
-                  : 'bg-gray-50 dark:bg-[#252525] border border-gray-100 dark:border-[#2a2a2a]'
+                  ? 'bg-green-50 border border-green-200'
+                  : 'bg-gray-50 border border-gray-100'
               }`}
             >
-              <span className={`text-[10px] font-medium ${
-                isSelected ? 'text-white' : isPast ? 'text-gray-400 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'
+              <span className={`text-2xs font-medium ${
+                isSelected ? 'text-white' : isPast ? 'text-gray-400' : 'text-gray-500'
               }`}>
                 {getLocaleDayNarrow(date, language)}
               </span>
               <span className={`text-sm ${
-                isSelected ? 'text-white' : isToday ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-gray-100'
+                isSelected ? 'text-white' : isToday ? 'text-orange-600' : 'text-gray-900'
               }`} style={{ fontWeight: isToday || isSelected ? 700 : 500 }}>
                 {date.getDate()}
               </span>
@@ -794,7 +786,7 @@ function WeekView({ weekDays, schedule, todayKey, selectedDate, weekLabel, onPre
                   <span className="text-base leading-none">{dayPlan[0].sportIcon}</span>
                 ) : (
                   <div className={`w-1.5 h-1.5 rounded-full ${
-                    isSelected ? 'bg-white/40' : 'bg-gray-200 dark:bg-[#333]'
+                    isSelected ? 'bg-white/40' : 'bg-gray-200'
                   }`} />
                 )}
               </div>
@@ -814,22 +806,22 @@ function WeekView({ weekDays, schedule, todayKey, selectedDate, weekLabel, onPre
           return acc + plan.reduce((s, w) => s + (w.plannedDuration || 0), 0);
         }, 0);
         return (
-          <div className="flex items-center justify-center gap-4 mt-3 px-2 py-2 bg-gray-50 dark:bg-[#252525] rounded-xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-center gap-4 mt-3 px-2 py-2 bg-gray-50 rounded-xl">
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
               <Dumbbell className="w-3 h-3 text-orange-500" />
               <span>{weekWorkouts} {t("calendar.workoutN")}</span>
             </div>
             {weekDuration > 0 && (
               <>
-                <div className="w-px h-3 bg-gray-200 dark:bg-[#333]" />
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+                <div className="w-px h-3 bg-gray-200" />
+                <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
                   <Clock className="w-3 h-3 text-blue-500" />
                   <span>{weekDuration} {t("calendar.minUnit")}</span>
                 </div>
               </>
             )}
-            <div className="w-px h-3 bg-gray-200 dark:bg-[#333]" />
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+            <div className="w-px h-3 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
               <Moon className="w-3 h-3 text-indigo-400" />
               <span>{7 - weekDays.filter(d => (schedule[dateToKey(d)] || []).length > 0).length} {t("calendar.restN")}</span>
             </div>
@@ -875,21 +867,21 @@ function MonthView({ monthDays, monthMonth, monthYear, schedule, todayKey, selec
     <div className="px-4 py-4">
       {/* Navigation */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={onPrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#252525] transition-colors">
-          <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <button onClick={onPrev} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
         </button>
-        <span className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 600 }}>
+        <span className="text-sm text-gray-900" style={{ fontWeight: 600 }}>
           {monthYear}. {monthLabel}
         </span>
-        <button onClick={onNext} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#252525] transition-colors">
-          <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <button onClick={onNext} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+          <ChevronRight className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
       {/* Day headers */}
       <div className="grid grid-cols-7 gap-1 mb-1">
         {dayHeaders.map(d => (
-          <div key={d} className="text-center text-[10px] text-gray-400 dark:text-gray-500 font-medium py-1">{d}</div>
+          <div key={d} className="text-center text-2xs text-gray-400 font-medium py-1">{d}</div>
         ))}
       </div>
 
@@ -913,23 +905,23 @@ function MonthView({ monthDays, monthMonth, monthYear, schedule, todayKey, selec
                   : isSelected
                   ? 'bg-orange-500 shadow-sm'
                   : isToday
-                  ? 'bg-orange-50 dark:bg-orange-500/10 ring-1 ring-orange-300 dark:ring-orange-500/40'
+                  ? 'bg-orange-50 ring-1 ring-orange-300'
                   : hasPlan
-                  ? 'bg-green-50 dark:bg-green-500/10'
-                  : 'hover:bg-gray-50 dark:hover:bg-[#252525]'
+                  ? 'bg-green-50'
+                  : 'hover:bg-gray-50'
               }`}
             >
               <span className={`text-xs ${
-                isSelected ? 'text-white' : isToday ? 'text-orange-600 dark:text-orange-400' : isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'
+                isSelected ? 'text-white' : isToday ? 'text-orange-600' : isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
               }`} style={{ fontWeight: isToday || isSelected ? 700 : 400 }}>
                 {date.getDate()}
               </span>
               {hasPlan && (
-                <span className="text-[10px] leading-none mt-0.5">{dayPlan[0].sportIcon}</span>
+                <span className="text-2xs leading-none mt-0.5">{dayPlan[0].sportIcon}</span>
               )}
               {hasPlan && dayPlan.length > 1 && (
                 <div className={`absolute top-0.5 right-0.5 w-3 h-3 rounded-full text-[7px] flex items-center justify-center ${
-                  isSelected ? 'bg-white/30 text-white' : 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                  isSelected ? 'bg-white/30 text-white' : 'bg-orange-100 text-orange-600'
                 }`} style={{ fontWeight: 700 }}>
                   {dayPlan.length}
                 </div>
@@ -946,13 +938,13 @@ function MonthView({ monthDays, monthMonth, monthYear, schedule, todayKey, selec
         }, 0);
         const trainingDays = monthDays.filter(d => d.getMonth() === monthMonth && (schedule[dateToKey(d)] || []).length > 0).length;
         return (
-          <div className="flex items-center justify-center gap-4 mt-3 px-2 py-2 bg-gray-50 dark:bg-[#252525] rounded-xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-center gap-4 mt-3 px-2 py-2 bg-gray-50 rounded-xl">
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
               <Dumbbell className="w-3 h-3 text-orange-500" />
               <span>{monthWorkouts} {t("calendar.workoutN")}</span>
             </div>
-            <div className="w-px h-3 bg-gray-200 dark:bg-[#333]" />
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+            <div className="w-px h-3 bg-gray-200" />
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
               <Calendar className="w-3 h-3 text-blue-500" />
               <span>{trainingDays} {t("calendar.trainingDayN")}</span>
             </div>
