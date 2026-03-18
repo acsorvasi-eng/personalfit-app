@@ -260,7 +260,7 @@ interface DSMActionCardProps {
 }
 
 export function DSMActionCard({
-  headerGradient = "bg-gradient-to-r from-[#2563EB] to-[#12CFA6]",
+  headerGradient = "bg-primary",
   headerIcon: Icon,
   headerLabel,
   children,

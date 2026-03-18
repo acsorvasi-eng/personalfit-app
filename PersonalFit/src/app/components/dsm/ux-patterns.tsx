@@ -195,7 +195,7 @@ export function DSMCoachMark({
             {/* Got it button */}
             <button
               onClick={dismiss}
-              className="w-full mt-3 py-2 bg-gradient-to-r from-[#2563EB] to-[#12CFA6] hover:from-[#1D4ED8] hover:to-[#0ea685] text-white rounded-xl text-xs font-bold transition-colors shadow-sm"
+              className="w-full mt-3 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition-colors"
             >
               Értem! 👍
             </button>
@@ -402,7 +402,7 @@ export function DSMEmptyFlow({
 
       <button
         onClick={onAction}
-        className="w-full py-2.5 bg-gradient-to-r from-[#2563EB] to-[#12CFA6] text-white rounded-xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+        className="w-full py-2.5 bg-primary text-white rounded-xl text-sm transition-all active:scale-[0.98] hover:bg-primary-hover"
         style={{ fontWeight: 700 }}
       >
         {actionLabel}

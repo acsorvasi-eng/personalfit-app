@@ -358,7 +358,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                   <button
                     onClick={handleLog}
                     disabled={isLogging}
-                    className="w-full py-3 bg-gradient-to-r from-[#2563EB] to-[#12CFA6] text-white rounded-xl text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-primary text-white rounded-xl text-sm transition-all active:scale-[0.98] disabled:opacity-50 hover:bg-primary-hover flex items-center justify-center gap-2"
                     style={{ fontWeight: 700 }}
                   >
                     {isLogging ? (

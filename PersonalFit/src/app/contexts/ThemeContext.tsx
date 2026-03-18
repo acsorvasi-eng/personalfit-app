@@ -48,7 +48,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark: theme === 'dark', toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, isDark: false, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
