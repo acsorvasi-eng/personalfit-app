@@ -60,6 +60,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { DSMButton } from "../../../components/dsm";
 import type { FoodCategory, FoodSource } from "../../../backend/models";
 import { toast } from "sonner";
+import { GenerateMealPlanSheet } from "./GenerateMealPlanSheet";
+import { getUserProfile } from "../../../backend/services/UserProfileService";
 
 type AddFoodChipStatus = "pending" | "valid" | "invalid";
 type AddFoodChip = {
@@ -103,57 +105,57 @@ const CATEGORY_COLORS: Record<
     bg: "bg-red-50",
     text: "text-red-600",
     border: "border-red-200",
-    darkBg: "dark:bg-red-500/10",
-    darkText: "dark:text-red-400",
+    darkBg: "",
+    darkText: "",
   },
   Tejtermek: {
     bg: "bg-blue-50",
     text: "text-blue-600",
     border: "border-blue-200",
-    darkBg: "dark:bg-blue-500/10",
-    darkText: "dark:text-blue-400",
+    darkBg: "",
+    darkText: "",
   },
   "Komplex szenhidrat": {
     bg: "bg-amber-50",
     text: "text-amber-600",
     border: "border-amber-200",
-    darkBg: "dark:bg-amber-500/10",
-    darkText: "dark:text-amber-400",
+    darkBg: "",
+    darkText: "",
   },
   "Egeszseges zsir": {
-    bg: "bg-emerald-50",
-    text: "text-emerald-600",
-    border: "border-emerald-200",
-    darkBg: "dark:bg-emerald-500/10",
-    darkText: "dark:text-emerald-400",
+    bg: "bg-primary/5",
+    text: "text-primary",
+    border: "border-primary",
+    darkBg: "",
+    darkText: "",
   },
   Huvelyes: {
     bg: "bg-orange-50",
     text: "text-orange-600",
     border: "border-orange-200",
-    darkBg: "dark:bg-orange-500/10",
-    darkText: "dark:text-orange-400",
+    darkBg: "",
+    darkText: "",
   },
   Mag: {
     bg: "bg-yellow-50",
     text: "text-yellow-700",
     border: "border-yellow-200",
-    darkBg: "dark:bg-yellow-500/10",
-    darkText: "dark:text-yellow-400",
+    darkBg: "",
+    darkText: "",
   },
   Zoldseg: {
     bg: "bg-green-50",
     text: "text-green-600",
     border: "border-green-200",
-    darkBg: "dark:bg-green-500/10",
-    darkText: "dark:text-green-400",
+    darkBg: "",
+    darkText: "",
   },
   Tojas: {
     bg: "bg-purple-50",
     text: "text-purple-600",
     border: "border-purple-200",
-    darkBg: "dark:bg-purple-500/10",
-    darkText: "dark:text-purple-400",
+    darkBg: "",
+    darkText: "",
   },
 };
 
@@ -161,17 +163,17 @@ const DEFAULT_COLORS = {
   bg: "bg-gray-50",
   text: "text-gray-600",
   border: "border-gray-200",
-  darkBg: "dark:bg-gray-500/10",
-  darkText: "dark:text-gray-400",
+  darkBg: "",
+  darkText: "",
 };
 
 const SkeletonFoodItem = () => (
-  <div className="animate-pulse flex items-center justify-between p-4 mb-2 rounded-2xl border border-gray-100 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#151515]">
+  <div className="animate-pulse flex items-center justify-between p-4 mb-2 rounded-2xl border border-gray-100 bg-gray-50">
     <div className="flex-1 mr-4">
-      <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-32 mb-2" />
-      <div className="h-3 bg-gray-100 dark:bg-[#202020] rounded w-20" />
+      <div className="h-4 bg-gray-200 rounded w-32 mb-2" />
+      <div className="h-3 bg-gray-100 rounded w-20" />
     </div>
-    <div className="h-4 bg-gray-200 dark:bg-[#2a2a2a] rounded w-16" />
+    <div className="h-4 bg-gray-200 rounded w-16" />
   </div>
 );
 
@@ -253,6 +255,8 @@ export function Foods() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("Osszes");
   const [selectedFood, setSelectedFood] = useState<PlanFood | null>(null);
+  const [generateSheetOpen, setGenerateSheetOpen] = useState(false);
+  const [dailyCalorieTarget, setDailyCalorieTarget] = useState(2000);
 
   // Add Food dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -406,6 +410,15 @@ export function Foods() {
     return () => window.removeEventListener("foodsUpdated", handler);
   }, [refreshPlanFoods]);
 
+  // Load daily calorie target from user profile
+  useEffect(() => {
+    getUserProfile().then((profile) => {
+      if (profile?.calorieTarget) {
+        setDailyCalorieTarget(profile.calorieTarget);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Decide data source:
   //   - If van aktív tervhez kötött étel (planFoods) → azt használjuk
   //   - Ha nincs aktív terv → ténylegesen üres lista (EmptyState fog megjelenni)
@@ -512,12 +525,12 @@ export function Foods() {
           title={t("foods.title")}
           subtitle={t("foods.foodCount").replace("{n}", String(foods.length))}
           gradientFrom="from-blue-400"
-          gradientVia="via-emerald-400"
-          gradientTo="to-teal-500"
+          gradientVia="via-blue-500"
+          gradientTo="to-blue-600"
           stats={[
             { label: t("foods.all"), value: foods.length },
             {
-              label: "Étel hozzáadása",
+              label: t("foods.addFoodLabel"),
               value: "+",
               isAction: true,
               onClick: () => {
@@ -525,6 +538,12 @@ export function Foods() {
                 setAddResultMessage(null);
                 setLookupError(null);
               },
+            },
+            {
+              label: t("foods.aiDietLabel"),
+              value: "✨",
+              isAction: true,
+              onClick: () => setGenerateSheetOpen(true),
             },
           ]}
         />
@@ -546,20 +565,20 @@ export function Foods() {
       {/* ═══ Search — visible only on Összes tab ═══ */}
       {activeTab === "Osszes" && (
         <div className="flex-shrink-0 px-4 pt-2 pb-1">
-          <div className="relative flex items-center bg-gray-50 dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#2a2a2a] rounded-xl transition-all focus-within:border-[var(--primary)] focus-within:ring-1 focus-within:ring-[var(--primary)]/20">
-            <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 ml-3 shrink-0" />
+          <div className="relative flex items-center bg-gray-50 border border-gray-200 rounded-xl transition-all focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20">
+            <Search className="w-4 h-4 text-gray-400 ml-3 shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("foods.search")}
-              className="w-full bg-transparent py-2.5 pl-2.5 pr-3 text-[13px] text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
+              className="w-full bg-transparent py-2.5 pl-2.5 pr-3 text-[13px] text-gray-800 placeholder-gray-400 focus:outline-none"
               style={{ fontWeight: 500 }}
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="w-7 h-7 flex items-center justify-center hover:bg-gray-200/60 dark:hover:bg-[#333] rounded-full mr-1.5 shrink-0"
+                className="w-7 h-7 flex items-center justify-center hover:bg-gray-200/60 rounded-full mr-1.5 shrink-0"
               >
                 <X className="w-3.5 h-3.5 text-gray-400" />
               </button>
@@ -578,11 +597,11 @@ export function Foods() {
           </div>
         ) : filteredFoods.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-[#252525] flex items-center justify-center">
-              <Search className="w-7 h-7 text-gray-300 dark:text-gray-600" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <Search className="w-7 h-7 text-gray-300" />
             </div>
             <p
-              className="text-sm text-gray-500 dark:text-gray-400"
+              className="text-sm text-gray-500"
               style={{ fontWeight: 600 }}
             >
               {t("foods.noResults")}
@@ -648,6 +667,18 @@ export function Foods() {
         )}
       </AnimatePresence>
 
+      {/* ═══ Generate Meal Plan Sheet ═══ */}
+      <GenerateMealPlanSheet
+        open={generateSheetOpen}
+        onClose={() => setGenerateSheetOpen(false)}
+        foods={foods}
+        dailyCalorieTarget={dailyCalorieTarget}
+        onSaved={() => {
+          refreshPlanFoods();
+          appData.refresh();
+        }}
+      />
+
       {/* ═══ Add Food Dialog ═══ */}
       <Dialog open={addDialogOpen} onOpenChange={(open) => {
         setAddDialogOpen(open);
@@ -658,7 +689,7 @@ export function Foods() {
           }
         }
       }}>
-        <DialogContent className="max-w-md sm:max-w-lg bg-white dark:bg-[#121212] rounded-2xl shadow-xl border border-gray-100 dark:border-[#2a2a2a] p-5 sm:p-6 space-y-4">
+        <DialogContent className="max-w-md sm:max-w-lg bg-white rounded-2xl shadow-xl border border-gray-100 p-5 sm:p-6 space-y-4">
           <DialogHeader>
             <DialogTitle>Étel hozzáadása</DialogTitle>
             <DialogDescription>
@@ -684,7 +715,7 @@ export function Foods() {
                   (window as any).webkitSpeechRecognition ||
                   (window as any).SpeechRecognition;
                 if (!SR) {
-                  setLookupError("A böngésződ nem támogatja a hangfelismerést.");
+                  setLookupError(t("foods.voiceNotSupported"));
                   console.warn("[AddFood][Voice] SpeechRecognition not supported in this browser");
                   return;
                 }
@@ -748,14 +779,14 @@ export function Foods() {
             >
               <Mic className="w-7 h-7" />
             </button>
-            <span className="text-[11px] text-gray-500 dark:text-gray-400">
-              {isListening ? "Felvétel folyamatban..." : "Koppints a mikrofonra, és mondd be az ételeket"}
+            <span className="text-[11px] text-gray-500">
+              {isListening ? t("foods.voiceRecording") : t("foods.voiceInstruction")}
             </span>
           </div>
 
           {/* CHIP INPUT AREA – the whole container behaves as an input */}
           <div
-            className="mt-3 min-h-[72px] rounded-2xl border-2 border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1E1E1E] px-3 py-2 flex flex-wrap items-center gap-2 cursor-text"
+            className="mt-3 min-h-[72px] rounded-2xl border-2 border-gray-200 bg-white px-3 py-2 flex flex-wrap items-center gap-2 cursor-text"
             onClick={() => {
               if (hiddenTextInputRef.current) {
                 hiddenTextInputRef.current.focus();
@@ -769,7 +800,7 @@ export function Foods() {
               const baseClasses =
                 "px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 border";
               const styleClasses = isValid
-                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                ? "bg-primary/10 border-primary text-primary"
                 : isInvalid
                 ? "bg-red-50 border-red-200 text-red-700"
                 : "bg-gray-50 border-gray-200 text-gray-700";
@@ -786,7 +817,7 @@ export function Foods() {
                     onClick={() =>
                       setChips(prev => prev.filter(c => c.id !== chip.id))
                     }
-                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-[10px]"
+                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-2xs"
                   >
                     ×
                   </button>
@@ -812,7 +843,7 @@ export function Foods() {
                 }
               }}
               className="bg-transparent border-none outline-none text-sm min-w-[40px]"
-              placeholder={chips.length === 0 ? "pl. pisztráng, dió, jégsaláta..." : ""}
+              placeholder={chips.length === 0 ? t("foods.voicePlaceholder") : ""}
             />
           </div>
 
@@ -821,7 +852,7 @@ export function Foods() {
               <p className="text-xs text-red-500">{lookupError}</p>
             )}
             {addResultMessage && (
-              <p className="text-xs text-emerald-500">{addResultMessage}</p>
+              <p className="text-xs text-primary">{addResultMessage}</p>
             )}
           </div>
 
@@ -861,16 +892,16 @@ export function Foods() {
                   const result = await createFoodsBatch(inputs as any);
                   const createdCount = result.created.length;
                   console.log("[AddFood] createFoodsBatch result:", result);
-                  setAddResultMessage(`${createdCount} étel hozzáadva`);
+                  setAddResultMessage(t("foods.foodAdded").replace("{n}", String(createdCount)));
                   if (createdCount > 0) {
-                    toast.success(`${createdCount} étel hozzáadva ✓`);
+                    toast.success(t("foods.foodAddedToast").replace("{n}", String(createdCount)));
                     // Frissítsük a Foods listát azonnal
                     appData.refresh();
                     setAddDialogOpen(false);
                     setChips([]);
                   }
                 } catch (e: any) {
-                  setLookupError(e.message || "Nem sikerült elmenteni az ételeket.");
+                  setLookupError(e.message || t("foods.foodSaveFailed"));
                 } finally {
                   setAddingFoods(false);
                 }
@@ -912,13 +943,13 @@ function FoodCard({
   return (
     <button
       onClick={onTap}
-      className="w-full bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-[#2a2a2a]/60 p-4 text-left active:scale-[0.98] transition-all group hover:shadow-md hover:border-gray-200 dark:hover:border-[#333]"
+      className="w-full bg-white rounded-2xl border border-gray-100 p-4 text-left active:scale-[0.98] transition-all group hover:shadow-md hover:border-gray-200"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left: Name + category label */}
         <div className="flex-1 min-w-0">
           <h3
-            className="text-[var(--text-base)] text-gray-800 dark:text-gray-100 truncate"
+            className="text-[var(--text-base)] text-gray-800 truncate"
             style={{ fontWeight: 600, fontFamily: "var(--font-family-base)" }}
           >
             {translateFoodName(food.name, language)}
@@ -926,7 +957,7 @@ function FoodCard({
           {showCategoryLabel && (
             <div className="flex items-center gap-1.5 mt-1">
               <span
-                className={`text-[var(--text-xs)] ${colors.text} ${colors.darkText}`}
+                className={`text-[var(--text-xs)] ${colors.text}`}
                 style={{ fontWeight: 600 }}
               >
                 {catLabel}
@@ -944,29 +975,29 @@ function FoodCard({
               e.stopPropagation();
               onToggleFavorite();
             }}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-rose-50 cursor-pointer"
           >
             <Heart
               className={`w-4 h-4 transition-colors ${
                 isFavorite
                   ? "text-rose-500 fill-rose-500"
-                  : "text-gray-300 dark:text-gray-600"
+                  : "text-gray-300"
               }`}
             />
           </motion.div>
           {/* Calories badge */}
           <div className="text-right">
             <span
-              className="text-[var(--text-sm)] text-gray-700 dark:text-gray-200"
+              className="text-[var(--text-sm)] text-gray-700"
               style={{ fontWeight: 700 }}
             >
               {food.calories}
             </span>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-0.5">
+            <span className="text-2xs text-gray-400 ml-0.5">
               kcal
             </span>
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-400" />
+          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-400" />
         </div>
       </div>
     </button>
@@ -1011,7 +1042,7 @@ function FoodDetailSheet({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed inset-0 z-50 bg-white dark:bg-[var(--background)] flex flex-col"
+        className="fixed inset-0 z-50 bg-white flex flex-col"
       >
         {/* ─── Header ─── */}
         <div className="flex-shrink-0 bg-gradient-to-br from-[var(--color-primary-500)] via-[var(--color-primary-600)] to-[var(--color-secondary-500)] px-5 pt-5 pb-5 relative overflow-hidden">
@@ -1029,7 +1060,7 @@ function FoodDetailSheet({
                 </div>
                 <div>
                   <h1
-                    className="text-[20px] text-white"
+                    className="text-xl text-white"
                     style={{
                       fontWeight: 700,
                       fontFamily: "var(--font-family-display)",
@@ -1037,7 +1068,7 @@ function FoodDetailSheet({
                   >
                     {food.name}
                   </h1>
-                  <span className="text-[12px] text-white/70 bg-white/15 px-2 py-0.5 rounded">
+                  <span className="text-xs text-white/70 bg-white/15 px-2 py-0.5 rounded">
                     {catLabel}
                   </span>
                 </div>
@@ -1073,13 +1104,13 @@ function FoodDetailSheet({
                 <Flame className="w-3.5 h-3.5 text-white/80" />
                 <div>
                   <span
-                    className="text-[10px] text-white/60 block"
+                    className="text-2xs text-white/60 block"
                     style={{ fontWeight: 500 }}
                   >
                     {t("foods.calories")}
                   </span>
                   <span
-                    className="text-[14px] text-white"
+                    className="text-sm text-white"
                     style={{ fontWeight: 700 }}
                   >
                     {food.calories} kcal
@@ -1090,7 +1121,7 @@ function FoodDetailSheet({
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/15 border border-white/10">
                 <Info className="w-3.5 h-3.5 text-white/80" />
                 <span
-                  className="text-[10px] text-white/60"
+                  className="text-2xs text-white/60"
                   style={{ fontWeight: 500 }}
                 >
                   {t("foods.nutritionPer100g")}
@@ -1105,9 +1136,9 @@ function FoodDetailSheet({
           <div className="px-4 py-4 space-y-4">
             {/* Description */}
             {food.description && (
-              <div className="bg-gray-50 dark:bg-[#1a1a1a] rounded-xl p-3">
+              <div className="bg-gray-50 rounded-xl p-3">
                 <p
-                  className="text-[13px] text-gray-600 dark:text-gray-400"
+                  className="text-[13px] text-gray-600"
                   style={{ fontWeight: 500 }}
                 >
                   {food.description}
@@ -1120,7 +1151,7 @@ function FoodDetailSheet({
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-[var(--color-primary-500)]" />
                 <span
-                  className="text-[12px] text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                  className="text-xs text-gray-500 uppercase tracking-wider"
                   style={{ fontWeight: 700 }}
                 >
                   {t("foods.macroRatio")}
@@ -1128,21 +1159,21 @@ function FoodDetailSheet({
               </div>
 
               {/* Macro bar (large) */}
-              <div className="h-3 rounded-full bg-gray-100 dark:bg-[#252525] overflow-hidden flex mb-4">
+              <div className="h-3 rounded-full bg-gray-100 overflow-hidden flex mb-4">
                 <motion.div
-                  className="h-full bg-red-400 dark:bg-red-500 rounded-l-full"
+                  className="h-full bg-red-400 rounded-l-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${macros.protein}%` }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
                 <motion.div
-                  className="h-full bg-amber-400 dark:bg-amber-500"
+                  className="h-full bg-amber-400"
                   initial={{ width: 0 }}
                   animate={{ width: `${macros.carbs}%` }}
                   transition={{ duration: 0.5, ease: "easeOut", delay: 0.05 }}
                 />
                 <motion.div
-                  className="h-full bg-blue-400 dark:bg-blue-500 rounded-r-full"
+                  className="h-full bg-blue-400 rounded-r-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${macros.fat}%` }}
                   transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
@@ -1152,70 +1183,70 @@ function FoodDetailSheet({
               {/* Macro cards */}
               <div className="grid grid-cols-3 gap-2">
                 {/* Protein */}
-                <div className="rounded-xl border border-red-100 dark:border-red-500/20 bg-red-50 dark:bg-red-500/5 p-3">
+                <div className="rounded-xl border border-red-100 bg-red-50 p-3">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-red-400 dark:bg-red-500" />
+                    <div className="w-2 h-2 rounded-full bg-red-400" />
                     <span
-                      className="text-[10px] text-red-500 dark:text-red-400 uppercase"
+                      className="text-2xs text-red-500 uppercase"
                       style={{ fontWeight: 700 }}
                     >
                       {t("foods.protein")}
                     </span>
                   </div>
                   <span
-                    className="text-[18px] text-red-600 dark:text-red-400"
+                    className="text-lg text-red-600"
                     style={{ fontWeight: 700 }}
                   >
                     {food.protein}
                     <span className="text-[11px]">g</span>
                   </span>
-                  <p className="text-[9px] text-red-400 dark:text-red-500/70 mt-0.5">
+                  <p className="text-[9px] text-red-400 mt-0.5">
                     {macros.protein}%
                   </p>
                 </div>
 
                 {/* Carbs */}
-                <div className="rounded-xl border border-amber-100 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/5 p-3">
+                <div className="rounded-xl border border-amber-100 bg-amber-50 p-3">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 dark:bg-amber-500" />
+                    <div className="w-2 h-2 rounded-full bg-amber-400" />
                     <span
-                      className="text-[10px] text-amber-600 dark:text-amber-400 uppercase"
+                      className="text-2xs text-amber-600 uppercase"
                       style={{ fontWeight: 700 }}
                     >
                       {t("foods.carbs")}
                     </span>
                   </div>
                   <span
-                    className="text-[18px] text-amber-600 dark:text-amber-400"
+                    className="text-lg text-amber-600"
                     style={{ fontWeight: 700 }}
                   >
                     {food.carbs}
                     <span className="text-[11px]">g</span>
                   </span>
-                  <p className="text-[9px] text-amber-400 dark:text-amber-500/70 mt-0.5">
+                  <p className="text-[9px] text-amber-400 mt-0.5">
                     {macros.carbs}%
                   </p>
                 </div>
 
                 {/* Fat */}
-                <div className="rounded-xl border border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/5 p-3">
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-2 h-2 rounded-full bg-blue-400 dark:bg-blue-500" />
+                    <div className="w-2 h-2 rounded-full bg-blue-400" />
                     <span
-                      className="text-[10px] text-blue-600 dark:text-blue-400 uppercase"
+                      className="text-2xs text-blue-600 uppercase"
                       style={{ fontWeight: 700 }}
                     >
                       {t("foods.fat")}
                     </span>
                   </div>
                   <span
-                    className="text-[18px] text-blue-600 dark:text-blue-400"
+                    className="text-lg text-blue-600"
                     style={{ fontWeight: 700 }}
                   >
                     {food.fat}
                     <span className="text-[11px]">g</span>
                   </span>
-                  <p className="text-[9px] text-blue-400 dark:text-blue-500/70 mt-0.5">
+                  <p className="text-[9px] text-blue-400 mt-0.5">
                     {macros.fat}%
                   </p>
                 </div>
@@ -1228,7 +1259,7 @@ function FoodDetailSheet({
                 <div className="flex items-center gap-2 mb-3">
                   <Heart className="w-4 h-4 text-[var(--color-secondary-500)]" />
                   <span
-                    className="text-[12px] text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    className="text-xs text-gray-500 uppercase tracking-wider"
                     style={{ fontWeight: 700 }}
                   >
                     {t("foods.benefitsLabel")}
@@ -1241,16 +1272,16 @@ function FoodDetailSheet({
                       initial={{ opacity: 0, x: -6 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.04, duration: 0.2 }}
-                      className="flex items-center gap-3 py-2.5 px-3.5 rounded-xl bg-[var(--color-secondary-50)] dark:bg-[var(--color-secondary-500)]/5 border border-[var(--color-secondary-100)] dark:border-[var(--color-secondary-500)]/15"
+                      className="flex items-center gap-3 py-2.5 px-3.5 rounded-xl bg-primary/5 border border-primary/20"
                     >
                       <span
-                        className="w-6 h-6 rounded-full bg-[var(--color-secondary-100)] dark:bg-[var(--color-secondary-500)]/15 flex items-center justify-center text-[11px] text-[var(--color-secondary-600)] dark:text-[var(--color-secondary-400)] shrink-0"
+                        className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[11px] text-primary shrink-0"
                         style={{ fontWeight: 700 }}
                       >
                         {i + 1}
                       </span>
                       <span
-                        className="text-[13px] text-gray-700 dark:text-gray-300"
+                        className="text-[13px] text-gray-700"
                         style={{ fontWeight: 500 }}
                       >
                         {benefit}
@@ -1265,9 +1296,9 @@ function FoodDetailSheet({
             {food.suitableFor.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <UtensilsCrossed className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                  <UtensilsCrossed className="w-4 h-4 text-gray-400" />
                   <span
-                    className="text-[12px] text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    className="text-xs text-gray-500 uppercase tracking-wider"
                     style={{ fontWeight: 700 }}
                   >
                     {t("foods.suitableForLabel")}
@@ -1277,7 +1308,7 @@ function FoodDetailSheet({
                   {food.suitableFor.map((meal, i) => (
                     <span
                       key={i}
-                      className="text-[12px] text-[var(--color-primary-600)] dark:text-[var(--color-primary-400)] bg-[var(--color-primary-50)] dark:bg-[var(--color-primary-500)]/10 border border-[var(--color-primary-100)] dark:border-[var(--color-primary-500)]/20 px-3 py-1.5 rounded-lg"
+                      className="text-xs text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-lg"
                       style={{ fontWeight: 600 }}
                     >
                       {meal}
@@ -1288,9 +1319,9 @@ function FoodDetailSheet({
             )}
 
             {/* ── Footer note ── */}
-            <div className="rounded-xl bg-gray-50 dark:bg-[#1a1a1a] p-3 mt-2">
+            <div className="rounded-xl bg-gray-50 p-3 mt-2">
               <p
-                className="text-[11px] text-gray-400 dark:text-gray-500 text-center"
+                className="text-[11px] text-gray-400 text-center"
                 style={{ fontWeight: 500 }}
               >
                 {t("foods.fromMealPlan")}

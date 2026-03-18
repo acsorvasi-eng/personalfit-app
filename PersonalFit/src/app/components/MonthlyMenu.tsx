@@ -101,7 +101,7 @@ export function MonthlyMenu() {
         title={t('monthly.title')}
         subtitle={`${getMonthName(selectedMonth)} ${selectedYear} - 28 ${t('menu.dayPlan')}`}
         gradientFrom="from-blue-400"
-        gradientTo="to-indigo-500"
+        gradientTo="to-blue-600"
         onClose={handleClose}
         stats={[
           {
@@ -127,7 +127,7 @@ export function MonthlyMenu() {
             </button>
             
             <div className="text-center">
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-heading font-bold text-foreground">
                 {getMonthName(selectedMonth)} {selectedYear}
               </h2>
               <p className="text-xs text-gray-600">
@@ -159,14 +159,14 @@ export function MonthlyMenu() {
               <div 
                 key={dateKey} 
                 className={`bg-white rounded-xl shadow-sm overflow-hidden border-2 ${
-                  todayFlag ? 'border-blue-500' : 'border-transparent'
+                  todayFlag ? 'border-primary' : 'border-transparent'
                 }`}
               >
                 <button
                   onClick={() => toggleDay(dateKey)}
                   className={`w-full px-4 py-4 flex items-center justify-between transition-all ${
                     todayFlag 
-                      ? 'bg-gradient-to-r from-blue-50 to-teal-50' 
+                      ? 'bg-primary/5' 
                       : pastFlag 
                       ? 'bg-gray-50' 
                       : 'hover:bg-gray-50'
@@ -174,14 +174,12 @@ export function MonthlyMenu() {
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-full flex flex-col items-center justify-center font-bold ${
-                      todayFlag 
-                        ? 'bg-blue-500 text-white' 
-                        : pastFlag
+                      pastFlag && !todayFlag
                         ? 'bg-gray-300 text-gray-600'
-                        : 'bg-blue-500 text-white'
+                        : 'bg-primary text-white'
                     }`}>
                       <span className="text-lg leading-tight">{day}</span>
-                      <span className="text-[10px] leading-tight opacity-80">{monthShort}</span>
+                      <span className="text-2xs leading-tight opacity-80">{monthShort}</span>
                     </div>
                     <div className="text-left">
                       <h3 className="font-semibold text-gray-900">
@@ -189,7 +187,7 @@ export function MonthlyMenu() {
                       </h3>
                       <p className="text-xs text-gray-500">
                         {t('menu.day')} {mealData.dayInPlan} • {mealData.week.week}. {t('common.week')}
-                        {todayFlag && <span className="ml-2 text-blue-600 font-semibold">• {t('menu.today').toUpperCase()}</span>}
+                        {todayFlag && <span className="ml-2 text-primary font-semibold">• {t('menu.today').toUpperCase()}</span>}
                       </p>
                     </div>
                   </div>
@@ -267,7 +265,7 @@ function MealSection({ title, meals }: MealSectionProps) {
               <span className="font-medium text-sm text-gray-900">
                 {meals.length > 1 ? `${t('monthly.option')} ${index + 1}: ` : ""}{meal.name}
               </span>
-              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+              <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded">
                 {meal.calories}
               </span>
             </div>

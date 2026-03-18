@@ -26,6 +26,7 @@ import {
   Trash2, AlertCircle, Flame,
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { DSMButton } from './dsm';
 import { foodDatabase, type Food } from '../data/mealData';
 import { foodKnowledge } from '../data/aiFoodKnowledge';
 import type { FoodItem as AIFoodItem } from '../data/aiFoodKnowledge';
@@ -373,39 +374,35 @@ export function ManualMealInput() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#0f0f0f] dark:to-[#121212] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/80 dark:bg-[#121212]/80 backdrop-blur-xl border-b border-gray-100 dark:border-[#2a2a2a]">
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="w-9" />
           <div className="text-center">
-            <h1 className="text-sm text-gray-900 dark:text-white" style={{ fontWeight: 600 }}>
+            <h1 className="text-sm text-foreground" style={{ fontWeight: 600 }}>
               {t('manualInput.title')}
             </h1>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500">
+            <p className="text-2xs text-gray-500">
               {completedDaysCount}/{TOTAL_DAYS} {t('manualInput.daysCompleted')}
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="w-9 h-9 rounded-full bg-gray-200/80 dark:bg-white/10 flex items-center justify-center hover:bg-gray-300/80 dark:hover:bg-white/20 transition-all"
+            className="w-9 h-9 rounded-full bg-gray-200/80 flex items-center justify-center hover:bg-gray-300/80 transition-all"
             aria-label="Close"
           >
-            <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <X className="w-5 h-5 text-gray-700" />
           </button>
-          <button
+          <DSMButton
+            variant={completedDaysCount > 0 ? 'primary' : 'secondary'}
+            size="sm"
             onClick={handleFinishPlan}
             disabled={completedDaysCount === 0 || isSaving}
-            className={`px-3 py-1.5 rounded-lg text-[11px] transition-all ${
-              completedDaysCount > 0
-                ? 'bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white shadow-md'
-                : 'bg-gray-100 dark:bg-[#252525] text-gray-400'
-            }`}
-            style={{ fontWeight: 600 }}
           >
             {isSaving ? '...' : t('manualInput.finish')}
-          </button>
+          </DSMButton>
         </div>
 
         {/* Day Selector */}
@@ -425,10 +422,10 @@ export function ManualMealInput() {
                     onClick={() => setCurrentDay(day)}
                     className={`w-9 h-9 rounded-full text-[11px] transition-all flex flex-col items-center justify-center ${
                       day === currentDay
-                        ? 'bg-gradient-to-br from-[#3366FF] to-[#12CFA6] text-white shadow-md'
+                        ? 'bg-primary text-white shadow-md'
                         : hasData
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                          : 'bg-gray-50 dark:bg-[#1e1e1e] text-gray-500 dark:text-gray-400'
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'bg-gray-50 text-gray-500'
                     }`}
                     style={{ fontWeight: day === currentDay ? 700 : 500, minWidth: '36px' }}
                   >
@@ -455,10 +452,10 @@ export function ManualMealInput() {
               <button
                 key={slot.key}
                 onClick={() => setActiveSlot(slot.key)}
-                className={`flex-1 py-2 rounded-xl text-[10px] transition-all ${
+                className={`flex-1 py-2 rounded-xl text-2xs transition-all ${
                   activeSlot === slot.key
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'bg-gray-50 dark:bg-[#1e1e1e] text-gray-500 dark:text-gray-400'
+                    ? 'bg-primary/10 text-primary shadow-sm'
+                    : 'bg-gray-50 text-gray-500'
                 }`}
                 style={{ fontWeight: activeSlot === slot.key ? 600 : 500 }}
               >
@@ -477,8 +474,8 @@ export function ManualMealInput() {
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="text-center">
-            <span className="text-lg text-gray-900 dark:text-white" style={{ fontWeight: 700 }}>{dayTotals.calories}</span>
-            <span className="text-[10px] text-gray-400 block">kcal</span>
+            <span className="text-lg text-foreground" style={{ fontWeight: 700 }}>{dayTotals.calories}</span>
+            <span className="text-2xs text-gray-400 block">kcal</span>
           </div>
           <div className="flex gap-2">
             {[
@@ -486,7 +483,7 @@ export function ManualMealInput() {
               { label: 'Sz', value: dayTotals.carbs, color: 'text-amber-500' },
               { label: 'Zs', value: dayTotals.fat, color: 'text-red-400' },
             ].map(m => (
-              <span key={m.label} className={`text-[10px] ${m.color}`} style={{ fontWeight: 500 }}>
+              <span key={m.label} className={`text-2xs ${m.color}`} style={{ fontWeight: 500 }}>
                 {m.label}: {m.value}g
               </span>
             ))}
@@ -494,10 +491,10 @@ export function ManualMealInput() {
         </div>
         <button
           onClick={toggleTrainingDay}
-          className={`px-3 py-1.5 rounded-lg text-[10px] transition-all ${
+          className={`px-3 py-1.5 rounded-lg text-2xs transition-all ${
             dayData.isTrainingDay
-              ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
-              : 'bg-gray-100 dark:bg-[#252525] text-gray-500 dark:text-gray-400'
+              ? 'bg-orange-100 text-orange-600'
+              : 'bg-gray-100 text-gray-500'
           }`}
           style={{ fontWeight: 500 }}
         >
@@ -517,18 +514,18 @@ export function ManualMealInput() {
           >
             {dayData[activeSlot].length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-gray-50 dark:bg-[#1e1e1e] flex items-center justify-center mb-3">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
                   {MEAL_SLOTS.find(s => s.key === activeSlot)?.icon && (
                     (() => {
                       const Icon = MEAL_SLOTS.find(s => s.key === activeSlot)!.icon;
-                      return <Icon className="w-6 h-6 text-gray-300 dark:text-gray-600" />;
+                      return <Icon className="w-6 h-6 text-gray-300" />;
                     })()
                   )}
                 </div>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mb-1" style={{ fontWeight: 500 }}>
+                <p className="text-sm text-gray-400 mb-1" style={{ fontWeight: 500 }}>
                   {t('manualInput.emptySlot')}
                 </p>
-                <p className="text-[11px] text-gray-300 dark:text-gray-600">
+                <p className="text-[11px] text-gray-300">
                   {t('manualInput.tapAdd')}
                 </p>
               </div>
@@ -543,16 +540,16 @@ export function ManualMealInput() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center gap-3 p-3 bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm"
+                      className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-50 to-teal-50 dark:from-blue-900/20 dark:to-teal-900/20 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-lg bg-primary/5 flex items-center justify-center">
                         <Flame className="w-4 h-4 text-orange-400" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900 dark:text-white truncate" style={{ fontWeight: 500 }}>
+                        <p className="text-sm text-foreground truncate" style={{ fontWeight: 500 }}>
                           {item.name}
                         </p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-2xs text-gray-400">
                           {item.quantityGrams}g · {itemCal} kcal ·{' '}
                           F:{Math.round(item.proteinPer100g * mult)}g{' '}
                           Sz:{Math.round(item.carbsPer100g * mult)}g{' '}
@@ -561,7 +558,7 @@ export function ManualMealInput() {
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -576,7 +573,7 @@ export function ManualMealInput() {
         {/* Add Food Button */}
         <button
           onClick={() => setShowSearch(true)}
-          className="mt-4 w-full py-3 rounded-xl border-2 border-dashed border-gray-200 dark:border-[#333] text-sm text-gray-400 dark:text-gray-500 hover:border-blue-300 dark:hover:border-blue-700 hover:text-blue-500 transition-all flex items-center justify-center gap-2"
+          className="mt-4 w-full py-3 rounded-xl border-2 border-dashed border-border text-sm text-gray-400 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
           style={{ fontWeight: 500 }}
         >
           <Plus className="w-4 h-4" />
@@ -599,12 +596,12 @@ export function ManualMealInput() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#1a1a1a] rounded-t-3xl max-h-[85vh] flex flex-col"
+              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[85vh] flex flex-col"
               onClick={e => e.stopPropagation()}
             >
               {/* Sheet Header */}
-              <div className="px-5 pt-4 pb-3 border-b border-gray-100 dark:border-[#2a2a2a]">
-                <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto mb-3" />
+              <div className="px-5 pt-4 pb-3 border-b border-border">
+                <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-3" />
                 <div className="flex items-center gap-3">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -614,7 +611,7 @@ export function ManualMealInput() {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       placeholder={t('manualInput.searchPlaceholder')}
-                      className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-gray-50 dark:bg-[#252525] text-sm text-gray-900 dark:text-white placeholder-gray-400 border border-gray-100 dark:border-[#333] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                      className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-gray-50 text-sm text-foreground placeholder-gray-400 border border-border focus:outline-none focus:ring-2 focus:ring-primary/30"
                       autoFocus
                     />
                     {searchQuery && (
@@ -632,9 +629,9 @@ export function ManualMealInput() {
               {/* Adding Item Detail */}
               {addingItem ? (
                 <div className="px-5 py-4 flex-1">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
-                    <h3 className="text-sm text-gray-900 dark:text-white mb-1" style={{ fontWeight: 600 }}>{addingItem.name}</h3>
-                    <div className="flex gap-3 text-[10px] text-gray-500 dark:text-gray-400">
+                  <div className="bg-primary/5 rounded-xl p-4 mb-4">
+                    <h3 className="text-sm text-foreground mb-1" style={{ fontWeight: 600 }}>{addingItem.name}</h3>
+                    <div className="flex gap-3 text-2xs text-gray-500">
                       <span>{addingItem.caloriesPer100g} kcal/100g</span>
                       <span>F: {addingItem.proteinPer100g}g</span>
                       <span>Sz: {addingItem.carbsPer100g}g</span>
@@ -649,15 +646,15 @@ export function ManualMealInput() {
                     type="number"
                     value={addQuantity}
                     onChange={e => setAddQuantity(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#252525] text-gray-900 dark:text-white border border-gray-100 dark:border-[#333] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary/30"
                     min="1"
                     max="5000"
                   />
 
                   {/* Calculated values */}
                   {addQuantity && (
-                    <div className="mt-3 p-3 bg-gray-50 dark:bg-[#1e1e1e] rounded-xl">
-                      <p className="text-[10px] text-gray-400 mb-1">{t('manualInput.calculated')}:</p>
+                    <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+                      <p className="text-2xs text-gray-400 mb-1">{t('manualInput.calculated')}:</p>
                       <div className="flex gap-4 text-sm">
                         <span className="text-orange-500" style={{ fontWeight: 600 }}>
                           {Math.round(addingItem.caloriesPer100g * (parseInt(addQuantity) || 0) / 100)} kcal
@@ -669,14 +666,14 @@ export function ManualMealInput() {
                     </div>
                   )}
 
-                  <button
+                  <DSMButton
+                    variant="primary"
+                    className="mt-4 w-full"
                     onClick={addFoodItem}
-                    className="mt-4 w-full py-3 rounded-xl bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white text-sm shadow-lg active:scale-[0.98] transition-transform"
-                    style={{ fontWeight: 600 }}
                   >
                     <Plus className="w-4 h-4 inline mr-1" />
                     {t('manualInput.addToMeal')}
-                  </button>
+                  </DSMButton>
                 </div>
               ) : (
                 /* Search Results */
@@ -691,14 +688,14 @@ export function ManualMealInput() {
                               setAddingItem(food);
                               if (navigator.vibrate) navigator.vibrate(10);
                             }}
-                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors text-left"
+                            className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
                           >
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-100 to-teal-100 dark:from-blue-900/30 dark:to-teal-900/30 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                               <UtensilsCrossed className="w-3.5 h-3.5 text-blue-500" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-900 dark:text-white truncate" style={{ fontWeight: 500 }}>{food.name}</p>
-                              <p className="text-[10px] text-gray-400">{food.caloriesPer100g} kcal/100g · {food.category}</p>
+                              <p className="text-sm text-foreground truncate" style={{ fontWeight: 500 }}>{food.name}</p>
+                              <p className="text-2xs text-gray-400">{food.caloriesPer100g} kcal/100g · {food.category}</p>
                             </div>
                             <ChevronRight className="w-4 h-4 text-gray-300" />
                           </button>
@@ -712,8 +709,8 @@ export function ManualMealInput() {
                     )
                   ) : (
                     <div className="text-center py-8">
-                      <Search className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400 dark:text-gray-500">{t('manualInput.typeToSearch')}</p>
+                      <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400">{t('manualInput.typeToSearch')}</p>
                     </div>
                   )}
                 </div>
@@ -724,18 +721,18 @@ export function ManualMealInput() {
       </AnimatePresence>
 
       {/* Progress Bar (fixed bottom) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-[#121212]/90 backdrop-blur-xl border-t border-gray-100 dark:border-[#2a2a2a] px-4 py-3 z-30">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-border px-4 py-3 z-30">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] text-gray-400" style={{ fontWeight: 500 }}>
+          <span className="text-2xs text-gray-400" style={{ fontWeight: 500 }}>
             {t('manualInput.progress')}
           </span>
-          <span className="text-[10px] text-blue-500" style={{ fontWeight: 600 }}>
+          <span className="text-2xs text-primary" style={{ fontWeight: 600 }}>
             {Math.round((completedDaysCount / TOTAL_DAYS) * 100)}%
           </span>
         </div>
-        <div className="h-1.5 bg-gray-100 dark:bg-[#252525] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-[#3366FF] to-[#12CFA6] rounded-full"
+            className="h-full bg-primary rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${(completedDaysCount / TOTAL_DAYS) * 100}%` }}
             transition={{ duration: 0.5 }}

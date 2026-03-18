@@ -558,7 +558,7 @@ export function LogMeal() {
   if (successData) {
     const { name: addedFoodName, kcal, protein, carbs, fat } = successData;
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-blue-100 dark:from-[#121212] dark:via-[#121212] dark:to-[#1E1E1E]">
+      <div className="min-h-screen bg-background">
         <style>{`@keyframes scaleIn {
   from { transform: scale(0); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
@@ -587,7 +587,7 @@ export function LogMeal() {
               width: "4rem",
               height: "4rem",
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #3b82f6, #14b8a6)",
+              background: "var(--primary)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -617,7 +617,6 @@ export function LogMeal() {
               color: "#111827",
               marginBottom: "0.5rem",
             }}
-            className="dark:text-gray-100"
           >
             {t("calorieCalculator.successTitle")}
           </div>
@@ -627,7 +626,6 @@ export function LogMeal() {
               fontSize: "0.9rem",
               marginBottom: "0.5rem",
             }}
-            className="dark:text-gray-400"
           >
             {addedFoodName}
           </div>
@@ -640,10 +638,9 @@ export function LogMeal() {
               borderRadius: "1rem",
               padding: "1rem 1.5rem",
             }}
-            className="dark:bg-gray-800/50"
           >
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontWeight: 700, color: "#111827" }} className="dark:text-gray-100">
+              <div style={{ fontWeight: 700, color: "#111827" }}>
                 {kcal}
               </div>
               <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>kcal</div>
@@ -663,7 +660,6 @@ export function LogMeal() {
           </div>
           <div
             style={{ color: "#9ca3af", fontSize: "0.8rem", marginTop: "1.5rem" }}
-            className="dark:text-gray-500"
           >
             {t("calorieCalculator.successBack")}
           </div>
@@ -673,15 +669,15 @@ export function LogMeal() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-blue-100 dark:from-[#121212] dark:via-[#121212] dark:to-[#1E1E1E]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <PageHeader
         onClose={handleClose}
         title={t("logMealExt.headerTitle")}
         subtitle={t("logMealExt.headerSubtitle")}
         gradientFrom="from-blue-400"
-        gradientVia="via-emerald-400"
-        gradientTo="to-teal-500"
+        gradientVia="via-blue-500"
+        gradientTo="to-blue-600"
         action={
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/10">
             <Sparkles className="w-5 h-5 text-yellow-300" />
@@ -703,10 +699,10 @@ export function LogMeal() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Search Input */}
-        <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg p-6 space-y-4" ref={dropdownRef}>
+        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4" ref={dropdownRef}>
           <div className="flex items-center gap-3">
             <Search className="w-5 h-5 text-blue-600" />
-            <h2 className="font-bold text-lg text-gray-900 dark:text-gray-100">{t("logMealExt.whatDidYouEat")}</h2>
+            <h2 className="font-bold text-lg text-foreground">{t("logMealExt.whatDidYouEat")}</h2>
           </div>
 
           {/* Main Search Input */}
@@ -720,19 +716,19 @@ export function LogMeal() {
               }}
               onFocus={() => setShowDropdown(true)}
               placeholder={t("logMealExt.searchPlaceholder")}
-              className="w-full px-4 py-3 border-2 border-blue-300 dark:border-blue-500/30 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-500/20 transition-all font-medium bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-medium bg-white text-foreground"
             />
 
             {/* Dropdown Results */}
             {showDropdown && mealInput.length >= 1 && (searchResults.compoundFoods.length > 0 || searchResults.smartFoods.length > 0 || searchResults.recipes.length > 0 || searchResults.products.length > 0 || searchResults.aiFoods.length > 0) && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1E1E1E] border-2 border-blue-200 dark:border-blue-500/30 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-200 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50">
 
                 {/* ═══ Compound Foods — Recipe Variant Items (HIGHEST PRIORITY) ═══ */}
                 {searchResults.compoundFoods.length > 0 && (
-                  <div className="border-b-2 border-emerald-200 dark:border-emerald-500/30">
-                    <div className="sticky top-0 bg-gradient-to-r from-emerald-50 to-teal-100 dark:from-emerald-500/10 dark:to-teal-500/10 px-4 py-2 flex items-center gap-2 z-10">
-                      <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 uppercase">
+                  <div className="border-b-2 border-emerald-200">
+                    <div className="sticky top-0 bg-gradient-to-r from-emerald-50 to-teal-100 px-4 py-2 flex items-center gap-2 z-10">
+                      <Sparkles className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs font-black text-emerald-800 uppercase">
                         AI Variánsok ({searchResults.compoundFoods.length})
                       </span>
                     </div>
@@ -753,25 +749,25 @@ export function LogMeal() {
                             setMealInput(cf.baseName);
                             setShowDropdown(false);
                           }}
-                          className="w-full px-4 py-3 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border-b border-gray-100 dark:border-[#2a2a2a] last:border-b-0 transition-all text-left flex items-center gap-3"
+                          className="w-full px-4 py-3 hover:bg-emerald-50 border-b border-gray-100 last:border-b-0 transition-all text-left flex items-center gap-3"
                         >
                           <div className="text-3xl flex-shrink-0">{cf.image}</div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">{cf.baseName}</span>
+                              <span className="font-bold text-foreground text-sm">{cf.baseName}</span>
                             </div>
                             <div className="text-xs text-gray-500 mt-0.5">{cf.category} · {cf.region}</div>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                              <span className="text-[10px] bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold">
+                              <span className="text-2xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold">
                                 {cf.variants.length} variáns
                               </span>
-                              <span className="text-[10px] bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">
+                              <span className="text-2xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">
                                 {minCal}–{maxCal} kcal/100g
                               </span>
                             </div>
                           </div>
                           <div className="flex-shrink-0">
-                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2 py-1 rounded-lg text-[10px] font-bold">
+                            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-2 py-1 rounded-lg text-2xs font-bold">
                               🧠 AI
                             </div>
                           </div>
@@ -784,9 +780,9 @@ export function LogMeal() {
                 {/* ═══ Smart Foods — Cooking Method Items (TOP PRIORITY) ═══ */}
                 {searchResults.smartFoods.length > 0 && (
                   <div className="border-b-2 border-amber-200">
-                    <div className="sticky top-0 bg-gradient-to-r from-amber-50 to-orange-100 dark:from-amber-500/10 dark:to-orange-500/10 px-4 py-2 flex items-center gap-2 z-10">
+                    <div className="sticky top-0 bg-gradient-to-r from-amber-50 to-orange-100 px-4 py-2 flex items-center gap-2 z-10">
                       <span className="text-sm">🍳</span>
-                      <span className="text-xs font-black text-amber-800 dark:text-amber-300 uppercase">{t("logMealExt.howPrepared")} ({searchResults.smartFoods.length})</span>
+                      <span className="text-xs font-black text-amber-800 uppercase">{t("logMealExt.howPrepared")} ({searchResults.smartFoods.length})</span>
                     </div>
                     {searchResults.smartFoods.slice(0, 8).map((food) => {
                       const grilledMethod = cookingMethods.find(m => m.id === 'grilled')!;
@@ -805,30 +801,30 @@ export function LogMeal() {
                             setMealInput(food.name);
                             setShowDropdown(false);
                           }}
-                          className="w-full px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-500/10 border-b border-gray-100 dark:border-[#2a2a2a] last:border-b-0 transition-all text-left flex items-center gap-3"
+                          className="w-full px-4 py-3 hover:bg-amber-50 border-b border-gray-100 last:border-b-0 transition-all text-left flex items-center gap-3"
                         >
                           <div className="text-3xl flex-shrink-0">{food.image}</div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">{food.name}</span>
+                              <span className="font-bold text-foreground text-sm">{food.name}</span>
                               {food.isMealPlan && (
                                 <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{t("logMealExt.inMealPlan")}</span>
                               )}
                             </div>
                             <div className="text-xs text-gray-500 mt-0.5">{food.category} · {food.region}</div>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <span className="text-[10px] bg-green-100 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded font-bold">
+                              <span className="text-2xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">
                                 🔥 {baseNutr.calories} kcal
                               </span>
-                              <span className="text-[10px] text-gray-400">→</span>
-                              <span className="text-[10px] bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-bold">
+                              <span className="text-2xs text-gray-400">→</span>
+                              <span className="text-2xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">
                                 🫕 {friedNutr.calories} kcal
                               </span>
-                              <span className="text-[10px] text-gray-400">/{food.defaultPortionG}g</span>
+                              <span className="text-2xs text-gray-400">/{food.defaultPortionG}g</span>
                             </div>
                           </div>
                           <div className="flex-shrink-0">
-                            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-lg text-[10px] font-bold">
+                            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-lg text-2xs font-bold">
                               {t("logMealExt.cookingBadge")}
                             </div>
                           </div>
@@ -840,10 +836,10 @@ export function LogMeal() {
 
                 {/* Recipes Section */}
                 {searchResults.recipes.length > 0 && (
-                  <div className="border-b border-gray-200 dark:border-[#2a2a2a]">
-                    <div className="sticky top-0 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-500/10 dark:to-orange-500/15 px-4 py-2 flex items-center gap-2">
-                      <ChefHat className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      <span className="text-xs font-black text-orange-700 dark:text-orange-300 uppercase">{t("logMealExt.recipesSection")} ({searchResults.recipes.length})</span>
+                  <div className="border-b border-gray-200">
+                    <div className="sticky top-0 bg-gradient-to-r from-orange-50 to-orange-100 px-4 py-2 flex items-center gap-2">
+                      <ChefHat className="w-4 h-4 text-orange-600" />
+                      <span className="text-xs font-black text-orange-700 uppercase">{t("logMealExt.recipesSection")} ({searchResults.recipes.length})</span>
                     </div>
                     {searchResults.recipes.map((recipe) => {
                       const nutrition = calculateRecipeNutrition(recipe, 1);
@@ -851,17 +847,17 @@ export function LogMeal() {
                         <button
                           key={recipe.id}
                           onClick={() => selectRecipe(recipe)}
-                          className="w-full px-4 py-3 hover:bg-orange-50 dark:hover:bg-orange-500/10 border-b border-gray-100 dark:border-[#2a2a2a] last:border-b-0 transition-all text-left flex items-center gap-3"
+                          className="w-full px-4 py-3 hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-all text-left flex items-center gap-3"
                         >
                           {/* Recipe Icon */}
                           <div className="text-3xl flex-shrink-0">{recipe.image}</div>
 
                           {/* Recipe Info */}
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate">{recipe.name}</div>
+                            <div className="font-bold text-foreground text-sm truncate">{recipe.name}</div>
                             <div className="text-xs text-gray-500">{recipe.category}</div>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full font-bold">
+                              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">
                                 {nutrition.calories} {t("logMealExt.kcalPerServing")}
                               </span>
                               <span className="text-xs text-gray-400">{recipe.portionSize}g</span>
@@ -884,25 +880,25 @@ export function LogMeal() {
                 {/* Products Section */}
                 {searchResults.products.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/15 px-4 py-2 flex items-center gap-2">
-                      <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-xs font-black text-blue-700 dark:text-blue-300 uppercase">{t("logMealExt.productsSection")} ({searchResults.products.length})</span>
+                    <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-2 flex items-center gap-2">
+                      <Package className="w-4 h-4 text-blue-600" />
+                      <span className="text-xs font-black text-blue-700 uppercase">{t("logMealExt.productsSection")} ({searchResults.products.length})</span>
                     </div>
                     {searchResults.products.map((product) => (
                       <button
                         key={product.id}
                         onClick={() => selectProduct(product)}
-                        className="w-full px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-500/10 border-b border-gray-100 dark:border-[#2a2a2a] last:border-b-0 transition-all text-left flex items-center gap-3"
+                        className="w-full px-4 py-3 hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-all text-left flex items-center gap-3"
                       >
                         {/* Product Icon */}
                         <div className="text-3xl flex-shrink-0">{product.image}</div>
 
                         {/* Product Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate">{product.name}</div>
+                          <div className="font-bold text-foreground text-sm truncate">{product.name}</div>
                           <div className="text-xs text-gray-600 truncate">{product.brand}</div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
                               {product.store}
                             </span>
                             <span className="text-xs text-gray-500">{product.caloriesPer100} kcal/100{product.unit}</span>
@@ -916,25 +912,25 @@ export function LogMeal() {
                 {/* AI Foods Section */}
                 {searchResults.aiFoods.length > 0 && (
                   <div>
-                    <div className="sticky top-0 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-500/10 dark:to-pink-500/10 px-4 py-2 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span className="text-xs font-black text-purple-700 dark:text-purple-300 uppercase">{t("logMealExt.aiFoodsSection")} ({searchResults.aiFoods.length})</span>
+                    <div className="sticky top-0 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-600" />
+                      <span className="text-xs font-black text-purple-700 uppercase">{t("logMealExt.aiFoodsSection")} ({searchResults.aiFoods.length})</span>
                     </div>
                     {searchResults.aiFoods.map((food) => (
                       <button
                         key={food.id}
                         onClick={() => selectAIFood(food)}
-                        className="w-full px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-500/10 border-b border-gray-100 dark:border-[#2a2a2a] last:border-b-0 transition-all text-left flex items-center gap-3"
+                        className="w-full px-4 py-3 hover:bg-purple-50 border-b border-gray-100 last:border-b-0 transition-all text-left flex items-center gap-3"
                       >
                         {/* Food Icon */}
                         <div className="text-3xl flex-shrink-0">{food.image}</div>
 
                         {/* Food Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate">{food.names[0]}</div>
+                          <div className="font-bold text-foreground text-sm truncate">{food.names[0]}</div>
                           <div className="text-xs text-gray-500">{food.category}</div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-bold">
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">
                               {food.portionLabel}
                             </span>
                             <span className="text-xs text-gray-500">{food.per100.calories} kcal/100{food.unit}</span>
@@ -962,22 +958,7 @@ export function LogMeal() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isRecognizing}
-              style={{
-                flex: 1,
-                background: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.75rem',
-                padding: '0.875rem',
-                fontWeight: 600,
-                fontSize: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                opacity: isRecognizing ? 0.5 : 1,
-                cursor: isRecognizing ? 'not-allowed' : 'pointer',
-              }}
+              className="flex-1 bg-primary text-white rounded-xl p-3.5 font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isRecognizing ? (
                 <>
@@ -1000,22 +981,7 @@ export function LogMeal() {
             />
             <button
               onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-              style={{
-                flex: 1,
-                background: isListening ? '#ef4444' : 'linear-gradient(135deg, #06b6d4, #14b8a6)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.75rem',
-                padding: '0.875rem',
-                fontWeight: 600,
-                fontSize: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                cursor: 'pointer',
-                animation: isListening ? 'pulse 1.5s ease-in-out infinite' : undefined,
-              }}
+              className={`flex-1 text-white rounded-xl p-3.5 font-semibold flex items-center justify-center gap-2 ${isListening ? 'bg-red-500 animate-pulse' : 'bg-primary'}`}
             >
               {isListening ? (
                 <>
@@ -1033,20 +999,20 @@ export function LogMeal() {
 
           {/* Voice Processing Indicator */}
           {isVoiceProcessing && (
-            <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-4 flex items-center gap-3">
-              <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
-              <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">{t("logMealExt.searchingFromVoice")}</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+              <p className="text-sm text-blue-700 font-medium">{t("logMealExt.searchingFromVoice")}</p>
             </div>
           )}
 
           {/* Voice Transcript Display */}
           {voiceTranscript && !isVoiceProcessing && (
-            <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 rounded-xl p-3 flex items-center justify-between">
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Mic className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">„{voiceTranscript}"</p>
+                <Mic className="w-4 h-4 text-purple-500" />
+                <p className="text-sm text-purple-700 font-medium">„{voiceTranscript}"</p>
               </div>
-              <button onClick={() => { setVoiceTranscript(null); setVoiceMatches(null); }} className="p-1 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg">
+              <button onClick={() => { setVoiceTranscript(null); setVoiceMatches(null); }} className="p-1 hover:bg-purple-100 rounded-lg">
                 <X className="w-4 h-4 text-purple-400" />
               </button>
             </div>
@@ -1054,13 +1020,13 @@ export function LogMeal() {
 
           {/* Voice Matched Results - Combined Panel */}
           {voiceMatches && (voiceMatches.recipes.length + voiceMatches.products.length > 1) && (
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-500/10 dark:to-pink-500/10 border-2 border-purple-200 dark:border-purple-500/30 rounded-2xl p-4 space-y-3">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  <h3 className="font-bold text-purple-900 dark:text-purple-200">{t("logMealExt.recognizedFoods")}</h3>
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-bold text-purple-900">{t("logMealExt.recognizedFoods")}</h3>
                 </div>
-                <span className="text-xs bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full font-bold">
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold">
                   {voiceMatches.recipes.length + voiceMatches.products.length} {t("logMealExt.matches")}
                 </span>
               </div>
@@ -1069,15 +1035,15 @@ export function LogMeal() {
               {voiceMatches.recipes.map((recipe) => {
                 const nutrition = calculateRecipeNutrition(recipe, 1);
                 return (
-                  <div key={recipe.id} className="bg-white dark:bg-[#1E1E1E] rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                  <div key={recipe.id} className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
                     <div className="text-2xl">{recipe.image}</div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{recipe.name}</div>
+                      <div className="font-bold text-sm text-foreground">{recipe.name}</div>
                       <div className="text-xs text-gray-500">{recipe.category} • {nutrition.calories} {t("logMealExt.kcalPerServing")}</div>
                     </div>
                     <button
                       onClick={() => { selectRecipe(recipe); setVoiceMatches(null); setVoiceTranscript(null); }}
-                      className="text-xs bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 px-3 py-1.5 rounded-lg font-bold hover:bg-orange-200 dark:hover:bg-orange-500/30 transition-all"
+                      className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-bold hover:bg-orange-200 transition-all"
                     >
                       {t("logMealExt.selectBtn")}
                     </button>
@@ -1087,15 +1053,15 @@ export function LogMeal() {
 
               {/* Matched Products */}
               {voiceMatches.products.slice(0, 5).map((product) => (
-                <div key={product.id} className="bg-white dark:bg-[#1E1E1E] rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                <div key={product.id} className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
                   <div className="text-2xl">{product.image}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{product.name}</div>
+                    <div className="font-bold text-sm text-foreground">{product.name}</div>
                     <div className="text-xs text-gray-500">{product.brand} • {product.caloriesPer100} kcal/100{product.unit}</div>
                   </div>
                   <button
                     onClick={() => { selectProduct(product); setVoiceMatches(null); setVoiceTranscript(null); }}
-                    className="text-xs bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-200 dark:hover:bg-blue-500/30 transition-all"
+                    className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-200 transition-all"
                   >
                     {t("logMealExt.selectBtn")}
                   </button>
@@ -1104,7 +1070,7 @@ export function LogMeal() {
 
               {/* Combined Add Button */}
               {(voiceMatches.recipes.length + voiceMatches.products.length) >= 2 && (
-                <div className="pt-2 border-t border-purple-200 dark:border-purple-500/30">
+                <div className="pt-2 border-t border-purple-200">
                   <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-3 text-white mb-2">
                     <div className="text-xs font-bold mb-1 opacity-80">{t("logMealExt.totalCaloriesSummarized")}</div>
                     <div className="text-2xl font-black">
@@ -1119,7 +1085,7 @@ export function LogMeal() {
                   </div>
                   <button
                     onClick={addVoiceCombinedMeal}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-xl font-black hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-primary text-white px-4 py-3 rounded-xl font-black hover:opacity-90 transition-all flex items-center justify-center gap-2"
                   >
                     <Plus className="w-5 h-5" />
                     {t("logMealExt.addCombined")}
@@ -1130,16 +1096,16 @@ export function LogMeal() {
           )}
 
           {recognitionError && (
-            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 flex items-center gap-2">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-              <p className="text-sm text-red-700 dark:text-red-300">{recognitionError}</p>
+              <p className="text-sm text-red-700">{recognitionError}</p>
             </div>
           )}
         </div>
 
         {/* AI Recognition Breakdown Panel - shows when compound food is recognized */}
         {aiRecognition && !selectedProduct && !selectedRecipe && !selectedSmartFood && !selectedCompoundFood && !showDropdown && (
-          <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-500 via-violet-500 to-pink-500 px-5 py-4">
               <div className="flex items-center justify-between mb-3">
@@ -1161,12 +1127,12 @@ export function LogMeal() {
               <div className="space-y-3">
                 <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">{t("logMealExt.componentBreakdown")}</div>
                 {aiRecognition.components.map((component, idx) => (
-                  <div key={component.food.id} className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-500/10 dark:to-violet-500/10 border-2 border-purple-200 dark:border-purple-500/30 rounded-xl p-4">
+                  <div key={component.food.id} className="bg-gradient-to-r from-purple-50 to-violet-50 border-2 border-purple-200 rounded-xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="text-3xl">{component.food.image}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-black text-gray-900 dark:text-gray-100">{component.food.names[0]}</div>
-                        <div className="text-xs text-purple-600 dark:text-purple-400 font-bold">{component.food.category}</div>
+                        <div className="font-black text-foreground">{component.food.names[0]}</div>
+                        <div className="text-xs text-purple-600 font-bold">{component.food.category}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
                           {component.portionLabel} ({component.portion}{component.food.unit})
                         </div>
@@ -1176,22 +1142,22 @@ export function LogMeal() {
                       </div>
                     </div>
                     {/* Per-component nutrition */}
-                    <div className="grid grid-cols-4 gap-2 bg-white/80 dark:bg-white/10 rounded-lg p-2.5">
+                    <div className="grid grid-cols-4 gap-2 bg-white/80 rounded-lg p-2.5">
                       <div className="text-center">
-                        <div className="text-sm text-gray-900 dark:text-gray-100 font-black">{component.nutrition.calories}</div>
-                        <div className="text-[10px] text-gray-500">kcal</div>
+                        <div className="text-sm text-foreground font-black">{component.nutrition.calories}</div>
+                        <div className="text-2xs text-gray-500">kcal</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-900 dark:text-gray-100 font-black">{component.nutrition.protein}</div>
-                        <div className="text-[10px] text-gray-500">{t("logMealExt.protein")}</div>
+                        <div className="text-sm text-foreground font-black">{component.nutrition.protein}</div>
+                        <div className="text-2xs text-gray-500">{t("logMealExt.protein")}</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-900 dark:text-gray-100 font-black">{component.nutrition.carbs}</div>
-                        <div className="text-[10px] text-gray-500">{t("logMealExt.carbs")}</div>
+                        <div className="text-sm text-foreground font-black">{component.nutrition.carbs}</div>
+                        <div className="text-2xs text-gray-500">{t("logMealExt.carbs")}</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm text-gray-900 dark:text-gray-100 font-black">{component.nutrition.fat}</div>
-                        <div className="text-[10px] text-gray-500">{t("logMealExt.fat")}</div>
+                        <div className="text-sm text-foreground font-black">{component.nutrition.fat}</div>
+                        <div className="text-2xs text-gray-500">{t("logMealExt.fat")}</div>
                       </div>
                     </div>
                   </div>
@@ -1229,7 +1195,7 @@ export function LogMeal() {
               {/* Add Button */}
               <button
                 onClick={addAIRecognizedMeal}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+                className="w-full bg-primary text-white px-6 py-4 rounded-xl font-black text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
               >
                 <Plus className="w-6 h-6" />
                 {t("logMeal.addMeal")}
@@ -1240,7 +1206,7 @@ export function LogMeal() {
 
         {/* ═══ COMPOUND FOOD VARIANT SELECTOR — AI Variant Panel ═══ */}
         {selectedCompoundFood && !selectedProduct && !selectedRecipe && !selectedSmartFood && (
-          <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-5 py-4">
               <div className="flex items-center gap-3 mb-2">
@@ -1260,7 +1226,7 @@ export function LogMeal() {
                 {selectedCompoundFood.description}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold backdrop-blur-sm">
+                <span className="text-2xs bg-white/20 text-white px-2 py-0.5 rounded-full font-bold backdrop-blur-sm">
                   🧠 {selectedCompoundFood.variants.length} variáns elemezve
                 </span>
               </div>
@@ -1286,27 +1252,27 @@ export function LogMeal() {
                       }}
                       className={`w-full p-3.5 rounded-xl border-2 text-left transition-all ${
                         isSelected
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/15 shadow-md ring-2 ring-emerald-200 dark:ring-emerald-500/30'
-                          : 'border-gray-200 dark:border-[#333] bg-white dark:bg-[#252525] hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10'
+                          ? 'border-emerald-500 bg-emerald-50 shadow-md ring-2 ring-emerald-200'
+                          : 'border-gray-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm text-gray-900 dark:text-gray-100 font-bold">{variant.variantName}</span>
+                            <span className="text-sm text-foreground font-bold">{variant.variantName}</span>
                             {isSelected && <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
                           </div>
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2">{variant.description}</p>
+                          <p className="text-[11px] text-gray-500 mb-2">{variant.description}</p>
                           <div className="flex flex-wrap gap-1 mb-2">
                             {variant.tags.map(tag => (
-                              <span key={tag} className="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded font-medium">
+                              <span key={tag} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
                                 {tag}
                               </span>
                             ))}
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {variant.keyIngredients.slice(0, 4).map(ing => (
-                              <span key={ing} className="text-[9px] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/20">
+                              <span key={ing} className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
                                 {ing}
                               </span>
                             ))}
@@ -1316,10 +1282,10 @@ export function LogMeal() {
                           </div>
                         </div>
                         <div className="flex-shrink-0 text-right">
-                          <div className={`text-lg font-black ${isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                          <div className={`text-lg font-black ${isSelected ? 'text-emerald-600' : 'text-gray-800'}`}>
                             {variant.per100.calories}
                           </div>
-                          <div className="text-[10px] text-gray-400">kcal/100g</div>
+                          <div className="text-2xs text-gray-400">kcal/100g</div>
                           <div className="flex gap-1.5 mt-1 text-[9px] text-gray-400">
                             <span>F:{variant.per100.protein}g</span>
                             <span>Sz:{variant.per100.carbs}g</span>
@@ -1336,7 +1302,7 @@ export function LogMeal() {
               {selectedVariant && (
                 <>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
                       Adag (g)
                     </label>
                     <input
@@ -1344,7 +1310,7 @@ export function LogMeal() {
                       value={compoundPortionInput}
                       onChange={(e) => setCompoundPortionInput(e.target.value)}
                       placeholder={`pl. ${selectedVariant.defaultPortionG}`}
-                      className="w-full px-4 py-3 border-2 border-emerald-300 dark:border-emerald-500/30 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 dark:focus:ring-emerald-500/20 transition-all font-bold text-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-3 border-2 border-emerald-300 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all font-bold text-lg bg-white text-foreground"
                     />
                     <p className="text-xs text-gray-400 mt-1">{selectedVariant.portionLabel}</p>
                   </div>
@@ -1409,7 +1375,7 @@ export function LogMeal() {
                       );
                     }}
                     disabled={!calculatedCompoundNutrition}
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-emerald-600 hover:to-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full bg-primary text-white px-6 py-4 rounded-xl font-black text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                   >
                     <Plus className="w-6 h-6" />
                     {t("logMeal.addMeal")}
@@ -1422,7 +1388,7 @@ export function LogMeal() {
 
         {/* ═══ COOKING METHOD SELECTOR — SmartFood Panel ═══ */}
         {selectedSmartFood && !selectedProduct && !selectedRecipe && !selectedCompoundFood && (
-          <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-5 py-4">
               <div className="flex items-center gap-3 mb-2">
@@ -1453,19 +1419,19 @@ export function LogMeal() {
                       onClick={() => setSelectedCookingMethod(method)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         isSelected
-                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/15 shadow-md ring-2 ring-orange-200 dark:ring-orange-500/30'
-                          : 'border-gray-200 bg-white dark:bg-[#252525] hover:border-orange-300 hover:bg-orange-50/50 dark:hover:bg-orange-500/10'
+                          ? 'border-orange-500 bg-orange-50 shadow-md ring-2 ring-orange-200'
+                          : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50/50'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-xl">{method.methodIcon}</span>
-                        <span className="text-xs text-gray-900 dark:text-gray-100 font-bold">{method.label}</span>
+                        <span className="text-xs text-foreground font-bold">{method.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`text-lg font-black ${isSelected ? 'text-orange-600 dark:text-orange-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                        <span className={`text-lg font-black ${isSelected ? 'text-orange-600' : 'text-gray-800'}`}>
                           {nutr.calories}
                         </span>
-                        <span className="text-[10px] text-gray-500">kcal</span>
+                        <span className="text-2xs text-gray-500">kcal</span>
                       </div>
                       <div className="flex gap-2 mt-1 text-[9px] text-gray-400">
                         <span>{t("logMealExt.proteinShort")}:{nutr.protein}g</span>
@@ -1481,7 +1447,7 @@ export function LogMeal() {
               {selectedCookingMethod && (
                 <>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
                       {t("logMealExt.portionG")}
                     </label>
                     <input
@@ -1489,7 +1455,7 @@ export function LogMeal() {
                       value={smartPortionInput}
                       onChange={(e) => setSmartPortionInput(e.target.value)}
                       placeholder={`${t("logMealExt.eg")} ${selectedSmartFood.defaultPortionG}`}
-                      className="w-full px-4 py-3 border-2 border-orange-300 dark:border-orange-500/30 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 dark:focus:ring-orange-500/20 transition-all font-bold text-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100"
+                      className="w-full px-4 py-3 border-2 border-orange-300 rounded-xl focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all font-bold text-lg bg-white text-foreground"
                     />
                   </div>
 
@@ -1553,7 +1519,7 @@ export function LogMeal() {
                       );
                     }}
                     disabled={!calculatedSmartNutrition}
-                    className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-amber-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full bg-primary text-white px-6 py-4 rounded-xl font-black text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
                   >
                     <Plus className="w-6 h-6" />
                     {t("logMeal.addMeal")}
@@ -1566,17 +1532,17 @@ export function LogMeal() {
 
         {/* Selected Product Preview */}
         {selectedProduct && (
-          <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg p-6 space-y-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{t("logMealExt.selectedProduct")}</h3>
+              <Package className="w-5 h-5 text-blue-600" />
+              <h3 className="font-bold text-lg text-foreground">{t("logMealExt.selectedProduct")}</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/15 border-2 border-blue-300 dark:border-blue-500/30 rounded-xl p-4">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 rounded-xl p-4">
               <div className="flex items-center gap-3">
                 <div className="text-4xl">{selectedProduct.image}</div>
                 <div className="flex-1">
-                  <div className="font-bold text-gray-900 dark:text-gray-100">{selectedProduct.name}</div>
+                  <div className="font-bold text-foreground">{selectedProduct.name}</div>
                   <div className="text-sm text-gray-600">{selectedProduct.brand}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full font-bold">
@@ -1589,7 +1555,7 @@ export function LogMeal() {
 
             {/* Quantity Input */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
                 {t("logMealExt.quantity")} ({selectedProduct.unit})
               </label>
               <input
@@ -1597,7 +1563,7 @@ export function LogMeal() {
                 value={quantityInput}
                 onChange={(e) => setQuantityInput(e.target.value)}
                 placeholder={`${t("logMealExt.eg")} 100`}
-                className="w-full px-4 py-3 border-2 border-blue-300 dark:border-blue-500/30 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-500/20 transition-all font-bold text-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-bold text-lg bg-white text-foreground"
               />
             </div>
 
@@ -1632,7 +1598,7 @@ export function LogMeal() {
             <button
               onClick={handleAddMeal}
               disabled={!calculatedProductNutrition}
-              className="w-full bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-blue-600 hover:to-teal-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary text-white px-6 py-4 rounded-xl font-black text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Plus className="w-6 h-6" />
               {t("logMeal.addMeal")}
@@ -1642,17 +1608,17 @@ export function LogMeal() {
 
         {/* Selected Recipe Preview */}
         {selectedRecipe && (
-          <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg p-6 space-y-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <ChefHat className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{t("logMealExt.selectedRecipe")}</h3>
+              <ChefHat className="w-5 h-5 text-orange-600" />
+              <h3 className="font-bold text-lg text-foreground">{t("logMealExt.selectedRecipe")}</h3>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-500/10 dark:to-orange-500/15 border-2 border-orange-300 dark:border-orange-500/30 rounded-xl p-4">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-4">
               <div className="flex items-center gap-3">
                 <div className="text-4xl">{selectedRecipe.image}</div>
                 <div className="flex-1">
-                  <div className="font-bold text-gray-900 dark:text-gray-100">{selectedRecipe.name}</div>
+                  <div className="font-bold text-foreground">{selectedRecipe.name}</div>
                   <div className="text-sm text-gray-600">{selectedRecipe.category}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded-full font-bold">
@@ -1663,16 +1629,16 @@ export function LogMeal() {
               </div>
 
               {/* Ingredients Preview */}
-              <div className="mt-3 pt-3 border-t border-orange-200 dark:border-orange-500/30">
-                <div className="text-xs font-bold text-orange-700 dark:text-orange-300 mb-2">{t("logMealExt.mainIngredients")}</div>
+              <div className="mt-3 pt-3 border-t border-orange-200">
+                <div className="text-xs font-bold text-orange-700 mb-2">{t("logMealExt.mainIngredients")}</div>
                 <div className="flex flex-wrap gap-1">
                   {selectedRecipe.ingredients.slice(0, 5).map((ingredient, idx) => (
-                    <span key={idx} className="text-xs bg-white dark:bg-white/10 text-orange-700 dark:text-orange-300 px-2 py-1 rounded-full">
+                    <span key={idx} className="text-xs bg-white text-orange-700 px-2 py-1 rounded-full">
                       {ingredient.name}
                     </span>
                   ))}
                   {selectedRecipe.ingredients.length > 5 && (
-                    <span className="text-xs bg-white dark:bg-white/10 text-orange-700 dark:text-orange-300 px-2 py-1 rounded-full">
+                    <span className="text-xs bg-white text-orange-700 px-2 py-1 rounded-full">
                       +{selectedRecipe.ingredients.length - 5} {t("logMealExt.moreIngredients")}
                     </span>
                   )}
@@ -1682,7 +1648,7 @@ export function LogMeal() {
 
             {/* Servings Input */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
                 {t("logMealExt.servingsCount")} (1 {t("logMealExt.serving")} ≈ {selectedRecipe.portionSize}g)
               </label>
               <input
@@ -1692,7 +1658,7 @@ export function LogMeal() {
                 value={servingsInput}
                 onChange={(e) => setServingsInput(e.target.value)}
                 placeholder={`${t("logMealExt.eg")} 1`}
-                className="w-full px-4 py-3 border-2 border-blue-300 dark:border-blue-500/30 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-500/20 transition-all font-bold text-lg bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all font-bold text-lg bg-white text-foreground"
               />
             </div>
 
@@ -1730,7 +1696,7 @@ export function LogMeal() {
             <button
               onClick={handleAddMeal}
               disabled={!calculatedRecipeNutrition}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-4 rounded-xl font-black text-lg hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-primary text-white px-6 py-4 rounded-xl font-black text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Plus className="w-6 h-6" />
               {t("logMeal.addMeal")}
@@ -1740,9 +1706,9 @@ export function LogMeal() {
 
         {/* Logged Meals Summary */}
         {loggedMeals.length > 0 && (
-          <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-lg p-6 space-y-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">{t("logMealExt.myLog")}</h3>
+              <h3 className="font-bold text-lg text-foreground">{t("logMealExt.myLog")}</h3>
               <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">
                 {loggedMeals.length} {t("logMealExt.foodItems")}
               </span>
@@ -1780,14 +1746,14 @@ export function LogMeal() {
                 >
                   <div className="text-2xl">{meal.image}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">{meal.name}</div>
+                    <div className="font-bold text-sm text-foreground truncate">{meal.name}</div>
                     <div className="text-xs text-gray-600">
                       {meal.type === 'recipe' ? `${meal.quantity} ${t("logMealExt.serving")}` : `${meal.quantity}g`} • {meal.calories} kcal
                     </div>
                   </div>
                   <button
                     onClick={() => removeMeal(meal.id)}
-                    className="p-2 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-lg transition-all"
+                    className="p-2 hover:bg-red-100 rounded-lg transition-all"
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
