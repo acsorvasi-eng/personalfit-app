@@ -380,3 +380,149 @@ export function DSMPriceDisplay({
     </div>
   );
 }
+
+// ─── DSMTabList ──────────────────────────────────────────────────────
+// Replaces TabFilter, custom food category tabs, meal type selectors.
+interface DSMTabListProps {
+  tabs: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  variant?: 'pill' | 'underline';
+  className?: string;
+}
+
+export function DSMTabList({ tabs, value, onChange, variant = 'pill', className = "" }: DSMTabListProps) {
+  if (variant === 'underline') {
+    return (
+      <div className={`flex border-b border-border ${className}`}>
+        {tabs.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => onChange(tab.value)}
+            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px
+              ${value === tab.value
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-foreground'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className={`flex gap-2 flex-wrap ${className}`}>
+      {tabs.map(tab => (
+        <button
+          key={tab.value}
+          onClick={() => onChange(tab.value)}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+            ${value === tab.value
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── DSMMealCard ─────────────────────────────────────────────────────
+// Replaces per-screen food/meal card patterns in Foods, UnifiedMenu, LogMeal.
+interface DSMMealCardProps {
+  title: string;
+  subtitle?: string;
+  calories?: number;
+  macros?: { protein?: number; carbs?: number; fat?: number };
+  imageUrl?: string;
+  emoji?: string;
+  onPress?: () => void;
+  trailing?: ReactNode;
+  className?: string;
+}
+
+export function DSMMealCard({ title, subtitle, calories, macros, imageUrl, emoji, onPress, trailing, className = "" }: DSMMealCardProps) {
+  return (
+    <div
+      onClick={onPress}
+      className={`flex items-center gap-3 p-3 bg-background rounded-xl border border-border ${onPress ? 'active:bg-gray-50 cursor-pointer' : ''} ${className}`}
+    >
+      {(imageUrl || emoji) && (
+        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {imageUrl
+            ? <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+            : <span className="text-2xl">{emoji}</span>
+          }
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{title}</p>
+        {subtitle && <p className="text-xs text-gray-500 truncate">{subtitle}</p>}
+        {(calories != null || macros) && (
+          <div className="flex items-center gap-2 mt-1">
+            {calories != null && <span className="text-xs text-gray-500">{calories} kcal</span>}
+            {macros?.protein != null && <DSMChip label={`P ${macros.protein}g`} color="blue" size="sm" />}
+            {macros?.carbs != null && <DSMChip label={`C ${macros.carbs}g`} color="amber" size="sm" />}
+            {macros?.fat != null && <DSMChip label={`F ${macros.fat}g`} color="red" size="sm" />}
+          </div>
+        )}
+      </div>
+      {trailing && <div className="flex-shrink-0">{trailing}</div>}
+    </div>
+  );
+}
+
+// ─── DSMPremiumCard ──────────────────────────────────────────────────
+// Replaces subscription plan cards in SubscriptionScreen, Checkout, PlanSetupScreen.
+interface DSMPremiumCardProps {
+  title: string;
+  description?: string;
+  price?: string;
+  period?: string;
+  badge?: string;
+  features?: string[];
+  selected?: boolean;
+  onPress?: () => void;
+  className?: string;
+}
+
+export function DSMPremiumCard({ title, description, price, period, badge, features, selected, onPress, className = "" }: DSMPremiumCardProps) {
+  return (
+    <div
+      onClick={onPress}
+      className={`relative p-4 rounded-2xl border-2 transition-all
+        ${onPress ? 'cursor-pointer' : ''}
+        ${selected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-gray-300'}
+        ${className}`}
+    >
+      {badge && (
+        <span className="absolute -top-2.5 left-4 bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+          {badge}
+        </span>
+      )}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-heading font-semibold text-foreground">{title}</h3>
+          {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
+        </div>
+        {price && (
+          <div className="text-right flex-shrink-0">
+            <span className="text-lg font-bold text-foreground">{price}</span>
+            {period && <span className="text-xs text-gray-500 block">{period}</span>}
+          </div>
+        )}
+      </div>
+      {features && features.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {features.map((f, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+              <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs">✓</span>
+              {f}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

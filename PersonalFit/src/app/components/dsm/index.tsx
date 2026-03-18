@@ -971,4 +971,5 @@ export { TabFilter, createTabs } from "../TabFilter";
 
 export * from "./atoms";
 export * from "./molecules";
+export * from "./ux-patterns";
 export { AppHeader } from './AppHeader';
