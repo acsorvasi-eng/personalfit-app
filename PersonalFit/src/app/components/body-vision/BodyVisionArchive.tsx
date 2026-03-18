@@ -62,7 +62,7 @@ export function BodyVisionArchive({ sessions, onDelete, onClose }: Props) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center justify-between">
+      <div className="bg-primary px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Archive className="w-4 h-4 text-white" />
           <span className="text-white font-bold text-sm">Archivum</span>
@@ -122,13 +122,13 @@ export function BodyVisionArchive({ sessions, onDelete, onClose }: Props) {
                     <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
                     <span className="text-sm font-bold text-gray-900 truncate">{session.label}</span>
                   </div>
-                  <div className="text-[10px] text-gray-400 ml-[18px] mt-0.5">
+                  <div className="text-2xs text-gray-400 ml-[18px] mt-0.5">
                     {d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })} &bull; {session.monthsInvested} ho
                   </div>
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center gap-2.5 text-[10px] font-bold flex-shrink-0">
+                <div className="flex items-center gap-2.5 text-2xs font-bold flex-shrink-0">
                   <span className="text-green-600">-{session.fatLoss}%</span>
                   <span className="text-blue-600">+{session.muscleGain}%</span>
                 </div>

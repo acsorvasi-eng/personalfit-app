@@ -32,7 +32,7 @@ export function BodyVisionControls({
           </div>
           <button
             onClick={onToggleOverlay}
-            className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-all ${showColorOverlay ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}
+            className={`px-2 py-0.5 rounded-md text-2xs font-medium transition-all ${showColorOverlay ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}
           >
             AR {showColorOverlay ? 'BE' : 'KI'}
           </button>
@@ -54,7 +54,7 @@ export function BodyVisionControls({
       <button
         onClick={onGenerate}
         disabled={isGenerating}
-        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-3.5 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow flex items-center justify-center gap-2.5 disabled:opacity-50"
+        className="w-full bg-primary text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-all shadow flex items-center justify-center gap-2.5 disabled:opacity-50"
       >
         {isGenerating ? (
           <><RotateCw className="w-5 h-5 animate-spin" /><span>Generalas...</span></>
@@ -67,7 +67,7 @@ export function BodyVisionControls({
       {hasGenerated && (
         <button
           onClick={onArchive}
-          className="w-full mt-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-3 rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all flex items-center justify-center gap-2"
+          className="w-full mt-2 bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2"
         >
           <Archive className="w-4 h-4" /><span>Archivalas & Uj Munkamenet</span>
         </button>

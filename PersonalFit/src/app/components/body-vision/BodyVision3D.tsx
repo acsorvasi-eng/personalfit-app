@@ -363,7 +363,7 @@ export function BodyVision3D() {
 
   // ========== MAIN RENDER ==========
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50/30 pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <PageHeader
         title="AR Test Vizio"
@@ -548,12 +548,12 @@ export function BodyVision3D() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-bold text-gray-900">AI elemzes blokkolva</p>
-                <p className="text-[10px] text-gray-500 mt-0.5">Csereld ki a visszautasitott kepeket</p>
+                <p className="text-2xs text-gray-500 mt-0.5">Csereld ki a visszautasitott kepeket</p>
               </div>
             </div>
             <div className="flex gap-1.5 mt-3 flex-wrap">
               {POSITIONS.filter(p => imageValidation[p] === 'invalid').map(p => (
-                <button key={p} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-medium border border-red-200 hover:bg-red-100">
+                <button key={p} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-2xs font-medium border border-red-200 hover:bg-red-100">
                   {POSITION_LABELS[p]}
                 </button>
               ))}
