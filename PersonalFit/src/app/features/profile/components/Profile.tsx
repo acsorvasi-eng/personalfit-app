@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Activity,
   LogOut, Crown, Gift, Clock,
@@ -523,11 +524,11 @@ export function Profile() {
                 <>
         {/* Tab 1 — Personal data */}
         <DSMCard>
-          <DSMSectionTitle icon={User} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.personalData')} className="mb-3" />
+          <DSMSectionTitle icon={User} iconColor="text-gray-500" title={t('profile.personalData')} className="mb-3" />
           <div className="space-y-3">
             <EditableFieldRow label={t('profile.birthDate')} value={profile.birthDate || ''} type="date" onSave={(v) => { setProfile((p) => ({ ...p, birthDate: v })); saveUserProfile({ birthDate: v || undefined }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
             <div className="pt-2 pb-1">
-              <label className="text-[10px] text-gray-500 dark:text-gray-400 block mb-1.5">{t('profile.gender')}</label>
+              <label className="text-2xs text-gray-500 block mb-1.5">{t('profile.gender')}</label>
               <div className="flex flex-wrap gap-2">
                 {(['male', 'female', 'other'] as const).map((g) => (
                   <button key={g} type="button" onClick={() => { setProfile((p) => ({ ...p, gender: g })); saveUserProfile({ gender: g }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.gender === g ? '#f3f4f6' : 'transparent', color: profile.gender === g ? '#111827' : '#6b7280', fontWeight: profile.gender === g ? 600 : 400, fontSize: '0.8125rem' }}>{t(`profile.gender${g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other'}`)}</button>
@@ -540,9 +541,9 @@ export function Profile() {
         {/* Body metrics + BMI bar + GMON fields */}
         <DSMCard>
           <div className="flex items-center gap-2 mb-3">
-            <DSMSectionTitle icon={Activity} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.bodyMetrics')} className="mb-0" />
+            <DSMSectionTitle icon={Activity} iconColor="text-gray-500" title={t('profile.bodyMetrics')} className="mb-0" />
             {profile.gmonUploadedAt && (
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal" style={{ fontWeight: 500 }}>{t('profile.gmonBadge')}</span>
+              <span className="text-2xs text-gray-400 font-normal" style={{ fontWeight: 500 }}>{t('profile.gmonBadge')}</span>
             )}
           </div>
             <div className="space-y-3">
@@ -552,13 +553,13 @@ export function Profile() {
                 <InlineEditStat label={t('profile.targetWeight')} value={weightGoal.targetKg} unit="kg" type="number" onSave={(v) => { const kg = Number(v); setWeightGoal((g) => ({ ...g, targetKg: kg })); setSetting('weightGoal', JSON.stringify({ ...weightGoal, targetKg: kg })).catch(() => {}); }} />
               </div>
               {/* BMI: from GMON or calculated */}
-              <div className="pt-2 border-t border-gray-100 dark:border-[#2a2a2a]">
+              <div className="pt-2 border-t border-gray-100">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400">BMI</span>
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{bmi === '0' ? '–' : bmi}</span>
+                  <span className="text-2xs text-gray-500">BMI</span>
+                  <span className="text-sm font-semibold text-gray-900">{bmi === '0' ? '–' : bmi}</span>
                 </div>
                 <BMIBar value={Number(bmi)} t={t} />
-                <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">{getBMILabel(Number(bmi), t)}</div>
+                <div className="text-2xs text-gray-500 mt-1">{getBMILabel(Number(bmi), t)}</div>
               </div>
               <InlineEditStat label={t('profile.bodyFat')} value={profile.bodyFat ?? 0} unit="%" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, bodyFat: n })); saveUserProfile({ bodyFat: n }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
               <InlineEditStat label={t('profile.muscleMass')} value={profile.muscleMass ?? 0} unit="kg" type="number" onSave={(v) => { const n = Number(v); setProfile((p) => ({ ...p, muscleMass: n })); saveUserProfile({ muscleMass: n }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
@@ -569,7 +570,7 @@ export function Profile() {
 
         {/* Activity level — 5 pills */}
         <DSMCard>
-          <label className="text-xs text-gray-500 dark:text-gray-400 block mb-2">{t('profile.activityLevel')}</label>
+          <label className="text-xs text-gray-500 block mb-2">{t('profile.activityLevel')}</label>
           <div className="flex flex-wrap gap-2">
             {[
               { key: 'Alacsony', labelKey: 'profile.activitySedentary' },
@@ -587,8 +588,8 @@ export function Profile() {
         <DSMCard>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-xs text-gray-700 dark:text-gray-300" style={{ fontWeight: 600 }}>{t('profile.weightProgress')}</span>
+              <Activity className="w-4 h-4 text-blue-600" />
+              <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>{t('profile.weightProgress')}</span>
             </div>
             <button
               onClick={() => {
@@ -598,15 +599,15 @@ export function Profile() {
                 }
                 setIsGoalEditing(!isGoalEditing);
               }}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors"
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
               aria-label={t('profile.editGoal')}
             >
-              <Pencil className={`w-3.5 h-3.5 ${isGoalEditing ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'}`} />
+              <Pencil className={`w-3.5 h-3.5 ${isGoalEditing ? 'text-blue-500' : 'text-gray-400'}`} />
             </button>
           </div>
 
           {/* Chart */}
-          <div className="bg-gray-50 dark:bg-[#252525] rounded-xl p-2.5 border border-gray-100 dark:border-[#2a2a2a]" role="img" aria-label={t('profile.weightChartAria').replace('{weight}', String(profile.weight))}>
+          <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-100" role="img" aria-label={t('profile.weightChartAria').replace('{weight}', String(profile.weight))}>
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={getChartData()} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                 <XAxis dataKey="label" tick={{ fontSize: 9, fill: '#9ca3af' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
@@ -658,15 +659,15 @@ export function Profile() {
             <div className="flex items-center justify-center gap-4 mt-2 pb-0.5">
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-[2.5px] bg-blue-600 rounded-full" />
-                <span className="text-[9px] text-gray-500 dark:text-gray-400" style={{ fontWeight: 500 }}>{t('profile.measured')}</span>
+                <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.measured')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-[2px] rounded-full" style={{ background: 'repeating-linear-gradient(90deg, #9ca3af 0px, #9ca3af 3px, transparent 3px, transparent 5.5px)' }} />
-                <span className="text-[9px] text-gray-500 dark:text-gray-400" style={{ fontWeight: 500 }}>{t('profile.predicted')}</span>
+                <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.predicted')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-blue-600 border-2 border-white shadow-sm" />
-                <span className="text-[9px] text-gray-500 dark:text-gray-400" style={{ fontWeight: 500 }}>{t('profile.now')}</span>
+                <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.now')}</span>
               </div>
             </div>
           </div>
@@ -686,20 +687,20 @@ export function Profile() {
             return (
               <div className={`mt-3 flex items-center justify-between px-3 py-2 rounded-lg border ${
                 Math.abs(deviation) <= 0.5
-                  ? 'bg-green-50/60 dark:bg-green-500/5 border-green-200/60 dark:border-green-500/15'
+                  ? 'bg-green-50/60 border-green-200/60'
                   : deviation > 0
-                    ? 'bg-amber-50/60 dark:bg-amber-500/5 border-amber-200/60 dark:border-amber-500/15'
-                    : 'bg-blue-50/60 dark:bg-blue-500/5 border-blue-200/60 dark:border-blue-500/15'
+                    ? 'bg-amber-50/60 border-amber-200/60'
+                    : 'bg-blue-50/60 border-blue-200/60'
               }`}>
                 <div className="flex items-center gap-2">
                   {Math.abs(deviation) <= 0.5 ? (
-                    <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                    <Check className="w-3.5 h-3.5 text-green-600" />
                   ) : deviation > 0 ? (
-                    <TrendingUp className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
                   ) : (
-                    <TrendingDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <TrendingDown className="w-3.5 h-3.5 text-blue-600" />
                   )}
-                  <span className="text-[11px] text-gray-700 dark:text-gray-300" style={{ fontWeight: 500 }}>
+                  <span className="text-[11px] text-gray-700" style={{ fontWeight: 500 }}>
                     {Math.abs(deviation) <= 0.5
                       ? t('profile.onPlan')
                       : deviation > 0
@@ -708,7 +709,7 @@ export function Profile() {
                     }
                   </span>
                 </div>
-                <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                <div className="text-2xs text-gray-500">
                   {t('profile.planLabel')}: {expectedNow?.toFixed(1)} kg
                 </div>
               </div>
@@ -717,15 +718,15 @@ export function Profile() {
 
           {/* Goal editing fields — only visible when pencil is active */}
           {isGoalEditing && (
-            <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-500/5 rounded-xl border border-blue-200/50 dark:border-blue-500/20">
+            <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-200/50">
               <div className="flex items-center gap-2 mb-2.5">
-                <Target className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span className="text-[11px] text-gray-700 dark:text-gray-300" style={{ fontWeight: 600 }}>{t('profile.goal')}</span>
+                <Target className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-[11px] text-gray-700" style={{ fontWeight: 600 }}>{t('profile.goal')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 dark:text-gray-400 mb-1 block">{t('profile.targetWeight')}</label>
-                  <div className="flex items-center gap-1 bg-white dark:bg-[#1E1E1E] rounded-lg border border-gray-200 dark:border-[#2a2a2a] px-2 py-1.5">
+                  <label className="text-2xs text-gray-500 mb-1 block">{t('profile.targetWeight')}</label>
+                  <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 px-2 py-1.5">
                     <Target className="w-3 h-3 text-blue-400 flex-shrink-0" />
                     <input
                       type="number"
@@ -733,14 +734,14 @@ export function Profile() {
                       placeholder={`${t('common.eg')} 84`}
                       value={goalDraftKg}
                       onChange={(e) => setGoalDraftKg(e.target.value)}
-                      className="w-full bg-transparent outline-none text-xs text-gray-900 dark:text-gray-100"
+                      className="w-full bg-transparent outline-none text-xs text-gray-900"
                     />
-                    <span className="text-[10px] text-gray-400 flex-shrink-0">kg</span>
+                    <span className="text-2xs text-gray-400 flex-shrink-0">kg</span>
                   </div>
                 </div>
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-500 dark:text-gray-400 mb-1 block">{t('profile.timeframe')}</label>
-                  <div className="flex items-center gap-1 bg-white dark:bg-[#1E1E1E] rounded-lg border border-gray-200 dark:border-[#2a2a2a] px-2 py-1.5">
+                  <label className="text-2xs text-gray-500 mb-1 block">{t('profile.timeframe')}</label>
+                  <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 px-2 py-1.5">
                     <Calendar className="w-3 h-3 text-blue-400 flex-shrink-0" />
                     <input
                       type="number"
@@ -748,9 +749,9 @@ export function Profile() {
                       placeholder={`${t('common.eg')} 12`}
                       value={goalDraftMonths}
                       onChange={(e) => setGoalDraftMonths(e.target.value)}
-                      className="w-full bg-transparent outline-none text-xs text-gray-900 dark:text-gray-100"
+                      className="w-full bg-transparent outline-none text-xs text-gray-900"
                     />
-                    <span className="text-[10px] text-gray-400 flex-shrink-0">{t('profile.month')}</span>
+                    <span className="text-2xs text-gray-400 flex-shrink-0">{t('profile.month')}</span>
                   </div>
                 </div>
               </div>
@@ -777,15 +778,15 @@ export function Profile() {
 
           {/* Saved goal summary — shown when not editing and goal exists */}
           {!isGoalEditing && weightGoal.targetKg > 0 && (
-            <div className="mt-2.5 flex items-center justify-between px-2 py-1.5 bg-gray-50 dark:bg-[#252525] rounded-lg">
+            <div className="mt-2.5 flex items-center justify-between px-2 py-1.5 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-1.5">
-                <Target className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-                <span className="text-[10px] text-gray-600 dark:text-gray-400">
+                <Target className="w-3 h-3 text-gray-500" />
+                <span className="text-2xs text-gray-600">
                   {t('profile.goalLabel')}: <span style={{ fontWeight: 600 }}>{weightGoal.targetKg} kg</span>
                 </span>
               </div>
               {weightGoal.months > 0 && (
-                <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                <span className="text-2xs text-gray-500">
                   {weightGoal.months} {t('profile.monthsIn')}
                 </span>
               )}
@@ -863,7 +864,7 @@ function EditableFieldRow({ label, value, type = 'text', onSave }: { label: stri
   const save = () => { onSave(draft); setEditing(false); };
   return (
     <div style={{ padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
-      <label className="block text-[0.75rem] text-gray-500 dark:text-gray-400">{label}</label>
+      <label className="block text-xs text-gray-500">{label}</label>
       {editing ? (
         <input
           autoFocus
@@ -872,10 +873,10 @@ function EditableFieldRow({ label, value, type = 'text', onSave }: { label: stri
           onChange={(e) => setDraft(e.target.value)}
           onBlur={save}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); }}
-          className="mt-0.5 w-full text-base font-semibold border-none border-b-2 border-blue-500 outline-none bg-transparent py-0.5 text-gray-900 dark:text-gray-100"
+          className="mt-0.5 w-full text-base font-semibold border-none border-b-2 border-blue-500 outline-none bg-transparent py-0.5 text-gray-900"
         />
       ) : (
-        <div onClick={() => setEditing(true)} className="mt-0.5 text-base font-semibold py-0.5 cursor-pointer text-gray-900 dark:text-gray-100" style={{ color: value ? undefined : '#9ca3af' }}>{value || '—'}</div>
+        <div onClick={() => setEditing(true)} className="mt-0.5 text-base font-semibold py-0.5 cursor-pointer text-gray-900" style={{ color: value ? undefined : '#9ca3af' }}>{value || '—'}</div>
       )}
     </div>
   );
@@ -900,13 +901,13 @@ function BMIBar({ value }: { value: number; t: (k: string) => string }) {
     { end: 100, color: '#ef4444' },
   ];
   return (
-    <div className="relative h-3 rounded-full overflow-hidden bg-gray-100 dark:bg-[#2a2a2a]" style={{ width: '100%' }}>
+    <div className="relative h-3 rounded-full overflow-hidden bg-gray-100" style={{ width: '100%' }}>
       <div className="absolute inset-0 flex">
         {zones.map((z, i) => (
           <div key={i} style={{ width: `${z.end - (zones[i - 1]?.end ?? 0)}%`, background: z.color }} />
         ))}
       </div>
-      <div className="absolute top-0 bottom-0 w-1 bg-gray-900 dark:bg-white rounded-full shadow" style={{ left: `${pct}%`, transform: 'translateX(-50%)' }} />
+      <div className="absolute top-0 bottom-0 w-1 bg-gray-900 rounded-full shadow" style={{ left: `${pct}%`, transform: 'translateX(-50%)' }} />
     </div>
   );
 }
@@ -998,50 +999,50 @@ function ProfileGoalsTab({
   return (
     <div className="space-y-6">
       <DSMCard>
-        <DSMSectionTitle icon={Target} iconColor="text-gray-500 dark:text-gray-400" title={t('profile.dailyGoals')} className="mb-3" />
+        <DSMSectionTitle icon={Target} iconColor="text-gray-500" title={t('profile.dailyGoals')} className="mb-3" />
         <div className="flex flex-col items-center gap-2">
           <input
             type="number"
             inputMode="numeric"
             value={kcal || ''}
             onChange={(e) => onProfileUpdate({ calorieTarget: e.target.value === '' ? undefined : Number(e.target.value) })}
-            className="w-32 text-center text-2xl font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-gray-200 dark:border-[#2a2a2a] focus:outline-none focus:border-blue-500 py-1"
+            className="w-32 text-center text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-blue-500 py-1"
           />
-          <span className="text-sm text-gray-500 dark:text-gray-400">{t('profile.kcalPerDay')}</span>
-          <p className="text-xs text-gray-400 dark:text-gray-500">{t('profile.recommendedKcal').replace('{kcal}', String(dailyCalories))}</p>
+          <span className="text-sm text-gray-500">{t('profile.kcalPerDay')}</span>
+          <p className="text-xs text-gray-400">{t('profile.recommendedKcal').replace('{kcal}', String(dailyCalories))}</p>
         </div>
       </DSMCard>
 
       <DSMCard>
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">{t('profile.macroProtein')}</span>
-            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 dark:border-[#2a2a2a] focus:outline-none" value={proteinPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(v, carbsPct, 100 - v - carbsPct); }} />% = {proteinG}g</span>
+            <span className="text-gray-600">{t('profile.macroProtein')}</span>
+            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 focus:outline-none" value={proteinPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(v, carbsPct, 100 - v - carbsPct); }} />% = {proteinG}g</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">{t('profile.macroCarbs')}</span>
-            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 dark:border-[#2a2a2a] focus:outline-none" value={carbsPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(proteinPct, v, 100 - proteinPct - v); }} />% = {carbsG}g</span>
+            <span className="text-gray-600">{t('profile.macroCarbs')}</span>
+            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 focus:outline-none" value={carbsPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(proteinPct, v, 100 - proteinPct - v); }} />% = {carbsG}g</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">{t('profile.macroFat')}</span>
-            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 dark:border-[#2a2a2a] focus:outline-none" value={fatPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(proteinPct, carbsPct, v); }} />% = {fatG}g</span>
+            <span className="text-gray-600">{t('profile.macroFat')}</span>
+            <span><input type="number" min={0} max={100} className="w-12 text-right bg-transparent border-b border-gray-200 focus:outline-none" value={fatPct} onChange={(e) => { const v = Number(e.target.value); updateMacros(proteinPct, carbsPct, v); }} />% = {fatG}g</span>
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 pt-1">{t('profile.total100')} {proteinPct + carbsPct + fatPct === 100 ? '✓' : ''}</div>
+          <div className="text-xs text-gray-500 pt-1">{t('profile.total100')} {proteinPct + carbsPct + fatPct === 100 ? '✓' : ''}</div>
         </div>
       </DSMCard>
 
       <DSMCard>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 dark:text-gray-400">{t('water.goal')}</label>
+          <label className="text-xs text-gray-500">{t('water.goal')}</label>
           <div className="flex items-center gap-2">
             <input
               type="number"
               inputMode="numeric"
               value={waterGoal || ''}
               onChange={(e) => onProfileUpdate({ waterGoalMl: e.target.value === '' ? undefined : Number(e.target.value) })}
-              className="flex-1 text-lg font-semibold text-gray-900 dark:text-gray-100 bg-transparent border-b-2 border-gray-200 dark:border-[#2a2a2a] focus:outline-none focus:border-blue-500 py-1"
+              className="flex-1 text-lg font-semibold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-blue-500 py-1"
             />
-            <span className="text-sm text-gray-500 dark:text-gray-400">{t('profile.waterGoalMlPerDay')}</span>
+            <span className="text-sm text-gray-500">{t('profile.waterGoalMlPerDay')}</span>
           </div>
         </div>
       </DSMCard>
@@ -1058,7 +1059,7 @@ function ProfileGoalsTab({
 
       <DSMCard>
         <div className="flex flex-col gap-2">
-          <label className="text-xs text-gray-500 dark:text-gray-400">{t('profile.workoutsPerWeek')}</label>
+          <label className="text-xs text-gray-500">{t('profile.workoutsPerWeek')}</label>
           <div className="flex flex-wrap gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((n) => (
               <button
@@ -1200,11 +1201,9 @@ function SettingsTabContent(props: {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user, subscriptionActive } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
   const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
   useEffect(() => { getTrialInfo().then(setTrial); }, []);
-  const isDark = theme === 'dark';
 
   return (
     <div style={{ background: '#f9fafb', minHeight: '100%', paddingBottom: '1rem' }}>
@@ -1221,45 +1220,6 @@ function SettingsTabContent(props: {
           subtitle={t('profile.optionalUpload')}
           rightText={t('profile.loadLink')}
           onClick={onBodyCompOpen}
-        />
-      </SettingsCard>
-
-      {/* Section 2: Appearance */}
-      <SettingsCard sectionTitle={t('profile.sectionAppearance')}>
-        <SettingsRow
-          title={isDark ? t('profile.darkMode') : t('profile.lightMode')}
-          subtitle={isDark ? t('profile.activeState') : t('profile.inactiveState')}
-          rightElement={
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isDark}
-              onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-              style={{
-                width: 48,
-                height: 28,
-                borderRadius: 14,
-                background: isDark ? '#111827' : '#e5e7eb',
-                border: 'none',
-                cursor: 'pointer',
-                position: 'relative',
-              }}
-            >
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 2,
-                  left: isDark ? 22 : 2,
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  background: 'white',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  transition: 'left 0.2s',
-                }}
-              />
-            </button>
-          }
         />
       </SettingsCard>
 
@@ -1335,27 +1295,153 @@ function SettingsTabContent(props: {
         />
       </SettingsCard>
 
-      {/* Reset confirm dialogs */}
-      {showResetConfirm && !showResetFinal && (
-        <div style={{ marginTop: 16, padding: 16, background: 'white', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontWeight: 600, marginBottom: 8 }}>{t('ui.confirm')}?</div>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 12 }}>{t('profile.deleteWarning')}</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <DSMButton variant="outline" size="sm" fullWidth onClick={() => onShowResetConfirm(false)}>{t('ui.cancel')}</DSMButton>
-            <DSMButton variant="destructive" size="sm" fullWidth onClick={() => onShowResetFinal(true)}>{t('ui.confirm')}</DSMButton>
-          </div>
-        </div>
-      )}
-      {showResetFinal && (
-        <div style={{ marginTop: 16, padding: 16, background: '#fef2f2', borderRadius: '1rem', border: '2px solid #fecaca' }}>
-          <div style={{ fontWeight: 700, marginBottom: 8, color: '#991b1b' }}>{t('profile.finalConfirmation')}</div>
-          <p style={{ fontSize: '0.875rem', color: '#b91c1c', marginBottom: 12 }}>{t('profile.finalDeleteWarning')}</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <DSMButton variant="outline" size="sm" fullWidth onClick={() => { onShowResetFinal(false); onShowResetConfirm(false); }}>{t('ui.cancel')}</DSMButton>
-            <DSMButton variant="destructive" size="sm" fullWidth icon={Trash2} loading={isResetting} onClick={onReset}>{t('profile.irreversibleDelete')}</DSMButton>
-          </div>
-        </div>
-      )}
+      {/* Reset confirm — full-screen overlay modal */}
+      <AnimatePresence>
+        {(showResetConfirm || showResetFinal) && (
+          <motion.div
+            key="delete-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => { onShowResetFinal(false); onShowResetConfirm(false); }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '24px',
+            }}
+          >
+            <motion.div
+              key={showResetFinal ? 'final' : 'first'}
+              initial={{ opacity: 0, scale: 0.92, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 16 }}
+              transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%', maxWidth: 420,
+                background: showResetFinal ? '#1a0505' : '#fff',
+                borderRadius: '20px',
+                padding: '32px 28px 28px',
+                boxShadow: '0 32px 80px rgba(0,0,0,0.45)',
+                border: showResetFinal ? '1.5px solid rgba(239,68,68,0.35)' : '1.5px solid rgba(0,0,0,0.07)',
+                position: 'relative',
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => { onShowResetFinal(false); onShowResetConfirm(false); }}
+                style={{
+                  position: 'absolute', top: 16, right: 16,
+                  width: 32, height: 32, borderRadius: '50%',
+                  border: 'none', cursor: 'pointer',
+                  background: showResetFinal ? 'rgba(239,68,68,0.15)' : 'rgba(0,0,0,0.06)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: showResetFinal ? '#ef4444' : '#6b7280',
+                  fontSize: 18, lineHeight: 1,
+                }}
+              >×</button>
+
+              {/* Icon */}
+              <div style={{
+                width: 64, height: 64, borderRadius: '18px',
+                background: showResetFinal ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 20,
+                border: showResetFinal ? '1.5px solid rgba(239,68,68,0.35)' : '1.5px solid rgba(239,68,68,0.15)',
+              }}>
+                <Trash2 size={28} color={showResetFinal ? '#ef4444' : '#ef4444'} strokeWidth={1.8} />
+              </div>
+
+              {/* Title */}
+              <div style={{
+                fontSize: '1.25rem', fontWeight: 700, marginBottom: 8,
+                color: showResetFinal ? '#fef2f2' : '#111827',
+                letterSpacing: '-0.02em',
+              }}>
+                {showResetFinal ? t('profile.finalConfirmation') : t('ui.confirm') + '?'}
+              </div>
+
+              {/* Body */}
+              <p style={{
+                fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 28,
+                color: showResetFinal ? 'rgba(254,226,226,0.7)' : '#6b7280',
+              }}>
+                {showResetFinal ? t('profile.finalDeleteWarning') : t('profile.deleteWarning')}
+              </p>
+
+              {/* Divider */}
+              <div style={{
+                height: 1,
+                background: showResetFinal ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.07)',
+                marginBottom: 20,
+              }} />
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => { onShowResetFinal(false); onShowResetConfirm(false); }}
+                  style={{
+                    flex: 1, height: 44, borderRadius: 12, cursor: 'pointer',
+                    border: showResetFinal ? '1.5px solid rgba(239,68,68,0.3)' : '1.5px solid #e5e7eb',
+                    background: 'transparent',
+                    color: showResetFinal ? 'rgba(254,226,226,0.8)' : '#374151',
+                    fontWeight: 600, fontSize: '0.9rem',
+                  }}
+                >
+                  {t('ui.cancel')}
+                </button>
+                {!showResetFinal ? (
+                  <button
+                    onClick={() => onShowResetFinal(true)}
+                    style={{
+                      flex: 1, height: 44, borderRadius: 12, cursor: 'pointer',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                      color: '#fff',
+                      fontWeight: 700, fontSize: '0.9rem',
+                      boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
+                    }}
+                  >
+                    {t('ui.confirm')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={onReset}
+                    disabled={isResetting}
+                    style={{
+                      flex: 1, height: 44, borderRadius: 12, cursor: isResetting ? 'not-allowed' : 'pointer',
+                      border: 'none',
+                      background: isResetting
+                        ? 'rgba(239,68,68,0.4)'
+                        : 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                      color: '#fff',
+                      fontWeight: 700, fontSize: '0.9rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: isResetting ? 'none' : '0 4px 18px rgba(185,28,28,0.5)',
+                    }}
+                  >
+                    {isResetting ? (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ animation: 'spin 0.8s linear infinite' }}>
+                          <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
+                          <path d="M8 2 A6 6 0 0 1 14 8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                        {t('profile.irreversibleDelete')}
+                      </>
+                    ) : (
+                      <>{t('profile.irreversibleDelete')}</>
+                    )}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1474,13 +1560,13 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
     <DSMCard>
       {/* User info header */}
       {user && (
-        <div className="flex items-center gap-3 p-2.5 bg-gray-50 dark:bg-[#252525] rounded-xl mb-3">
-          <div className="w-9 h-9 bg-blue-100 dark:bg-blue-500/20 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl mb-3">
+          <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm text-gray-900 dark:text-gray-100 truncate">{user.email}</div>
-            <div className="text-[10px] text-gray-400 dark:text-gray-500">
+            <div className="text-sm text-gray-900 truncate">{user.email}</div>
+            <div className="text-2xs text-gray-400">
               {user.provider === 'email' ? t('profile.account.emailAccount') : user.provider === 'demo' ? 'Demo (offline)' : t('profile.googleAccount')}
             </div>
           </div>
@@ -1489,9 +1575,9 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
 
       {/* Success message */}
       {success && (
-        <div className="flex items-center gap-2 p-2.5 mb-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl">
-          <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
-          <span className="text-xs text-green-700 dark:text-green-300">{success}</span>
+        <div className="flex items-center gap-2 p-2.5 mb-3 bg-green-50 border border-green-200 rounded-xl">
+          <Check className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+          <span className="text-xs text-green-700">{success}</span>
         </div>
       )}
 
@@ -1500,19 +1586,19 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
         <div className="flex gap-2 mb-3">
           <button
             onClick={() => { setEditMode('email'); setError(null); setSuccess(null); }}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/15 border border-blue-200/60 dark:border-blue-500/20 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors"
           >
-            <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span className="text-xs text-blue-700 dark:text-blue-300" style={{ fontWeight: 600 }}>
+            <Mail className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-xs text-blue-700" style={{ fontWeight: 600 }}>
               {t('profile.account.changeEmail')}
             </span>
           </button>
           <button
             onClick={() => { setEditMode('password'); setError(null); setSuccess(null); }}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/15 border border-purple-200/60 dark:border-purple-500/20 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors"
           >
-            <KeyRound className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-            <span className="text-xs text-purple-700 dark:text-purple-300" style={{ fontWeight: 600 }}>
+            <KeyRound className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs text-primary" style={{ fontWeight: 600 }}>
               {t('profile.account.changePassword')}
             </span>
           </button>
@@ -1521,10 +1607,10 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
 
       {/* ── Email Change Form ───────────────────────── */}
       {editMode === 'email' && (
-        <form onSubmit={handleChangeEmail} className="mb-3 p-3 bg-blue-50/50 dark:bg-blue-500/5 rounded-xl border border-blue-200/50 dark:border-blue-500/20 space-y-2.5">
+        <form onSubmit={handleChangeEmail} className="mb-3 p-3 bg-blue-50/50 rounded-xl border border-blue-200/50 space-y-2.5">
           <div className="flex items-center gap-2 mb-1">
-            <Mail className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span className="text-xs text-gray-700 dark:text-gray-300" style={{ fontWeight: 600 }}>
+            <Mail className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>
               {t('profile.account.changeEmail')}
             </span>
           </div>
@@ -1535,7 +1621,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder={t('profile.account.newEmailPlaceholder')}
             required
-            className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
           />
 
           <div className="relative">
@@ -1545,18 +1631,18 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
               onChange={(e) => setEmailCurrentPw(e.target.value)}
               placeholder={t('profile.account.currentPasswordPlaceholder')}
               required
-              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
             />
             <button type="button" onClick={() => setShowEmailPw(!showEmailPw)} tabIndex={-1}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
               {showEmailPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-500/10 rounded-lg">
+            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
               <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
-              <span className="text-[11px] text-red-600 dark:text-red-400">{error}</span>
+              <span className="text-[11px] text-red-600">{error}</span>
             </div>
           )}
 
@@ -1573,10 +1659,10 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
 
       {/* ── Password Change Form ────────────────────── */}
       {editMode === 'password' && (
-        <form onSubmit={handleChangePassword} className="mb-3 p-3 bg-purple-50/50 dark:bg-purple-500/5 rounded-xl border border-purple-200/50 dark:border-purple-500/20 space-y-2.5">
+        <form onSubmit={handleChangePassword} className="mb-3 p-3 bg-primary/5 rounded-xl border border-primary/20 space-y-2.5">
           <div className="flex items-center gap-2 mb-1">
-            <KeyRound className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-            <span className="text-xs text-gray-700 dark:text-gray-300" style={{ fontWeight: 600 }}>
+            <KeyRound className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>
               {t('profile.account.changePassword')}
             </span>
           </div>
@@ -1588,10 +1674,10 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
               onChange={(e) => setCurrentPw(e.target.value)}
               placeholder={t('profile.account.currentPasswordPlaceholder')}
               required
-              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
             <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} tabIndex={-1}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
               {showCurrentPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
           </div>
@@ -1604,10 +1690,10 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
               placeholder={t('profile.account.newPasswordPlaceholder')}
               required
               minLength={6}
-              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
             <button type="button" onClick={() => setShowNewPw(!showNewPw)} tabIndex={-1}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
               {showNewPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </button>
           </div>
@@ -1619,17 +1705,17 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
             placeholder={t('profile.account.confirmPasswordPlaceholder')}
             required
             minLength={6}
-            className="w-full h-10 px-3 rounded-lg border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+            className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
           />
 
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 pl-0.5">
+          <p className="text-2xs text-gray-400 pl-0.5">
             {t('profile.account.passwordHint')}
           </p>
 
           {error && (
-            <div className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-500/10 rounded-lg">
+            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
               <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
-              <span className="text-[11px] text-red-600 dark:text-red-400">{error}</span>
+              <span className="text-[11px] text-red-600">{error}</span>
             </div>
           )}
 
@@ -1648,7 +1734,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
       <button
         type="button"
         onClick={onLogout}
-        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-medium transition-colors hover:bg-red-50 dark:hover:bg-red-500/5 bg-white dark:bg-[#1E1E1E] border-2 border-red-500 text-red-500"
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-medium transition-colors hover:bg-red-50 bg-white border-2 border-red-500 text-red-500"
       >
         <LogOut className="w-4 h-4" />
         {t('profile.logout')}
@@ -1659,9 +1745,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
 
 /** Theme toggle card */
 function ThemeToggleCard() {
-  const { theme, toggleTheme } = useTheme();
   const { t } = useLanguage();
-  const isDark = theme === 'dark';
 
   return (
     <DSMCard>
@@ -1677,17 +1761,17 @@ function ThemeToggleCard() {
             {isDark ? <Moon className="w-4.5 h-4.5 text-indigo-400" /> : <Sun className="w-4.5 h-4.5 text-amber-500" />}
           </div>
           <div className="text-left">
-            <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
+            <div className="text-sm text-gray-900" style={{ fontWeight: 700 }}>
               {isDark ? t('profile.darkMode') : t('profile.lightMode')}
             </div>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-2xs text-gray-500 mt-0.5">
               {isDark ? t('profile.darkModeDesc') : t('profile.lightModeDesc')}
             </p>
           </div>
         </div>
         <div
           className={`relative w-12 h-7 rounded-full transition-all duration-300 flex-shrink-0 pointer-events-none ${
-            isDark ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+            isDark ? 'bg-blue-500' : 'bg-gray-300'
           }`}
         >
           <div
@@ -1716,14 +1800,14 @@ function LanguageSelectorCard() {
   return (
     <DSMCard>
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center">
-          <Globe className="w-4.5 h-4.5 text-blue-500 dark:text-blue-400" />
+        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+          <Globe className="w-4.5 h-4.5 text-blue-500" />
         </div>
         <div>
-          <div className="text-sm text-gray-900 dark:text-gray-100" style={{ fontWeight: 700 }}>
+          <div className="text-sm text-gray-900" style={{ fontWeight: 700 }}>
             {t('profile.appLanguage')}
           </div>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-2xs text-gray-500 mt-0.5">
             {t('profile.appLanguageDesc')}
           </p>
         </div>
@@ -1742,13 +1826,13 @@ function LanguageSelectorCard() {
               }}
               className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all cursor-pointer ${
                 isActive
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10 dark:border-blue-400 shadow-sm'
-                  : 'border-gray-100 dark:border-[#2a2a2a] bg-gray-50 dark:bg-[#252525] hover:border-gray-200 dark:hover:border-[#3a3a3a] active:bg-gray-100 dark:active:bg-[#2a2a2a]'
+                  ? 'border-blue-500 bg-blue-50 shadow-sm'
+                  : 'border-gray-100 bg-gray-50 hover:border-gray-200 active:bg-gray-100'
               }`}
             >
               <span className="text-2xl leading-none pointer-events-none">{lang.flag}</span>
               <span
-                className={`text-xs pointer-events-none ${isActive ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}
+                className={`text-xs pointer-events-none ${isActive ? 'text-blue-700' : 'text-gray-600'}`}
                 style={{ fontWeight: isActive ? 700 : 500 }}
               >
                 {lang.name}
@@ -1773,13 +1857,13 @@ function SettingsLink({ icon: Icon, iconColor, label, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between py-3 px-1 border-b border-gray-50 dark:border-[#2a2a2a] last:border-b-0 hover:bg-gray-50 dark:hover:bg-[#252525] rounded-lg transition-colors"
+      className="w-full flex items-center justify-between py-3 px-1 border-b border-gray-50 last:border-b-0 hover:bg-gray-50 rounded-lg transition-colors"
     >
       <div className="flex items-center gap-3">
         <Icon className={`w-4.5 h-4.5 ${iconColor}`} />
-        <span className="text-sm text-gray-700 dark:text-gray-300" style={{ fontWeight: 500 }}>{label}</span>
+        <span className="text-sm text-gray-700" style={{ fontWeight: 500 }}>{label}</span>
       </div>
-      <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+      <ChevronRight className="w-4 h-4 text-gray-400" />
     </button>
   );
 }
@@ -1805,13 +1889,7 @@ function SubscriptionManagement() {
     <>
       <DSMCard padding="none">
         {/* Header */}
-        <div className={`p-3.5 ${
-          subscriptionActive
-            ? 'bg-gradient-to-r from-amber-400 to-orange-500'
-            : !trial.isExpired
-            ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
-            : 'bg-gradient-to-r from-gray-400 to-gray-500'
-        } rounded-t-2xl`}>
+        <div className="p-3.5 bg-primary rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-white">
               <Crown className="w-4 h-4" />
@@ -1827,7 +1905,7 @@ function SubscriptionManagement() {
             {!subscriptionActive && !trial.isExpired && (
               <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
                 <Clock className="w-3 h-3 text-white" />
-                <span className="text-[10px] font-bold text-white">{trial.daysRemaining} {t('common.day')}</span>
+                <span className="text-2xs font-bold text-white">{trial.daysRemaining} {t('common.day')}</span>
               </div>
             )}
           </div>
@@ -1837,27 +1915,27 @@ function SubscriptionManagement() {
           {subscriptionActive && subscription ? (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.status')}</span>
-                <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-full font-medium">{t('profile.active')}</span>
+                <span className="text-xs text-gray-500">{t('profile.status')}</span>
+                <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium">{t('profile.active')}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.nextPayment')}</span>
-                <span className="text-xs text-gray-800 dark:text-gray-200">{new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-500">{t('profile.nextPayment')}</span>
+                <span className="text-xs text-gray-800">{new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.fee')}</span>
-                <span className="text-xs text-gray-800 dark:text-gray-200">{formatUsd(SUBSCRIPTION_PRICE_USD)}{t('common.perMonth')} (~{formatHuf(SUBSCRIPTION_PRICE_HUF)})</span>
+                <span className="text-xs text-gray-500">{t('profile.fee')}</span>
+                <span className="text-xs text-gray-800">{formatUsd(SUBSCRIPTION_PRICE_USD)}{t('common.perMonth')} (~{formatHuf(SUBSCRIPTION_PRICE_HUF)})</span>
               </div>
               {showCancelConfirm ? (
-                <div className="p-2.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl mt-1">
-                  <p className="text-xs text-red-800 dark:text-red-300 mb-2">{t('profile.confirmCancel')}</p>
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl mt-1">
+                  <p className="text-xs text-red-800 mb-2">{t('profile.confirmCancel')}</p>
                   <div className="flex gap-2">
                     <DSMButton variant="outline" size="sm" fullWidth onClick={() => setShowCancelConfirm(false)}>{t('ui.cancel')}</DSMButton>
                     <DSMButton variant="destructive" size="sm" fullWidth onClick={handleCancelSubscription} loading={isCancelling}>{t('ui.confirm')}</DSMButton>
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setShowCancelConfirm(true)} className="w-full px-3 py-2 border border-gray-200 dark:border-[#2a2a2a] text-gray-400 rounded-xl text-xs hover:bg-gray-50 dark:hover:bg-[#252525] transition-colors mt-1">
+                <button onClick={() => setShowCancelConfirm(true)} className="w-full px-3 py-2 border border-gray-200 text-gray-400 rounded-xl text-xs hover:bg-gray-50 transition-colors mt-1">
                   {t('profile.cancelSubscription')}
                 </button>
               )}
@@ -1865,20 +1943,20 @@ function SubscriptionManagement() {
           ) : !trial.isExpired ? (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.status')}</span>
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <span className="text-xs text-gray-500">{t('profile.status')}</span>
+                <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                   <Gift className="w-3 h-3" /> {t('profile.trialActive')}
                 </span>
               </div>
-              <div className="h-1.5 bg-gray-100 dark:bg-[#252525] rounded-full overflow-hidden">
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    trial.daysRemaining <= 3 ? 'bg-amber-400' : 'bg-emerald-400'
+                    trial.daysRemaining <= 3 ? 'bg-amber-400' : 'bg-primary'
                   }`}
                   style={{ width: `${Math.min(100, (trial.daysUsed / TRIAL_DAYS) * 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500">
+              <p className="text-2xs text-gray-400">
                 {t('profile.trialRemaining').replace('{n}', String(trial.daysRemaining))}
               </p>
               <DSMButton variant="gradientAmber" size="sm" fullWidth icon={Crown} onClick={() => navigate('/subscription')}>
@@ -1888,12 +1966,12 @@ function SubscriptionManagement() {
           ) : (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 dark:text-gray-400">{t('profile.status')}</span>
-                <span className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <span className="text-xs text-gray-500">{t('profile.status')}</span>
+                <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                   <Clock className="w-3 h-3" /> {t('profile.trialExpired')}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.limitedAccessDesc')}</p>
+              <p className="text-xs text-gray-500">{t('profile.limitedAccessDesc')}</p>
               <DSMButton variant="gradientAmber" size="sm" fullWidth icon={Crown} onClick={() => navigate('/subscription')}>
                 {t('profile.premiumUpgrade')}
               </DSMButton>
@@ -1944,7 +2022,7 @@ function InlineEditStat({ label, value, unit, type = "text", prominent, onSave }
 
   if (editing) {
     return (
-      <div className={`bg-white dark:bg-[#1E1E1E] rounded-xl text-center border-2 border-blue-400 dark:border-blue-500 shadow-sm ${
+      <div className={`bg-white rounded-xl text-center border-2 border-blue-400 shadow-sm ${
         prominent ? 'px-4 py-4' : 'px-2 py-2.5'
       }`}>
         <div className="flex items-center justify-center gap-1.5">
@@ -1959,18 +2037,18 @@ function InlineEditStat({ label, value, unit, type = "text", prominent, onSave }
               if (e.key === 'Escape') cancel();
             }}
             onBlur={commit}
-            className={`text-center bg-transparent outline-none text-gray-900 dark:text-gray-100 ${
+            className={`text-center bg-transparent outline-none text-gray-900 ${
               prominent ? 'w-24' : 'w-16'
             }`}
             style={{ fontSize: prominent ? '1.75rem' : '1.125rem', fontWeight: 700 }}
           />
           {unit && (
-            <span className={`text-gray-400 dark:text-gray-500 ${prominent ? 'text-sm' : 'text-[10px]'}`} style={{ fontWeight: 500 }}>
+            <span className={`text-gray-400 ${prominent ? 'text-sm' : 'text-2xs'}`} style={{ fontWeight: 500 }}>
               {unit}
             </span>
           )}
         </div>
-        <div className={`text-gray-500 dark:text-gray-400 mt-0.5 ${prominent ? 'text-xs' : 'text-[10px]'}`}>{label}</div>
+        <div className={`text-gray-500 mt-0.5 ${prominent ? 'text-xs' : 'text-2xs'}`}>{label}</div>
       </div>
     );
   }
@@ -1978,22 +2056,22 @@ function InlineEditStat({ label, value, unit, type = "text", prominent, onSave }
   return (
     <button
       onClick={() => setEditing(true)}
-      className={`w-full bg-gray-50 dark:bg-[#252525] rounded-xl text-center border border-gray-100 dark:border-[#2a2a2a] transition-all hover:border-blue-300 dark:hover:border-blue-500/30 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 active:scale-[0.97] cursor-pointer ${
+      className={`w-full bg-gray-50 rounded-xl text-center border border-gray-100 transition-all hover:border-blue-300 hover:bg-blue-50/30 active:scale-[0.97] cursor-pointer ${
         prominent ? 'px-4 py-4' : 'px-2 py-3'
       }`}
       aria-label={`${label}: ${displayValue} ${unit || ''}`}
     >
-      <div className={`text-gray-900 dark:text-gray-100 ${prominent ? '' : ''}`}
+      <div className={`text-gray-900 ${prominent ? '' : ''}`}
         style={{ fontSize: prominent ? '1.75rem' : '1.125rem', fontWeight: 700 }}
       >
         {displayValue}
         {displayValue !== '–' && unit && (
-          <span className={`text-gray-500 dark:text-gray-400 ml-1 ${prominent ? 'text-sm' : 'text-[10px]'}`} style={{ fontWeight: 500 }}>
+          <span className={`text-gray-500 ml-1 ${prominent ? 'text-sm' : 'text-2xs'}`} style={{ fontWeight: 500 }}>
             {unit}
           </span>
         )}
       </div>
-      <div className={`text-gray-500 dark:text-gray-400 mt-0.5 ${prominent ? 'text-xs' : 'text-[10px]'}`}>{label}</div>
+      <div className={`text-gray-500 mt-0.5 ${prominent ? 'text-xs' : 'text-2xs'}`}>{label}</div>
     </button>
   );
 }
@@ -2028,10 +2106,10 @@ function MetabolicAgeTile({ realAge, metabolicAge, onSave }: {
   // Color logic
   const diff = metabolicAge - realAge;
   const getColor = () => {
-    if (metabolicAge === 0 || realAge === 0) return { bg: 'bg-gray-50 dark:bg-[#252525]', border: 'border-gray-100 dark:border-[#2a2a2a]', text: 'text-gray-900 dark:text-gray-100', label: 'text-gray-500 dark:text-gray-400', indicator: '' };
-    if (diff <= 0) return { bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-200 dark:border-green-500/20', text: 'text-green-700 dark:text-green-400', label: 'text-green-600 dark:text-green-400', indicator: diff < 0 ? t('profileExtra.metabolicYounger').replace('{n}', String(Math.abs(diff))) : t('profileExtra.metabolicMatch') };
-    if (diff <= 5) return { bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/20', text: 'text-amber-700 dark:text-amber-400', label: 'text-amber-600 dark:text-amber-400', indicator: t('profileExtra.metabolicOlder').replace('{n}', String(diff)) };
-    return { bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-200 dark:border-red-500/20', text: 'text-red-700 dark:text-red-400', label: 'text-red-600 dark:text-red-400', indicator: t('profileExtra.metabolicOlder').replace('{n}', String(diff)) + '!' };
+    if (metabolicAge === 0 || realAge === 0) return { bg: 'bg-gray-50', border: 'border-gray-100', text: 'text-gray-900', label: 'text-gray-500', indicator: '' };
+    if (diff <= 0) return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', label: 'text-green-600', indicator: diff < 0 ? t('profileExtra.metabolicYounger').replace('{n}', String(Math.abs(diff))) : t('profileExtra.metabolicMatch') };
+    if (diff <= 5) return { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', label: 'text-amber-600', indicator: t('profileExtra.metabolicOlder').replace('{n}', String(diff)) };
+    return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', label: 'text-red-600', indicator: t('profileExtra.metabolicOlder').replace('{n}', String(diff)) + '!' };
   };
 
   const color = getColor();
@@ -2039,7 +2117,7 @@ function MetabolicAgeTile({ realAge, metabolicAge, onSave }: {
 
   if (editing) {
     return (
-      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl text-center border-2 border-blue-400 dark:border-blue-500 shadow-sm px-2 py-2.5">
+      <div className="bg-white rounded-xl text-center border-2 border-blue-400 shadow-sm px-2 py-2.5">
         <div className="flex items-center justify-center gap-1.5">
           <input
             ref={inputRef}
@@ -2049,12 +2127,12 @@ function MetabolicAgeTile({ realAge, metabolicAge, onSave }: {
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') cancel(); }}
             onBlur={commit}
-            className="w-16 text-center bg-transparent outline-none text-gray-900 dark:text-gray-100"
+            className="w-16 text-center bg-transparent outline-none text-gray-900"
             style={{ fontSize: '1.125rem', fontWeight: 700 }}
           />
-          <span className="text-[10px] text-gray-400 dark:text-gray-500" style={{ fontWeight: 500 }}>{t('profileExtra.yearUnit')}</span>
+          <span className="text-2xs text-gray-400" style={{ fontWeight: 500 }}>{t('profileExtra.yearUnit')}</span>
         </div>
-        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('profileExtra.metabolicAgeLabel')}</div>
+        <div className="text-2xs text-gray-500 mt-0.5">{t('profileExtra.metabolicAgeLabel')}</div>
       </div>
     );
   }
@@ -2068,10 +2146,10 @@ function MetabolicAgeTile({ realAge, metabolicAge, onSave }: {
       <div className={`${color.text}`} style={{ fontSize: '1.125rem', fontWeight: 700 }}>
         {displayValue}
         {displayValue !== '–' && (
-          <span className={`${color.label} ml-1 text-[10px]`} style={{ fontWeight: 500 }}>{t('profileExtra.yearUnit')}</span>
+          <span className={`${color.label} ml-1 text-2xs`} style={{ fontWeight: 500 }}>{t('profileExtra.yearUnit')}</span>
         )}
       </div>
-      <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{t('profileExtra.metabolicAgeLabel')}</div>
+      <div className="text-2xs text-gray-500 mt-0.5">{t('profileExtra.metabolicAgeLabel')}</div>
       {color.indicator && metabolicAge > 0 && (
         <div className={`text-[9px] ${color.label} mt-0.5`} style={{ fontWeight: 600 }}>{color.indicator}</div>
       )}
