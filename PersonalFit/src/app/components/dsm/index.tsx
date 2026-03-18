@@ -194,7 +194,7 @@ export function DSMCard({ children, className = "", padding = "md", border = "bo
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-sm border ${border} dark:border-[#2a2a2a] ${pad} ${onClick ? "cursor-pointer" : ""} ${className}`}
+      className={`bg-white dark:bg-card rounded-2xl shadow-sm border ${border} dark:border-border ${pad} ${onClick ? "cursor-pointer" : ""} ${className}`}
     >
       {children}
     </div>
@@ -223,11 +223,11 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-md",
   secondary: "bg-[var(--color-primary-50)] dark:bg-[rgba(51,102,255,0.1)] text-[var(--color-primary-700)] dark:text-[#809fff] border border-[var(--color-primary-200)] dark:border-[rgba(51,102,255,0.2)] hover:bg-[var(--color-primary-100)] dark:hover:bg-[rgba(51,102,255,0.2)]",
   destructive: "bg-red-500 text-white hover:bg-red-600 shadow-md",
-  ghost: "bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#252525]",
+  ghost: "bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-muted",
   gradient: "bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white hover:from-[#2952cc] hover:to-[#0ea685] shadow-md",
   gradientAmber: "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md",
   gradientPurple: "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-md",
-  outline: "bg-white dark:bg-[#1E1E1E] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-50 dark:hover:bg-[#252525]",
+  outline: "bg-white dark:bg-card text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-border hover:bg-gray-50 dark:hover:bg-muted",
 };
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
@@ -310,7 +310,7 @@ export function DSMInput({ value, onChange, placeholder, autoFocus, className = 
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       autoFocus={autoFocus}
-      className={`w-full px-3.5 py-2.5 border-2 border-gray-200 dark:border-[#2a2a2a] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-200)] dark:focus:ring-[rgba(51,102,255,0.3)] focus:border-[var(--color-primary-400)] dark:focus:border-[var(--primary)] bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${className}`}
+      className={`w-full px-3.5 py-2.5 border-2 border-gray-200 dark:border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-200)] dark:focus:ring-[rgba(51,102,255,0.3)] focus:border-[var(--color-primary-400)] dark:focus:border-[var(--primary)] bg-white dark:bg-[#252525] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${className}`}
     />
   );
 }
@@ -431,7 +431,7 @@ export function DSMHint({ icon: Icon, text, variant = "info", className = "", ta
         <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${HINT_ICON_BG[variant]}`}>
           <Icon className="w-3.5 h-3.5" />
         </div>
-        <span className="text-[12px] font-medium leading-snug">{text}</span>
+        <span className="text-xs font-medium leading-snug">{text}</span>
       </div>
       {/* Speech bubble tail */}
       {tailPosition !== "none" && (
@@ -486,7 +486,7 @@ function NavLinkItem({ to, icon: Icon, label, active }: NavLinkProps) {
         />
       </div>
       {/* Label */}
-      <span className={`text-[11px] sm:text-[12px] text-center leading-tight transition-colors duration-200 ${
+      <span className={`text-[11px] sm:text-xs text-center leading-tight transition-colors duration-200 ${
         active ? "text-[var(--color-primary-700)] dark:text-[#809fff] font-semibold" : "text-gray-400 dark:text-gray-500 font-medium"
       }`}>
         {label}
@@ -507,7 +507,7 @@ export function BottomNav({ t }: BottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40" role="navigation" aria-label={t("nav.menu")}>
       {/* Frosted glass background */}
-      <div className="bg-white/95 dark:bg-[#121212]/95 backdrop-blur-lg border-t border-gray-200/80 dark:border-[#2a2a2a]/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+      <div className="bg-white/95 dark:bg-background/95 backdrop-blur-lg border-t border-gray-200/80 dark:border-border/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
         <div className="mx-auto flex items-end px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] sm:px-3 w-full max-w-md sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
           <NavLinkItem to="/foods" icon={Apple} label={t("nav.foods")} active={isActive("/foods")} />
           <NavLinkItem to="/shopping" icon={ShoppingCart} label={t("nav.shopping")} active={isActive("/shopping")} />
@@ -580,7 +580,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
         ${isFull
           ? "bg-blue-100/90 dark:bg-blue-900/40 border-blue-400 dark:border-blue-500/50 shadow-blue-300/40 dark:shadow-blue-500/20"
           : isEmpty
-            ? "bg-white/80 dark:bg-[#1E1E1E]/80 border-cyan-300/60 dark:border-cyan-500/30 shadow-cyan-200/30 dark:shadow-cyan-500/10"
+            ? "bg-white/80 dark:bg-card/80 border-cyan-300/60 dark:border-cyan-500/30 shadow-cyan-200/30 dark:shadow-cyan-500/10"
             : "bg-blue-50/90 dark:bg-blue-950/40 border-blue-300 dark:border-blue-600/40 shadow-blue-200/30 dark:shadow-blue-500/15"
         }
       `}
@@ -694,7 +694,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
           <Droplets className="w-3 h-3 inline-block mr-0.5 -mt-0.5" />
           {waterLabel}
         </span>
-        <span className={`text-[12px] font-bold leading-tight ${
+        <span className={`text-xs font-bold leading-tight ${
           isFull
             ? "text-blue-500 dark:text-blue-300"
             : isEmpty
@@ -831,7 +831,7 @@ export function DSMModal({ open, onClose, children, maxWidth = "max-w-xs" }: DSM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-6" onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div className={`relative w-full ${maxWidth} bg-white dark:bg-[#1E1E1E] rounded-2xl p-5 shadow-2xl`} onClick={(e) => e.stopPropagation()}>
+      <div className={`relative w-full ${maxWidth} bg-white dark:bg-card rounded-2xl p-5 shadow-2xl`} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -928,7 +928,7 @@ export function DSMNotification({
     success: "bg-green-500",
     warning: "bg-amber-500",
     error: "bg-red-500",
-    confirm: "bg-gray-800 dark:bg-[#1E1E1E]",
+    confirm: "bg-gray-800 dark:bg-card",
   }[variant];
 
   return (
@@ -1043,7 +1043,7 @@ export function DSMStatCard({ value, label, color = "text-white", fontSize = "1.
   return (
     <div className="bg-white/10 backdrop-blur rounded-xl p-2.5 text-center">
       <div className={`font-bold ${color}`} style={{ fontSize }}>{value}</div>
-      <div className="text-[10px] text-white/50 mt-0.5">{label}</div>
+      <div className="text-2xs text-white/50 mt-0.5">{label}</div>
     </div>
   );
 }
@@ -1073,3 +1073,4 @@ export { TabFilter, createTabs } from "../TabFilter";
 
 export * from "./atoms";
 export * from "./molecules";
+export { AppHeader } from './AppHeader';
