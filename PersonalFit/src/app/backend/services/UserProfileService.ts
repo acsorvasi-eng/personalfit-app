@@ -67,6 +67,10 @@ export interface StoredUserProfile {
   bedtime?: string;
   /** Sleep cycles 4–7 */
   sleepCycles?: number;
+  /** Foods the user enjoys — used to bias meal plan generation */
+  likedFoods?: string[];
+  /** Foods the user dislikes or avoids — LLM is told to exclude them */
+  dislikedFoods?: string[];
 }
 
 /** Parsed GMON/body composition from API */
@@ -98,6 +102,8 @@ function getDefaultProfile(): StoredUserProfile {
     allergies: '',
     dietaryPreferences: '',
     avatar: '',
+    likedFoods: [],
+    dislikedFoods: [],
   };
 }
 
@@ -107,7 +113,11 @@ function getDefaultProfile(): StoredUserProfile {
 export async function getUserProfile(): Promise<StoredUserProfile> {
   const db = await getDB();
   const existing = await db.get<StoredUserProfile>('user_profile', PROFILE_ID);
-  if (existing) return existing;
+  if (existing) return {
+    ...existing,
+    likedFoods: existing.likedFoods ?? [],
+    dislikedFoods: existing.dislikedFoods ?? [],
+  };
   const fresh = getDefaultProfile();
   await db.put('user_profile', fresh);
   return fresh;
