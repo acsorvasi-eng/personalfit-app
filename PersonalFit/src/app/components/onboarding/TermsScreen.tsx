@@ -18,9 +18,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { Button } from '../ui/button';
+import { DSMButton, DSMCard } from '../dsm';
 import { Checkbox } from '../ui/checkbox';
-import { Card, CardContent } from '../ui/card';
 
 export function TermsScreen() {
   const navigate = useNavigate();
@@ -66,7 +65,7 @@ export function TermsScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-[#121212] dark:via-[#121212] dark:to-[#121212] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -75,11 +74,11 @@ export function TermsScreen() {
       >
         <div className="max-w-md mx-auto">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+              <FileText className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl text-gray-900">{t("terms.title")}</h1>
+              <h1 className="text-2xl text-foreground">{t("terms.title")}</h1>
               <p className="text-gray-500 text-sm">{t("terms.subtitle")}</p>
             </div>
           </div>
@@ -95,24 +94,23 @@ export function TermsScreen() {
       >
         <div className="max-w-md mx-auto">
           {/* Trust Badges */}
-          <div className="flex items-center gap-4 mb-4 p-3 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-100">
-            <div className="flex items-center gap-2 text-blue-700">
+          <div className="flex items-center gap-4 mb-4 p-3 bg-primary/5 rounded-xl border border-primary/20">
+            <div className="flex items-center gap-2 text-primary">
               <Shield className="w-4 h-4" />
               <span className="text-xs">{t("terms.gdpr")}</span>
             </div>
-            <div className="flex items-center gap-2 text-blue-700">
+            <div className="flex items-center gap-2 text-primary">
               <Lock className="w-4 h-4" />
               <span className="text-xs">{t("terms.encrypted")}</span>
             </div>
-            <div className="flex items-center gap-2 text-blue-700">
+            <div className="flex items-center gap-2 text-primary">
               <Eye className="w-4 h-4" />
               <span className="text-xs">{t("terms.transparent")}</span>
             </div>
           </div>
 
           {/* T&C Sections */}
-          <Card className="border-gray-200 shadow-sm">
-            <CardContent className="p-5 pt-5 space-y-5">
+          <DSMCard className="shadow-sm p-5 space-y-5">
               {TERMS_SECTIONS.map((section, idx) => (
                 <div key={idx}>
                   <h3 className="text-gray-900 mb-1.5">{section.title}</h3>
@@ -128,8 +126,7 @@ export function TermsScreen() {
               <p className="text-xs text-gray-400 pt-2">
                 {t("terms.lastUpdate")}
               </p>
-            </CardContent>
-          </Card>
+          </DSMCard>
         </div>
       </motion.div>
 
@@ -138,7 +135,7 @@ export function TermsScreen() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="border-t border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1E1E1E] px-6 py-5 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+        className="border-t border-border bg-background px-6 py-5 shadow-sm"
       >
         <div className="max-w-md mx-auto space-y-4">
           {/* Decline Warning */}
@@ -146,31 +143,21 @@ export function TermsScreen() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl"
+              className="p-4 bg-amber-50 border border-amber-200 rounded-xl"
             >
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-amber-800 dark:text-amber-300 text-sm">
+                  <p className="text-amber-800 text-sm">
                     {t("terms.declineWarning")}
                   </p>
                   <div className="flex gap-2 mt-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDeclineWarning(false)}
-                      className="text-xs"
-                    >
+                    <DSMButton variant="secondary" size="sm" onClick={() => setShowDeclineWarning(false)} className="text-xs">
                       {t("terms.cancelBtn")}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleConfirmDecline}
-                      className="text-xs"
-                    >
+                    </DSMButton>
+                    <DSMButton variant="danger" size="sm" onClick={handleConfirmDecline} className="text-xs">
                       {t("terms.declineBtn")}
-                    </Button>
+                    </DSMButton>
                   </div>
                 </div>
               </div>
@@ -195,21 +182,13 @@ export function TermsScreen() {
 
           {/* Buttons */}
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleDecline}
-              className="flex-1 h-12 rounded-xl border-gray-200"
-            >
+            <DSMButton variant="secondary" onClick={handleDecline} className="flex-1 h-12 rounded-xl">
               {t("terms.declineBtn")}
-            </Button>
-            <Button
-              onClick={handleAcceptAndContinue}
-              disabled={!isAccepted}
-              className="flex-1 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-teal-500 text-white border-0 shadow-lg gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
+            </DSMButton>
+            <DSMButton variant="primary" onClick={handleAcceptAndContinue} disabled={!isAccepted} className="flex-1 h-12 rounded-xl">
               {t("terms.acceptBtn")}
               <ChevronRight className="w-4 h-4" />
-            </Button>
+            </DSMButton>
           </div>
         </div>
       </motion.div>

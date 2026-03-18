@@ -1,244 +1,237 @@
 /**
- * OnboardingScreen - 4-slide introduction to app benefits
- * Uses swipe/tap navigation with progress dots.
- * Connects to the AuthContext flow.
+ * OnboardingScreen - 3-slide privacy-first introduction
+ * Swipeable slides focusing on local-only, personal, and AI-powered benefits.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  UtensilsCrossed,
-  ShoppingCart,
-  Dumbbell,
-  Heart,
-  ChevronRight,
-  Sparkles,
-} from 'lucide-react';
+import { Lock, Sparkles, ChevronRight, Brain, Apple } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { Button } from '../ui/button';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { DSMButton } from '../dsm';
 
-interface OnboardingSlide {
+interface Slide {
+  bgEmojis: { emoji: string; x: number; y: number; size: number; delay: number; dur: number; amp: number }[];
   icon: React.ElementType;
-  iconColor: string;
-  iconBg: string;
-  titleKey: string;
-  subtitleKey: string;
-  descKey: string;
-  image: string;
-  gradient: string;
-  features?: { key1: string; key2: string };
+  badge: string;
+  title: string;
+  desc: string;
 }
 
-const slides: OnboardingSlide[] = [
+const getPrimaryColor = () =>
+  getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2563EB';
+
+const SLIDE_TEMPLATES: Omit<Slide, 'badge' | 'title' | 'desc'>[] = [
   {
-    icon: UtensilsCrossed,
-    iconColor: 'text-blue-600',
-    iconBg: 'bg-blue-100',
-    titleKey: 'onboarding.slide1.title',
-    subtitleKey: 'onboarding.slide1.subtitle',
-    descKey: 'onboarding.slide1.desc',
-    image: 'https://images.unsplash.com/photo-1621758745802-6c16a087ca32?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwbWVhbCUyMHBsYW5uaW5nJTIwbnV0cml0aW9ufGVufDF8fHx8MTc3MTMxOTE5NHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    gradient: 'from-blue-500 via-blue-500 to-teal-500',
+    icon: Lock,
+    bgEmojis: [
+      { emoji: '🔒', x: 10, y: 12, size: 28, delay: 0,   dur: 3.2, amp: 12 },
+      { emoji: '🛡️', x: 80, y: 18, size: 24, delay: 0.5, dur: 2.8, amp: 10 },
+      { emoji: '📱', x: 86, y: 64, size: 22, delay: 0.9, dur: 3.6, amp: 14 },
+      { emoji: '🔐', x:  7, y: 70, size: 20, delay: 1.3, dur: 2.6, amp:  8 },
+      { emoji: '✅', x: 20, y: 46, size: 18, delay: 0.6, dur: 4.0, amp: 16 },
+      { emoji: '💚', x: 74, y: 48, size: 20, delay: 1.1, dur: 3.0, amp: 11 },
+    ],
   },
   {
-    icon: ShoppingCart,
-    iconColor: 'text-blue-600',
-    iconBg: 'bg-blue-100 dark:bg-blue-500/20',
-    titleKey: 'onboarding.slide2.title',
-    subtitleKey: 'onboarding.slide2.subtitle',
-    descKey: 'onboarding.slide2.desc',
-    image: 'https://images.unsplash.com/photo-1703113691184-848da8ebd0bc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncm9jZXJ5JTIwc2hvcHBpbmclMjBmcmVzaCUyMHZlZ2V0YWJsZXN8ZW58MXx8fHwxNzcxMjcwOTAzfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    gradient: 'from-blue-500 via-blue-500 to-teal-500',
+    icon: Brain,
+    bgEmojis: [
+      { emoji: '🧠', x: 10, y: 12, size: 28, delay: 0,   dur: 3.0, amp: 12 },
+      { emoji: '🥗', x: 80, y: 16, size: 24, delay: 0.4, dur: 3.4, amp: 10 },
+      { emoji: '⚖️', x: 84, y: 64, size: 22, delay: 0.8, dur: 2.9, amp: 14 },
+      { emoji: '🎯', x:  6, y: 68, size: 24, delay: 1.2, dur: 3.6, amp:  9 },
+      { emoji: '💪', x: 22, y: 44, size: 20, delay: 0.5, dur: 2.7, amp: 13 },
+      { emoji: '✨', x: 76, y: 46, size: 18, delay: 1.0, dur: 3.2, amp: 11 },
+    ],
   },
   {
-    icon: Dumbbell,
-    iconColor: 'text-orange-600',
-    iconBg: 'bg-orange-100 dark:bg-orange-500/20',
-    titleKey: 'onboarding.slide3.title',
-    subtitleKey: 'onboarding.slide3.subtitle',
-    descKey: 'onboarding.slide3.desc',
-    image: 'https://images.unsplash.com/photo-1758875568756-37a9c5c1a4f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwd29ya291dCUyMHRyYWNraW5nJTIwcHJvZ3Jlc3N8ZW58MXx8fHwxNzcxMzE5MTk0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    gradient: 'from-orange-500 via-pink-500 to-rose-500',
-  },
-  {
-    icon: Heart,
-    iconColor: 'text-rose-600',
-    iconBg: 'bg-rose-100 dark:bg-rose-500/20',
-    titleKey: 'onboarding.slide4.title',
-    subtitleKey: 'onboarding.slide4.subtitle',
-    descKey: 'onboarding.slide4.desc',
-    image: '',
-    gradient: 'from-rose-500 via-purple-500 to-indigo-500',
-    features: { key1: 'onboarding.slide4.feature1', key2: 'onboarding.slide4.feature2' },
+    icon: Apple,
+    bgEmojis: [
+      { emoji: '🍎', x: 10, y: 13, size: 26, delay: 0,   dur: 3.4, amp: 12 },
+      { emoji: '🥦', x: 80, y: 15, size: 22, delay: 0.3, dur: 2.8, amp: 10 },
+      { emoji: '🫐', x: 85, y: 63, size: 24, delay: 0.7, dur: 3.2, amp: 14 },
+      { emoji: '🥑', x:  8, y: 65, size: 22, delay: 1.1, dur: 2.6, amp:  9 },
+      { emoji: '🍋', x: 22, y: 43, size: 20, delay: 0.5, dur: 4.0, amp: 16 },
+      { emoji: '🌽', x: 74, y: 46, size: 20, delay: 0.9, dur: 3.6, amp: 11 },
+    ],
   },
 ];
+
+const cardVariants = {
+  initial: (dir: number) => ({ opacity: 0, x: dir * 80, scale: 0.93 }),
+  animate: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring' as const, stiffness: 280, damping: 28 } },
+  exit: (dir: number) => ({ opacity: 0, x: dir * -80, scale: 0.95, transition: { duration: 0.2, ease: 'easeIn' as const } }),
+};
 
 export function OnboardingScreen() {
   const navigate = useNavigate();
   const { markOnboardingComplete } = useAuth();
   const { t } = useLanguage();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
+  const touchStart = useRef(0);
+
+  const slides = useMemo(() => [
+    { ...SLIDE_TEMPLATES[0], badge: t('onboarding.slide1.badge'), title: t('onboarding.slide1.title'), desc: t('onboarding.slide1.desc') },
+    { ...SLIDE_TEMPLATES[1], badge: t('onboarding.slide2.badge'), title: t('onboarding.slide2.title'), desc: t('onboarding.slide2.desc') },
+    { ...SLIDE_TEMPLATES[2], badge: t('onboarding.slide3.badge'), title: t('onboarding.slide3.title'), desc: t('onboarding.slide3.desc') },
+  ], [t]);
 
   const goNext = useCallback(() => {
-    if (currentSlide < slides.length - 1) {
+    if (current < slides.length - 1) {
       setDirection(1);
-      setCurrentSlide(prev => prev + 1);
+      setCurrent(p => p + 1);
     } else {
-      // Finish onboarding
       markOnboardingComplete();
       navigate('/login');
     }
-  }, [currentSlide, markOnboardingComplete, navigate]);
+  }, [current, slides.length, markOnboardingComplete, navigate]);
 
   const goPrev = useCallback(() => {
-    if (currentSlide > 0) {
+    if (current > 0) {
       setDirection(-1);
-      setCurrentSlide(prev => prev - 1);
+      setCurrent(p => p - 1);
     }
-  }, [currentSlide]);
+  }, [current]);
 
-  const skipOnboarding = useCallback(() => {
+  const skip = useCallback(() => {
     markOnboardingComplete();
     navigate('/login');
   }, [markOnboardingComplete, navigate]);
 
-  const slide = slides[currentSlide];
-  const isLast = currentSlide === slides.length - 1;
-  const SlideIcon = slide.icon;
-
-  // ─── Swipe gesture support for onboarding ───
-  const touchStartRef = useRef(0);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartRef.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const dx = e.changedTouches[0].clientX - touchStartRef.current;
-    if (Math.abs(dx) > 60) {
-      if (dx < 0) goNext();
-      else goPrev();
-    }
-  };
+  const slide = slides[current];
+  const isLast = current === slides.length - 1;
+  const Icon = slide.icon;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#121212] flex flex-col overflow-hidden">
-      {/* Top Section - Skip + Step indicator */}
-      <div className="flex items-center justify-between p-4 pt-6">
-        <span className="text-xs text-gray-400 font-medium">
-          {currentSlide + 1} / {slides.length}
+    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pt-6 pb-2">
+        <span className="text-xs text-gray-400 font-medium tabular-nums">
+          {current + 1} / {slides.length}
         </span>
         {!isLast && (
-          <button
-            onClick={skipOnboarding}
-            className="text-gray-400 hover:text-gray-600 transition-colors px-3 py-1"
-          >
+          <DSMButton variant="ghost" onClick={skip} className="text-sm px-2 py-1">
             {t('onboarding.skip')}
-          </button>
+          </DSMButton>
         )}
       </div>
 
-      {/* Main Content — swipeable */}
+      {/* Main swipeable area */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        onTouchStart={e => { touchStart.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - touchStart.current;
+          if (Math.abs(dx) > 60) { if (dx < 0) goNext(); else goPrev(); }
+        }}
       >
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
-            key={currentSlide}
+            key={current}
             custom={direction}
-            initial={{ opacity: 0, x: direction * 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -100 }}
-            transition={{ duration: 0.35, ease: 'easeInOut' }}
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             className="w-full flex flex-col items-center text-center"
           >
-            {/* Image/Icon Area */}
-            <div className={`w-full aspect-[4/3] rounded-3xl bg-gradient-to-br ${slide.gradient} mb-8 overflow-hidden relative flex items-center justify-center shadow-xl`}>
-              {slide.image ? (
-                <ImageWithFallback
-                  src={slide.image}
-                  alt={slide.titleKey}
-                  className="w-full h-full object-cover mix-blend-overlay opacity-60"
+            {/* Visual card */}
+            <div className="w-full aspect-[4/3] rounded-3xl bg-gray-100 mb-8 overflow-hidden relative flex items-center justify-center shadow-xl">
+              {/* Floating emojis */}
+              {slide.bgEmojis.map((p, i) => (
+                <motion.span
+                  key={i}
+                  className="absolute select-none pointer-events-none leading-none"
+                  style={{ left: `${p.x}%`, top: `${p.y}%`, fontSize: p.size }}
+                  initial={{ opacity: 0, scale: 0.4 }}
+                  animate={{ opacity: 0.8, scale: 1, y: [0, -p.amp, 0] }}
+                  transition={{
+                    opacity: { delay: p.delay + 0.3, duration: 0.5 },
+                    scale:   { delay: p.delay + 0.3, duration: 0.45, type: 'spring', stiffness: 320, damping: 18 },
+                    y:       { delay: p.delay + 0.6, duration: p.dur, repeat: Infinity, ease: 'easeInOut' },
+                  }}
                 />
-              ) : null}
-              {/* Overlay content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4">
-                  <SlideIcon className="w-10 h-10 text-white" />
+              ))}
+
+              {/* Center icon */}
+              <div className="relative flex items-center justify-center">
+                <motion.div
+                  className="absolute w-24 h-24 rounded-2xl border-2 border-primary/20"
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut' }}
+                />
+                <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center">
+                  <Icon className="w-10 h-10 text-primary" />
                 </div>
-                {isLast && slide.features && (
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                      <Sparkles className="w-5 h-5 text-yellow-300" />
-                      <span className="text-white text-sm">{t(slide.features.key1)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                      <Heart className="w-5 h-5 text-red-300" />
-                      <span className="text-white text-sm">{t(slide.features.key2)}</span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Text Content */}
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${slide.iconBg} mb-3`}>
-              <SlideIcon className={`w-4 h-4 ${slide.iconColor}`} />
-              <span className={`text-xs ${slide.iconColor}`}>{t(slide.subtitleKey)}</span>
-            </div>
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08, type: 'spring', stiffness: 400, damping: 32 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 mb-3"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-gray-500" />
+              <span className="text-xs text-gray-600 font-medium">{slide.badge}</span>
+            </motion.div>
 
-            <h2 className="text-2xl text-gray-900 mb-3">{t(slide.titleKey)}</h2>
-            <p className="text-gray-500 leading-relaxed max-w-sm">{t(slide.descKey)}</p>
+            {/* Title */}
+            <motion.h2
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.16, type: 'spring', stiffness: 400, damping: 32 }}
+              className="text-2xl font-semibold text-foreground mb-3"
+            >
+              {slide.title}
+            </motion.h2>
+
+            {/* Description */}
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.24, type: 'spring', stiffness: 400, damping: 32 }}
+              className="text-gray-500 leading-relaxed max-w-sm text-sm"
+            >
+              {slide.desc}
+            </motion.p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Bottom Navigation */}
+      {/* Bottom nav */}
       <div className="px-6 pb-10 pt-4 max-w-md mx-auto w-full">
-        {/* Progress Dots */}
+        {/* Dots */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                setDirection(idx > currentSlide ? 1 : -1);
-                setCurrentSlide(idx);
-              }}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                idx === currentSlide
-                  ? 'w-8 bg-blue-500'
-                  : 'w-2 bg-gray-200 hover:bg-gray-300'
-              }`}
-              aria-label={`${idx + 1}. ${t('onboarding.slide')}`}
+          {slides.map((_, i) => (
+            <motion.button
+              key={i}
+              onClick={() => { setDirection(i > current ? 1 : -1); setCurrent(i); }}
+              animate={{ width: i === current ? 32 : 8, backgroundColor: i === current ? getPrimaryColor() : '#e5e7eb' }}
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              className="h-2 rounded-full"
             />
           ))}
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={goNext}
-            className={`flex-1 h-14 rounded-2xl bg-gradient-to-r ${slide.gradient} text-white hover:opacity-90 transition-opacity border-0 shadow-lg gap-2`}
-          >
+        {/* CTA button */}
+        <motion.div
+          key={`btn-${current}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28, type: 'spring', stiffness: 400, damping: 30 }}
+        >
+          <DSMButton onClick={goNext} variant="primary" className="w-full h-14 rounded-2xl">
             {isLast ? (
-              <>
-                {t('onboarding.start')}
-                <Sparkles className="w-5 h-5" />
-              </>
+              <>{t('onboarding.start')} <Sparkles className="w-5 h-5" /></>
             ) : (
-              <>
-                {t('onboarding.next')}
-                <ChevronRight className="w-5 h-5" />
-              </>
+              <>{t('onboarding.next')} <ChevronRight className="w-5 h-5" /></>
             )}
-          </Button>
-        </div>
+          </DSMButton>
+        </motion.div>
       </div>
     </div>
   );
