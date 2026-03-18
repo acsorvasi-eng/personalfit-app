@@ -789,7 +789,7 @@ export function DSMConfirmDialog({
         <button
           onClick={() => { onConfirm(); onClose(); }}
           className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white ${
-            variant === "danger" ? "bg-red-500" : "bg-[var(--primary)]"
+            variant === "danger" ? "bg-red-500" : "bg-primary"
           }`}
         >
           {confirmLabel}
@@ -887,7 +887,7 @@ export function DSMNotification({
               <button
                 onClick={() => { onConfirm(); onClose(); }}
                 className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold text-white ${
-                  confirmVariant === "danger" ? "bg-red-500" : confirmVariant === "warning" ? "bg-amber-500" : "bg-[var(--primary)]"
+                  confirmVariant === "danger" ? "bg-red-500" : confirmVariant === "warning" ? "bg-amber-500" : "bg-primary"
                 }`}
               >
                 {confirmLabel}
