@@ -73,6 +73,11 @@ export const DSM_TOKENS = {
     md:      '0 4px 6px rgba(0,0,0,0.08)',
     primary: '0 4px 14px rgba(37,99,235,0.25)',
   },
+  /** @deprecated no-op — kept for backward compatibility */
+  haptics: {
+    /** @deprecated vibration pattern for long press — kept for backward compatibility */
+    longPress: [15, 30, 50] as number[],
+  },
 } as const;
 
 // ====================================================================
@@ -84,6 +89,10 @@ interface DSMCardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  /** @deprecated no-op — kept for backward compatibility */
+  padding?: string;
+  /** @deprecated no-op — kept for backward compatibility */
+  border?: string;
 }
 
 export function DSMCard({ children, className = '', onClick }: DSMCardProps) {
@@ -99,13 +108,21 @@ export function DSMCard({ children, className = '', onClick }: DSMCardProps) {
 
 // --- DSMButton ---
 interface DSMButtonProps {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+    // deprecated — kept for backward compatibility, map to nearest equivalent
+    | 'gradient' | 'gradientAmber' | 'gradientPurple' | 'outline' | 'destructive';
   fullWidth?: boolean;
   disabled?: boolean;
   onClick?: () => void;
   children: React.ReactNode;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
+  /** @deprecated no-op — kept for backward compatibility */
+  size?: string;
+  /** @deprecated no-op — kept for backward compatibility */
+  icon?: React.ReactNode | React.ElementType;
+  /** @deprecated no-op — kept for backward compatibility */
+  loading?: boolean;
 }
 
 export function DSMButton({
@@ -116,14 +133,24 @@ export function DSMButton({
   children,
   type = 'button',
   className = '',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  size: _size,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  icon: _icon,
 }: DSMButtonProps) {
   const base = 'h-11 rounded-xl px-4 text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2';
   const width = fullWidth ? 'w-full' : 'w-auto';
-  const variants = {
-    primary:   'bg-primary text-white hover:bg-primary-hover active:scale-95',
-    secondary: 'bg-white border border-border text-gray-900 hover:bg-surface active:scale-95',
-    ghost:     'bg-transparent text-primary hover:bg-primary-light active:scale-95',
-    danger:    'bg-error text-white hover:opacity-90 active:scale-95',
+  const variants: Record<string, string> = {
+    primary:        'bg-primary text-white hover:bg-primary-hover active:scale-95',
+    secondary:      'bg-white border border-border text-gray-900 hover:bg-surface active:scale-95',
+    ghost:          'bg-transparent text-primary hover:bg-primary-light active:scale-95',
+    danger:         'bg-error text-white hover:opacity-90 active:scale-95',
+    // deprecated — map to nearest equivalent
+    gradient:       'bg-primary text-white hover:bg-primary-hover active:scale-95',
+    gradientAmber:  'bg-primary text-white hover:bg-primary-hover active:scale-95',
+    gradientPurple: 'bg-primary text-white hover:bg-primary-hover active:scale-95',
+    outline:        'bg-white border border-border text-gray-900 hover:bg-surface active:scale-95',
+    destructive:    'bg-error text-white hover:opacity-90 active:scale-95',
   };
   const disabledCls = 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60';
 
@@ -143,21 +170,42 @@ export function DSMButton({
 interface DSMIconButtonProps {
   onClick?: () => void;
   active?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
+  /** @deprecated pass a Lucide icon component or ReactNode; rendered as children if children omitted */
+  icon?: React.ReactNode | React.ElementType;
+  /** @deprecated no-op — kept for backward compatibility */
+  size?: number | string;
+  /** @deprecated no-op — kept for backward compatibility */
+  variant?: string;
+  /** @deprecated no-op — kept for backward compatibility */
+  label?: string;
+  disabled?: boolean;
 }
 
-export function DSMIconButton({ onClick, active = false, children, className = '' }: DSMIconButtonProps) {
+export function DSMIconButton({ onClick, active = false, children, className = '', icon, disabled = false }: DSMIconButtonProps) {
+  // icon may be a Lucide component constructor or a ReactNode — render accordingly
+  const iconContent = (() => {
+    if (children != null) return children;
+    if (icon == null) return null;
+    if (typeof icon === 'function' || (typeof icon === 'object' && icon !== null && '$$typeof' in (icon as object))) {
+      const IconComponent = icon as React.ElementType;
+      return <IconComponent className="w-5 h-5" />;
+    }
+    return icon as React.ReactNode;
+  })();
+
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-150 ${
         active
           ? 'bg-primary-light text-primary'
           : 'bg-surface text-gray-900 hover:bg-gray-100'
-      } ${className}`}
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${className}`}
     >
-      {children}
+      {iconContent}
     </button>
   );
 }
@@ -171,6 +219,7 @@ interface DSMInputProps {
   onChange: (v: string) => void;
   type?: string;
   className?: string;
+  autoFocus?: boolean;
 }
 
 export function DSMInput({
@@ -181,6 +230,7 @@ export function DSMInput({
   onChange,
   type = 'text',
   className = '',
+  autoFocus,
 }: DSMInputProps) {
   return (
     <div className={`flex flex-col ${className}`}>
@@ -191,6 +241,7 @@ export function DSMInput({
         type={type}
         value={value}
         placeholder={placeholder}
+        autoFocus={autoFocus}
         onChange={e => onChange(e.target.value)}
         className={`bg-surface border rounded-xl h-11 px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-150 ${
           error ? 'border-error focus:border-error' : 'border-border focus:border-primary'
