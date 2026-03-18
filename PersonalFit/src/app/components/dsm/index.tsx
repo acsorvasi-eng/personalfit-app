@@ -222,6 +222,8 @@ interface DSMInputProps {
   type?: string;
   className?: string;
   autoFocus?: boolean;
+  maxLength?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
 }
 
 export function DSMInput({
@@ -233,6 +235,8 @@ export function DSMInput({
   type = 'text',
   className = '',
   autoFocus,
+  maxLength,
+  inputMode,
 }: DSMInputProps) {
   return (
     <div className={`flex flex-col ${className}`}>
@@ -244,6 +248,8 @@ export function DSMInput({
         value={value}
         placeholder={placeholder}
         autoFocus={autoFocus}
+        maxLength={maxLength}
+        inputMode={inputMode}
         onChange={e => onChange(e.target.value)}
         className={`bg-surface border rounded-xl h-11 px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-150 ${
           error ? 'border-error focus:border-error' : 'border-border focus:border-primary'

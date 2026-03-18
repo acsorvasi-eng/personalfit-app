@@ -30,6 +30,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { setSetting } from '../../backend/services/SettingsService';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { DSMButton } from '../dsm';
 
 export function PlanSetupScreen() {
   const navigate = useNavigate();
@@ -58,7 +59,7 @@ export function PlanSetupScreen() {
   const userName = user?.name?.split(' ')[0] || t('planSetup.user');
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[var(--color-primary-50)] to-white dark:from-[#0f0f0f] dark:to-[#121212] flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -67,18 +68,18 @@ export function PlanSetupScreen() {
         className="px-6 pt-12 pb-6"
       >
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3366FF] to-[#12CFA6] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
             <UtensilsCrossed className="w-4 h-4 text-white" />
           </div>
-          <span className="text-[11px] text-[#3366FF] dark:text-blue-400 tracking-wider" style={{ fontWeight: 600 }}>
+          <span className="text-[11px] text-primary tracking-wider" style={{ fontWeight: 600 }}>
             SIXTH-HALT
           </span>
         </div>
 
-        <h1 className="text-gray-900 dark:text-white mb-1" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+        <h1 className="text-foreground mb-1" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
           {t('planSetup.greeting').replace('{name}', userName)}
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+        <p className="text-sm text-gray-500 leading-relaxed">
           {t('planSetup.subtitle')}
         </p>
       </motion.div>
@@ -95,8 +96,8 @@ export function PlanSetupScreen() {
           onMouseLeave={() => setHoveredCard(null)}
           className={`w-full text-left rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
             selected === 'pdf'
-              ? 'border-[#3366FF] bg-blue-50/50 dark:bg-blue-950/30 shadow-lg'
-              : 'border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:border-blue-300 dark:hover:border-blue-800'
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-border bg-background hover:border-primary/50'
           }`}
         >
           {/* Card Image */}
@@ -108,19 +109,19 @@ export function PlanSetupScreen() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             <div className="absolute bottom-3 left-4 flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3366FF] to-[#12CFA6] flex items-center justify-center shadow-lg">
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg">
                 <FileUp className="w-4.5 h-4.5 text-white" />
               </div>
               <div>
                 <span className="text-white text-sm block" style={{ fontWeight: 600 }}>{t('planSetup.pdfTitle')}</span>
-                <span className="text-white/70 text-[10px]">{t('planSetup.pdfBadge')}</span>
+                <span className="text-white/70 text-2xs">{t('planSetup.pdfBadge')}</span>
               </div>
             </div>
             {selected === 'pdf' && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-[#3366FF] flex items-center justify-center shadow-lg"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-lg"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
@@ -129,7 +130,7 @@ export function PlanSetupScreen() {
 
           {/* Card Content */}
           <div className="p-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+            <p className="text-xs text-gray-500 mb-3 leading-relaxed">
               {t('planSetup.pdfDesc')}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -138,7 +139,7 @@ export function PlanSetupScreen() {
                 { icon: Sparkles, label: t('planSetup.auto30days') },
                 { icon: Shield, label: t('planSetup.validated') },
               ].map((feat, i) => (
-                <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-[10px] text-blue-600 dark:text-blue-400" style={{ fontWeight: 500 }}>
+                <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/5 text-2xs text-primary" style={{ fontWeight: 500 }}>
                   <feat.icon className="w-3 h-3" />
                   {feat.label}
                 </span>
@@ -157,8 +158,8 @@ export function PlanSetupScreen() {
           onMouseLeave={() => setHoveredCard(null)}
           className={`w-full text-left rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
             selected === 'manual'
-              ? 'border-[#12CFA6] bg-teal-50/50 dark:bg-teal-950/30 shadow-lg'
-              : 'border-gray-200 dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] hover:border-teal-300 dark:hover:border-teal-800'
+              ? 'border-primary bg-primary/5 shadow-sm'
+              : 'border-border bg-background hover:border-primary/50'
           }`}
         >
           {/* Card Image */}
@@ -170,19 +171,19 @@ export function PlanSetupScreen() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             <div className="absolute bottom-3 left-4 flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#12CFA6] to-teal-600 flex items-center justify-center shadow-lg">
+              <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg">
                 <PenLine className="w-4.5 h-4.5 text-white" />
               </div>
               <div>
                 <span className="text-white text-sm block" style={{ fontWeight: 600 }}>{t('planSetup.manualTitle')}</span>
-                <span className="text-white/70 text-[10px]">{t('planSetup.manualBadge')}</span>
+                <span className="text-white/70 text-2xs">{t('planSetup.manualBadge')}</span>
               </div>
             </div>
             {selected === 'manual' && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-[#12CFA6] flex items-center justify-center shadow-lg"
+                className="absolute top-3 right-3 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-lg"
               >
                 <CheckCircle2 className="w-4 h-4 text-white" />
               </motion.div>
@@ -191,7 +192,7 @@ export function PlanSetupScreen() {
 
           {/* Card Content */}
           <div className="p-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 leading-relaxed">
+            <p className="text-xs text-gray-500 mb-3 leading-relaxed">
               {t('planSetup.manualDesc')}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -200,7 +201,7 @@ export function PlanSetupScreen() {
                 { icon: Clock, label: t('planSetup.flexSchedule') },
                 { icon: UtensilsCrossed, label: t('planSetup.dailyInput') },
               ].map((feat, i) => (
-                <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-teal-50 dark:bg-teal-900/20 text-[10px] text-teal-600 dark:text-teal-400" style={{ fontWeight: 500 }}>
+                <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/5 text-2xs text-primary" style={{ fontWeight: 500 }}>
                   <feat.icon className="w-3 h-3" />
                   {feat.label}
                 </span>
@@ -217,21 +218,17 @@ export function PlanSetupScreen() {
         transition={{ delay: 0.5 }}
         className="px-6 pb-8"
       >
-        <button
+        <DSMButton
           onClick={handleContinue}
           disabled={!selected}
-          className={`w-full py-4 rounded-2xl flex items-center justify-center gap-2 transition-all duration-300 ${
-            selected
-              ? 'bg-gradient-to-r from-[#3366FF] to-[#12CFA6] text-white shadow-lg hover:shadow-xl active:scale-[0.98]'
-              : 'bg-gray-100 dark:bg-[#252525] text-gray-400 dark:text-gray-600 cursor-not-allowed'
-          }`}
-          style={{ fontWeight: 600 }}
+          variant="primary"
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2"
         >
           {t('planSetup.continue')}
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </DSMButton>
 
-        <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-3">
+        <p className="text-center text-2xs text-gray-400 mt-3">
           {t('planSetup.changeLater')}
         </p>
       </motion.div>
