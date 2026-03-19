@@ -216,11 +216,14 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
         userProfile = undefined;
       }
 
+      // Only send foods with actual calorie data — filter out 0-kcal unresolved ones
+      const validFoods = foods.filter(f => (f.calories ?? 0) > 0);
+
       const resp = await fetch("/api/generate-meal-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ingredients: foods.map(f => ({
+          ingredients: validFoods.map(f => ({
             name: f.name,
             calories_per_100g: f.calories ?? 100,
             protein_per_100g: f.protein ?? 5,
@@ -233,8 +236,11 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           userProfile,
         }),
       });
-      if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || `Error: ${resp.status}`);
-      const data = await resp.json();
+      const responseBody = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        throw new Error(responseBody?.error || responseBody?.message || `Server error ${resp.status} — check API logs`);
+      }
+      const data = responseBody;
       setGeneratedPlan(data.nutritionPlan);
       setStats(data.stats);
       setStep("preview");

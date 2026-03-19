@@ -209,7 +209,8 @@ export const translations = {
       voicePlaceholder: 'pl. pisztráng, dió, jégsaláta...',
       foodAdded: '{n} étel hozzáadva',
       foodAddedToast: '{n} étel hozzáadva ✓',
-      foodSaveFailed: 'Nem sikerült elmenteni az ételeket.'
+      foodSaveFailed: 'Nem sikerült elmenteni az ételeket.',
+      addButton: 'Hozzáadás',
     },
 
     // Shopping List
@@ -1704,7 +1705,8 @@ export const translations = {
       voicePlaceholder: 'e.g. trout, walnut, iceberg lettuce...',
       foodAdded: '{n} food(s) added',
       foodAddedToast: '{n} food(s) added ✓',
-      foodSaveFailed: 'Could not save foods.'
+      foodSaveFailed: 'Could not save foods.',
+      addButton: 'Add',
     },
 
     shopping: {
@@ -3119,7 +3121,8 @@ export const translations = {
       voicePlaceholder: 'ex. păstrăv, nucă, salată iceberg...',
       foodAdded: '{n} aliment(e) adăugat(e)',
       foodAddedToast: '{n} aliment(e) adăugat(e) ✓',
-      foodSaveFailed: 'Nu s-au putut salva alimentele.'
+      foodSaveFailed: 'Nu s-au putut salva alimentele.',
+      addButton: 'Adaugă',
     },
 
     shopping: {

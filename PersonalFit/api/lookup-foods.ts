@@ -19,6 +19,8 @@ function getClient() {
 type LookupFood = {
   /** Hungarian display name (name_hu from the LLM) */
   name: string;
+  /** true = real identifiable food, false = not a real food / gibberish */
+  valid: boolean;
   calories_per_100g: number;
   protein_g: number;
   fat_g: number;
@@ -61,15 +63,26 @@ export default async function handler(req: any, res: any) {
 You are a nutrition expert with access to a reliable nutrition database.
 
 For each food in this list, return ONLY a JSON array with no markdown, no explanation.
+The output array MUST have the same number of items as the input list, in the same order.
 Each item MUST have this exact shape:
 {
-  "name_hu": string,                       // Hungarian name, short, singular
-  "calories_per_100g": number,            // kcal per 100g
-  "protein_g": number,                    // grams of protein per 100g
-  "fat_g": number,                        // grams of fat per 100g
-  "carbs_g": number,                      // grams of carbohydrates per 100g
-  "category": "Fehérje" | "Zsír" | "Szénhidrát" | "Tejtermék" | "Zöldség" | "Gyümölcs"
+  "name_hu": string,                       // Hungarian name, short, singular (correct Hungarian spelling, with accents)
+  "valid": boolean,                        // true = real identifiable food; false = not a food, gibberish, or unrecognisable
+  "calories_per_100g": number,            // kcal per 100g (0 if valid=false)
+  "protein_g": number,                    // grams of protein per 100g (0 if valid=false)
+  "fat_g": number,                        // grams of fat per 100g (0 if valid=false)
+  "carbs_g": number,                      // grams of carbohydrates per 100g (0 if valid=false)
+  "category": "Fehérje" | "Zsír" | "Szénhidrát" | "Tejtermék" | "Zöldség" | "Gyümölcs"  // use "Fehérje" if valid=false
 }
+
+Rules:
+- Set "valid": false ONLY for genuinely unrecognisable input (gibberish, random letters). Real food names written without Hungarian diacritics are always valid.
+- Accept Hungarian food names with or without accents. Mapping examples:
+  "csuka" = csuka (pike), "sullo" or "süllo" = süllő (pike-perch/zander), "harcsa" = harcsa (catfish), "ponty" = ponty (carp), "suger" or "sugor" = sügér (perch), "angolna" = angolna (eel), "pisztrang" = pisztráng (trout), "fogas" = fogás/süllő, "keszeg" = keszeg (bream), "compó" = compó (tench), "amur" = amur (grass carp).
+  Also: "zeller szar" or "zeller szár" = zellérszár (celery stalk), "edeskomeny gumo" = édesköménygumó (fennel bulb), "feher repa" = fehérrépa (parsnip).
+- Freshwater fish (csuka, süllő, harcsa, ponty, sügér, pisztráng, etc.) are "Fehérje" category, high protein (~17-22g), low fat (~1-5g), very low carbs (~0g).
+- Provide accurate nutritional values from USDA / scientific nutrition databases.
+- The output array MUST have exactly the same number of items as the input list.
 
 Foods:
 ${listBlock}
@@ -77,8 +90,8 @@ ${listBlock}
 Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`;
 
     const message = await getClient().messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 512,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
       messages: [
         {
           role: 'user',
@@ -147,17 +160,19 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
         if (!item) return null;
         const name = String(item.name_hu || item.name || '').trim();
         if (!name) return null;
+        const valid = item.valid !== false; // default true if missing
         const toNum = (v: any, fallback: number) => {
           const n = Number(v);
-          return Number.isFinite(n) && n > 0 ? n : fallback;
+          return Number.isFinite(n) && n >= 0 ? n : fallback;
         };
         const category = typeof item.category === 'string' ? String(item.category).trim() : undefined;
         return {
           name,
-          calories_per_100g: toNum(item.calories_per_100g, 100),
-          protein_g: toNum(item.protein_g, 5),
-          fat_g: toNum(item.fat_g, 3),
-          carbs_g: toNum(item.carbs_g, 15),
+          valid,
+          calories_per_100g: valid ? toNum(item.calories_per_100g, 100) : 0,
+          protein_g: valid ? toNum(item.protein_g, 5) : 0,
+          fat_g: valid ? toNum(item.fat_g, 3) : 0,
+          carbs_g: valid ? toNum(item.carbs_g, 15) : 0,
           category,
         };
       })

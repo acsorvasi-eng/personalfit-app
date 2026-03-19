@@ -183,7 +183,7 @@ TEXT:
 ${cleanedText.substring(0, 45000)}`;
 
   const message = await getClient().messages.create({
-    model: 'claude-haiku-4-5',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
   });

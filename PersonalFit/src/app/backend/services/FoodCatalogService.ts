@@ -546,13 +546,24 @@ export async function createFood(input: CreateFoodInput): Promise<FoodEntity> {
  *   source updated to match the input. Use from the wizard so wizard-selected
  *   foods that already exist in the DB still get tagged as 'user_uploaded'.
  */
+/** Remove accents and lowercase — used for fuzzy duplicate matching */
+function normalizeFoodName(s: string): string {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 export async function createFoodsBatch(
   inputs: CreateFoodInput[],
-  options?: { upsertSource?: boolean }
+  options?: { upsertSource?: boolean; upsertNutrition?: boolean }
 ): Promise<{ created: FoodEntity[]; skipped: string[] }> {
   const db = await getDB();
   const existing = await db.getAll<FoodEntity>('foods');
+  // Index by both exact lowercase name AND accent-stripped form for fuzzy matching
   const existingByName = new Map(existing.map(f => [f.name.toLowerCase(), f]));
+  const existingByNorm = new Map(existing.map(f => [normalizeFoodName(f.name), f]));
   const existingNames = new Set(existingByName.keys());
   const now = nowISO();
   const created: FoodEntity[] = [];
@@ -575,17 +586,32 @@ export async function createFoodsBatch(
       continue;
     }
 
-    if (existingNames.has(input.name.toLowerCase())) {
-      // If upsertSource is requested, update the existing record's source so
-      // wizard-selected foods that already existed keep the correct source tag.
-      if (options?.upsertSource) {
-        const existingFood = existingByName.get(input.name.toLowerCase())!;
-        if (existingFood.source !== input.source) {
-          const updated: FoodEntity = { ...existingFood, source: input.source, updated_at: now };
-          await db.put('foods', updated);
-          existingByName.set(input.name.toLowerCase(), updated);
-          console.log(`[FoodCatalog] createFoodsBatch upserted source for "${input.name}": ${existingFood.source} → ${input.source}`);
-        }
+    const inputNorm = normalizeFoodName(input.name);
+    const isExisting = existingNames.has(input.name.toLowerCase()) || existingByNorm.has(inputNorm);
+    if (isExisting) {
+      const existingFood = existingByName.get(input.name.toLowerCase()) ?? existingByNorm.get(inputNorm)!;
+      let needsUpdate = false;
+      let patch: Partial<FoodEntity> = {};
+
+      // upsertSource: sync source field
+      if (options?.upsertSource && existingFood.source !== input.source) {
+        patch.source = input.source;
+        needsUpdate = true;
+      }
+      // upsertNutrition: overwrite 0-value nutrition with real values
+      if (options?.upsertNutrition && (existingFood.calories_per_100g ?? 0) === 0 && (input.calories_per_100g ?? 0) > 0) {
+        patch.calories_per_100g = input.calories_per_100g;
+        patch.protein_per_100g  = input.protein_per_100g;
+        patch.carbs_per_100g    = input.carbs_per_100g;
+        patch.fat_per_100g      = input.fat_per_100g;
+        patch.category          = input.category;
+        needsUpdate = true;
+        console.log(`[FoodCatalog] createFoodsBatch upserted nutrition for "${input.name}": ${input.calories_per_100g} kcal`);
+      }
+      if (needsUpdate) {
+        const updated: FoodEntity = { ...existingFood, ...patch, updated_at: now };
+        await db.put('foods', updated);
+        existingByName.set(input.name.toLowerCase(), updated);
       } else {
         console.log('[FoodCatalog] createFoodsBatch skipped duplicate name:', input.name);
       }

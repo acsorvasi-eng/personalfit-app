@@ -71,7 +71,8 @@ type AddFoodChip = {
   protein_g?: number;
   fat_g?: number;
   carbs_g?: number;
-  // whether a lookup attempt failed; used to avoid infinite retry loops
+  /** Category string returned by the API (e.g. "Fehérje") */
+  apiCategory?: string;
   lookupFailed?: boolean;
 };
 
@@ -199,6 +200,8 @@ export function Foods() {
   const [chips, setChips] = useState<AddFoodChip[]>([]);
   const [addingFoods, setAddingFoods] = useState(false);
   const [addResultMessage, setAddResultMessage] = useState<string | null>(null);
+  // Ref to prevent concurrent fetch requests (state update is async, ref is synchronous)
+  const fetchInProgressRef = useRef(false);
 
   const addTokenAsChip = useCallback((token: string) => {
     const value = token.trim();
@@ -206,112 +209,99 @@ export function Foods() {
     const lower = value.toLowerCase();
     const fillerWords = ["ennyi", "ott", "hozzá", "hozza", "add", "hozzád", "hozzad"];
     if (fillerWords.includes(lower)) return;
+    setLookupError(null);
     setChips(prev => {
       if (prev.some(c => c.raw.toLowerCase() === lower)) return prev;
       const id = typeof crypto !== "undefined" && "randomUUID" in crypto
         ? (crypto as any).randomUUID()
         : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      const newChip: AddFoodChip = {
-        id,
-        raw: value,
-        name: value,
-        status: "pending",
-        lookupFailed: false,
-      };
-      return [...prev, newChip];
+      return [...prev, { id, raw: value, name: value, status: "pending", lookupFailed: false }];
     });
   }, []);
 
-  const removeAccents = (s: string) =>
-    s
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-
-  const normalizeNameForMatch = (s: string) =>
-    removeAccents(String(s || "").toLowerCase().trim());
-
-  // Background nutrition lookup for pending chips
+  // Background nutrition lookup — fires whenever chips change, debounced via ref guard
   useEffect(() => {
     const pending = chips.filter(c => c.status === "pending" && !c.lookupFailed);
-    if (pending.length === 0 || lookupLoading) return;
+    if (pending.length === 0 || fetchInProgressRef.current) return;
 
-    const fetchNutrition = async () => {
-      try {
-        setLookupLoading(true);
-        const names = pending.map(c => c.raw);
-        console.log("[AddFood] Nutrition lookup for chips:", names);
-        const resp = await fetch("/api/lookup-foods", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ foods: names }),
-        });
+    // Snapshot the pending chip ids so we can match by id after the async call
+    const pendingSnapshot = pending.map(c => ({ id: c.id, raw: c.raw }));
+
+    fetchInProgressRef.current = true;
+    setLookupLoading(true);
+    setLookupError(null);
+
+    const names = pendingSnapshot.map(c => c.raw);
+    console.log("[AddFood] Nutrition lookup for:", names);
+
+    fetch("/api/lookup-foods", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ foods: names }),
+    })
+      .then(async resp => {
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({}));
-          console.warn("[AddFood] Nutrition lookup HTTP error, leaving chips pending:", err);
-          // Mark these chips as attempted so we don't loop, but keep them grey
-          setChips(prev =>
-            prev.map(chip =>
-              chip.status === "pending"
-                ? { ...chip, lookupFailed: true }
-                : chip
-            )
-          );
-          return;
+          console.warn("[AddFood] HTTP error:", err);
+          throw new Error("HTTP " + resp.status);
         }
-        const data = await resp.json().catch(() => null);
-        console.log("[AddFood] Nutrition lookup response:", data);
-        const foods = data && (data.result || data.foods || []);
+        return resp.json();
+      })
+      .then(data => {
+        const foods: any[] = data && (data.result || data.foods || []);
         if (!Array.isArray(foods) || foods.length === 0) {
-          console.warn("[AddFood] Nutrition lookup returned no foods array, leaving chips pending");
-          setChips(prev =>
-            prev.map(chip =>
-              chip.status === "pending"
-                ? { ...chip, lookupFailed: true }
-                : chip
-            )
-          );
-          return;
+          throw new Error("empty response");
         }
+        // Match by position using snapshot ids — immune to concurrent state changes
         setChips(prev =>
           prev.map(chip => {
-            if (chip.status !== "pending") return chip;
-            const match = foods.find(
-              (f: any) =>
-                normalizeNameForMatch(f.name || f.name_hu) ===
-                normalizeNameForMatch(chip.raw)
-            );
-            if (!match) {
-              return { ...chip, status: "invalid", lookupFailed: true };
+            const snapshotIdx = pendingSnapshot.findIndex(s => s.id === chip.id);
+            if (snapshotIdx === -1 || chip.status !== "pending") return chip;
+            const match = foods[snapshotIdx];
+            if (!match || match.valid === false) {
+              return { ...chip, status: "invalid" as const, lookupFailed: true };
             }
             return {
               ...chip,
-              status: "valid",
+              status: "valid" as const,
               lookupFailed: false,
-              name: match.name || match.name_hu || chip.raw,
-              calories_per_100g: match.calories_per_100g,
-              protein_g: match.protein_g,
-              fat_g: match.fat_g,
-              carbs_g: match.carbs_g,
+              name: match.name || chip.raw,
+              calories_per_100g: Number(match.calories_per_100g) || 0,
+              protein_g: Number(match.protein_g) || 0,
+              fat_g: Number(match.fat_g) || 0,
+              carbs_g: Number(match.carbs_g) || 0,
+              apiCategory: match.category || undefined,
             };
           })
         );
-      } catch (e: any) {
-        console.error("[AddFood] Nutrition lookup error, leaving chips pending:", e);
-        // Mark as attempted; stay grey/pending visually
+      })
+      .catch(e => {
+        console.error("[AddFood] Lookup failed:", e);
+        setLookupError("Nem sikerült betölteni a tápértékeket. Próbáld újra.");
         setChips(prev =>
           prev.map(chip =>
-            chip.status === "pending"
+            pendingSnapshot.some(s => s.id === chip.id)
               ? { ...chip, lookupFailed: true }
               : chip
           )
         );
-      } finally {
+      })
+      .finally(() => {
+        fetchInProgressRef.current = false;
         setLookupLoading(false);
-      }
-    };
+      });
+  }, [chips]);
 
-    fetchNutrition();
-  }, [chips, lookupLoading]);
+  const retryLookup = useCallback(() => {
+    setLookupError(null);
+    setChips(prev =>
+      prev.map(chip =>
+        chip.status === "pending" && chip.lookupFailed
+          ? { ...chip, lookupFailed: false }
+          : chip
+      )
+    );
+  }, []);
 
   // Egyszeri tisztítás: távolítsuk el a korábban betöltött, teljesen
   // értelmetlen AI ételeket (korrupt nevek a PDF-ből).
@@ -726,26 +716,39 @@ export function Foods() {
               const isPending = chip.status === "pending";
               const isInvalid = chip.status === "invalid";
               const baseClasses =
-                "px-3 py-1.5 rounded-full text-xs flex items-center gap-1.5 border";
+                "px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border";
               const styleClasses = isValid
                 ? "bg-primary/10 border-primary text-primary"
                 : isInvalid
-                ? "bg-red-50 border-red-200 text-red-700"
-                : "bg-gray-50 border-gray-200 text-gray-700";
+                ? "bg-red-50 border-red-200 text-red-600"
+                : "bg-gray-50 border-gray-200 text-gray-600";
               return (
                 <div key={chip.id} className={`${baseClasses} ${styleClasses}`}>
-                  <span className="font-semibold max-w-[140px] truncate">
-                    {chip.name}
-                  </span>
-                  {isPending && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold max-w-[140px] truncate leading-tight">
+                      {chip.name}
+                    </span>
+                    {isValid && chip.calories_per_100g != null && (
+                      <span className="text-[10px] opacity-70 leading-tight">
+                        {chip.calories_per_100g} kcal · {chip.protein_g}g P
+                      </span>
+                    )}
+                    {isInvalid && (
+                      <span className="text-[10px] opacity-70 leading-tight">nem ismert élelmiszer</span>
+                    )}
+                  </div>
+                  {isPending && !chip.lookupFailed && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse flex-shrink-0" />
+                  )}
+                  {isPending && chip.lookupFailed && (
+                    <span className="text-amber-500 text-xs flex-shrink-0" title="Nem sikerült betölteni">⚠</span>
                   )}
                   <button
                     type="button"
                     onClick={() =>
                       setChips(prev => prev.filter(c => c.id !== chip.id))
                     }
-                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/5 text-2xs"
+                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/10 text-2xs flex-shrink-0"
                   >
                     ×
                   </button>
@@ -776,8 +779,25 @@ export function Foods() {
           </div>
 
           <div className="space-y-2 mt-3">
-            {lookupError && (
-              <p className="text-xs text-red-500">{lookupError}</p>
+            {lookupLoading && (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span className="w-3 h-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin flex-shrink-0" />
+                Azonosítás folyamatban...
+              </div>
+            )}
+            {lookupError && !lookupLoading && (
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-red-500 flex-1">{lookupError}</p>
+                {chips.some(c => c.status === "pending" && c.lookupFailed) && (
+                  <button
+                    type="button"
+                    onClick={retryLookup}
+                    className="text-xs text-indigo-600 font-semibold underline underline-offset-2 whitespace-nowrap"
+                  >
+                    Újra
+                  </button>
+                )}
+              </div>
             )}
             {addResultMessage && (
               <p className="text-xs text-primary">{addResultMessage}</p>
@@ -789,27 +809,30 @@ export function Foods() {
               variant="gradient"
               size="sm"
               fullWidth
-              disabled={!chips.some(c => c.status === "valid" || c.status === "pending")}
-              loading={addingFoods}
+              disabled={lookupLoading || !chips.some(c => c.status === "valid")}
+              loading={addingFoods || lookupLoading}
               onClick={async () => {
-                // Mentsük az összes érvényes vagy még feldolgozás alatt lévő chipet.
-                // A piros (invalid) chipeket kihagyjuk.
-                const chipsToSave = chips.filter(c => c.status === "valid" || c.status === "pending");
+                // Only save valid chips — pending/invalid are excluded
+                const chipsToSave = chips.filter(c => c.status === "valid");
                 if (chipsToSave.length === 0) return;
                 try {
                   setAddingFoods(true);
                   setAddResultMessage(null);
                   console.log("[AddFood] Saving chips (valid + pending):", chipsToSave);
                   const inputs = chipsToSave.map((chip) => {
-                    const semantic = inferSemanticCategoryFromName(chip.name);
-                    const cat: FoodCategory = semanticCategoryToFoodCategory(semantic);
+                    // Prefer category from the API lookup; fall back to local inference
+                    const API_CAT_MAP: Record<string, FoodCategory> = {
+                      'Fehérje': 'Protein', 'Zsír': 'Fat', 'Szénhidrát': 'Carbs',
+                      'Tejtermék': 'Dairy', 'Zöldség': 'Vegetable', 'Gyümölcs': 'Fruit',
+                    };
+                    const cat: FoodCategory = chip.apiCategory
+                      ? (API_CAT_MAP[chip.apiCategory] ?? semanticCategoryToFoodCategory(inferSemanticCategoryFromName(chip.name)))
+                      : semanticCategoryToFoodCategory(inferSemanticCategoryFromName(chip.name));
                     const source: FoodSource = "user_uploaded";
                     return {
                       name: chip.name,
                       description: "Felhasználó által hozzáadott étel",
                       category: cat,
-                      // Zöld (valid) chipek a valós tápértékeket kapják,
-                      // szürke (pending) chipek 0 értékkel mentődnek (később frissíthető).
                       calories_per_100g: chip.calories_per_100g ?? 0,
                       protein_per_100g: chip.protein_g ?? 0,
                       carbs_per_100g: chip.carbs_g ?? 0,
@@ -817,17 +840,16 @@ export function Foods() {
                       source,
                     };
                   });
-                  const result = await createFoodsBatch(inputs as any);
-                  const createdCount = result.created.length;
+                  const result = await createFoodsBatch(inputs as any, { upsertNutrition: true, upsertSource: true });
                   console.log("[AddFood] createFoodsBatch result:", result);
-                  setAddResultMessage(t("foods.foodAdded").replace("{n}", String(createdCount)));
-                  if (createdCount > 0) {
-                    toast.success(t("foods.foodAddedToast").replace("{n}", String(createdCount)));
-                    // Frissítsük a Foods listát azonnal
-                    appData.refresh();
-                    setAddDialogOpen(false);
-                    setChips([]);
-                  }
+                  // All valid chips are considered processed (created + nutrition-updated in skipped)
+                  const processedCount = chipsToSave.length;
+                  setAddResultMessage(t("foods.foodAdded").replace("{n}", String(processedCount)));
+                  toast.success(t("foods.foodAddedToast").replace("{n}", String(processedCount)));
+                  appData.refresh();
+                  refreshPlanFoods();
+                  setAddDialogOpen(false);
+                  setChips([]);
                 } catch (e: any) {
                   setLookupError(e.message || t("foods.foodSaveFailed"));
                 } finally {
@@ -835,7 +857,7 @@ export function Foods() {
                 }
               }}
             >
-              Hozzáadás
+              {t("foods.addButton")}
             </DSMButton>
           </div>
         </DialogContent>

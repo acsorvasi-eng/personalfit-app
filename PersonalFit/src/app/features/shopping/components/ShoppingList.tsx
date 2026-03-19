@@ -81,6 +81,7 @@ export function ShoppingList() {
   const [showStoreView, setShowStoreView] = useState(false);
   const [isLoadingStores, setIsLoadingStores] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<string | null>(null);
 
   // User location: Târgu Mureș center
   const userLocation = { lat: 46.5450, lng: 24.5620 };
@@ -121,32 +122,38 @@ export function ShoppingList() {
     return searchProducts('', undefined);
   }, [searchQuery, selectedCategory]);
 
-  const displayProducts = searchResults.length > 0 ? searchResults : browseProducts;
+  const unfilteredProducts = searchResults.length > 0 ? searchResults : browseProducts;
+  const displayProducts = selectedStore
+    ? unfilteredProducts.filter((p) => p.store === selectedStore)
+    : unfilteredProducts;
+
+  const filteredShoppingItems = selectedStore
+    ? shoppingItems.filter((i) => i.product.store === selectedStore)
+    : shoppingItems;
 
   const totalItems = shoppingItems.length;
-  const checkedCount = shoppingItems.filter((i) => i.checked).length;
+  const checkedCount = filteredShoppingItems.filter((i) => i.checked).length;
 
   const totalPrice = useMemo(() => {
-    return shoppingItems.reduce((sum, item) => sum + item.product.price, 0);
-  }, [shoppingItems]);
+    return filteredShoppingItems.reduce((sum, item) => sum + item.product.price, 0);
+  }, [filteredShoppingItems]);
 
   const addProduct = (product: Product) => {
-    const existingIdx = shoppingItems.findIndex((i) => i.product.id === product.id);
-    if (existingIdx >= 0) return; // Already in list
+    const exists = shoppingItems.some((i) => i.product.id === product.id);
+    if (exists) return;
     updateShoppingItems((prev) => [
       ...prev,
       { product, quantity: product.defaultQuantity, checked: false },
     ]);
-    // Quick feedback: briefly highlight
   };
 
-  const removeItem = (index: number) => {
-    updateShoppingItems((prev) => prev.filter((_, i) => i !== index));
+  const removeItem = (productId: string) => {
+    updateShoppingItems((prev) => prev.filter((i) => i.product.id !== productId));
   };
 
-  const toggleItemCheck = (index: number) => {
+  const toggleItemCheck = (productId: string) => {
     updateShoppingItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, checked: !item.checked } : item))
+      prev.map((item) => item.product.id === productId ? { ...item, checked: !item.checked } : item)
     );
   };
 
@@ -293,6 +300,7 @@ export function ShoppingList() {
                   onClick={() => {
                     setSearchQuery("");
                     setSelectedCategory(null);
+                    setSelectedStore(null);
                   }}
                   className="p-1 hover:bg-gray-200 rounded-full transition-colors"
                   aria-label={t('shopping.clearSearch')}
@@ -333,6 +341,39 @@ export function ShoppingList() {
                 style={{ fontWeight: 700 }}
               >
                 {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Store filter pills */}
+          <div className="flex gap-2 overflow-x-auto pb-1 mt-1 scrollbar-hide" role="tablist" aria-label="Bolt szűrő">
+            <button
+              onClick={() => setSelectedStore(null)}
+              role="tab"
+              aria-selected={!selectedStore}
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-all flex items-center gap-1 ${
+                !selectedStore
+                  ? "bg-gray-800 text-white shadow-md"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+              style={{ fontWeight: 700 }}
+            >
+              🏪 Mind
+            </button>
+            {localStores.map((store) => (
+              <button
+                key={store.name}
+                onClick={() => setSelectedStore(selectedStore === store.name ? null : store.name)}
+                role="tab"
+                aria-selected={selectedStore === store.name}
+                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-all flex items-center gap-1 ${
+                  selectedStore === store.name
+                    ? "bg-gray-800 text-white shadow-md"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+                style={{ fontWeight: 700 }}
+              >
+                {store.logo} {store.name}
               </button>
             ))}
           </div>
@@ -494,7 +535,8 @@ export function ShoppingList() {
               <div className="relative">
                 <h3 className="text-sm text-gray-800 flex items-center gap-2" style={{ fontWeight: 800 }}>
                   <ShoppingBag className="w-4 h-4 text-indigo-500" />
-                  {t('shopping.shoppingList')} ({totalItems})
+                  {t('shopping.shoppingList')}{' '}
+                  ({selectedStore ? `${filteredShoppingItems.length}/${totalItems}` : totalItems})
                 </h3>
                 <DSMCoachMark
                   id="shopping-swipe-delete"
@@ -506,16 +548,22 @@ export function ShoppingList() {
               </div>
               {checkedCount > 0 && (
                 <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full" style={{ fontWeight: 700 }}>
-                  {checkedCount}/{totalItems} {t('shopping.done').toLowerCase()}
+                  {checkedCount}/{filteredShoppingItems.length} {t('shopping.done').toLowerCase()}
                 </span>
               )}
             </div>
 
+            {filteredShoppingItems.length === 0 && selectedStore && (
+              <div className="text-center py-6">
+                <p className="text-sm text-gray-400">Nincs termék a listán ebből az üzletből.</p>
+              </div>
+            )}
+
             <div className="space-y-1.5">
-              {shoppingItems.map((item, index) => (
+              {filteredShoppingItems.map((item) => (
                 <DSMSwipeAction
-                  key={`${item.product.id}-${index}`}
-                  onSwipeLeft={() => removeItem(index)}
+                  key={item.product.id}
+                  onSwipeLeft={() => removeItem(item.product.id)}
                   leftAction={{ icon: Trash2, color: "bg-red-500", label: t('shopping.remove') }}
                 >
                   <div
@@ -527,7 +575,7 @@ export function ShoppingList() {
                   >
                     {/* Checkbox */}
                     <button
-                      onClick={() => toggleItemCheck(index)}
+                      onClick={() => toggleItemCheck(item.product.id)}
                       aria-label={item.checked ? t('shopping.uncheckItem') : t('shopping.checkItem')}
                       className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                         item.checked
@@ -556,7 +604,7 @@ export function ShoppingList() {
 
                     {/* Remove */}
                     <button
-                      onClick={() => removeItem(index)}
+                      onClick={() => removeItem(item.product.id)}
                       aria-label={t('shopping.remove')}
                       className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                     >
