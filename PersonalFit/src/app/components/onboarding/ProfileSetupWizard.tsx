@@ -23,6 +23,7 @@ import {
   Sparkles,
   Clock,
   Search,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -293,6 +294,8 @@ export function ProfileSetupWizard() {
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set());
   const [activeAllergens, setActiveAllergens] = useState<Set<string>>(new Set());
   const [allergenNotes, setAllergenNotes] = useState('');
+  const [alternativeLookupStatus, setAlternativeLookupStatus] = useState<'idle' | 'loading' | 'done'>('idle');
+  const [alternativesAdded, setAlternativesAdded] = useState(0);
 
   // Step 3: Meals
   const [mealCount, setMealCount] = useState(3);
@@ -448,6 +451,69 @@ export function ProfileSetupWizard() {
     setLookupResults([]);
     setLookupStatus('idle');
   }, []);
+
+  // ── Alternative food lookup (for allergen substitutes) ───────
+
+  const handleAlternativeLookup = useCallback(async () => {
+    const terms = allergenNotes.split(/[,;\n]+/).map(t => t.trim()).filter(Boolean);
+    if (terms.length === 0) return;
+
+    setAlternativeLookupStatus('loading');
+    const knownNames = new Set([...SEED_FOODS.map(f => f.name), ...extraFoods.map(f => f.name)]);
+    const newFoods: SeedFood[] = [];
+
+    for (const term of terms) {
+      try {
+        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&fields=product_name,product_name_hu,nutriments,stores_tags&page_size=5&lc=hu`;
+        const resp = await fetch(url);
+        if (!resp.ok) continue;
+        const data = await resp.json();
+
+        const hits = (data.products ?? [])
+          .filter((p: any) => {
+            const n = p.nutriments;
+            return n && (n['energy-kcal_100g'] || n['energy-kcal']) && (p.product_name_hu || p.product_name);
+          })
+          .slice(0, 2);
+
+        for (const p of hits) {
+          const n = p.nutriments;
+          const name = (p.product_name_hu || p.product_name || term).slice(0, 40);
+          if (knownNames.has(name) || newFoods.some(f => f.name === name)) continue;
+          const kcal = Math.round(n['energy-kcal_100g'] ?? n['energy-kcal'] ?? 0);
+          if (!kcal) continue;
+          const protein = +(n['proteins_100g'] ?? n['proteins'] ?? 0);
+          const carbs = +(n['carbohydrates_100g'] ?? n['carbohydrates'] ?? 0);
+          const fat = +(n['fat_100g'] ?? n['fat'] ?? 0);
+          newFoods.push({
+            name,
+            category: guessCategory(protein, carbs, fat),
+            calories_per_100g: kcal,
+            protein_per_100g: +protein.toFixed(1),
+            carbs_per_100g: +carbs.toFixed(1),
+            fat_per_100g: +fat.toFixed(1),
+            vegetarian: true,
+            emoji: '🛒',
+          });
+        }
+      } catch {
+        // skip failed searches
+      }
+    }
+
+    if (newFoods.length > 0) {
+      setExtraFoods(prev => [...prev, ...newFoods]);
+      setSelectedFoods(prev => {
+        const next = new Set(prev);
+        newFoods.forEach(f => next.add(f.name));
+        return next;
+      });
+    }
+
+    setAlternativesAdded(newFoods.length);
+    setAlternativeLookupStatus('done');
+    setTimeout(() => setAlternativeLookupStatus('idle'), 5000);
+  }, [allergenNotes, extraFoods]);
 
   // ── Sport helpers ────────────────────────────────────────────
 
@@ -613,7 +679,7 @@ export function ProfileSetupWizard() {
             className="px-6 pb-6"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
-            {step === 1 && <StepFoods dietType={dietType} setDietType={setDietType} foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} allergenNotes={allergenNotes} setAllergenNotes={setAllergenNotes} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
+            {step === 1 && <StepFoods dietType={dietType} setDietType={setDietType} foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} allergenNotes={allergenNotes} setAllergenNotes={setAllergenNotes} selectAllVisible={selectAllVisible} deselectAll={deselectAll} onAlternativeLookup={handleAlternativeLookup} alternativeLookupStatus={alternativeLookupStatus} alternativesAdded={alternativesAdded} />}
             {step === 2 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} />}
             {step === 3 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
             {step === 4 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
@@ -799,7 +865,7 @@ function StepPersonal({ gender, setGender, age, setAge, weight, setWeight, heigh
 // Step 2: Foods
 // ─────────────────────────────────────────────────────────────────
 
-function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, activeAllergens, toggleAllergen, allergenNotes, setAllergenNotes, selectAllVisible, deselectAll }: {
+function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, activeAllergens, toggleAllergen, allergenNotes, setAllergenNotes, selectAllVisible, deselectAll, onAlternativeLookup, alternativeLookupStatus, alternativesAdded }: {
   dietType: DietType; setDietType: (v: DietType) => void;
   foodTab: FoodTabType; setFoodTab: (v: FoodTabType) => void;
   foodSearch: string; setFoodSearch: (v: string) => void;
@@ -815,6 +881,9 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
   setAllergenNotes: (v: string) => void;
   selectAllVisible: () => void;
   deselectAll: () => void;
+  onAlternativeLookup: () => void;
+  alternativeLookupStatus: 'idle' | 'loading' | 'done';
+  alternativesAdded: number;
 }) {
   const { t } = useLanguage();
   return (
@@ -896,15 +965,36 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
           })}
         </div>
         {activeAllergens.size > 0 && (
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <p className="text-xs text-gray-400">Helyettesítők (pl. kecske joghurt, mandula tej):</p>
-            <input
-              type="text"
-              value={allergenNotes}
-              onChange={e => setAllergenNotes(e.target.value)}
-              placeholder="Írj ide alternatívákat..."
-              className="w-full h-9 px-3 rounded-xl border border-border bg-background text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={allergenNotes}
+                onChange={e => setAllergenNotes(e.target.value)}
+                placeholder="kecske, juh, mandula tej..."
+                className="flex-1 h-9 px-3 rounded-xl border border-border bg-background text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
+              />
+              <button
+                type="button"
+                onClick={onAlternativeLookup}
+                disabled={!allergenNotes.trim() || alternativeLookupStatus === 'loading'}
+                className="shrink-0 h-9 px-3 rounded-xl bg-primary text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-all"
+              >
+                {alternativeLookupStatus === 'loading' ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Keresés...</>
+                ) : (
+                  <><RefreshCw className="w-3.5 h-3.5" /> Frissít</>
+                )}
+              </button>
+            </div>
+            {alternativeLookupStatus === 'done' && (
+              <p className="text-xs text-primary font-medium">
+                {alternativesAdded > 0
+                  ? `✓ ${alternativesAdded} alternatív élelmiszer hozzáadva és kijelölve`
+                  : 'Nem találtunk elérhető alternatívát az adatbázisban'}
+              </p>
+            )}
           </div>
         )}
       </div>
