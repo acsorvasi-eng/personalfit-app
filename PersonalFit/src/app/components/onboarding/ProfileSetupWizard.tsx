@@ -432,6 +432,7 @@ export function ProfileSetupWizard() {
 
   // Step 3: Meals
   const [mealCount, setMealCount] = useState(3);
+  const [mealModel, setMealModel] = useState<string | undefined>(undefined);
 
   // Step 4: Sport
   const [activity, setActivity] = useState<ActivityLevel>('moderate');
@@ -639,9 +640,13 @@ export function ProfileSetupWizard() {
 
     setIsGenerating(true);
     try {
+      const mealModelMap: Record<number, string> = { 2: '2meals', 4: '4meals', 5: '5meals' };
+      const effectiveMealModel = mealModel ?? mealModelMap[mealCount]; // IF model takes priority
+
       // 1. Save profile
       const mealSettings = getDefaultMealSettings();
       mealSettings.mealCount = mealCount;
+      if (effectiveMealModel) mealSettings.mealModel = effectiveMealModel as any;
 
       await saveUserProfile({
         name: user?.name ?? '',
@@ -692,10 +697,6 @@ export function ProfileSetupWizard() {
             fat_per_100g: f.fat_per_100g,
           }));
 
-        // Map mealCount → mealModel string the API understands
-        const mealModelMap: Record<number, string> = { 2: '2meals', 4: '4meals', 5: '5meals' };
-        const mealModel = mealModelMap[mealCount]; // undefined → default 3 meals
-
         const activeAllergenList = Array.from(activeAllergens).join(', ');
 
         const userProfilePayload = {
@@ -707,10 +708,10 @@ export function ProfileSetupWizard() {
           dietaryPreferences: dietType,
           allergies: activeAllergenList || undefined,
           mealCount,
-          mealModel,
+          mealModel: effectiveMealModel,
         };
 
-        console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget, 'mealModel:', mealModel ?? '3meals(default)');
+        console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget, 'mealModel:', effectiveMealModel ?? '3meals(default)');
         const abortCtrl = new AbortController();
         const timeoutId = setTimeout(() => abortCtrl.abort(), 90_000); // 90s max
         let resp: Response;
@@ -826,7 +827,7 @@ export function ProfileSetupWizard() {
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
             {step === 1 && <StepCriteria dietType={dietType} setDietType={setDietType} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} selectedAlternativeKeys={selectedAlternativeKeys} setSelectedAlternativeKeys={setSelectedAlternativeKeys} />}
             {step === 2 && <StepFoods foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
-            {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} />}
+            {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} mealModel={mealModel} setMealModel={setMealModel} />}
             {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
             {step === 5 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
             {step === 6 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} goal={goal} />}
@@ -1371,41 +1372,74 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
 // Step 3: Meals
 // ─────────────────────────────────────────────────────────────────
 
-function StepMeals({ mealCount, setMealCount }: { mealCount: number; setMealCount: (v: number) => void }) {
+function StepMeals({
+  mealCount, setMealCount, mealModel, setMealModel
+}: {
+  mealCount: number;
+  setMealCount: (v: number) => void;
+  mealModel: string | undefined;
+  setMealModel: (v: string | undefined) => void;
+}) {
   const { t } = useLanguage();
-  const MEAL_OPTIONS = [
-    { count: 2, label: t('wizard.meals.opt2label'), desc: t('wizard.meals.opt2desc'), emoji: '🍽️' },
-    { count: 3, label: t('wizard.meals.opt3label'), desc: t('wizard.meals.opt3desc'), emoji: '🍽️🍽️' },
-    { count: 4, label: t('wizard.meals.opt4label'), desc: t('wizard.meals.opt4desc'), emoji: '🍽️🍽️🍽️' },
-    { count: 5, label: t('wizard.meals.opt5label'), desc: t('wizard.meals.opt5desc'), emoji: '🌟' },
+
+  const NORMAL_OPTIONS = [
+    { count: 2, model: undefined as string | undefined, label: t('wizard.meals.opt2label'), desc: t('wizard.meals.opt2desc'), emoji: '🍽️' },
+    { count: 3, model: undefined as string | undefined, label: t('wizard.meals.opt3label'), desc: t('wizard.meals.opt3desc'), emoji: '🍽️🍽️' },
+    { count: 4, model: undefined as string | undefined, label: t('wizard.meals.opt4label'), desc: t('wizard.meals.opt4desc'), emoji: '🍽️🍽️🍽️' },
+    { count: 5, model: undefined as string | undefined, label: t('wizard.meals.opt5label'), desc: t('wizard.meals.opt5desc'), emoji: '🌟' },
   ];
+
+  const IF_OPTIONS = [
+    { count: 2, model: 'if16_8' as string | undefined, label: t('wizard.meals.optIF16label'), desc: t('wizard.meals.optIF16desc'), emoji: '⏱️' },
+    { count: 1, model: 'if18_6' as string | undefined, label: t('wizard.meals.optIF18label'), desc: t('wizard.meals.optIF18desc'), emoji: '🌙' },
+  ];
+
+  const isSelected = (count: number, model: string | undefined) =>
+    mealCount === count && mealModel === model;
+
+  const renderOption = (opt: { count: number; model: string | undefined; label: string; desc: string; emoji: string }) => (
+    <button
+      key={opt.model ?? String(opt.count)}
+      onClick={() => { setMealCount(opt.count); setMealModel(opt.model); }}
+      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 transition-all text-left ${
+        isSelected(opt.count, opt.model) ? 'border-primary bg-primary/5' : 'border-border'
+      }`}
+    >
+      <span className="text-2xl">{opt.emoji}</span>
+      <div className="flex-1">
+        <p className={`text-sm font-semibold ${isSelected(opt.count, opt.model) ? 'text-primary' : 'text-gray-800'}`}>
+          {opt.label}
+        </p>
+        <p className="text-xs text-gray-400">{opt.desc}</p>
+      </div>
+      {isSelected(opt.count, opt.model) && <Check className="w-5 h-5 text-primary shrink-0" />}
+    </button>
+  );
+
   return (
     <div className="space-y-5 pt-2">
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-1">{t('wizard.meals.title')}</h2>
         <p className="text-sm text-gray-500">{t('wizard.meals.subtitle')}</p>
       </div>
+
       <div className="space-y-2.5">
-        {MEAL_OPTIONS.map(opt => (
-          <button
-            key={opt.count}
-            onClick={() => setMealCount(opt.count)}
-            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border-2 transition-all text-left ${
-              mealCount === opt.count
-                ? 'border-primary bg-primary/5'
-                : 'border-border'
-            }`}
-          >
-            <span className="text-2xl">{opt.emoji}</span>
-            <div className="flex-1">
-              <p className={`text-sm font-semibold ${mealCount === opt.count ? 'text-primary' : 'text-gray-800'}`}>
-                {opt.label}
-              </p>
-              <p className="text-xs text-gray-400">{opt.desc}</p>
-            </div>
-            {mealCount === opt.count && <Check className="w-5 h-5 text-primary shrink-0" />}
-          </button>
-        ))}
+        {/* Normal meals section label */}
+        <p className="text-[0.68rem] font-semibold text-gray-400 tracking-widest px-1">
+          {t('wizard.meals.sectionNormal')}
+        </p>
+        {NORMAL_OPTIONS.map(renderOption)}
+
+        {/* IF section divider */}
+        <div className="flex items-center gap-2 pt-1">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[0.68rem] font-semibold text-gray-400 tracking-widest whitespace-nowrap">
+            {t('wizard.meals.sectionIF')}
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        {IF_OPTIONS.map(renderOption)}
       </div>
 
       <div className="bg-primary/5 rounded-2xl p-4 flex gap-3">
