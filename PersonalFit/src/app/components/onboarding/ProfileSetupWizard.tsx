@@ -46,7 +46,7 @@ type DietType = 'omnivore' | 'vegetarian';
 interface SportEntry {
   id: string;
   label: string;
-  days: number; // days per week
+  days: number[];  // weekday indices: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
   minutes: number; // per session
 }
 
@@ -393,6 +393,23 @@ const SPORT_OPTIONS = [
 // Main component
 // ─────────────────────────────────────────────────────────────────
 
+// MET values for calorie burn estimation
+const MET_MAP: Record<string, number> = {
+  futas: 10, edzoterm: 6, crossfit: 6,
+  kerekparozas: 8, uszas: 7, joga: 3,
+  futball: 9, kosarlabda: 8, tenisz: 8,
+  gyaloglas: 3.5,
+};
+
+function normAccent(s: string): string {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function getMET(label: string): number {
+  const key = normAccent(label);
+  return Object.entries(MET_MAP).find(([k]) => key.includes(k))?.[1] ?? 6;
+}
+
 export function ProfileSetupWizard() {
   const navigate = useNavigate();
   const { setHasPlanSetup, setHasCompletedFullFlow, user } = useAuth();
@@ -616,14 +633,22 @@ export function ProfileSetupWizard() {
   // ── Sport helpers ────────────────────────────────────────────
 
   const addSport = (label: string) => {
-    setSports(prev => [...prev, { id: Date.now().toString(), label, days: 3, minutes: 45 }]);
+    setSports(prev => [...prev, { id: Date.now().toString(), label, days: [], minutes: 45 }]);
     setShowSportPicker(false);
   };
 
   const removeSport = (id: string) => setSports(prev => prev.filter(s => s.id !== id));
 
-  const updateSport = (id: string, field: 'days' | 'minutes', value: number) => {
-    setSports(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  const updateSport = (id: string, patch: Partial<SportEntry>) => {
+    setSports(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+  };
+
+  const toggleSportDay = (id: string, dayIdx: number) => {
+    setSports(prev => prev.map(s =>
+      s.id === id
+        ? { ...s, days: s.days.includes(dayIdx) ? s.days.filter(d => d !== dayIdx) : [...s.days, dayIdx] }
+        : s
+    ));
   };
 
   // ── Final submit ─────────────────────────────────────────────
@@ -711,6 +736,17 @@ export function ProfileSetupWizard() {
           mealModel: effectiveMealModel,
         };
 
+        const trainingDayIndices = [...new Set(sports.flatMap(s => s.days))].sort();
+        const wizardWeight = weight || 70;
+        const wizardBurnPerDay: Record<number, number> = {};
+        for (const s of sports) {
+          const met = getMET(s.label);
+          const kcal = Math.round(met * wizardWeight * (s.minutes / 60));
+          for (const day of s.days) {
+            wizardBurnPerDay[day] = (wizardBurnPerDay[day] ?? 0) + kcal;
+          }
+        }
+
         console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget, 'mealModel:', effectiveMealModel ?? '3meals(default)');
         const abortCtrl = new AbortController();
         const timeoutId = setTimeout(() => abortCtrl.abort(), 90_000); // 90s max
@@ -727,6 +763,8 @@ export function ProfileSetupWizard() {
               language,
               userId: user?.id,
               userProfile: userProfilePayload,
+              trainingDays: trainingDayIndices,
+              trainingCaloriesPerDay: wizardBurnPerDay,
             }),
           });
         } finally {
@@ -828,7 +866,7 @@ export function ProfileSetupWizard() {
             {step === 1 && <StepCriteria dietType={dietType} setDietType={setDietType} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} selectedAlternativeKeys={selectedAlternativeKeys} setSelectedAlternativeKeys={setSelectedAlternativeKeys} />}
             {step === 2 && <StepFoods foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
             {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} mealModel={mealModel} setMealModel={setMealModel} />}
-            {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
+            {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} toggleSportDay={toggleSportDay} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} weightKg={weight || 70} />}
             {step === 5 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
             {step === 6 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} mealModel={mealModel} goal={goal} />}
           </motion.div>
@@ -1454,11 +1492,13 @@ function StepMeals({
 // Step 4: Sport & Activity
 // ─────────────────────────────────────────────────────────────────
 
-function StepSport({ activity, setActivity, sports, addSport, removeSport, updateSport, showSportPicker, setShowSportPicker }: {
+function StepSport({ activity, setActivity, sports, addSport, removeSport, updateSport, toggleSportDay, showSportPicker, setShowSportPicker, weightKg }: {
   activity: ActivityLevel; setActivity: (v: ActivityLevel) => void;
   sports: SportEntry[]; addSport: (label: string) => void; removeSport: (id: string) => void;
-  updateSport: (id: string, field: 'days' | 'minutes', value: number) => void;
+  updateSport: (id: string, patch: Partial<SportEntry>) => void;
+  toggleSportDay: (id: string, dayIdx: number) => void;
   showSportPicker: boolean; setShowSportPicker: (v: boolean) => void;
+  weightKg: number;
 }) {
   const { t } = useLanguage();
   const ACTIVITY_OPTIONS = [
@@ -1522,22 +1562,48 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
                 <Minus className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-xs text-gray-500">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span>{t('wizard.sport.daysPerWeek')}</span>
-                  <span className="font-semibold text-gray-700">{s.days}x</span>
-                </div>
-                <input type="range" min={1} max={7} value={s.days} onChange={e => updateSport(s.id, 'days', +e.target.value)} className="w-full accent-primary" />
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span>{t('wizard.sport.minutesPer')}</span>
-                  <span className="font-semibold text-gray-700">{s.minutes}p</span>
-                </div>
-                <input type="range" min={15} max={180} step={15} value={s.minutes} onChange={e => updateSport(s.id, 'minutes', +e.target.value)} className="w-full accent-primary" />
+            {/* Day picker */}
+            <div className="mb-2">
+              <p className="text-xs text-gray-500 mb-1.5">{t('wizard.sport.trainingDays')}</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {['H','K','Sze','Cs','P','Szo','V'].map((label, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => toggleSportDay(s.id, idx)}
+                    className={`text-[0.72rem] font-bold px-2.5 py-1.5 rounded-lg transition-all ${
+                      s.days.includes(idx)
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Minutes slider */}
+            <div className="mb-1">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>{t('wizard.sport.minutesPer')}</span>
+                <span className="font-semibold text-gray-700">{s.minutes}p</span>
+              </div>
+              <input
+                type="range" min={15} max={180} step={15} value={s.minutes}
+                onChange={e => updateSport(s.id, { minutes: +e.target.value })}
+                className="w-full accent-primary"
+              />
+            </div>
+
+            {/* Calorie burn estimate */}
+            {s.days.length > 0 && (
+              <p className="text-[0.72rem] text-primary mt-1">
+                ⚡ {t('wizard.sport.burnEstimate').replace('{n}', String(
+                  Math.round(getMET(s.label) * weightKg * (s.minutes / 60))
+                ))}
+              </p>
+            )}
           </div>
         ))}
       </div>
