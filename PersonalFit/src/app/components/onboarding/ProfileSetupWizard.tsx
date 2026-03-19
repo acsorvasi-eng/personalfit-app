@@ -207,6 +207,73 @@ const FOOD_CATEGORY_TABS = ['Minden', 'Fehérje', 'Szénhidrát', 'Zsír', 'Tejt
 type FoodTabType = typeof FOOD_CATEGORY_TABS[number];
 
 // ─────────────────────────────────────────────────────────────────
+// Curated alternative foods for allergen substitution
+// Covers Romanian market: kecske/juh/bivaly dairy, plant milks, etc.
+// ─────────────────────────────────────────────────────────────────
+
+const CURATED_ALTERNATIVES: Record<string, SeedFood[]> = {
+  kecske: [
+    { name: 'Kecske tej', category: 'Tejtermék', calories_per_100g: 69, protein_per_100g: 3.6, carbs_per_100g: 4.4, fat_per_100g: 4.2, vegetarian: true, emoji: '🥛' },
+    { name: 'Kecske joghurt', category: 'Tejtermék', calories_per_100g: 59, protein_per_100g: 3.8, carbs_per_100g: 4.1, fat_per_100g: 3.5, vegetarian: true, emoji: '🥛' },
+    { name: 'Kecske sajt', category: 'Tejtermék', calories_per_100g: 364, protein_per_100g: 22, carbs_per_100g: 2, fat_per_100g: 30, vegetarian: true, emoji: '🧀' },
+    { name: 'Kecske túró', category: 'Tejtermék', calories_per_100g: 105, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 5.5, vegetarian: true, emoji: '🧀' },
+    { name: 'Kecske tejföl', category: 'Tejtermék', calories_per_100g: 198, protein_per_100g: 2.7, carbs_per_100g: 3.2, fat_per_100g: 20, vegetarian: true, emoji: '🥛' },
+    { name: 'Kecske kefir', category: 'Tejtermék', calories_per_100g: 65, protein_per_100g: 3.5, carbs_per_100g: 4.3, fat_per_100g: 3.8, vegetarian: true, emoji: '🥛' },
+    { name: 'Kecske vaj', category: 'Tejtermék', calories_per_100g: 717, protein_per_100g: 0.9, carbs_per_100g: 0.1, fat_per_100g: 81, vegetarian: true, emoji: '🧈' },
+  ],
+  juh: [
+    { name: 'Juh tej', category: 'Tejtermék', calories_per_100g: 108, protein_per_100g: 5.4, carbs_per_100g: 5.1, fat_per_100g: 7, vegetarian: true, emoji: '🥛' },
+    { name: 'Juh joghurt', category: 'Tejtermék', calories_per_100g: 103, protein_per_100g: 5.5, carbs_per_100g: 5.1, fat_per_100g: 6.5, vegetarian: true, emoji: '🥛' },
+    { name: 'Telemea (juh sajt)', category: 'Tejtermék', calories_per_100g: 300, protein_per_100g: 18, carbs_per_100g: 2, fat_per_100g: 25, vegetarian: true, emoji: '🧀' },
+    { name: 'Urdă (juh túró)', category: 'Tejtermék', calories_per_100g: 150, protein_per_100g: 12, carbs_per_100g: 3, fat_per_100g: 10, vegetarian: true, emoji: '🧀' },
+    { name: 'Juh tejföl', category: 'Tejtermék', calories_per_100g: 202, protein_per_100g: 3.2, carbs_per_100g: 4, fat_per_100g: 20, vegetarian: true, emoji: '🥛' },
+    { name: 'Juh kefir', category: 'Tejtermék', calories_per_100g: 103, protein_per_100g: 5.2, carbs_per_100g: 4.8, fat_per_100g: 6.2, vegetarian: true, emoji: '🥛' },
+    { name: 'Juh vaj', category: 'Tejtermék', calories_per_100g: 740, protein_per_100g: 1, carbs_per_100g: 0.1, fat_per_100g: 83, vegetarian: true, emoji: '🧈' },
+    { name: 'Brânză de burduf', category: 'Tejtermék', calories_per_100g: 330, protein_per_100g: 20, carbs_per_100g: 2, fat_per_100g: 28, vegetarian: true, emoji: '🧀' },
+  ],
+  bivaly: [
+    { name: 'Bivaly mozzarella', category: 'Tejtermék', calories_per_100g: 253, protein_per_100g: 19, carbs_per_100g: 2, fat_per_100g: 19, vegetarian: true, emoji: '🧀' },
+    { name: 'Bivaly tej', category: 'Tejtermék', calories_per_100g: 117, protein_per_100g: 4.5, carbs_per_100g: 5, fat_per_100g: 8, vegetarian: true, emoji: '🥛' },
+    { name: 'Bivaly joghurt', category: 'Tejtermék', calories_per_100g: 125, protein_per_100g: 5, carbs_per_100g: 5, fat_per_100g: 9, vegetarian: true, emoji: '🥛' },
+    { name: 'Bivaly túró', category: 'Tejtermék', calories_per_100g: 140, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 9, vegetarian: true, emoji: '🧀' },
+    { name: 'Bivaly kefir', category: 'Tejtermék', calories_per_100g: 117, protein_per_100g: 4.8, carbs_per_100g: 4.9, fat_per_100g: 7.5, vegetarian: true, emoji: '🥛' },
+  ],
+  'mandula tej': [
+    { name: 'Mandula tej (natúr)', category: 'Tejtermék', calories_per_100g: 24, protein_per_100g: 0.9, carbs_per_100g: 3.1, fat_per_100g: 1.1, vegetarian: true, emoji: '🥛' },
+    { name: 'Mandula joghurt', category: 'Tejtermék', calories_per_100g: 56, protein_per_100g: 1.2, carbs_per_100g: 7, fat_per_100g: 2.5, vegetarian: true, emoji: '🥛' },
+  ],
+  mandula: [
+    { name: 'Mandula tej (natúr)', category: 'Tejtermék', calories_per_100g: 24, protein_per_100g: 0.9, carbs_per_100g: 3.1, fat_per_100g: 1.1, vegetarian: true, emoji: '🥛' },
+    { name: 'Mandula joghurt', category: 'Tejtermék', calories_per_100g: 56, protein_per_100g: 1.2, carbs_per_100g: 7, fat_per_100g: 2.5, vegetarian: true, emoji: '🥛' },
+    { name: 'Mandula tejszín', category: 'Zsír', calories_per_100g: 180, protein_per_100g: 1.5, carbs_per_100g: 4, fat_per_100g: 18, vegetarian: true, emoji: '🥛' },
+  ],
+  'zab tej': [
+    { name: 'Zab tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 1, carbs_per_100g: 6.6, fat_per_100g: 1.5, vegetarian: true, emoji: '🥛' },
+  ],
+  zab: [
+    { name: 'Zab tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 1, carbs_per_100g: 6.6, fat_per_100g: 1.5, vegetarian: true, emoji: '🥛' },
+  ],
+  'kókusz tej': [
+    { name: 'Kókusz tej', category: 'Zsír', calories_per_100g: 197, protein_per_100g: 2, carbs_per_100g: 2.8, fat_per_100g: 21, vegetarian: true, emoji: '🥥' },
+  ],
+  kókusz: [
+    { name: 'Kókusz tej', category: 'Zsír', calories_per_100g: 197, protein_per_100g: 2, carbs_per_100g: 2.8, fat_per_100g: 21, vegetarian: true, emoji: '🥥' },
+    { name: 'Kókusz joghurt', category: 'Tejtermék', calories_per_100g: 88, protein_per_100g: 0.7, carbs_per_100g: 7, fat_per_100g: 6.2, vegetarian: true, emoji: '🥛' },
+    { name: 'Kókusz tejszín', category: 'Zsír', calories_per_100g: 330, protein_per_100g: 3.5, carbs_per_100g: 6, fat_per_100g: 34, vegetarian: true, emoji: '🥥' },
+  ],
+  'rizs tej': [
+    { name: 'Rizs tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 0.3, carbs_per_100g: 9.2, fat_per_100g: 1, vegetarian: true, emoji: '🥛' },
+  ],
+  rizs: [
+    { name: 'Rizs tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 0.3, carbs_per_100g: 9.2, fat_per_100g: 1, vegetarian: true, emoji: '🥛' },
+  ],
+  'szója tej': [
+    { name: 'Szója tej', category: 'Tejtermék', calories_per_100g: 33, protein_per_100g: 2.9, carbs_per_100g: 1.7, fat_per_100g: 1.8, vegetarian: true, emoji: '🥛' },
+    { name: 'Szója joghurt', category: 'Tejtermék', calories_per_100g: 65, protein_per_100g: 3.8, carbs_per_100g: 5.4, fat_per_100g: 2, vegetarian: true, emoji: '🥛' },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────
 // Calorie calculations
 // ─────────────────────────────────────────────────────────────────
 
@@ -268,10 +335,7 @@ export function ProfileSetupWizard() {
   const { setHasPlanSetup, setHasCompletedFullFlow, user } = useAuth();
   const { t } = useLanguage();
 
-  const STEPS = [
-    t('wizard.step.personal'), t('wizard.step.foods'), t('wizard.step.meals'),
-    t('wizard.step.sport'), t('wizard.step.sleep'), t('wizard.step.summary'),
-  ];
+  const STEPS = ['Személyes adatok', 'Étkezési feltételek', 'Alapanyagok', 'Étkezések', 'Sport', 'Alvás', 'Összefoglalás'];
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -359,12 +423,11 @@ export function ProfileSetupWizard() {
 
   const visibleFoods = allFoods.filter(f => {
     if (dietType === 'vegetarian' && !f.vegetarian) return false;
-    if (dietType === 'omnivore' && foodTab !== 'Minden' && f.category !== foodTab) return false;
+    if (foodTab !== 'Minden' && f.category !== foodTab) return false;
     if (foodSearch) {
       const q = foodSearch.toLowerCase();
       if (!f.name.toLowerCase().includes(q)) return false;
     }
-    // Allergen filter: hide foods that contain any active allergen
     if (activeAllergens.size > 0 && f.allergens) {
       if (f.allergens.some(a => activeAllergens.has(a))) return false;
     }
@@ -455,37 +518,66 @@ export function ProfileSetupWizard() {
   // ── Alternative food lookup (for allergen substitutes) ───────
 
   const handleAlternativeLookup = useCallback(async () => {
-    const terms = allergenNotes.split(/[,;\n]+/).map(t => t.trim()).filter(Boolean);
+    const terms = allergenNotes.split(/[,;\n]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
     if (terms.length === 0) return;
 
     setAlternativeLookupStatus('loading');
     const knownNames = new Set([...SEED_FOODS.map(f => f.name), ...extraFoods.map(f => f.name)]);
     const newFoods: SeedFood[] = [];
 
+    const addIfNew = (food: SeedFood) => {
+      if (!knownNames.has(food.name) && !newFoods.some(f => f.name === food.name)) {
+        newFoods.push(food);
+        knownNames.add(food.name);
+      }
+    };
+
+    // 1. Curated fallback — instant, reliable for Romanian market
     for (const term of terms) {
+      const curated = CURATED_ALTERNATIVES[term] ?? [];
+      curated.forEach(addIfNew);
+    }
+
+    // 2. Open Food Facts search — expanded smart queries
+    // Build allergen-specific product type suffixes
+    const DAIRY_TYPES = ['tej', 'sajt', 'joghurt', 'túró', 'tejföl', 'kefir', 'vaj', 'tejszín'];
+    const searchQueries: string[] = [];
+
+    for (const term of terms) {
+      // Direct search
+      searchQueries.push(term);
+      // Expand dairy terms
+      if (activeAllergens.has('laktóz')) {
+        for (const dtype of DAIRY_TYPES) {
+          searchQueries.push(`${term} ${dtype}`);
+        }
+      }
+    }
+
+    // Dedupe queries
+    const uniqueQueries = [...new Set(searchQueries)].slice(0, 12); // max 12 API calls
+
+    for (const query of uniqueQueries) {
       try {
-        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&fields=product_name,product_name_hu,nutriments,stores_tags&page_size=5&lc=hu`;
+        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&fields=product_name,product_name_hu,product_name_ro,nutriments,stores_tags&page_size=4&lc=ro`;
         const resp = await fetch(url);
         if (!resp.ok) continue;
         const data = await resp.json();
 
-        const hits = (data.products ?? [])
-          .filter((p: any) => {
-            const n = p.nutriments;
-            return n && (n['energy-kcal_100g'] || n['energy-kcal']) && (p.product_name_hu || p.product_name);
-          })
-          .slice(0, 2);
+        const hits = (data.products ?? []).filter((p: any) => {
+          const n = p.nutriments;
+          return n && (n['energy-kcal_100g'] || n['energy-kcal']) && (p.product_name_hu || p.product_name_ro || p.product_name);
+        }).slice(0, 2);
 
         for (const p of hits) {
           const n = p.nutriments;
-          const name = (p.product_name_hu || p.product_name || term).slice(0, 40);
-          if (knownNames.has(name) || newFoods.some(f => f.name === name)) continue;
           const kcal = Math.round(n['energy-kcal_100g'] ?? n['energy-kcal'] ?? 0);
           if (!kcal) continue;
+          const name = (p.product_name_hu || p.product_name_ro || p.product_name || query).slice(0, 40);
           const protein = +(n['proteins_100g'] ?? n['proteins'] ?? 0);
           const carbs = +(n['carbohydrates_100g'] ?? n['carbohydrates'] ?? 0);
           const fat = +(n['fat_100g'] ?? n['fat'] ?? 0);
-          newFoods.push({
+          addIfNew({
             name,
             category: guessCategory(protein, carbs, fat),
             calories_per_100g: kcal,
@@ -497,7 +589,7 @@ export function ProfileSetupWizard() {
           });
         }
       } catch {
-        // skip failed searches
+        // skip
       }
     }
 
@@ -513,7 +605,7 @@ export function ProfileSetupWizard() {
     setAlternativesAdded(newFoods.length);
     setAlternativeLookupStatus('done');
     setTimeout(() => setAlternativeLookupStatus('idle'), 5000);
-  }, [allergenNotes, extraFoods]);
+  }, [allergenNotes, extraFoods, activeAllergens]);
 
   // ── Sport helpers ────────────────────────────────────────────
 
@@ -679,11 +771,12 @@ export function ProfileSetupWizard() {
             className="px-6 pb-6"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
-            {step === 1 && <StepFoods dietType={dietType} setDietType={setDietType} foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} allergenNotes={allergenNotes} setAllergenNotes={setAllergenNotes} selectAllVisible={selectAllVisible} deselectAll={deselectAll} onAlternativeLookup={handleAlternativeLookup} alternativeLookupStatus={alternativeLookupStatus} alternativesAdded={alternativesAdded} />}
-            {step === 2 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} />}
-            {step === 3 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
-            {step === 4 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
-            {step === 5 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} goal={goal} />}
+            {step === 1 && <StepCriteria dietType={dietType} setDietType={setDietType} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} allergenNotes={allergenNotes} setAllergenNotes={setAllergenNotes} onAlternativeLookup={handleAlternativeLookup} alternativeLookupStatus={alternativeLookupStatus} alternativesAdded={alternativesAdded} />}
+            {step === 2 && <StepFoods foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
+            {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} />}
+            {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
+            {step === 5 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
+            {step === 6 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} goal={goal} />}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -862,11 +955,119 @@ function StepPersonal({ gender, setGender, age, setAge, weight, setWeight, heigh
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Step 1: Dietary Criteria
+// ─────────────────────────────────────────────────────────────────
+
+function StepCriteria({
+  dietType, setDietType,
+  activeAllergens, toggleAllergen,
+  allergenNotes, setAllergenNotes,
+  onAlternativeLookup, alternativeLookupStatus, alternativesAdded,
+}: {
+  dietType: DietType; setDietType: (v: DietType) => void;
+  activeAllergens: Set<string>; toggleAllergen: (a: string) => void;
+  allergenNotes: string; setAllergenNotes: (v: string) => void;
+  onAlternativeLookup: () => void;
+  alternativeLookupStatus: 'idle' | 'loading' | 'done';
+  alternativesAdded: number;
+}) {
+  return (
+    <div className="space-y-6 pt-2">
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Étkezési feltételek</h2>
+        <p className="text-sm text-gray-500">Ezek alapján rendezzük össze az alapanyaglistádat.</p>
+      </div>
+
+      {/* Diet type */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Étrend típusa</p>
+        <div className="flex rounded-2xl bg-gray-100 p-1 gap-1">
+          {([['omnivore', '🍖', 'Mindent eszem'], ['vegetarian', '🥦', 'Vegetáriánus']] as const).map(([val, emoji, label]) => (
+            <button
+              key={val}
+              onClick={() => setDietType(val)}
+              className={`flex-1 h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                dietType === val ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'
+              }`}
+            >
+              <span>{emoji}</span> {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Allergens */}
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Allergiák & intoleranciák</p>
+          <div className="flex flex-wrap gap-2">
+            {(['Laktóz', 'Glutén', 'Tojás', 'Hal', 'Diófélék', 'Szója', 'Rákféle'] as const).map(label => {
+              const key = label.toLowerCase();
+              const active = activeAllergens.has(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleAllergen(key)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                    active
+                      ? 'bg-red-50 border-red-300 text-red-700'
+                      : 'bg-gray-50 border-border text-gray-600 hover:border-red-200'
+                  }`}
+                >
+                  {active ? '🚫 ' : ''}{label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {activeAllergens.size > 0 && (
+          <div className="space-y-2 bg-gray-50 rounded-2xl p-4 border border-border">
+            <p className="text-sm font-medium text-gray-700">Helyettesítők</p>
+            <p className="text-xs text-gray-400">
+              Mit ehetsz helyette? Pl.: kecske, juh, bivaly, mandula tej, zab tej
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={allergenNotes}
+                onChange={e => setAllergenNotes(e.target.value)}
+                placeholder="kecske, juh, bivaly..."
+                className="flex-1 h-10 px-3 rounded-xl border border-border bg-background text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
+              />
+              <button
+                type="button"
+                onClick={onAlternativeLookup}
+                disabled={!allergenNotes.trim() || alternativeLookupStatus === 'loading'}
+                className="shrink-0 h-10 px-4 rounded-xl bg-primary text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-50 transition-all"
+              >
+                {alternativeLookupStatus === 'loading' ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Keresés...</>
+                ) : (
+                  <><RefreshCw className="w-4 h-4" /> Keresés</>
+                )}
+              </button>
+            </div>
+            {alternativeLookupStatus === 'done' && (
+              <p className={`text-xs font-medium ${alternativesAdded > 0 ? 'text-primary' : 'text-gray-400'}`}>
+                {alternativesAdded > 0
+                  ? `✓ ${alternativesAdded} alternatív élelmiszer hozzáadva`
+                  : 'Nem találtunk terméket — próbálj más kulcsszót'}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Step 2: Foods
 // ─────────────────────────────────────────────────────────────────
 
-function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, activeAllergens, toggleAllergen, allergenNotes, setAllergenNotes, selectAllVisible, deselectAll, onAlternativeLookup, alternativeLookupStatus, alternativesAdded }: {
-  dietType: DietType; setDietType: (v: DietType) => void;
+function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, selectAllVisible, deselectAll }: {
   foodTab: FoodTabType; setFoodTab: (v: FoodTabType) => void;
   foodSearch: string; setFoodSearch: (v: string) => void;
   selectedFoods: Set<string>; toggleFood: (name: string) => void;
@@ -875,15 +1076,8 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
   lookupResults: ProductResult[];
   onLookupFood: (name: string) => void;
   onAddResult: (r: ProductResult) => void;
-  activeAllergens: Set<string>;
-  toggleAllergen: (a: string) => void;
-  allergenNotes: string;
-  setAllergenNotes: (v: string) => void;
   selectAllVisible: () => void;
   deselectAll: () => void;
-  onAlternativeLookup: () => void;
-  alternativeLookupStatus: 'idle' | 'loading' | 'done';
-  alternativesAdded: number;
 }) {
   const { t } = useLanguage();
   return (
@@ -893,41 +1087,20 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
         <p className="text-sm text-gray-500">{t('wizard.foods.subtitle')}</p>
       </div>
 
-      {/* Diet type toggle */}
-      <div className="flex rounded-2xl bg-gray-100 p-1 gap-1">
-        {([['omnivore', '🍖', t('wizard.foods.omnivore')], ['vegetarian', '🥦', t('wizard.foods.vegetarian')]] as const).map(([val, emoji, label]) => (
+      {/* Category tabs — always visible */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {FOOD_CATEGORY_TABS.map(cat => (
           <button
-            key={val}
-            onClick={() => setDietType(val)}
-            className={`flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 text-sm font-medium transition-all ${
-              dietType === val
-                ? 'bg-white shadow-sm text-gray-900'
-                : 'text-gray-500'
+            key={cat}
+            onClick={() => setFoodTab(cat)}
+            className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              foodTab === cat ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
             }`}
           >
-            <span>{emoji}</span> {label}
+            {cat}
           </button>
         ))}
       </div>
-
-      {/* Category tabs (omnivore only) */}
-      {dietType === 'omnivore' && (
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {FOOD_CATEGORY_TABS.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFoodTab(cat)}
-              className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-                foodTab === cat
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Search bar */}
       <div className="relative">
@@ -941,65 +1114,7 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
         />
       </div>
 
-      {/* Allergen section */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Allergiák & intoleranciák</p>
-        <div className="flex flex-wrap gap-1.5">
-          {(['Laktóz', 'Glutén', 'Tojás', 'Hal', 'Diófélék', 'Szója', 'Rákféle'] as const).map(label => {
-            const key = label.toLowerCase() as string;
-            const active = activeAllergens.has(key);
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => toggleAllergen(key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  active
-                    ? 'bg-red-50 border-red-300 text-red-700'
-                    : 'bg-gray-50 border-border text-gray-500 hover:border-red-200'
-                }`}
-              >
-                {active ? '🚫 ' : ''}{label}
-              </button>
-            );
-          })}
-        </div>
-        {activeAllergens.size > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-xs text-gray-400">Helyettesítők (pl. kecske joghurt, mandula tej):</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={allergenNotes}
-                onChange={e => setAllergenNotes(e.target.value)}
-                placeholder="kecske, juh, mandula tej..."
-                className="flex-1 h-9 px-3 rounded-xl border border-border bg-background text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
-              />
-              <button
-                type="button"
-                onClick={onAlternativeLookup}
-                disabled={!allergenNotes.trim() || alternativeLookupStatus === 'loading'}
-                className="shrink-0 h-9 px-3 rounded-xl bg-primary text-white text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-all"
-              >
-                {alternativeLookupStatus === 'loading' ? (
-                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Keresés...</>
-                ) : (
-                  <><RefreshCw className="w-3.5 h-3.5" /> Frissít</>
-                )}
-              </button>
-            </div>
-            {alternativeLookupStatus === 'done' && (
-              <p className="text-xs text-primary font-medium">
-                {alternativesAdded > 0
-                  ? `✓ ${alternativesAdded} alternatív élelmiszer hozzáadva és kijelölve`
-                  : 'Nem találtunk elérhető alternatívát az adatbázisban'}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Store lookup results — shown instead of the grid when active */}
+      {/* Store lookup results */}
       {lookupStatus === 'results' && lookupResults.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs text-gray-400 font-medium">{t('wizard.foods.storeResults')}</p>
