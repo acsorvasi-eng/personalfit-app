@@ -762,6 +762,14 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                               </div>
                               <span className="text-[0.78rem] font-bold text-indigo-500">{dayTotal} kcal</span>
                             </div>
+                            {/* Macro summary row */}
+                            {(day.daily_protein != null) && (
+                              <div className="flex gap-3 px-[14px] py-[6px] border-b border-gray-100 bg-gray-50/60 text-[0.68rem] text-gray-500">
+                                <span>🥩 <strong className="text-gray-700">{day.daily_protein}g</strong> {t('generatePlan.macroProtein')}</span>
+                                <span>🌾 <strong className="text-gray-700">{day.daily_carbs}g</strong> {t('generatePlan.macroCarbs')}</span>
+                                <span>🥑 <strong className="text-gray-700">{day.daily_fat}g</strong> {t('generatePlan.macroFat')}</span>
+                              </div>
+                            )}
                             {/* Meals */}
                             <div>
                               {(day.meals ?? []).map((meal: any, mi: number) => (

@@ -446,9 +446,39 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
       };
     }
 
+    function mealMacros(meal: any) {
+      const ingredients = meal.ingredients ?? [];
+      let protein = 0, carbs = 0, fat = 0;
+      for (const ing of ingredients) {
+        const g = ing.quantity_grams ?? 0;
+        protein += (ing.estimated_protein_per_100g ?? 0) * g / 100;
+        carbs   += (ing.estimated_carbs_per_100g   ?? 0) * g / 100;
+        fat     += (ing.estimated_fat_per_100g     ?? 0) * g / 100;
+      }
+      return {
+        total_protein: Math.round(protein),
+        total_carbs:   Math.round(carbs),
+        total_fat:     Math.round(fat),
+      };
+    }
+
     const weekDays = rawDays.slice(0, 7).map((d, i) => {
       const weekdayIdx = i % 7;
       const burnBonus = (trainingCaloriesPerDay as Record<string, number>)[String(weekdayIdx)] ?? 0;
+      const enrichedMeals = (d.meals ?? []).map((m: any) => {
+        const enrichedIngredients = (m.ingredients ?? []).map(enrichIngredient);
+        const mealWithIngredients = { ...m, ingredients: enrichedIngredients };
+        return {
+          meal_type: m.meal_type,
+          name: m.name,
+          total_calories: m.total_calories,
+          ingredients: enrichedIngredients,
+          ...mealMacros(mealWithIngredients),
+        };
+      });
+      const daily_protein = enrichedMeals.reduce((s: number, m: any) => s + (m.total_protein ?? 0), 0);
+      const daily_carbs   = enrichedMeals.reduce((s: number, m: any) => s + (m.total_carbs   ?? 0), 0);
+      const daily_fat     = enrichedMeals.reduce((s: number, m: any) => s + (m.total_fat     ?? 0), 0);
       return {
         week: 1,
         day: weekdayIdx + 1,
@@ -456,12 +486,10 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
         weekday_index: weekdayIdx,
         is_training_day: trainingDaySet.has(weekdayIdx),
         daily_calorie_target: dailyCalorieTarget + burnBonus,
-        meals: (d.meals ?? []).map((m: any) => ({
-          meal_type: m.meal_type,
-          name: m.name,
-          total_calories: m.total_calories,
-          ingredients: (m.ingredients ?? []).map(enrichIngredient),
-        })),
+        daily_protein,
+        daily_carbs,
+        daily_fat,
+        meals: enrichedMeals,
       };
     });
 
