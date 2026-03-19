@@ -141,6 +141,8 @@ export default async function handler(req: any, res: any) {
       language = 'hu',
       userProfile,
       mealCount,
+      trainingDays = [],
+      goal = 'maintain',
     }: {
       ingredients: Ingredient[];
       dailyCalorieTarget?: number;
@@ -148,6 +150,8 @@ export default async function handler(req: any, res: any) {
       language?: string;
       userProfile?: UserProfile;
       mealCount?: number;
+      trainingDays?: number[];
+      goal?: string;
     } = req.body || {};
 
     // Filter out foods with no calorie data
@@ -186,6 +190,21 @@ export default async function handler(req: any, res: any) {
       .map((d, i) => `day${i + 1}="${d}"`)
       .join(', ');
 
+    // Training day names for the prompt
+    const hasTrainingDays = trainingDays.length > 0;
+    const trainingDayNames = trainingDays.map(d => dayNames[d]).join(', ');
+
+    // Carb cycling block — only relevant when goal is weight loss
+    const carbCycleBlock = hasTrainingDays
+      ? `\nSPORT ÉS SZÉNHIDRÁT CIKLUS:
+- Edzésnapok (is_training_day=true): ${trainingDayNames}
+- Pihenőnapok (is_training_day=false): a többi nap
+${goal === 'loss'
+  ? `- FOGYÁS CÉL: Pihenőnapokon csökkentett szénhidrát — kerüld a rizst, burgonyát, tésztát, kenyeret. Helyettesítsd fehérjével és zöldségekkel. Edzésnapokon ezek megengedett.`
+  : `- KARBAN TARTÁS/NÖVELÉS: Minden nap szokásos szénhidrát, edzésnapokon kissé több (rizs, zabpehely, burgonya).\n`}
+`
+      : '';
+
     // User context
     const userLines: string[] = [];
     if (userProfile?.dislikedFoods?.length) userLines.push(`KERÜLENDŐ TELJESEN: ${userProfile.dislikedFoods.join(', ')}`);
@@ -196,7 +215,7 @@ export default async function handler(req: any, res: any) {
 
     const prompt = `${userBlock}${intro}
 ${style}
-
+${carbCycleBlock}
 ALAPANYAGOK (név, kcal/100g, protein, szénhidrát, zsír):
 ${ingList}
 
@@ -208,7 +227,8 @@ SZABÁLYOK:
 2. Minden ételnél adj meg egy VALÓDI, vonzó étlapszerű nevet
 3. Változatos ételek napról napra — ne ismételj egymás után
 4. ingredients.g = gramm mennyiség az adott étkezésben
-5. Válaszolj KIZÁRÓLAG nyers JSON-nel, semmi más szöveg
+5. is_training_day értékét állítsd helyesen minden napra
+6. Válaszolj KIZÁRÓLAG nyers JSON-nel, semmi más szöveg
 
 SÉMA:
 {"days":[{"day":1,"day_label":"Hétfő","is_training_day":false,"meals":[{"meal_type":"breakfast","name":"Zabkása pirított dióval","total_calories":483,"ingredients":[{"name":"zab","g":80},{"name":"dió","g":20}]}]}]}
@@ -270,13 +290,16 @@ Generáld le mind a ${clampedDays} napot:`;
 
     // Expand to 30 days (rotate the 7-day pattern)
     const TOTAL_DAYS = 30;
+    const trainingDaySet = new Set(trainingDays);
     const allDays = Array.from({ length: TOTAL_DAYS }, (_, i) => {
       const base = baseWeek[i % baseWeek.length];
+      const weekdayIdx = i % 7; // 0=Mon … 6=Sun
       return {
         ...base,
         week: Math.floor(i / 7) + 1,
         day: i + 1,
-        day_label: dayNames[i % 7],
+        day_label: dayNames[weekdayIdx],
+        is_training_day: trainingDaySet.has(weekdayIdx),
       };
     });
 

@@ -221,6 +221,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       // Only send foods with actual calorie data — filter out 0-kcal unresolved ones
       const validFoods = foods.filter(f => (f.calories ?? 0) > 0);
 
+      // Collect which weekday indices (0=Mon … 6=Sun) are training days
+      const trainingDayIndices = [...new Set(activity.sports.flatMap(s => s.days))].sort();
+
       const resp = await fetch("/api/generate-meal-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -237,6 +240,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           language,
           userProfile,
           mealCount: loadedMealCount,
+          trainingDays: trainingDayIndices,
+          goal: personal.goal,
         }),
       });
       const responseBody = await resp.json().catch(() => null);
