@@ -59,6 +59,10 @@ export interface ResetOptions {
 export async function performFullReset(
   options: ResetOptions = { clearTheme: false, reseed: false }
 ): Promise<{ success: boolean; error?: string }> {
+  // Safety net: force reload after 3 s regardless of what the async chain does.
+  // This prevents the UI from getting permanently stuck if any IndexedDB op hangs.
+  setTimeout(() => window.location.reload(), 3000);
+
   try {
     console.log('[Reset] Starting full data wipe...');
 
@@ -66,19 +70,22 @@ export async function performFullReset(
     await destroyDatabase();
     console.log('[Reset] IndexedDB destroy requested.');
 
-    // Step 1b: Safety net — clear all object stores in case delete was blocked
-    try {
-      await clearAllStores();
-      console.log('[Reset] All object stores cleared.');
-    } catch (err) {
-      console.warn('[Reset] Failed to clear object stores:', err);
-    }
+    // NOTE: clearAllStores() is intentionally skipped here.
+    // After destroyDatabase() the DB is gone; re-opening it just to clear stores
+    // can block indefinitely on some browsers (IDB open hangs after delete).
+    // The destroy + reload is sufficient to produce a clean state.
 
-    // Step 2: Clear IndexedDB settings store
-    await clearAllSettings();
+    // Step 2: Clear settings store (uses a fresh DB open — best-effort)
+    try {
+      await clearAllSettings();
+    } catch {
+      // ignore — a fresh DB open after delete may fail; reload cleans up anyway
+    }
     if (options.clearTheme) {
-      const { setSetting } = await import('./SettingsService');
-      await setSetting('themeMode', 'light');
+      try {
+        const { setSetting } = await import('./SettingsService');
+        await setSetting('themeMode', 'light');
+      } catch { /* ignore */ }
     }
     console.log('[Reset] Settings cleared.');
 
