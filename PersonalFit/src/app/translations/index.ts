@@ -1333,6 +1333,17 @@ export const translations = {
         selectedCount: '{n} kiválasztva',
         selectAtLeast: 'Válassz legalább egyet, hogy az étrendedbe kerüljön.'
       },
+      foodStyle: {
+        title: 'Milyen étkezési stílust képviselsz?',
+        subtitle: 'Válassz 1-2 képet — a többit mi megoldjuk',
+        sporty: 'Sportos & fehérjedús',
+        plant: 'Könnyű & növényi',
+        traditional: 'Hagyományos & laktató',
+        mediterranean: 'Mediterrán & kiegyensúlyozott',
+        maxSelectHint: 'Legfeljebb 2 választható',
+        allergenTitle: 'Van allergiád vagy étkezési korlátod?',
+        alternativesFor: '{label} helyett ehető:',
+      },
       meals: {
         title: 'Napi étkezések',
         subtitle: 'Hány alkalommal eszel egy nap?',
@@ -2792,6 +2803,17 @@ export const translations = {
         selectedCount: '{n} selected',
         selectAtLeast: 'Choose at least one to include in your diet.'
       },
+      foodStyle: {
+        title: "What's your food style?",
+        subtitle: "Pick 1-2 images — we'll handle the rest",
+        sporty: 'Sporty & high-protein',
+        plant: 'Light & plant-based',
+        traditional: 'Traditional & hearty',
+        mediterranean: 'Mediterranean & balanced',
+        maxSelectHint: 'Select up to 2',
+        allergenTitle: 'Any allergies or dietary limits?',
+        alternativesFor: 'Instead of {label} you can eat:',
+      },
       meals: {
         title: 'Daily meals', subtitle: 'How many times do you eat per day?',
         opt2label: '2 meals', opt2desc: 'Breakfast + Dinner',
@@ -4224,6 +4246,17 @@ export const translations = {
         alternativeHeading: '🚫 Ce poți mânca în loc de {label}?',
         selectedCount: '{n} selectate',
         selectAtLeast: 'Alege cel puțin unul pentru a-l include în dieta ta.'
+      },
+      foodStyle: {
+        title: 'Ce stil alimentar preferi?',
+        subtitle: 'Alege 1-2 imagini — noi ne ocupăm de rest',
+        sporty: 'Sportiv & bogat în proteine',
+        plant: 'Ușor & pe bază de plante',
+        traditional: 'Tradițional & consistent',
+        mediterranean: 'Mediteranean & echilibrat',
+        maxSelectHint: 'Selectează până la 2',
+        allergenTitle: 'Ai alergii sau restricții alimentare?',
+        alternativesFor: 'În loc de {label} poți mânca:',
       },
       meals: {
         title: 'Mese zilnice', subtitle: 'De câte ori mănânci pe zi?',
