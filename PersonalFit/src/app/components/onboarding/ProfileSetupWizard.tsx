@@ -692,7 +692,7 @@ export function ProfileSetupWizard() {
         const resp = await fetch('/api/generate-meal-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ingredients, dailyCalorieTarget: dailyTarget, days: 7, language: 'hu' }),
+          body: JSON.stringify({ ingredients, dailyCalorieTarget: dailyTarget, days: 7, language: 'hu', userId: user?.id }),
         });
 
         console.log('[ProfileSetup] API response status:', resp.status);

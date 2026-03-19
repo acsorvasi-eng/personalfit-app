@@ -1,6 +1,73 @@
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
+import * as admin from 'firebase-admin';
+
+// ─── Firebase Admin (server-side Firestore) ───────────────────────
+// Requires FIREBASE_ADMIN_KEY env var (base64-encoded service account JSON)
+// If not configured → rate limit check is skipped (fail open for local dev)
+function getAdminApp(): admin.app.App | null {
+  if (admin.apps.length > 0) return admin.apps[0]!;
+  const keyB64 = process.env.FIREBASE_ADMIN_KEY;
+  if (!keyB64) return null;
+  try {
+    const credential = JSON.parse(Buffer.from(keyB64, 'base64').toString('utf8'));
+    return admin.initializeApp({ credential: admin.credential.cert(credential) });
+  } catch (e) {
+    console.warn('[generate-meal-plan] Firebase Admin init failed:', e);
+    return null;
+  }
+}
+
+const FREE_DAILY_LIMIT = 5;
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+async function checkAndIncrementUsage(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+  const app = getAdminApp();
+  if (!app) return { allowed: true, remaining: FREE_DAILY_LIMIT }; // fail open — no admin config
+
+  try {
+    const db = admin.firestore(app);
+    const ref = db.collection('users').doc(userId);
+    const snap = await ref.get();
+
+    if (!snap.exists) return { allowed: true, remaining: FREE_DAILY_LIMIT };
+
+    const data = snap.data()!;
+    if (data.plan === 'pro') {
+      await ref.update({ 'usage.totalGenerations': admin.firestore.FieldValue.increment(1), updatedAt: new Date().toISOString() });
+      return { allowed: true, remaining: 999 };
+    }
+
+    const today = todayStr();
+    const count = data.usage?.lastResetDate !== today ? 0 : (data.usage?.generationsToday ?? 0);
+
+    if (count >= FREE_DAILY_LIMIT) {
+      return { allowed: false, remaining: 0 };
+    }
+
+    // Increment — reset daily counter if new day
+    if (data.usage?.lastResetDate !== today) {
+      await ref.update({
+        'usage.generationsToday': 1,
+        'usage.lastResetDate': today,
+        'usage.totalGenerations': admin.firestore.FieldValue.increment(1),
+        updatedAt: new Date().toISOString(),
+      });
+    } else {
+      await ref.update({
+        'usage.generationsToday': admin.firestore.FieldValue.increment(1),
+        'usage.totalGenerations': admin.firestore.FieldValue.increment(1),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return { allowed: true, remaining: FREE_DAILY_LIMIT - count - 1 };
+  } catch (e) {
+    console.warn('[generate-meal-plan] Usage check failed, failing open:', e);
+    return { allowed: true, remaining: FREE_DAILY_LIMIT };
+  }
+}
 
 function resolveApiKey(): string | undefined {
   if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
@@ -190,16 +257,30 @@ export default async function handler(req: any, res: any) {
     days = 7,
     language = 'hu',
     userProfile,
+    userId,
   }: {
     ingredients: IngredientInput[];
     dailyCalorieTarget?: number;
     days?: number;
     language?: string;
     userProfile?: UserProfileContext;
+    userId?: string;
   } = req.body || {};
 
   if (!Array.isArray(ingredients) || ingredients.length === 0) {
     return res.status(400).json({ error: 'ingredients array required' });
+  }
+
+  // ── Rate limit check ───────────────────────────────────────────
+  if (userId) {
+    const usage = await checkAndIncrementUsage(userId);
+    if (!usage.allowed) {
+      return res.status(429).json({
+        error: 'daily_limit_reached',
+        message: 'Napi generálási limit elérve. Próbáld holnap, vagy válts Pro-ra.',
+        remaining: 0,
+      });
+    }
   }
 
   const clampedDays = Math.min(Math.max(days, 1), 7);
