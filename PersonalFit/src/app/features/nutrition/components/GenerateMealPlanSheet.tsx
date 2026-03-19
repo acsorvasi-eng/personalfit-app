@@ -211,6 +211,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
 
   // ── Generate + save ──────────────────────────────────────────
   async function handleGenerate() {
+    setBurnPerDay({});
     setStep("generating");
     setError(null);
     try {
@@ -328,7 +329,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
   function handleClose() {
     onClose();
     setTimeout(() => {
-      setStep("welcome"); setGeneratedPlan(null); setStats(null); setError(null);
+      setStep("welcome"); setGeneratedPlan(null); setStats(null); setError(null); setBurnPerDay({});
       setPersonal({ gender: "male", age: "", heightCm: "", weightKg: "", goal: "maintain" });
       setActivity({ level: "moderate", sports: [] });
     }, 400);
