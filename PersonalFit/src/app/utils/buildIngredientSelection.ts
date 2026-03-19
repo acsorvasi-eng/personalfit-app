@@ -69,7 +69,7 @@ export function buildIngredientSelection(
 
   // Step 6 — minimum viable set fallback
   if (result.size < 6) {
-    return new Set(['Fehér rizs', 'Brokkoli', 'Sárgarépa', 'Alma', 'Burgonya', 'Lencse']);
+    return new Set(['Rizs', 'Brokkoli', 'Sárgarépa', 'Alma', 'Burgonya', 'Lencse']);
   }
 
   // Step 7 — return
