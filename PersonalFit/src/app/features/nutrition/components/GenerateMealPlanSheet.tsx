@@ -249,7 +249,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
     setStep("saving");
     try {
       const label = `AI diet — ${new Date().toLocaleDateString()}`;
-      await NutritionPlanSvc.importFromAIParse(generatedPlan, label);
+      const plan = await NutritionPlanSvc.importFromAIParse(generatedPlan, label);
+      await NutritionPlanSvc.activatePlan(plan.id);
       setStep("done");
       toast.success(t('generatePlan.dietSaved'));
       setTimeout(() => { onSaved(); handleClose(); }, 1400);
