@@ -23,7 +23,6 @@ import {
   Sparkles,
   Clock,
   Search,
-  RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -275,6 +274,69 @@ const CURATED_ALTERNATIVES: Record<string, SeedFood[]> = {
 };
 
 // ─────────────────────────────────────────────────────────────────
+// Curated alternative picker options per allergen
+// Keys that start with uppercase match SEED_FOOD names directly.
+// Lowercase keys map to CURATED_ALTERNATIVES entries.
+// ─────────────────────────────────────────────────────────────────
+const ALLERGEN_ALTERNATIVES: Record<string, Array<{ key: string; label: string; emoji: string }>> = {
+  'laktóz': [
+    { key: 'kecske',      label: 'Kecske termékek',  emoji: '🐐' },
+    { key: 'juh',         label: 'Juh termékek',      emoji: '🐑' },
+    { key: 'bivaly',      label: 'Bivaly termékek',   emoji: '🐃' },
+    { key: 'mandula tej', label: 'Mandula ital',      emoji: '🥛' },
+    { key: 'zab tej',     label: 'Zab ital',          emoji: '🌾' },
+    { key: 'kókusz',      label: 'Kókusz ital',       emoji: '🥥' },
+    { key: 'rizs tej',    label: 'Rizs ital',         emoji: '🍚' },
+    { key: 'szója tej',   label: 'Szója ital',        emoji: '🫘' },
+  ],
+  'glutén': [
+    { key: 'Rizs',          label: 'Rizs',          emoji: '🍚' },
+    { key: 'Barna rizs',    label: 'Barna rizs',    emoji: '🍚' },
+    { key: 'Kukorica',      label: 'Kukorica',      emoji: '🌽' },
+    { key: 'Hajdina',       label: 'Hajdina',       emoji: '🌾' },
+    { key: 'Quinoa',        label: 'Quinoa',        emoji: '🌾' },
+    { key: 'Burgonya',      label: 'Burgonya',      emoji: '🥔' },
+    { key: 'Édesburgonya',  label: 'Édesburgonya',  emoji: '🍠' },
+  ],
+  'tojás': [
+    { key: 'Chia mag',  label: 'Chia mag',  emoji: '🌱' },
+    { key: 'Lenmag',    label: 'Lenmag',    emoji: '🌱' },
+    { key: 'Tofu',      label: 'Tofu',      emoji: '🫘' },
+    { key: 'Banán',     label: 'Banán',     emoji: '🍌' },
+    { key: 'Avokádó',   label: 'Avokádó',   emoji: '🥑' },
+  ],
+  'hal': [
+    { key: 'Csirkemell',    label: 'Csirkemell',    emoji: '🍗' },
+    { key: 'Pulykamell',    label: 'Pulykamell',    emoji: '🦃' },
+    { key: 'Lencse',        label: 'Lencse',        emoji: '🫘' },
+    { key: 'Csicseriborsó', label: 'Csicseriborsó', emoji: '🫘' },
+    { key: 'Tofu',          label: 'Tofu',          emoji: '🫘' },
+    { key: 'Tempeh',        label: 'Tempeh',        emoji: '🫘' },
+  ],
+  'diófélék': [
+    { key: 'Tök mag',   label: 'Tökmag',        emoji: '🌱' },
+    { key: 'Chia mag',  label: 'Chia mag',      emoji: '🌱' },
+    { key: 'Lenmag',    label: 'Lenmag',        emoji: '🌱' },
+    { key: 'Avokádó',   label: 'Avokádó',       emoji: '🥑' },
+    { key: 'Olívaolaj', label: 'Olívaolaj',     emoji: '🫒' },
+  ],
+  'szója': [
+    { key: 'Csicseriborsó', label: 'Csicseriborsó', emoji: '🫘' },
+    { key: 'Lencse',        label: 'Lencse',        emoji: '🫘' },
+    { key: 'Fekete bab',    label: 'Fekete bab',    emoji: '🫘' },
+    { key: 'Fehér bab',     label: 'Fehér bab',     emoji: '🫘' },
+    { key: 'kókusz',        label: 'Kókusz aminos', emoji: '🥥' },
+  ],
+  'rákféle': [
+    { key: 'Csirkemell',    label: 'Csirkemell',    emoji: '🍗' },
+    { key: 'Lazac',         label: 'Lazac',         emoji: '🐟' },
+    { key: 'Tonhal',        label: 'Tonhal',        emoji: '🐠' },
+    { key: 'Lencse',        label: 'Lencse',        emoji: '🫘' },
+    { key: 'Tofu',          label: 'Tofu',          emoji: '🫘' },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────
 // Calorie calculations
 // ─────────────────────────────────────────────────────────────────
 
@@ -358,9 +420,7 @@ export function ProfileSetupWizard() {
   const [lookupResults, setLookupResults] = useState<ProductResult[]>([]);
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set());
   const [activeAllergens, setActiveAllergens] = useState<Set<string>>(new Set());
-  const [allergenNotes, setAllergenNotes] = useState('');
-  const [alternativeLookupStatus, setAlternativeLookupStatus] = useState<'idle' | 'loading' | 'done'>('idle');
-  const [alternativesAdded, setAlternativesAdded] = useState(0);
+  const [selectedAlternativeKeys, setSelectedAlternativeKeys] = useState<Set<string>>(new Set());
 
   // Step 3: Meals
   const [mealCount, setMealCount] = useState(3);
@@ -377,11 +437,14 @@ export function ProfileSetupWizard() {
   // ── Navigation ──────────────────────────────────────────────
 
   const goNext = useCallback(() => {
+    if (step === 1 && selectedAlternativeKeys.size > 0) {
+      processAlternatives(selectedAlternativeKeys);
+    }
     if (step < STEPS.length - 1) {
       setDirection(1);
       setStep(s => s + 1);
     }
-  }, [step]);
+  }, [step, selectedAlternativeKeys, processAlternatives]);
 
   const goPrev = useCallback(() => {
     if (step > 0) {
@@ -419,6 +482,47 @@ export function ProfileSetupWizard() {
       return next;
     });
   };
+
+  const processAlternatives = useCallback((keys: Set<string>) => {
+    const knownNames = new Set([...SEED_FOODS.map(f => f.name), ...extraFoods.map(f => f.name)]);
+    const newFoods: SeedFood[] = [];
+    const autoSelectNames: string[] = [];
+
+    keys.forEach(key => {
+      // Uppercase key = matches a SEED_FOOD name directly → just auto-select it
+      if (key[0] === key[0].toUpperCase() && key[0] !== key[0].toLowerCase()) {
+        const seedFood = SEED_FOODS.find(f => f.name === key);
+        if (seedFood) {
+          autoSelectNames.push(seedFood.name);
+          return;
+        }
+      }
+
+      // Lowercase key = look up in CURATED_ALTERNATIVES
+      const curated = CURATED_ALTERNATIVES[key] ?? [];
+      curated.forEach(food => {
+        if (!knownNames.has(food.name)) {
+          newFoods.push(food);
+          knownNames.add(food.name);
+        } else {
+          // Already exists — just auto-select
+          autoSelectNames.push(food.name);
+        }
+      });
+    });
+
+    if (newFoods.length > 0) {
+      setExtraFoods(prev => [...prev, ...newFoods]);
+    }
+    if (newFoods.length > 0 || autoSelectNames.length > 0) {
+      setSelectedFoods(prev => {
+        const next = new Set(prev);
+        newFoods.forEach(f => next.add(f.name));
+        autoSelectNames.forEach(n => next.add(n));
+        return next;
+      });
+    }
+  }, [extraFoods]);
 
   const allFoods = [...SEED_FOODS, ...extraFoods];
 
@@ -515,98 +619,6 @@ export function ProfileSetupWizard() {
     setLookupResults([]);
     setLookupStatus('idle');
   }, []);
-
-  // ── Alternative food lookup (for allergen substitutes) ───────
-
-  const handleAlternativeLookup = useCallback(async () => {
-    const terms = allergenNotes.split(/[,;\n]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
-    if (terms.length === 0) return;
-
-    setAlternativeLookupStatus('loading');
-    const knownNames = new Set([...SEED_FOODS.map(f => f.name), ...extraFoods.map(f => f.name)]);
-    const newFoods: SeedFood[] = [];
-
-    const addIfNew = (food: SeedFood) => {
-      if (!knownNames.has(food.name) && !newFoods.some(f => f.name === food.name)) {
-        newFoods.push(food);
-        knownNames.add(food.name);
-      }
-    };
-
-    // 1. Curated fallback — instant, reliable for Romanian market
-    for (const term of terms) {
-      const curated = CURATED_ALTERNATIVES[term] ?? [];
-      curated.forEach(addIfNew);
-    }
-
-    // 2. Open Food Facts search — expanded smart queries
-    // Build allergen-specific product type suffixes
-    const DAIRY_TYPES = ['tej', 'sajt', 'joghurt', 'túró', 'tejföl', 'kefir', 'vaj', 'tejszín'];
-    const searchQueries: string[] = [];
-
-    for (const term of terms) {
-      // Direct search
-      searchQueries.push(term);
-      // Expand dairy terms
-      if (activeAllergens.has('laktóz')) {
-        for (const dtype of DAIRY_TYPES) {
-          searchQueries.push(`${term} ${dtype}`);
-        }
-      }
-    }
-
-    // Dedupe queries
-    const uniqueQueries = [...new Set(searchQueries)].slice(0, 12); // max 12 API calls
-
-    for (const query of uniqueQueries) {
-      try {
-        const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&fields=product_name,product_name_hu,product_name_ro,nutriments,stores_tags&page_size=4&lc=ro`;
-        const resp = await fetch(url);
-        if (!resp.ok) continue;
-        const data = await resp.json();
-
-        const hits = (data.products ?? []).filter((p: any) => {
-          const n = p.nutriments;
-          return n && (n['energy-kcal_100g'] || n['energy-kcal']) && (p.product_name_hu || p.product_name_ro || p.product_name);
-        }).slice(0, 2);
-
-        for (const p of hits) {
-          const n = p.nutriments;
-          const kcal = Math.round(n['energy-kcal_100g'] ?? n['energy-kcal'] ?? 0);
-          if (!kcal) continue;
-          const name = (p.product_name_hu || p.product_name_ro || p.product_name || query).slice(0, 40);
-          const protein = +(n['proteins_100g'] ?? n['proteins'] ?? 0);
-          const carbs = +(n['carbohydrates_100g'] ?? n['carbohydrates'] ?? 0);
-          const fat = +(n['fat_100g'] ?? n['fat'] ?? 0);
-          addIfNew({
-            name,
-            category: guessCategory(protein, carbs, fat),
-            calories_per_100g: kcal,
-            protein_per_100g: +protein.toFixed(1),
-            carbs_per_100g: +carbs.toFixed(1),
-            fat_per_100g: +fat.toFixed(1),
-            vegetarian: true,
-            emoji: '🛒',
-          });
-        }
-      } catch {
-        // skip
-      }
-    }
-
-    if (newFoods.length > 0) {
-      setExtraFoods(prev => [...prev, ...newFoods]);
-      setSelectedFoods(prev => {
-        const next = new Set(prev);
-        newFoods.forEach(f => next.add(f.name));
-        return next;
-      });
-    }
-
-    setAlternativesAdded(newFoods.length);
-    setAlternativeLookupStatus('done');
-    setTimeout(() => setAlternativeLookupStatus('idle'), 5000);
-  }, [allergenNotes, extraFoods, activeAllergens]);
 
   // ── Sport helpers ────────────────────────────────────────────
 
@@ -786,7 +798,7 @@ export function ProfileSetupWizard() {
             className="px-6 pb-6"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
-            {step === 1 && <StepCriteria dietType={dietType} setDietType={setDietType} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} allergenNotes={allergenNotes} setAllergenNotes={setAllergenNotes} onAlternativeLookup={handleAlternativeLookup} alternativeLookupStatus={alternativeLookupStatus} alternativesAdded={alternativesAdded} />}
+            {step === 1 && <StepCriteria dietType={dietType} setDietType={setDietType} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} selectedAlternativeKeys={selectedAlternativeKeys} setSelectedAlternativeKeys={setSelectedAlternativeKeys} />}
             {step === 2 && <StepFoods foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
             {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} />}
             {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
@@ -970,22 +982,32 @@ function StepPersonal({ gender, setGender, age, setAge, weight, setWeight, heigh
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Step 1: Dietary Criteria
+// Step 2: Dietary Criteria
 // ─────────────────────────────────────────────────────────────────
 
 function StepCriteria({
   dietType, setDietType,
   activeAllergens, toggleAllergen,
-  allergenNotes, setAllergenNotes,
-  onAlternativeLookup, alternativeLookupStatus, alternativesAdded,
+  selectedAlternativeKeys, setSelectedAlternativeKeys,
 }: {
   dietType: DietType; setDietType: (v: DietType) => void;
   activeAllergens: Set<string>; toggleAllergen: (a: string) => void;
-  allergenNotes: string; setAllergenNotes: (v: string) => void;
-  onAlternativeLookup: () => void;
-  alternativeLookupStatus: 'idle' | 'loading' | 'done';
-  alternativesAdded: number;
+  selectedAlternativeKeys: Set<string>;
+  setSelectedAlternativeKeys: (fn: (prev: Set<string>) => Set<string>) => void;
 }) {
+  const ALLERGEN_LABELS = ['Laktóz', 'Glutén', 'Tojás', 'Hal', 'Diófélék', 'Szója', 'Rákféle'] as const;
+
+  const toggleAlternative = (key: string) => {
+    setSelectedAlternativeKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const activeList = ALLERGEN_LABELS.filter(l => activeAllergens.has(l.toLowerCase()));
+
   return (
     <div className="space-y-6 pt-2">
       <div>
@@ -1011,69 +1033,81 @@ function StepCriteria({
         </div>
       </div>
 
-      {/* Allergens */}
+      {/* Allergen chips */}
       <div className="space-y-3">
-        <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Allergiák & intoleranciák</p>
-          <div className="flex flex-wrap gap-2">
-            {(['Laktóz', 'Glutén', 'Tojás', 'Hal', 'Diófélék', 'Szója', 'Rákféle'] as const).map(label => {
-              const key = label.toLowerCase();
-              const active = activeAllergens.has(key);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => toggleAllergen(key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                    active
-                      ? 'bg-red-50 border-red-300 text-red-700'
-                      : 'bg-gray-50 border-border text-gray-600 hover:border-red-200'
-                  }`}
-                >
-                  {active ? '🚫 ' : ''}{label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {activeAllergens.size > 0 && (
-          <div className="space-y-2 bg-gray-50 rounded-2xl p-4 border border-border">
-            <p className="text-sm font-medium text-gray-700">Helyettesítők</p>
-            <p className="text-xs text-gray-400">
-              Mit ehetsz helyette? Pl.: kecske, juh, bivaly, mandula tej, zab tej
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={allergenNotes}
-                onChange={e => setAllergenNotes(e.target.value)}
-                placeholder="kecske, juh, bivaly..."
-                className="flex-1 h-10 px-3 rounded-xl border border-border bg-background text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
-              />
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Allergiák & intoleranciák</p>
+        <p className="text-xs text-gray-400">Érintsd meg ami vonatkozik rád — megmutatjuk mit ehetsz helyette.</p>
+        <div className="flex flex-wrap gap-2">
+          {ALLERGEN_LABELS.map(label => {
+            const key = label.toLowerCase();
+            const active = activeAllergens.has(key);
+            return (
               <button
+                key={key}
                 type="button"
-                onClick={onAlternativeLookup}
-                disabled={!allergenNotes.trim() || alternativeLookupStatus === 'loading'}
-                className="shrink-0 h-10 px-4 rounded-xl bg-primary text-white text-sm font-semibold flex items-center gap-2 disabled:opacity-50 transition-all"
+                onClick={() => toggleAllergen(key)}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
+                  active
+                    ? 'bg-red-50 border-red-300 text-red-700'
+                    : 'bg-gray-50 border-border text-gray-600 hover:border-red-200'
+                }`}
               >
-                {alternativeLookupStatus === 'loading' ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Keresés...</>
-                ) : (
-                  <><RefreshCw className="w-4 h-4" /> Keresés</>
-                )}
+                {active ? '🚫 ' : ''}{label}
               </button>
-            </div>
-            {alternativeLookupStatus === 'done' && (
-              <p className={`text-xs font-medium ${alternativesAdded > 0 ? 'text-primary' : 'text-gray-400'}`}>
-                {alternativesAdded > 0
-                  ? `✓ ${alternativesAdded} alternatív élelmiszer hozzáadva`
-                  : 'Nem találtunk terméket — próbálj más kulcsszót'}
-              </p>
-            )}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
+
+      {/* Per-allergen alternatives */}
+      {activeList.length > 0 && (
+        <div className="space-y-4">
+          {activeList.map(label => {
+            const key = label.toLowerCase();
+            const options = ALLERGEN_ALTERNATIVES[key] ?? [];
+            if (options.length === 0) return null;
+            const selectedCount = options.filter(o => selectedAlternativeKeys.has(o.key)).length;
+            return (
+              <div key={key} className="rounded-2xl border border-border bg-gray-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-800">
+                    🚫 {label} helyett mit ehetsz?
+                  </p>
+                  {selectedCount > 0 && (
+                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {selectedCount} kiválasztva
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {options.map(opt => {
+                    const selected = selectedAlternativeKeys.has(opt.key);
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => toggleAlternative(opt.key)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-all ${
+                          selected
+                            ? 'bg-primary/10 border-primary text-primary font-medium'
+                            : 'bg-white border-border text-gray-600 hover:border-primary/50'
+                        }`}
+                      >
+                        <span>{opt.emoji}</span>
+                        <span>{opt.label}</span>
+                        {selected && <span className="text-primary">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedCount === 0 && (
+                  <p className="text-xs text-gray-400 italic">Válassz legalább egyet, hogy az étrendedbe kerüljön.</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
