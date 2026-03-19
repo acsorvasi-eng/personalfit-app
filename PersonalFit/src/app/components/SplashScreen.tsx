@@ -20,7 +20,6 @@ import { useLanguage, LanguageCode } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPPORTED_LANGUAGES, LANGUAGE_META } from '../../i18n';
 import { Button } from './ui/button';
-import { showToast } from '../shared/components/Toast';
 
 const GREETINGS: Record<string, string> = { hu: 'Kezdjük!', en: "Let's go!", ro: 'Să începem!' };
 const languages = SUPPORTED_LANGUAGES.map((code) => ({
@@ -67,13 +66,11 @@ export function SplashScreen() {
     setSelectedLanguageState(code);
     setLanguage(code);
     setLangPickerOpen(false);
-    showToast(t('toast.languageChanged'));
     if (navigator.vibrate) navigator.vibrate(10);
   };
 
   const handleContinue = () => {
     setLanguage(selectedLanguage);
-    showToast(t('toast.languageChanged'));
     markSplashSeen();
     if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
     navigate('/onboarding');
