@@ -10,6 +10,7 @@ import {
   loginWithGoogle as authLogin,
   loginWithEmail as authLoginEmail,
   registerWithEmail as authRegisterEmail,
+  loginLocal as authLoginLocal,
   logout as authLogout,
   hasAcceptedTerms as checkTerms,
   acceptTerms as storeTerms,
@@ -43,6 +44,7 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<AuthUser>;
   loginWithEmail: (email: string, password: string) => Promise<AuthUser>;
   registerWithEmail: (email: string, password: string, name?: string) => Promise<AuthUser>;
+  loginLocal: (name: string) => Promise<AuthUser>;
   logout: () => void;
   markSplashSeen: () => void;
   markOnboardingComplete: () => void;
@@ -79,6 +81,7 @@ const AUTH_FALLBACK: AuthContextType = {
   loginWithGoogle: () => Promise.reject(new Error('AuthProvider not mounted')),
   loginWithEmail: () => Promise.reject(new Error('AuthProvider not mounted')),
   registerWithEmail: () => Promise.reject(new Error('AuthProvider not mounted')),
+  loginLocal: () => Promise.reject(new Error('AuthProvider not mounted')),
   logout: () => {},
   markSplashSeen: () => {},
   markOnboardingComplete: () => {},
@@ -114,9 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     };
-    const timeoutId = setTimeout(stopLoading, 3000);
+    // Safety valve: fires only if both operations hang completely
+    const timeoutId = setTimeout(stopLoading, 5000);
 
-    (async () => {
+    const initSettings = async () => {
       const [storedUser, storedSub, seenSplash, onboarding, terms, subActive, firstUsage, fullFlow, planSetup] = await Promise.all([
         getStoredUser(),
         getSubscription(),
@@ -142,21 +146,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await setSetting('appFirstUsageDate', now);
         setAppFirstUsageDate(now);
       }
-    })()
-      .then(() => stopLoading())
-      .catch(() => stopLoading());
+    };
 
-    console.log('[Auth] checkGoogleRedirectResult starting');
-    checkGoogleRedirectResult()
-      .then((redirectUser) => {
-        if (redirectUser) setUser(redirectUser);
-        stopLoading();
-      })
-      .catch(() => stopLoading())
-      .finally(() => {
-        console.log('[Auth] checkGoogleRedirectResult done');
-        clearTimeout(timeoutId);
-      });
+    const initGoogleRedirect = async () => {
+      const redirectUser = await checkGoogleRedirectResult();
+      if (redirectUser) setUser(redirectUser);
+    };
+
+    // Both operations run in parallel; stopLoading fires only after both settle
+    Promise.allSettled([initSettings(), initGoogleRedirect()]).finally(() => {
+      clearTimeout(timeoutId);
+      stopLoading();
+    });
   }, []);
 
   const setHasCompletedFullFlow = useCallback((v: boolean) => {
@@ -180,6 +181,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const newUser = await authRegisterEmail(email, password, name);
     setUser(newUser);
     return newUser;
+  }, []);
+
+  const loginLocal = useCallback(async (name: string) => {
+    const loggedInUser = await authLoginLocal(name);
+    setUser(loggedInUser);
+    setTermsAccepted(true); // auto-accepted inside authLoginLocal
+    return loggedInUser;
   }, []);
 
   const logout = useCallback(async () => {
@@ -229,14 +237,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * skip the splash screen automatically.
    */
   const getNextRoute = useCallback((): string => {
-    if (hasCompletedFullFlow && appFirstUsageDate) return '/';
+    // Splash/onboarding run once before any auth — keep them first
     if (!hasSeenSplash) return '/splash';
     if (!onboardingCompleted) return '/onboarding';
+    // Auth is always required — a logged-out user must re-authenticate
+    // even if they previously completed the full flow
     if (!user) return '/login';
+    // Authenticated: send to home if setup is done, else wizard
+    if (hasCompletedFullFlow && hasPlanSetup) return '/';
     if (!termsAccepted) return '/terms';
+    if (!hasPlanSetup) return '/profile-setup';
     if (!hasCompletedFullFlow) setHasCompletedFullFlow(true);
     return '/';
-  }, [hasSeenSplash, onboardingCompleted, user, termsAccepted, hasCompletedFullFlow, appFirstUsageDate, setHasCompletedFullFlow]);
+  }, [hasSeenSplash, onboardingCompleted, user, termsAccepted, hasPlanSetup, hasCompletedFullFlow, setHasCompletedFullFlow]);
 
   return (
     <AuthContext.Provider
@@ -252,6 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithGoogle,
         loginWithEmail,
         registerWithEmail,
+        loginLocal,
         logout,
         markSplashSeen,
         markOnboardingComplete,
