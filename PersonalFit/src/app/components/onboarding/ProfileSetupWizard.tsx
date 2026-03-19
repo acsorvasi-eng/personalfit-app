@@ -75,6 +75,7 @@ interface SeedFood {
   fat_per_100g: number;
   vegetarian: boolean;
   emoji: string;
+  allergens?: string[];
 }
 
 interface ProductResult {
@@ -104,63 +105,63 @@ const SEED_FOODS: SeedFood[] = [
   { name: 'Csirkemell', category: 'Fehérje', calories_per_100g: 165, protein_per_100g: 31, carbs_per_100g: 0, fat_per_100g: 3.6, vegetarian: false, emoji: '🍗' },
   { name: 'Csirkecomb', category: 'Fehérje', calories_per_100g: 215, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 12, vegetarian: false, emoji: '🍗' },
   { name: 'Pulykamell', category: 'Fehérje', calories_per_100g: 135, protein_per_100g: 30, carbs_per_100g: 0, fat_per_100g: 1.5, vegetarian: false, emoji: '🦃' },
-  { name: 'Tojás', category: 'Fehérje', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11, vegetarian: true, emoji: '🥚' },
-  { name: 'Lazac', category: 'Fehérje', calories_per_100g: 208, protein_per_100g: 20, carbs_per_100g: 0, fat_per_100g: 13, vegetarian: false, emoji: '🐟' },
-  { name: 'Tonhal', category: 'Fehérje', calories_per_100g: 116, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 1, vegetarian: false, emoji: '🐠' },
-  { name: 'Makréla', category: 'Fehérje', calories_per_100g: 205, protein_per_100g: 19, carbs_per_100g: 0, fat_per_100g: 14, vegetarian: false, emoji: '🐟' },
-  { name: 'Tilápia', category: 'Fehérje', calories_per_100g: 96, protein_per_100g: 20, carbs_per_100g: 0, fat_per_100g: 2, vegetarian: false, emoji: '🐟' },
-  { name: 'Garnélarák', category: 'Fehérje', calories_per_100g: 99, protein_per_100g: 24, carbs_per_100g: 0.2, fat_per_100g: 0.3, vegetarian: false, emoji: '🦐' },
+  { name: 'Tojás', category: 'Fehérje', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11, vegetarian: true, emoji: '🥚', allergens: ['tojás'] },
+  { name: 'Lazac', category: 'Fehérje', calories_per_100g: 208, protein_per_100g: 20, carbs_per_100g: 0, fat_per_100g: 13, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
+  { name: 'Tonhal', category: 'Fehérje', calories_per_100g: 116, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 1, vegetarian: false, emoji: '🐠', allergens: ['hal'] },
+  { name: 'Makréla', category: 'Fehérje', calories_per_100g: 205, protein_per_100g: 19, carbs_per_100g: 0, fat_per_100g: 14, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
+  { name: 'Tilápia', category: 'Fehérje', calories_per_100g: 96, protein_per_100g: 20, carbs_per_100g: 0, fat_per_100g: 2, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
+  { name: 'Garnélarák', category: 'Fehérje', calories_per_100g: 99, protein_per_100g: 24, carbs_per_100g: 0.2, fat_per_100g: 0.3, vegetarian: false, emoji: '🦐', allergens: ['rákféle'] },
   { name: 'Sertéshús', category: 'Fehérje', calories_per_100g: 242, protein_per_100g: 27, carbs_per_100g: 0, fat_per_100g: 14, vegetarian: false, emoji: '🥩' },
   { name: 'Marhahús', category: 'Fehérje', calories_per_100g: 250, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 15, vegetarian: false, emoji: '🥩' },
   { name: 'Bárány', category: 'Fehérje', calories_per_100g: 294, protein_per_100g: 25, carbs_per_100g: 0, fat_per_100g: 21, vegetarian: false, emoji: '🥩' },
-  { name: 'Tofu', category: 'Fehérje', calories_per_100g: 76, protein_per_100g: 8, carbs_per_100g: 1.9, fat_per_100g: 4.8, vegetarian: true, emoji: '🫘' },
-  { name: 'Tempeh', category: 'Fehérje', calories_per_100g: 193, protein_per_100g: 19, carbs_per_100g: 9, fat_per_100g: 11, vegetarian: true, emoji: '🫘' },
+  { name: 'Tofu', category: 'Fehérje', calories_per_100g: 76, protein_per_100g: 8, carbs_per_100g: 1.9, fat_per_100g: 4.8, vegetarian: true, emoji: '🫘', allergens: ['szója'] },
+  { name: 'Tempeh', category: 'Fehérje', calories_per_100g: 193, protein_per_100g: 19, carbs_per_100g: 9, fat_per_100g: 11, vegetarian: true, emoji: '🫘', allergens: ['szója'] },
   { name: 'Lencse', category: 'Fehérje', calories_per_100g: 116, protein_per_100g: 9, carbs_per_100g: 20, fat_per_100g: 0.4, vegetarian: true, emoji: '🫘' },
   { name: 'Csicseriborsó', category: 'Fehérje', calories_per_100g: 164, protein_per_100g: 9, carbs_per_100g: 27, fat_per_100g: 2.6, vegetarian: true, emoji: '🫘' },
   { name: 'Fekete bab', category: 'Fehérje', calories_per_100g: 132, protein_per_100g: 8.9, carbs_per_100g: 24, fat_per_100g: 0.5, vegetarian: true, emoji: '🫘' },
   { name: 'Fehér bab', category: 'Fehérje', calories_per_100g: 127, protein_per_100g: 8.7, carbs_per_100g: 22, fat_per_100g: 0.5, vegetarian: true, emoji: '🫘' },
-  { name: 'Tojásfehérje', category: 'Fehérje', calories_per_100g: 52, protein_per_100g: 11, carbs_per_100g: 0.7, fat_per_100g: 0.2, vegetarian: true, emoji: '🥚' },
-  { name: 'Szardínia', category: 'Fehérje', calories_per_100g: 208, protein_per_100g: 25, carbs_per_100g: 0, fat_per_100g: 11, vegetarian: false, emoji: '🐟' },
+  { name: 'Tojásfehérje', category: 'Fehérje', calories_per_100g: 52, protein_per_100g: 11, carbs_per_100g: 0.7, fat_per_100g: 0.2, vegetarian: true, emoji: '🥚', allergens: ['tojás'] },
+  { name: 'Szardínia', category: 'Fehérje', calories_per_100g: 208, protein_per_100g: 25, carbs_per_100g: 0, fat_per_100g: 11, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
   // ── Szénhidrát ───────────────────────────────────────────────
-  { name: 'Zab', category: 'Szénhidrát', calories_per_100g: 389, protein_per_100g: 17, carbs_per_100g: 66, fat_per_100g: 7, vegetarian: true, emoji: '🌾' },
+  { name: 'Zab', category: 'Szénhidrát', calories_per_100g: 389, protein_per_100g: 17, carbs_per_100g: 66, fat_per_100g: 7, vegetarian: true, emoji: '🌾', allergens: ['glutén'] },
   { name: 'Rizs', category: 'Szénhidrát', calories_per_100g: 130, protein_per_100g: 2.7, carbs_per_100g: 28, fat_per_100g: 0.3, vegetarian: true, emoji: '🍚' },
   { name: 'Barna rizs', category: 'Szénhidrát', calories_per_100g: 111, protein_per_100g: 2.6, carbs_per_100g: 23, fat_per_100g: 0.9, vegetarian: true, emoji: '🍚' },
-  { name: 'Teljes kiőrlésű kenyér', category: 'Szénhidrát', calories_per_100g: 247, protein_per_100g: 13, carbs_per_100g: 41, fat_per_100g: 4, vegetarian: true, emoji: '🍞' },
-  { name: 'Fehér kenyér', category: 'Szénhidrát', calories_per_100g: 265, protein_per_100g: 9, carbs_per_100g: 49, fat_per_100g: 3.2, vegetarian: true, emoji: '🍞' },
-  { name: 'Tészta', category: 'Szénhidrát', calories_per_100g: 157, protein_per_100g: 5.8, carbs_per_100g: 31, fat_per_100g: 0.9, vegetarian: true, emoji: '🍝' },
-  { name: 'Teljes kiőrlésű tészta', category: 'Szénhidrát', calories_per_100g: 148, protein_per_100g: 6.3, carbs_per_100g: 29, fat_per_100g: 0.8, vegetarian: true, emoji: '🍝' },
+  { name: 'Teljes kiőrlésű kenyér', category: 'Szénhidrát', calories_per_100g: 247, protein_per_100g: 13, carbs_per_100g: 41, fat_per_100g: 4, vegetarian: true, emoji: '🍞', allergens: ['glutén'] },
+  { name: 'Fehér kenyér', category: 'Szénhidrát', calories_per_100g: 265, protein_per_100g: 9, carbs_per_100g: 49, fat_per_100g: 3.2, vegetarian: true, emoji: '🍞', allergens: ['glutén'] },
+  { name: 'Tészta', category: 'Szénhidrát', calories_per_100g: 157, protein_per_100g: 5.8, carbs_per_100g: 31, fat_per_100g: 0.9, vegetarian: true, emoji: '🍝', allergens: ['glutén'] },
+  { name: 'Teljes kiőrlésű tészta', category: 'Szénhidrát', calories_per_100g: 148, protein_per_100g: 6.3, carbs_per_100g: 29, fat_per_100g: 0.8, vegetarian: true, emoji: '🍝', allergens: ['glutén'] },
   { name: 'Burgonya', category: 'Szénhidrát', calories_per_100g: 77, protein_per_100g: 2, carbs_per_100g: 17, fat_per_100g: 0.1, vegetarian: true, emoji: '🥔' },
   { name: 'Édesburgonya', category: 'Szénhidrát', calories_per_100g: 86, protein_per_100g: 1.6, carbs_per_100g: 20, fat_per_100g: 0.1, vegetarian: true, emoji: '🍠' },
   { name: 'Quinoa', category: 'Szénhidrát', calories_per_100g: 120, protein_per_100g: 4.4, carbs_per_100g: 21, fat_per_100g: 1.9, vegetarian: true, emoji: '🌾' },
   { name: 'Kukorica', category: 'Szénhidrát', calories_per_100g: 96, protein_per_100g: 3.4, carbs_per_100g: 21, fat_per_100g: 1.5, vegetarian: true, emoji: '🌽' },
   { name: 'Hajdina', category: 'Szénhidrát', calories_per_100g: 92, protein_per_100g: 3.4, carbs_per_100g: 20, fat_per_100g: 0.6, vegetarian: true, emoji: '🌾' },
-  { name: 'Árpa', category: 'Szénhidrát', calories_per_100g: 123, protein_per_100g: 2.3, carbs_per_100g: 28, fat_per_100g: 0.4, vegetarian: true, emoji: '🌾' },
-  { name: 'Tortilla', category: 'Szénhidrát', calories_per_100g: 218, protein_per_100g: 6, carbs_per_100g: 36, fat_per_100g: 5.5, vegetarian: true, emoji: '🫓' },
-  { name: 'Zabpehely', category: 'Szénhidrát', calories_per_100g: 379, protein_per_100g: 13, carbs_per_100g: 68, fat_per_100g: 6.5, vegetarian: true, emoji: '🌾' },
+  { name: 'Árpa', category: 'Szénhidrát', calories_per_100g: 123, protein_per_100g: 2.3, carbs_per_100g: 28, fat_per_100g: 0.4, vegetarian: true, emoji: '🌾', allergens: ['glutén'] },
+  { name: 'Tortilla', category: 'Szénhidrát', calories_per_100g: 218, protein_per_100g: 6, carbs_per_100g: 36, fat_per_100g: 5.5, vegetarian: true, emoji: '🫓', allergens: ['glutén'] },
+  { name: 'Zabpehely', category: 'Szénhidrát', calories_per_100g: 379, protein_per_100g: 13, carbs_per_100g: 68, fat_per_100g: 6.5, vegetarian: true, emoji: '🌾', allergens: ['glutén'] },
   // ── Zsír ─────────────────────────────────────────────────────
   { name: 'Avokádó', category: 'Zsír', calories_per_100g: 160, protein_per_100g: 2, carbs_per_100g: 9, fat_per_100g: 15, vegetarian: true, emoji: '🥑' },
-  { name: 'Dió', category: 'Zsír', calories_per_100g: 654, protein_per_100g: 15, carbs_per_100g: 14, fat_per_100g: 65, vegetarian: true, emoji: '🌰' },
-  { name: 'Mandula', category: 'Zsír', calories_per_100g: 579, protein_per_100g: 21, carbs_per_100g: 22, fat_per_100g: 50, vegetarian: true, emoji: '🥜' },
-  { name: 'Mogyoró', category: 'Zsír', calories_per_100g: 567, protein_per_100g: 26, carbs_per_100g: 16, fat_per_100g: 49, vegetarian: true, emoji: '🥜' },
-  { name: 'Kesudió', category: 'Zsír', calories_per_100g: 553, protein_per_100g: 18, carbs_per_100g: 30, fat_per_100g: 44, vegetarian: true, emoji: '🥜' },
-  { name: 'Pekándió', category: 'Zsír', calories_per_100g: 691, protein_per_100g: 9, carbs_per_100g: 14, fat_per_100g: 72, vegetarian: true, emoji: '🌰' },
+  { name: 'Dió', category: 'Zsír', calories_per_100g: 654, protein_per_100g: 15, carbs_per_100g: 14, fat_per_100g: 65, vegetarian: true, emoji: '🌰', allergens: ['diófélék'] },
+  { name: 'Mandula', category: 'Zsír', calories_per_100g: 579, protein_per_100g: 21, carbs_per_100g: 22, fat_per_100g: 50, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
+  { name: 'Mogyoró', category: 'Zsír', calories_per_100g: 567, protein_per_100g: 26, carbs_per_100g: 16, fat_per_100g: 49, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
+  { name: 'Kesudió', category: 'Zsír', calories_per_100g: 553, protein_per_100g: 18, carbs_per_100g: 30, fat_per_100g: 44, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
+  { name: 'Pekándió', category: 'Zsír', calories_per_100g: 691, protein_per_100g: 9, carbs_per_100g: 14, fat_per_100g: 72, vegetarian: true, emoji: '🌰', allergens: ['diófélék'] },
   { name: 'Olívaolaj', category: 'Zsír', calories_per_100g: 884, protein_per_100g: 0, carbs_per_100g: 0, fat_per_100g: 100, vegetarian: true, emoji: '🫒' },
   { name: 'Kókuszolaj', category: 'Zsír', calories_per_100g: 862, protein_per_100g: 0, carbs_per_100g: 0, fat_per_100g: 100, vegetarian: true, emoji: '🥥' },
-  { name: 'Mogyoróvaj', category: 'Zsír', calories_per_100g: 588, protein_per_100g: 25, carbs_per_100g: 20, fat_per_100g: 50, vegetarian: true, emoji: '🥜' },
+  { name: 'Mogyoróvaj', category: 'Zsír', calories_per_100g: 588, protein_per_100g: 25, carbs_per_100g: 20, fat_per_100g: 50, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
   { name: 'Chia mag', category: 'Zsír', calories_per_100g: 486, protein_per_100g: 17, carbs_per_100g: 42, fat_per_100g: 31, vegetarian: true, emoji: '🌱' },
   { name: 'Lenmag', category: 'Zsír', calories_per_100g: 534, protein_per_100g: 18, carbs_per_100g: 29, fat_per_100g: 42, vegetarian: true, emoji: '🌱' },
   { name: 'Tök mag', category: 'Zsír', calories_per_100g: 559, protein_per_100g: 30, carbs_per_100g: 11, fat_per_100g: 49, vegetarian: true, emoji: '🌱' },
   // ── Tejtermék ────────────────────────────────────────────────
-  { name: 'Görög joghurt', category: 'Tejtermék', calories_per_100g: 59, protein_per_100g: 10, carbs_per_100g: 3.6, fat_per_100g: 0.4, vegetarian: true, emoji: '🥛' },
-  { name: 'Joghurt', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.5, carbs_per_100g: 4.7, fat_per_100g: 3.3, vegetarian: true, emoji: '🥛' },
-  { name: 'Túró', category: 'Tejtermék', calories_per_100g: 98, protein_per_100g: 11, carbs_per_100g: 3.4, fat_per_100g: 4.3, vegetarian: true, emoji: '🧀' },
-  { name: 'Sajt', category: 'Tejtermék', calories_per_100g: 402, protein_per_100g: 25, carbs_per_100g: 1.3, fat_per_100g: 33, vegetarian: true, emoji: '🧀' },
-  { name: 'Mozzarella', category: 'Tejtermék', calories_per_100g: 280, protein_per_100g: 28, carbs_per_100g: 2.2, fat_per_100g: 17, vegetarian: true, emoji: '🧀' },
-  { name: 'Ricotta', category: 'Tejtermék', calories_per_100g: 174, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 13, vegetarian: true, emoji: '🧀' },
-  { name: 'Tej', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.2, carbs_per_100g: 4.8, fat_per_100g: 3.3, vegetarian: true, emoji: '🥛' },
-  { name: 'Kefir', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.3, carbs_per_100g: 4.7, fat_per_100g: 3.5, vegetarian: true, emoji: '🥛' },
-  { name: 'Vaj', category: 'Tejtermék', calories_per_100g: 717, protein_per_100g: 0.9, carbs_per_100g: 0.1, fat_per_100g: 81, vegetarian: true, emoji: '🧈' },
-  { name: 'Tejföl', category: 'Tejtermék', calories_per_100g: 193, protein_per_100g: 2.4, carbs_per_100g: 3.4, fat_per_100g: 20, vegetarian: true, emoji: '🥛' },
+  { name: 'Görög joghurt', category: 'Tejtermék', calories_per_100g: 59, protein_per_100g: 10, carbs_per_100g: 3.6, fat_per_100g: 0.4, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
+  { name: 'Joghurt', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.5, carbs_per_100g: 4.7, fat_per_100g: 3.3, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
+  { name: 'Túró', category: 'Tejtermék', calories_per_100g: 98, protein_per_100g: 11, carbs_per_100g: 3.4, fat_per_100g: 4.3, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
+  { name: 'Sajt', category: 'Tejtermék', calories_per_100g: 402, protein_per_100g: 25, carbs_per_100g: 1.3, fat_per_100g: 33, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
+  { name: 'Mozzarella', category: 'Tejtermék', calories_per_100g: 280, protein_per_100g: 28, carbs_per_100g: 2.2, fat_per_100g: 17, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
+  { name: 'Ricotta', category: 'Tejtermék', calories_per_100g: 174, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 13, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
+  { name: 'Tej', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.2, carbs_per_100g: 4.8, fat_per_100g: 3.3, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
+  { name: 'Kefir', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.3, carbs_per_100g: 4.7, fat_per_100g: 3.5, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
+  { name: 'Vaj', category: 'Tejtermék', calories_per_100g: 717, protein_per_100g: 0.9, carbs_per_100g: 0.1, fat_per_100g: 81, vegetarian: true, emoji: '🧈', allergens: ['laktóz'] },
+  { name: 'Tejföl', category: 'Tejtermék', calories_per_100g: 193, protein_per_100g: 2.4, carbs_per_100g: 3.4, fat_per_100g: 20, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
   // ── Zöldség ──────────────────────────────────────────────────
   { name: 'Brokkoli', category: 'Zöldség', calories_per_100g: 34, protein_per_100g: 2.8, carbs_per_100g: 7, fat_per_100g: 0.4, vegetarian: true, emoji: '🥦' },
   { name: 'Karfiol', category: 'Zöldség', calories_per_100g: 25, protein_per_100g: 1.9, carbs_per_100g: 5, fat_per_100g: 0.3, vegetarian: true, emoji: '🥦' },
@@ -289,9 +290,9 @@ export function ProfileSetupWizard() {
   const [extraFoods, setExtraFoods] = useState<SeedFood[]>([]);
   const [lookupStatus, setLookupStatus] = useState<'idle' | 'loading' | 'results' | 'not_found'>('idle');
   const [lookupResults, setLookupResults] = useState<ProductResult[]>([]);
-  const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set([
-    'Csirkemell', 'Tojás', 'Zab', 'Rizs', 'Brokkoli', 'Alma', 'Görög joghurt', 'Avokádó',
-  ]));
+  const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set());
+  const [activeAllergens, setActiveAllergens] = useState<Set<string>>(new Set());
+  const [allergenNotes, setAllergenNotes] = useState('');
 
   // Step 3: Meals
   const [mealCount, setMealCount] = useState(3);
@@ -342,6 +343,15 @@ export function ProfileSetupWizard() {
     });
   };
 
+  const toggleAllergen = (allergen: string) => {
+    setActiveAllergens(prev => {
+      const next = new Set(prev);
+      if (next.has(allergen)) next.delete(allergen);
+      else next.add(allergen);
+      return next;
+    });
+  };
+
   const allFoods = [...SEED_FOODS, ...extraFoods];
 
   const visibleFoods = allFoods.filter(f => {
@@ -351,8 +361,24 @@ export function ProfileSetupWizard() {
       const q = foodSearch.toLowerCase();
       if (!f.name.toLowerCase().includes(q)) return false;
     }
+    // Allergen filter: hide foods that contain any active allergen
+    if (activeAllergens.size > 0 && f.allergens) {
+      if (f.allergens.some(a => activeAllergens.has(a))) return false;
+    }
     return true;
   });
+
+  const selectAllVisible = () => {
+    setSelectedFoods(prev => {
+      const next = new Set(prev);
+      visibleFoods.forEach(f => next.add(f.name));
+      return next;
+    });
+  };
+
+  const deselectAll = () => {
+    setSelectedFoods(new Set());
+  };
 
   // ── Store product lookup (Open Food Facts) ──────────────────
 
@@ -587,7 +613,7 @@ export function ProfileSetupWizard() {
             className="px-6 pb-6"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
-            {step === 1 && <StepFoods dietType={dietType} setDietType={setDietType} foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} />}
+            {step === 1 && <StepFoods dietType={dietType} setDietType={setDietType} foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} allergenNotes={allergenNotes} setAllergenNotes={setAllergenNotes} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
             {step === 2 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} />}
             {step === 3 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
             {step === 4 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
@@ -773,7 +799,7 @@ function StepPersonal({ gender, setGender, age, setAge, weight, setWeight, heigh
 // Step 2: Foods
 // ─────────────────────────────────────────────────────────────────
 
-function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult }: {
+function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, activeAllergens, toggleAllergen, allergenNotes, setAllergenNotes, selectAllVisible, deselectAll }: {
   dietType: DietType; setDietType: (v: DietType) => void;
   foodTab: FoodTabType; setFoodTab: (v: FoodTabType) => void;
   foodSearch: string; setFoodSearch: (v: string) => void;
@@ -783,6 +809,12 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
   lookupResults: ProductResult[];
   onLookupFood: (name: string) => void;
   onAddResult: (r: ProductResult) => void;
+  activeAllergens: Set<string>;
+  toggleAllergen: (a: string) => void;
+  allergenNotes: string;
+  setAllergenNotes: (v: string) => void;
+  selectAllVisible: () => void;
+  deselectAll: () => void;
 }) {
   const { t } = useLanguage();
   return (
@@ -838,6 +870,43 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
           placeholder={t('wizard.foods.searchPlaceholder')}
           className="w-full h-10 pl-9 pr-4 rounded-xl border border-border bg-background text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
         />
+      </div>
+
+      {/* Allergen section */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Allergiák & intoleranciák</p>
+        <div className="flex flex-wrap gap-1.5">
+          {(['Laktóz', 'Glutén', 'Tojás', 'Hal', 'Diófélék', 'Szója', 'Rákféle'] as const).map(label => {
+            const key = label.toLowerCase() as string;
+            const active = activeAllergens.has(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleAllergen(key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  active
+                    ? 'bg-red-50 border-red-300 text-red-700'
+                    : 'bg-gray-50 border-border text-gray-500 hover:border-red-200'
+                }`}
+              >
+                {active ? '🚫 ' : ''}{label}
+              </button>
+            );
+          })}
+        </div>
+        {activeAllergens.size > 0 && (
+          <div className="space-y-1">
+            <p className="text-xs text-gray-400">Helyettesítők (pl. kecske joghurt, mandula tej):</p>
+            <input
+              type="text"
+              value={allergenNotes}
+              onChange={e => setAllergenNotes(e.target.value)}
+              placeholder="Írj ide alternatívákat..."
+              className="w-full h-9 px-3 rounded-xl border border-border bg-background text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
+            />
+          </div>
+        )}
       </div>
 
       {/* Store lookup results — shown instead of the grid when active */}
@@ -918,7 +987,27 @@ function StepFoods({ dietType, setDietType, foodTab, setFoodTab, foodSearch, set
         })}
       </div>
 
-      <p className="text-xs text-center text-gray-400">{t('wizard.foods.selectedCount').replace('{n}', String(selectedFoods.size))}</p>
+      <div className="flex items-center justify-between pt-1">
+        <p className="text-xs text-gray-400">{t('wizard.foods.selectedCount').replace('{n}', String(selectedFoods.size))}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={selectAllVisible}
+            className="text-xs text-primary font-medium hover:underline"
+          >
+            Mind kijelöl
+          </button>
+          {selectedFoods.size > 0 && (
+            <button
+              type="button"
+              onClick={deselectAll}
+              className="text-xs text-gray-400 font-medium hover:underline"
+            >
+              Töröl
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
