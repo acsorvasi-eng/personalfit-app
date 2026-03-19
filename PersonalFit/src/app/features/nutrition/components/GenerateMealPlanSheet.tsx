@@ -241,7 +241,12 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       });
       const responseBody = await resp.json().catch(() => null);
       if (!resp.ok) {
-        throw new Error(responseBody?.error || responseBody?.message || `Server error ${resp.status} — check API logs`);
+        const raw = responseBody?.error || responseBody?.message || `Server error ${resp.status}`;
+        // Detect Anthropic billing error and show a friendly message
+        const isBillingError = raw.includes('credit balance') || raw.includes('billing') || raw.includes('Plans & Billing');
+        throw new Error(isBillingError
+          ? 'Az Anthropic API kredit elfogyott. Töltsd fel a krediteket a console.anthropic.com > Billing oldalon, majd próbáld újra.'
+          : raw);
       }
       const data = responseBody;
       setGeneratedPlan(data.nutritionPlan);
