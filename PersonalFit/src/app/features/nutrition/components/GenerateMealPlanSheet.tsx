@@ -11,6 +11,23 @@ import { useLanguage } from "../../../contexts/LanguageContext";
 import { getUserProfile } from "../../../backend/services/UserProfileService";
 import { getSetting } from "../../../backend/services/SettingsService";
 
+// ─── MET helpers ──────────────────────────────────────────────
+const MET_MAP: Record<string, number> = {
+  futas: 10, edzoterm: 6, crossfit: 6,
+  kerekparozas: 8, uszas: 7, joga: 3,
+  futball: 9, kosarlabda: 8, tenisz: 8, basketball: 8,
+  gyaloglas: 3.5,
+};
+
+function normAccent(s: string): string {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function getMET(label: string): number {
+  const key = normAccent(label);
+  return Object.entries(MET_MAP).find(([k]) => key.includes(k))?.[1] ?? 6;
+}
+
 // ─── Types ────────────────────────────────────────────────────
 type WizardStep = "welcome" | "personal" | "activity" | "calc" | "generating" | "preview" | "saving" | "done";
 type Gender = "male" | "female";
@@ -131,6 +148,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
   const [loadedMealCount, setLoadedMealCount] = useState<number>(3);
   const [error, setError] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [burnPerDay, setBurnPerDay] = useState<Record<number, number>>({});
 
   // ── Auto-load saved profile when sheet opens ─────────────────
   useEffect(() => {
@@ -224,6 +242,17 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       // Collect which weekday indices (0=Mon … 6=Sun) are training days
       const trainingDayIndices = [...new Set(activity.sports.flatMap(s => s.days))].sort();
 
+      const weightKg = parseFloat(personal.weightKg) || 70;
+      const computedBurnPerDay: Record<number, number> = {};
+      for (const s of activity.sports) {
+        const met = getMET(s.type); // s.type is the sport name in GenerateMealPlanSheet
+        const kcal = Math.round(met * weightKg * (parseInt(s.minutesPerSession) / 60));
+        for (const day of s.days) {
+          computedBurnPerDay[day] = (computedBurnPerDay[day] ?? 0) + kcal;
+        }
+      }
+      setBurnPerDay(computedBurnPerDay);
+
       const resp = await fetch("/api/generate-meal-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -241,6 +270,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           userProfile,
           mealCount: loadedMealCount,
           trainingDays: trainingDayIndices,
+          trainingCaloriesPerDay: computedBurnPerDay,
           goal: personal.goal,
         }),
       });
@@ -730,6 +760,16 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                                     {t('generatePlan.trainingDayBadge')}
                                   </span>
                                 )}
+                                {day.is_training_day && (() => {
+                                  const burn = burnPerDay[day.weekday_index ?? ((day.day - 1) % 7)] ?? 0;
+                                  return burn > 0 ? (
+                                    <span className={`text-[0.65rem] font-bold px-[7px] py-[2px] rounded-full ${
+                                      burn > 500 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {t('generatePlan.burnBadge').replace('{n}', String(burn))}
+                                    </span>
+                                  ) : null;
+                                })()}
                               </div>
                               <span className="text-[0.78rem] font-bold text-indigo-500">{dayTotal} kcal</span>
                             </div>
