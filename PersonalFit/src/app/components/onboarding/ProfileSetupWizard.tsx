@@ -719,18 +719,26 @@ export function ProfileSetupWizard() {
         };
 
         console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget, 'mealModel:', mealModel ?? '3meals(default)');
-        const resp = await fetch('/api/generate-meal-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ingredients,
-            dailyCalorieTarget: dailyTarget,
-            days: 7,
-            language,
-            userId: user?.id,
-            userProfile: userProfilePayload,
-          }),
-        });
+        const abortCtrl = new AbortController();
+        const timeoutId = setTimeout(() => abortCtrl.abort(), 90_000); // 90s max
+        let resp: Response;
+        try {
+          resp = await fetch('/api/generate-meal-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: abortCtrl.signal,
+            body: JSON.stringify({
+              ingredients,
+              dailyCalorieTarget: dailyTarget,
+              days: 7,
+              language,
+              userId: user?.id,
+              userProfile: userProfilePayload,
+            }),
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         console.log('[ProfileSetup] API response status:', resp.status);
         if (resp.ok) {
