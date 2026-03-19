@@ -54,7 +54,7 @@ export default async function handler(req: any, res: any) {
     return res.status(503).json({ error: 'Stripe not configured' });
   }
 
-  const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
+  const stripe = new Stripe(stripeKey);
 
   // Verify webhook signature
   const sig = req.headers['stripe-signature'];
