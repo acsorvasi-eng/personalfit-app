@@ -59,72 +59,41 @@ export interface ResetOptions {
 export async function performFullReset(
   options: ResetOptions = { clearTheme: false, reseed: false }
 ): Promise<{ success: boolean; error?: string }> {
-  // Safety net: force reload after 3 s regardless of what the async chain does.
-  // This prevents the UI from getting permanently stuck if any IndexedDB op hangs.
-  setTimeout(() => window.location.reload(), 3000);
+  // Safety net: force reload after 4 s regardless of what the async chain does.
+  setTimeout(() => window.location.reload(), 4000);
 
   try {
     console.log('[Reset] Starting full data wipe...');
 
-    // Step 1: Destroy IndexedDB (best-effort)
-    await destroyDatabase();
-    console.log('[Reset] IndexedDB destroy requested.');
+    // Step 1: Clear all stores IN-PLACE on the currently-open connection.
+    // This is the primary data wipe — reliable even when deleteDatabase is blocked.
+    await clearAllStores();
+    console.log('[Reset] All object stores cleared.');
 
-    // NOTE: clearAllStores() is intentionally skipped here.
-    // After destroyDatabase() the DB is gone; re-opening it just to clear stores
-    // can block indefinitely on some browsers (IDB open hangs after delete).
-    // The destroy + reload is sufficient to produce a clean state.
+    // Step 2: Destroy the DB structure (belt + suspenders).
+    // If this blocks (another tab/context holds a connection) we still
+    // cleared the data in Step 1, so the wipe is effective either way.
+    destroyDatabase().catch(() => {}); // non-blocking, best-effort
 
-    // Step 2: Clear settings store (uses a fresh DB open — best-effort)
-    try {
-      await clearAllSettings();
-    } catch {
-      // ignore — a fresh DB open after delete may fail; reload cleans up anyway
-    }
-    if (options.clearTheme) {
-      try {
-        const { setSetting } = await import('./SettingsService');
-        await setSetting('themeMode', 'light');
-      } catch { /* ignore */ }
-    }
-    console.log('[Reset] Settings cleared.');
-
-    // Step 2b: Set a flag so the UI/plan loader knows we're in a "no active plan" state.
-    try {
-      const { setSetting } = await import('./SettingsService');
-      await setSetting('forceNoActivePlan', '1');
-    } catch {
-      // ignore
-    }
-
-    // Step 3: Re-seed if requested
-    if (options.reseed) {
-      await seedDatabase();
-      console.log('[Reset] Database re-seeded with defaults.');
-    }
-
-    // Step 4: Notify all tabs
+    // Step 3: Notify all tabs
     try {
       const channel = new BroadcastChannel('nutriplan-db-sync');
       channel.postMessage({ store: '*', action: 'clear' });
       channel.close();
-    } catch { /* not supported */ }
+    } catch { /* BroadcastChannel not supported in all envs */ }
 
-    // Step 5: Dispatch storage event for same-tab reactivity
+    // Step 4: Dispatch storage event for same-tab reactivity
     window.dispatchEvent(new Event('storage'));
 
-    // Step 6: Hard reload to ensure absolutely clean runtime state
-    try {
-      window.location.reload();
-    } catch {
-      // ignore if not in browser context
-    }
+    // Step 5: Hard reload — produces a completely clean runtime state
+    window.location.reload();
 
     console.log('[Reset] Full reset complete.');
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
     console.error('[Reset] Failed:', message);
+    window.location.reload();
     return { success: false, error: message };
   }
 }
