@@ -33,6 +33,7 @@ import { setSetting } from '../../backend/services/SettingsService';
 import type { CreateFoodInput } from '../../backend/services/FoodCatalogService';
 import { DSMButton } from '../dsm';
 import { canGenerate, incrementUsage } from '../../services/userFirestoreService';
+import { getMET } from '../../utils/metHelpers';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -392,23 +393,6 @@ const SPORT_OPTIONS = [
 // ─────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────
-
-// MET values for calorie burn estimation
-const MET_MAP: Record<string, number> = {
-  futas: 10, edzoterm: 6, crossfit: 6,
-  kerekparozas: 8, uszas: 7, joga: 3,
-  futball: 9, kosarlabda: 8, tenisz: 8,
-  gyaloglas: 3.5,
-};
-
-function normAccent(s: string): string {
-  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-
-function getMET(label: string): number {
-  const key = normAccent(label);
-  return Object.entries(MET_MAP).find(([k]) => key.includes(k))?.[1] ?? 6;
-}
 
 export function ProfileSetupWizard() {
   const navigate = useNavigate();
