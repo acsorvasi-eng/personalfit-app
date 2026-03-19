@@ -457,16 +457,11 @@ export function ProfileSetupWizard() {
   const processAlternatives = useCallback((keys: Set<string>) => {
     const knownNames = new Set([...SEED_FOODS.map(f => f.name), ...extraFoods.map(f => f.name)]);
     const newFoods: SeedFood[] = [];
-    const autoSelectNames: string[] = [];
 
     keys.forEach(key => {
-      // Uppercase key = matches a SEED_FOOD name directly → just auto-select it
+      // Uppercase key = matches a SEED_FOOD name directly → food already exists, no action needed
       if (key[0] === key[0].toUpperCase() && key[0] !== key[0].toLowerCase()) {
-        const seedFood = SEED_FOODS.find(f => f.name === key);
-        if (seedFood) {
-          autoSelectNames.push(seedFood.name);
-          return;
-        }
+        return;
       }
 
       // Lowercase key = look up in CURATED_ALTERNATIVES
@@ -475,23 +470,12 @@ export function ProfileSetupWizard() {
         if (!knownNames.has(food.name)) {
           newFoods.push(food);
           knownNames.add(food.name);
-        } else {
-          // Already exists — just auto-select
-          autoSelectNames.push(food.name);
         }
       });
     });
 
     if (newFoods.length > 0) {
       setExtraFoods(prev => [...prev, ...newFoods]);
-    }
-    if (newFoods.length > 0 || autoSelectNames.length > 0) {
-      setSelectedFoods(prev => {
-        const next = new Set(prev);
-        newFoods.forEach(f => next.add(f.name));
-        autoSelectNames.forEach(n => next.add(n));
-        return next;
-      });
     }
   }, [extraFoods]);
 
@@ -843,7 +827,7 @@ export function ProfileSetupWizard() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="px-6 pb-10 pt-3 border-t border-gray-100">
+      <div className="sticky bottom-0 bg-white px-6 pb-10 pt-3 border-t border-gray-100">
         {step < STEPS.length - 1 ? (
           <DSMButton
             onClick={goNext}
@@ -1223,6 +1207,29 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
         </div>
       )}
 
+      {/* Select / deselect all action bar */}
+      <div className="flex items-center justify-between pb-2">
+        <p className="text-xs text-gray-400">{t('wizard.foods.selectedCount').replace('{n}', String(selectedFoods.size))}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={selectAllVisible}
+            className="text-xs text-primary font-medium hover:underline"
+          >
+            Mind kijelöl
+          </button>
+          {selectedFoods.size > 0 && (
+            <button
+              type="button"
+              onClick={deselectAll}
+              className="text-xs text-gray-400 font-medium hover:underline"
+            >
+              Töröl
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Food grid */}
       <div className="grid grid-cols-2 gap-2">
         {visibleFoods.length === 0 && foodSearch.trim() && lookupStatus !== 'results' && (
@@ -1273,28 +1280,6 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
             </button>
           );
         })}
-      </div>
-
-      <div className="flex items-center justify-between pt-1">
-        <p className="text-xs text-gray-400">{t('wizard.foods.selectedCount').replace('{n}', String(selectedFoods.size))}</p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={selectAllVisible}
-            className="text-xs text-primary font-medium hover:underline"
-          >
-            Mind kijelöl
-          </button>
-          {selectedFoods.size > 0 && (
-            <button
-              type="button"
-              onClick={deselectAll}
-              className="text-xs text-gray-400 font-medium hover:underline"
-            >
-              Töröl
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
