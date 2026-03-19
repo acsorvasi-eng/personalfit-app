@@ -481,7 +481,7 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
 
     const responsePayload = {
       nutritionPlan,
-      stats: { days: weekDays.length, meals: weekDays.reduce((s, d) => s + d.meals.length, 0), avg_calories_per_day: avgCalories },
+      stats: { days: weekDays.length, meals: weekDays.reduce((s, d) => s + d.meals.length, 0), meals_per_day: Math.round(weekDays.reduce((s, d) => s + d.meals.length, 0) / Math.max(weekDays.length, 1)), avg_calories_per_day: avgCalories },
     };
 
     // Write to cache (non-blocking)

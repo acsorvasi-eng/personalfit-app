@@ -177,7 +177,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               sports: saved.map(s => ({
                 id: s.id,
                 type: s.label ?? s.type ?? '',
-                days: Array.from({ length: Math.min(s.days, 7) }, (_, i) => i),
+                days: Array.isArray(s.days)
+                  ? s.days
+                  : Array.from({ length: Math.min(s.days as number, 7) }, (_, i) => i),
                 minutesPerSession: String(s.minutes ?? 60),
               })),
             }));
