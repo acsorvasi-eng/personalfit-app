@@ -1323,11 +1323,11 @@ function SettingsTabContent(props: {
               onClick={e => e.stopPropagation()}
               style={{
                 width: '100%', maxWidth: 420,
-                background: showResetFinal ? '#1a0505' : '#fff',
+                background: '#fff',
                 borderRadius: '20px',
                 padding: '32px 28px 28px',
                 boxShadow: '0 32px 80px rgba(0,0,0,0.45)',
-                border: showResetFinal ? '1.5px solid rgba(239,68,68,0.35)' : '1.5px solid rgba(0,0,0,0.07)',
+                border: '1.5px solid rgba(0,0,0,0.07)',
                 position: 'relative',
               }}
             >
@@ -1338,9 +1338,9 @@ function SettingsTabContent(props: {
                   position: 'absolute', top: 16, right: 16,
                   width: 32, height: 32, borderRadius: '50%',
                   border: 'none', cursor: 'pointer',
-                  background: showResetFinal ? 'rgba(239,68,68,0.15)' : 'rgba(0,0,0,0.06)',
+                  background: 'rgba(0,0,0,0.06)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: showResetFinal ? '#ef4444' : '#6b7280',
+                  color: '#6b7280',
                   fontSize: 18, lineHeight: 1,
                 }}
               >×</button>
@@ -1348,10 +1348,10 @@ function SettingsTabContent(props: {
               {/* Icon */}
               <div style={{
                 width: 64, height: 64, borderRadius: '18px',
-                background: showResetFinal ? 'rgba(239,68,68,0.18)' : 'rgba(239,68,68,0.08)',
+                background: 'rgba(239,68,68,0.08)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 marginBottom: 20,
-                border: showResetFinal ? '1.5px solid rgba(239,68,68,0.35)' : '1.5px solid rgba(239,68,68,0.15)',
+                border: '1.5px solid rgba(239,68,68,0.15)',
               }}>
                 <Trash2 size={28} color={showResetFinal ? '#ef4444' : '#ef4444'} strokeWidth={1.8} />
               </div>
@@ -1359,7 +1359,7 @@ function SettingsTabContent(props: {
               {/* Title */}
               <div style={{
                 fontSize: '1.25rem', fontWeight: 700, marginBottom: 8,
-                color: showResetFinal ? '#fef2f2' : '#111827',
+                color: '#111827',
                 letterSpacing: '-0.02em',
               }}>
                 {showResetFinal ? t('profile.finalConfirmation') : t('ui.confirm') + '?'}
@@ -1368,7 +1368,7 @@ function SettingsTabContent(props: {
               {/* Body */}
               <p style={{
                 fontSize: '0.9rem', lineHeight: 1.6, marginBottom: 28,
-                color: showResetFinal ? 'rgba(254,226,226,0.7)' : '#6b7280',
+                color: '#6b7280',
               }}>
                 {showResetFinal ? t('profile.finalDeleteWarning') : t('profile.deleteWarning')}
               </p>
@@ -1376,7 +1376,7 @@ function SettingsTabContent(props: {
               {/* Divider */}
               <div style={{
                 height: 1,
-                background: showResetFinal ? 'rgba(239,68,68,0.2)' : 'rgba(0,0,0,0.07)',
+                background: 'rgba(0,0,0,0.07)',
                 marginBottom: 20,
               }} />
 
@@ -1386,9 +1386,9 @@ function SettingsTabContent(props: {
                   onClick={() => { onShowResetFinal(false); onShowResetConfirm(false); }}
                   style={{
                     flex: 1, height: 44, borderRadius: 12, cursor: 'pointer',
-                    border: showResetFinal ? '1.5px solid rgba(239,68,68,0.3)' : '1.5px solid #e5e7eb',
+                    border: '1.5px solid #e5e7eb',
                     background: 'transparent',
-                    color: showResetFinal ? 'rgba(254,226,226,0.8)' : '#374151',
+                    color: '#374151',
                     fontWeight: 600, fontSize: '0.9rem',
                   }}
                 >
