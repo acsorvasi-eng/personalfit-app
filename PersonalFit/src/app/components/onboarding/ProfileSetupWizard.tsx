@@ -398,7 +398,15 @@ export function ProfileSetupWizard() {
   const { setHasPlanSetup, setHasCompletedFullFlow, user } = useAuth();
   const { t, language } = useLanguage();
 
-  const STEPS = ['Személyes adatok', 'Étkezési feltételek', 'Alapanyagok', 'Étkezések', 'Sport', 'Alvás', 'Összefoglalás'];
+  const STEPS = [
+    t('wizard.personal.title'),
+    t('wizard.criteria.title'),
+    t('wizard.foods.title'),
+    t('wizard.meals.title'),
+    t('wizard.sport.title'),
+    t('wizard.sleep.title'),
+    t('wizard.summary.title'),
+  ];
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -1088,20 +1096,21 @@ function StepCriteria({
     });
   };
 
+  const { t } = useLanguage();
   const activeList = ALLERGEN_LABELS.filter(l => activeAllergens.has(l.toLowerCase()));
 
   return (
     <div className="space-y-6 pt-2">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">Étkezési feltételek</h2>
-        <p className="text-sm text-gray-500">Ezek alapján rendezzük össze az alapanyaglistádat.</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">{t('wizard.criteria.title')}</h2>
+        <p className="text-sm text-gray-500">{t('wizard.criteria.subtitle')}</p>
       </div>
 
       {/* Diet type */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Étrend típusa</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('wizard.criteria.dietTypeLabel')}</p>
         <div className="flex rounded-2xl bg-gray-100 p-1 gap-1">
-          {([['omnivore', '🍖', 'Mindent eszem'], ['vegetarian', '🥦', 'Vegetáriánus']] as const).map(([val, emoji, label]) => (
+          {([['omnivore', '🍖', t('wizard.foods.omnivore')], ['vegetarian', '🥦', t('wizard.foods.vegetarian')]] as const).map(([val, emoji, label]) => (
             <button
               key={val}
               onClick={() => setDietType(val)}
@@ -1117,8 +1126,8 @@ function StepCriteria({
 
       {/* Allergen chips */}
       <div className="space-y-3">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Allergiák & intoleranciák</p>
-        <p className="text-xs text-gray-400">Érintsd meg ami vonatkozik rád — megmutatjuk mit ehetsz helyette.</p>
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('wizard.criteria.allergiesLabel')}</p>
+        <p className="text-xs text-gray-400">{t('wizard.criteria.allergiesHint')}</p>
         <div className="flex flex-wrap gap-2">
           {ALLERGEN_LABELS.map(label => {
             const key = label.toLowerCase();
@@ -1153,11 +1162,11 @@ function StepCriteria({
               <div key={key} className="rounded-2xl border border-border bg-gray-50 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-800">
-                    🚫 {label} helyett mit ehetsz?
+                    {t('wizard.criteria.alternativeHeading').replace('{label}', label)}
                   </p>
                   {selectedCount > 0 && (
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                      {selectedCount} kiválasztva
+                      {t('wizard.criteria.selectedCount').replace('{n}', String(selectedCount))}
                     </span>
                   )}
                 </div>
@@ -1183,7 +1192,7 @@ function StepCriteria({
                   })}
                 </div>
                 {selectedCount === 0 && (
-                  <p className="text-xs text-gray-400 italic">Válassz legalább egyet, hogy az étrendedbe kerüljön.</p>
+                  <p className="text-xs text-gray-400 italic">{t('wizard.criteria.selectAtLeast')}</p>
                 )}
               </div>
             );
@@ -1211,6 +1220,15 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
   deselectAll: () => void;
 }) {
   const { t } = useLanguage();
+  const CAT_LABELS: Record<typeof FOOD_CATEGORY_TABS[number], string> = {
+    'Minden': t('wizard.foods.catAll'),
+    'Fehérje': t('wizard.foods.catProtein'),
+    'Szénhidrát': t('wizard.foods.catCarb'),
+    'Zsír': t('wizard.foods.catFat'),
+    'Tejtermék': t('wizard.foods.catDairy'),
+    'Zöldség': t('wizard.foods.catVeg'),
+    'Gyümölcs': t('wizard.foods.catFruit'),
+  };
   return (
     <div className="space-y-4 pt-2">
       <div>
@@ -1228,7 +1246,7 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
               foodTab === cat ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
             }`}
           >
-            {cat}
+            {CAT_LABELS[cat]}
           </button>
         ))}
       </div>
@@ -1280,7 +1298,7 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
             onClick={selectAllVisible}
             className="text-xs text-primary font-medium hover:underline"
           >
-            Mind kijelöl
+            {t('wizard.foods.selectAll')}
           </button>
           {selectedFoods.size > 0 && (
             <button
@@ -1288,7 +1306,7 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
               onClick={deselectAll}
               className="text-xs text-gray-400 font-medium hover:underline"
             >
-              Töröl
+              {t('wizard.foods.deselectAll')}
             </button>
           )}
         </div>

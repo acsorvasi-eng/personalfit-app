@@ -1274,6 +1274,7 @@ export const translations = {
       generate: 'Generáld az étrendemet!',
       step: {
         personal: 'Személyes',
+        criteria: 'Feltételek',
         foods: 'Élelmiszerek',
         meals: 'Étkezések',
         sport: 'Sport',
@@ -1317,7 +1318,19 @@ export const translations = {
         searching: 'Keresés a boltokban…',
         searchStores: '🏪 Keresés: Lidl, Carrefour, Penny…',
         noResults: 'Nincs találat',
-        selectedCount: '{n} alapanyag kiválasztva'
+        selectedCount: '{n} alapanyag kiválasztva',
+        selectAll: 'Mind kijelöl',
+        deselectAll: 'Töröl'
+      },
+      criteria: {
+        title: 'Étkezési feltételek',
+        subtitle: 'Ezek alapján rendezzük össze az alapanyaglistádat.',
+        dietTypeLabel: 'Étrend típusa',
+        allergiesLabel: 'Allergiák & intoleranciák',
+        allergiesHint: 'Érintsd meg ami vonatkozik rád — megmutatjuk mit ehetsz helyette.',
+        alternativeHeading: '🚫 {label} helyett mit ehetsz?',
+        selectedCount: '{n} kiválasztva',
+        selectAtLeast: 'Válassz legalább egyet, hogy az étrendedbe kerüljön.'
       },
       meals: {
         title: 'Napi étkezések',
@@ -2732,7 +2745,7 @@ export const translations = {
       next: 'Next',
       generating: 'Generating…',
       generate: 'Generate my diet!',
-      step: { personal: 'Personal', foods: 'Foods', meals: 'Meals', sport: 'Sport', sleep: 'Sleep', summary: 'Summary' },
+      step: { personal: 'Personal', criteria: 'Criteria', foods: 'Foods', meals: 'Meals', sport: 'Sport', sleep: 'Sleep', summary: 'Summary' },
       personal: {
         title: 'Personal data', subtitle: 'Needed for calorie calculation — stored on device only.',
         gender: 'Gender', male: 'Male', female: 'Female',
@@ -2748,7 +2761,18 @@ export const translations = {
         searchPlaceholder: 'Search ingredients…', storeResults: 'Store results — choose one:',
         notFound: 'Could not find this ingredient in stores', notInList: '"{name}" is not in the list',
         searching: 'Searching in stores…', searchStores: '🏪 Search: Lidl, Carrefour, Penny…',
-        noResults: 'No results', selectedCount: '{n} ingredients selected'
+        noResults: 'No results', selectedCount: '{n} ingredients selected',
+        selectAll: 'Select all', deselectAll: 'Clear'
+      },
+      criteria: {
+        title: 'Dietary criteria',
+        subtitle: 'We use these to put together your ingredient list.',
+        dietTypeLabel: 'Diet type',
+        allergiesLabel: 'Allergies & intolerances',
+        allergiesHint: 'Tap what applies to you — we\'ll show what you can eat instead.',
+        alternativeHeading: '🚫 Instead of {label}, what can you eat?',
+        selectedCount: '{n} selected',
+        selectAtLeast: 'Choose at least one to include in your diet.'
       },
       meals: {
         title: 'Daily meals', subtitle: 'How many times do you eat per day?',
@@ -4136,7 +4160,7 @@ export const translations = {
       next: 'Înainte',
       generating: 'Se generează…',
       generate: 'Generează dieta mea!',
-      step: { personal: 'Personal', foods: 'Alimente', meals: 'Mese', sport: 'Sport', sleep: 'Somn', summary: 'Rezumat' },
+      step: { personal: 'Personal', criteria: 'Criterii', foods: 'Alimente', meals: 'Mese', sport: 'Sport', sleep: 'Somn', summary: 'Rezumat' },
       personal: {
         title: 'Date personale', subtitle: 'Necesare pentru calculul caloriilor — stocate doar pe telefon.',
         gender: 'Gen', male: 'Masculin', female: 'Feminin',
@@ -4152,7 +4176,18 @@ export const translations = {
         searchPlaceholder: 'Caută ingrediente…', storeResults: 'Rezultate magazine — alege unul:',
         notFound: 'Nu am găsit acest ingredient în magazine', notInList: '„{name}" nu este în listă',
         searching: 'Căutare în magazine…', searchStores: '🏪 Căutare: Lidl, Carrefour, Penny…',
-        noResults: 'Niciun rezultat', selectedCount: '{n} ingrediente selectate'
+        noResults: 'Niciun rezultat', selectedCount: '{n} ingrediente selectate',
+        selectAll: 'Selectează tot', deselectAll: 'Șterge'
+      },
+      criteria: {
+        title: 'Criterii alimentare',
+        subtitle: 'Pe baza acestora vom alcătui lista ta de ingrediente.',
+        dietTypeLabel: 'Tip de dietă',
+        allergiesLabel: 'Alergii & intoleranțe',
+        allergiesHint: 'Atinge ce ți se aplică — îți vom arăta ce poți mânca în schimb.',
+        alternativeHeading: '🚫 Ce poți mânca în loc de {label}?',
+        selectedCount: '{n} selectate',
+        selectAtLeast: 'Alege cel puțin unul pentru a-l include în dieta ta.'
       },
       meals: {
         title: 'Mese zilnice', subtitle: 'De câte ori mănânci pe zi?',
