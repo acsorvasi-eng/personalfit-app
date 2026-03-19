@@ -75,8 +75,10 @@ async function checkAndIncrementUsage(userId: string): Promise<{ allowed: boolea
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-function makeCacheKey(ingredients: IngredientInput[], target: number, lang: string): string {
-  const base = `${lang}_${target}_${ingredients.map(i => i.name).sort().join('|')}`;
+function makeCacheKey(ingredients: IngredientInput[], target: number, lang: string, trainingDays?: number[], trainingCaloriesPerDay?: Record<string, number>): string {
+  const base = `${lang}_${target}_${ingredients.map(i => i.name).sort().join('|')}`
+    + JSON.stringify((trainingDays ?? []).sort())
+    + JSON.stringify(trainingCaloriesPerDay ?? {});
   return Buffer.from(base).toString('base64url').slice(0, 100);
 }
 
@@ -323,7 +325,7 @@ export default async function handler(req: any, res: any) {
   }
 
   // ── Cache check (24h) ─────────────────────────────────────────
-  const cacheKey = makeCacheKey(ingredients, dailyCalorieTarget, language);
+  const cacheKey = makeCacheKey(ingredients, dailyCalorieTarget, language, trainingDays, trainingCaloriesPerDay);
   const cached = await getCached(cacheKey);
   if (cached) {
     return res.status(200).json({ ...cached, fromCache: true });
@@ -452,7 +454,7 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
         day: weekdayIdx + 1,
         day_label: d.day_label ?? dayNames[weekdayIdx],
         weekday_index: weekdayIdx,
-        is_training_day: trainingDaySet.has(weekdayIdx) || (d.is_training_day ?? false),
+        is_training_day: trainingDaySet.has(weekdayIdx),
         daily_calorie_target: dailyCalorieTarget + burnBonus,
         meals: (d.meals ?? []).map((m: any) => ({
           meal_type: m.meal_type,
