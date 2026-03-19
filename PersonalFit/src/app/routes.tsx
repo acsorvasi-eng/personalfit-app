@@ -33,6 +33,7 @@ import { SubscriptionScreen } from "./components/onboarding/SubscriptionScreen";
 
 // Plan Setup & Manual Input
 import { PlanSetupScreen } from "./components/onboarding/PlanSetupScreen";
+import { ProfileSetupWizard } from "./components/onboarding/ProfileSetupWizard";
 import { ManualMealInput } from "./components/ManualMealInput";
 import { ProtectedRoute, OnboardingGuard } from "./components/ProtectedRoute";
 
@@ -87,6 +88,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <PlanSetupScreen />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile-setup",
+        element: (
+          <ProtectedRoute>
+            <ProfileSetupWizard />
           </ProtectedRoute>
         ),
       },

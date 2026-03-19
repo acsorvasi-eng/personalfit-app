@@ -524,7 +524,7 @@ export const MEAL_CARD_DESIGN_CONTRACT = {
     consumedColor: 'text-green-700 line-through',
   },
   time: {
-    size: 'text-[12px]',
+    size: 'text-xs',
     color: 'text-gray-400',
     clockIcon: 'w-3 h-3',
   },

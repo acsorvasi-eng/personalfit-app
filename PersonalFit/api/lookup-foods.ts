@@ -1,6 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
+import fs from 'fs';
+import path from 'path';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function resolveApiKey(): string | undefined {
+  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
+  try {
+    const content = fs.readFileSync(path.resolve(process.cwd(), '.env.local'), 'utf8');
+    return content.match(/^ANTHROPIC_API_KEY=["']?([^"'\r\n]+)["']?/m)?.[1];
+  } catch { return undefined; }
+}
+
+let _client: Anthropic | null = null;
+function getClient() {
+  if (!_client) _client = new Anthropic({ apiKey: resolveApiKey() });
+  return _client;
+}
 
 type LookupFood = {
   /** Hungarian display name (name_hu from the LLM) */
@@ -62,7 +76,7 @@ ${listBlock}
 
 Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`;
 
-    const message = await client.messages.create({
+    const message = await getClient().messages.create({
       model: 'claude-haiku-4-5',
       max_tokens: 512,
       messages: [

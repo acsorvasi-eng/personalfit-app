@@ -53,17 +53,17 @@ export type BodyCompStep =
   | 'error';
 
 export const BODY_COMP_STEP_LABELS: Record<BodyCompStep, string> = {
-  idle: 'Varakozas...',
-  reading_file: 'Fajl beolvasasa...',
-  detecting_type: 'Dokumentum tipus felismerese...',
-  extracting_metrics: 'Testosszetétel metrikan kinyerese...',
-  parsing_segmental: 'Szegmentalis elemzes...',
-  parsing_gmon: 'GMON metrikan feldolgozasa...',
-  mapping_measurements: 'Meresek mentese...',
-  updating_engine: 'Kaloria/makro motor frissitese...',
-  creating_version: 'Verzio mentes...',
-  complete: 'Kesz!',
-  error: 'Hiba tortent',
+  idle: 'upload.idle',
+  reading_file: 'bodyCompUpload.stepReadingFile',
+  detecting_type: 'bodyCompUpload.stepDetectType',
+  extracting_metrics: 'bodyCompUpload.stepExtractMetrics',
+  parsing_segmental: 'bodyCompUpload.stepSegmental',
+  parsing_gmon: 'bodyCompUpload.stepGmon',
+  mapping_measurements: 'bodyCompUpload.stepMapping',
+  updating_engine: 'bodyCompUpload.stepEngine',
+  creating_version: 'bodyCompUpload.stepVersion',
+  complete: 'upload.complete',
+  error: 'upload.error',
 };
 
 export interface BodyCompUploadResult {

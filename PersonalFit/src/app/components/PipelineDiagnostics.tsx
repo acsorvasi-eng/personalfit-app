@@ -271,7 +271,7 @@ export function PipelineDiagnostics() {
           <span className="font-mono tracking-tight">Pipeline Diagnostics</span>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-gray-400 font-mono">
+          <span className="text-2xs text-gray-400 font-mono">
             {passCount}P {failCount}F {warnCount}W
           </span>
           <button
@@ -294,7 +294,7 @@ export function PipelineDiagnostics() {
         <div className="border-t border-gray-800">
           {/* Store Counts */}
           <div className="px-3 py-2 border-b border-gray-800/50">
-            <div className="text-[10px] text-gray-500 mb-1 flex items-center gap-1">
+            <div className="text-2xs text-gray-500 mb-1 flex items-center gap-1">
               <Database className="w-3 h-3" /> IndexedDB Store Counts
             </div>
             <div className="grid grid-cols-3 gap-x-3 gap-y-0.5">
@@ -314,7 +314,7 @@ export function PipelineDiagnostics() {
 
           {/* Pipeline Checks */}
           <div className="px-3 py-2">
-            <div className="text-[10px] text-gray-500 mb-1">Pipeline Checks</div>
+            <div className="text-2xs text-gray-500 mb-1">Pipeline Checks</div>
             <div className="space-y-1">
               {checks.map(c => (
                 <div key={c.id} className="flex items-start gap-1.5">
@@ -330,7 +330,7 @@ export function PipelineDiagnostics() {
                     }`}>
                       {c.label}
                     </div>
-                    <div className="text-[10px] text-gray-500 truncate">{c.detail}</div>
+                    <div className="text-2xs text-gray-500 truncate">{c.detail}</div>
                   </div>
                 </div>
               ))}
@@ -339,7 +339,7 @@ export function PipelineDiagnostics() {
 
           {/* Footer */}
           {lastRun && (
-            <div className="px-3 py-1 border-t border-gray-800/50 text-[10px] text-gray-600 text-right">
+            <div className="px-3 py-1 border-t border-gray-800/50 text-2xs text-gray-600 text-right">
               Utolso futtatas: {lastRun}
             </div>
           )}

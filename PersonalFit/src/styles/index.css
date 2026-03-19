@@ -2,6 +2,11 @@
 @import './tailwind.css';
 @import './theme.css';
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* Root and body: full width, no padding — header gradient must reach screen edges */
 * {
   box-sizing: border-box;

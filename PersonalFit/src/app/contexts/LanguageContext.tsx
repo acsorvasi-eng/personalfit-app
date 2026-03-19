@@ -110,6 +110,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     getSetting(LANGUAGE_KEY).then((saved) => {
       if (saved && SUPPORTED_LANGUAGES.includes(saved as LanguageCode)) {
         setLanguageState(saved as LanguageCode);
+      } else {
+        // No saved preference → use device language, fallback to 'hu'
+        const detected = detectDeviceLanguage();
+        if (detected) setLanguageState(detected);
       }
       setLanguageLoaded(true);
     });

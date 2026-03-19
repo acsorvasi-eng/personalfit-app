@@ -91,6 +91,8 @@ export interface PlanDataState {
   activePlan: NutritionPlanEntity | null;
   /** Whether there's any plan data at all */
   hasData: boolean;
+  /** Non-null when loading failed — show error UI instead of empty state */
+  loadError: string | null;
   /** Force refresh */
   refresh: () => void;
 }
@@ -257,9 +259,12 @@ export function usePlanData(): PlanDataState {
   const [planData, setPlanData] = useState<WeekData[]>([]);
   const [activePlan, setActivePlan] = useState<NutritionPlanEntity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
+      setLoadError(null);
+
       // Hard override after factory reset: never load any plan data
       // while the forceNoActivePlan flag is set.
       try {
@@ -288,20 +293,19 @@ export function usePlanData(): PlanDataState {
       setActivePlan(plan);
       const weeks = await buildWeekData(plan);
       if (!hasActualMealData(weeks)) {
-        // Aktív terv van, de nincs benne étkezési adat → csendes fallback
-        // a hardcoded 4 hetes tervre, hogy a Menüm fül ne legyen teljesen üres.
+        // Aktív terv van, de nincs benne étkezési adat → fallback.
+        // activePlan marad beállítva (van terv), csak az adat üres → hardcoded fallback.
         console.log('[usePlanData] Active plan has no meal data, using hardcoded fallback');
         setPlanData(getFallbackPlanData());
-        setActivePlan(null);
+        // activePlan already set above — do NOT null it out, plan exists
       } else {
         setPlanData(weeks);
       }
       setIsLoading(false);
     } catch (error) {
       console.warn('[usePlanData] Failed to load:', error);
-      // Hiba esetén ne jelenjen meg a hardcoded étrend – a reset után
-      // kifejezetten azt szeretnénk, hogy a Menüm fül üres legyen,
-      // amíg a felhasználó új tervet nem tölt fel.
+      const message = error instanceof Error ? error.message : 'Ismeretlen hiba';
+      setLoadError(message);
       setPlanData([]);
       setActivePlan(null);
       setIsLoading(false);
@@ -337,6 +341,7 @@ export function usePlanData(): PlanDataState {
     isLoading,
     activePlan,
     hasData: planData.length > 0,
+    loadError,
     refresh: loadData,
   };
 }
@@ -385,14 +390,6 @@ export function usePlanFoods() {
         // ignore and continue with normal flow
       }
 
-      const plan = await NutritionPlanSvc.getActivePlan();
-      if (!plan) {
-        setFoods([]);
-        setCategories(['Osszes']);
-        setIsLoading(false);
-        return;
-      }
-
       const db = await getDB();
 
       const CATEGORY_LABELS: Record<string, string> = {
@@ -406,57 +403,63 @@ export function usePlanFoods() {
         'Tojas': 'Tojas',
       };
 
-      // Try to get foods from active plan's meals first
-      const allMeals = await db.getAllFromIndex<MealEntity>('meals', 'by-plan', plan.id);
+      const planFoods: PlanFood[] = [];
+      const categorySet = new Set<string>();
+      const addedIds = new Set<string>();
 
-      const foodIdSet = new Set<string>();
-      for (const meal of allMeals) {
-        const items = await db.getAllFromIndex<MealItemEntity>('meal_items', 'by-meal', meal.id);
-        for (const item of items) {
-          foodIdSet.add(item.food_id);
+      // If an active plan exists, collect meal-linked foods first
+      const plan = await NutritionPlanSvc.getActivePlan();
+      if (plan) {
+        const allMeals = await db.getAllFromIndex<MealEntity>('meals', 'by-plan', plan.id);
+        const foodIdSet = new Set<string>();
+        for (const meal of allMeals) {
+          const items = await db.getAllFromIndex<MealItemEntity>('meal_items', 'by-meal', meal.id);
+          for (const item of items) foodIdSet.add(item.food_id);
+        }
+        for (const foodId of foodIdSet) {
+          const food = await db.get<any>('foods', foodId);
+          if (food) {
+            const catLabel = CATEGORY_LABELS[food.category] || food.category;
+            categorySet.add(catLabel);
+            addedIds.add(food.id);
+            planFoods.push({
+              id: food.id, name: food.name, description: food.description || '',
+              category: catLabel, calories: food.calories_per_100g,
+              protein: food.protein_per_100g, carbs: food.carbs_per_100g,
+              fat: food.fat_per_100g, benefits: food.benefits || [],
+              suitableFor: food.suitable_for || [], source: food.source,
+            });
+          }
         }
       }
 
-      // Load food entities from plan meals
-      const planFoods: PlanFood[] = [];
-      const categorySet = new Set<string>();
+      // Always include user_uploaded foods (wizard selections + manual uploads)
+      // This ensures the Foods tab is populated even before an AI plan is generated.
+      const allCatalogFoods = await db.getAll<any>('foods');
+      for (const food of allCatalogFoods) {
+        if (food.source === 'user_uploaded' && !addedIds.has(food.id)) {
+          const catLabel = CATEGORY_LABELS[food.category] || food.category;
+          categorySet.add(catLabel);
+          planFoods.push({
+            id: food.id, name: food.name, description: food.description || '',
+            category: catLabel, calories: food.calories_per_100g,
+            protein: food.protein_per_100g, carbs: food.carbs_per_100g,
+            fat: food.fat_per_100g, benefits: food.benefits || [],
+            suitableFor: food.suitable_for || [], source: food.source,
+          });
+        }
+      }
 
-      if (foodIdSet.size === 0) {
-        // Ha az aktív tervben nincs egyetlen étel sem, akkor a katalógus
-        // is üres marad – nem esünk vissza az összes DB ételre, hogy a
-        // factory reset után se jelenjen meg "látszólagos" tartalom.
-        console.log('[usePlanFoods] No meal-linked foods found; returning empty catalog');
+      if (planFoods.length === 0) {
+        console.log('[usePlanFoods] No foods found in DB');
         setFoods([]);
         setCategories(['Osszes']);
         setIsLoading(false);
         return;
       }
 
-      // Plan has linked foods → show only plan-linked foods
-      for (const foodId of foodIdSet) {
-        const food = await db.get<any>('foods', foodId);
-        if (food) {
-          const catLabel = CATEGORY_LABELS[food.category] || food.category;
-          categorySet.add(catLabel);
-          planFoods.push({
-            id: food.id,
-            name: food.name,
-            description: food.description || '',
-            category: catLabel,
-            calories: food.calories_per_100g,
-            protein: food.protein_per_100g,
-            carbs: food.carbs_per_100g,
-            fat: food.fat_per_100g,
-            benefits: food.benefits || [],
-            suitableFor: food.suitable_for || [],
-            source: food.source,
-          });
-        }
-      }
-
       // Sort foods alphabetically
       planFoods.sort((a, b) => a.name.localeCompare(b.name, 'hu'));
-
       setFoods(planFoods);
       setCategories(['Osszes', ...Array.from(categorySet).sort()]);
       setIsLoading(false);

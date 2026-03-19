@@ -74,6 +74,7 @@ export interface AIParsedUserProfile {
 export interface AIParsedDocument {
   userProfile: AIParsedUserProfile;
   nutritionPlan: AIParsedNutritionPlan | null;
+  ingredients?: string[];
   measurements: AIParsedMeasurement[];
   trainingDays: AIParsedTrainingDay[];
   warnings: string[];

@@ -42,7 +42,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
           <div className="bg-orange-50 rounded-xl p-2.5 border border-orange-100">
             <div className="flex items-center gap-1.5 mb-1">
               <Flame className="w-3.5 h-3.5 text-orange-500" />
-              <span className="text-[10px] text-orange-600 font-medium">Napi bevitel</span>
+              <span className="text-2xs text-orange-600 font-medium">Napi bevitel</span>
             </div>
             <div className="text-orange-700 font-bold" style={{ fontSize: '1.1rem' }}>
               {prediction.avgDailyIntake} <span className="text-xs font-medium">kcal</span>
@@ -53,7 +53,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
           <div className="bg-blue-50 rounded-xl p-2.5 border border-blue-100">
             <div className="flex items-center gap-1.5 mb-1">
               <Activity className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-[10px] text-blue-600 font-medium">Napi TDEE + sport</span>
+              <span className="text-2xs text-blue-600 font-medium">Napi TDEE + sport</span>
             </div>
             <div className="text-blue-700 font-bold" style={{ fontSize: '1.1rem' }}>
               {prediction.currentTDEE + prediction.avgDailyExerciseBurn} <span className="text-xs font-medium">kcal</span>
@@ -81,7 +81,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
               {prediction.isDeficit ? '-' : '+'}{Math.abs(prediction.dailyNetDeficit)} kcal
             </span>
           </div>
-          <div className="flex items-center justify-between mt-1.5 text-[10px]">
+          <div className="flex items-center justify-between mt-1.5 text-2xs">
             <span className={prediction.isDeficit ? 'text-green-500' : 'text-red-500'}>
               Heti: {prediction.isDeficit ? '-' : '+'}{Math.abs(prediction.weeklyNetDeficit).toLocaleString()} kcal
             </span>
@@ -95,7 +95,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
         <div className="flex items-center justify-between mt-3 px-1">
           <div className="flex items-center gap-1.5">
             <Dumbbell className="w-3 h-3 text-purple-500" />
-            <span className="text-[10px] text-gray-500">Edzes: {prediction.avgWorkoutDaysPerWeek} nap/het, ~{prediction.avgWorkoutMinutesPerDay} perc/nap</span>
+            <span className="text-2xs text-gray-500">Edzes: {prediction.avgWorkoutDaysPerWeek} nap/het, ~{prediction.avgWorkoutMinutesPerDay} perc/nap</span>
           </div>
           {prediction.hasResistanceTraining && (
             <span className="text-[9px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded-full font-medium">Ero</span>
@@ -152,7 +152,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5">
             <Info className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] text-gray-400">
+            <span className="text-2xs text-gray-400">
               Megbizhatosag: <span className={`font-bold ${confidenceColor}`}>{confidenceLabel}</span>
             </span>
           </div>
@@ -168,7 +168,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
         >
           <DSMSectionTitle icon={Activity} iconColor="text-indigo-500" title="Heti bontas" />
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-gray-400">{prediction.weeklyProjections.length} het</span>
+            <span className="text-2xs text-gray-400">{prediction.weeklyProjections.length} het</span>
             {showWeekly ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </div>
         </button>
@@ -176,7 +176,7 @@ export function BodyVisionStatsPanel({ prediction, monthsInvested }: Props) {
         {showWeekly && (
           <div className="mt-2 space-y-1.5 max-h-64 overflow-y-auto">
             {prediction.weeklyProjections.map((week) => (
-              <div key={week.weekNumber} className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg text-[10px]">
+              <div key={week.weekNumber} className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg text-2xs">
                 <span className="w-10 text-gray-500 font-medium">{week.weekNumber}. het</span>
                 <div className="flex-1 flex items-center gap-3">
                   <span className="text-red-500">-{week.projectedFatLossKg.toFixed(2)} kg zsir</span>

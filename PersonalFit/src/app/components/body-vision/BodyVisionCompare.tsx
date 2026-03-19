@@ -31,7 +31,7 @@ export function BodyVisionCompare({ sessions, onClose }: Props) {
       <div className="flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,12px)] pb-3 bg-gradient-to-b from-black/80 to-transparent z-10">
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-bold" style={{ fontSize: '1rem' }}>Osszehasonlitas</h2>
-          <span className="text-white/40 text-[10px]">{sorted.length} munkamenet &bull; {POSITION_LABELS[activeView]}</span>
+          <span className="text-white/40 text-2xs">{sorted.length} munkamenet &bull; {POSITION_LABELS[activeView]}</span>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -99,7 +99,7 @@ export function BodyVisionCompare({ sessions, onClose }: Props) {
                     {/* Date overlay */}
                     <div className="absolute top-2.5 left-2.5 z-10">
                       <div className="bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
-                        <div className="text-[10px] text-white/90 font-bold">{session.label}</div>
+                        <div className="text-2xs text-white/90 font-bold">{session.label}</div>
                         <div className="text-[9px] text-white/50 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
                           {d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })}
@@ -172,7 +172,7 @@ export function BodyVisionCompare({ sessions, onClose }: Props) {
       {/* Navigation hint */}
       <div className="flex items-center justify-center gap-3 pb-[env(safe-area-inset-bottom,16px)] pt-2 bg-gradient-to-t from-black/70 to-transparent">
         {viewMode === 'scroll' && (
-          <div className="flex items-center gap-2 text-white/20 text-[10px]">
+          <div className="flex items-center gap-2 text-white/20 text-2xs">
             <ChevronLeft className="w-3 h-3" />
             <span>Huzd oldalra a lapozashoz</span>
             <ChevronRight className="w-3 h-3" />

@@ -50,7 +50,7 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
       <div className="flex items-center gap-3 px-4 pt-[env(safe-area-inset-top,12px)] pb-3 bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex-1 min-w-0">
           <h2 className="text-white font-bold truncate" style={{ fontSize: '1rem' }}>{session.label}</h2>
-          <div className="flex items-center gap-1.5 text-white/40 text-[10px]">
+          <div className="flex items-center gap-1.5 text-white/40 text-2xs">
             <Clock className="w-3 h-3" />
             <span>{d.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             <span>&bull;</span>
@@ -88,7 +88,7 @@ export function BodyVisionArchiveViewer({ session, onClose }: Props) {
         {/* View label */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
           <div className="bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-            <span className="text-[10px] text-white/80 font-medium">{POSITION_LABELS[currentView]}</span>
+            <span className="text-2xs text-white/80 font-medium">{POSITION_LABELS[currentView]}</span>
           </div>
         </div>
 

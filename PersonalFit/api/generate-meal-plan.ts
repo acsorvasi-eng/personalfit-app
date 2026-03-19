@@ -69,6 +69,42 @@ async function checkAndIncrementUsage(userId: string): Promise<{ allowed: boolea
   }
 }
 
+// ─── 24h Meal Plan Cache (Firestore) ─────────────────────────────
+// Key = base64url of "lang_target_ingredient1|ingredient2|..."
+// Saves ~60–80% of Claude API calls for repeated requests.
+
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function makeCacheKey(ingredients: IngredientInput[], target: number, lang: string): string {
+  const base = `${lang}_${target}_${ingredients.map(i => i.name).sort().join('|')}`;
+  return Buffer.from(base).toString('base64url').slice(0, 100);
+}
+
+async function getCached(key: string): Promise<object | null> {
+  const app = getAdminApp();
+  if (!app) return null;
+  try {
+    const snap = await admin.firestore(app).collection('mealPlanCache').doc(key).get();
+    if (!snap.exists) return null;
+    const data = snap.data()!;
+    if (Date.now() > data.expiresAt) return null; // expired
+    console.log('[generate-meal-plan] Cache HIT:', key.slice(0, 20));
+    return data.result;
+  } catch { return null; }
+}
+
+async function writeCache(key: string, result: object): Promise<void> {
+  const app = getAdminApp();
+  if (!app) return;
+  try {
+    await admin.firestore(app).collection('mealPlanCache').doc(key).set({
+      result,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    });
+  } catch { /* non-fatal */ }
+}
+
 function resolveApiKey(): string | undefined {
   if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
   try {
@@ -271,6 +307,13 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'ingredients array required' });
   }
 
+  // ── Cache check (24h) ─────────────────────────────────────────
+  const cacheKey = makeCacheKey(ingredients, dailyCalorieTarget, language);
+  const cached = await getCached(cacheKey);
+  if (cached) {
+    return res.status(200).json({ ...cached, fromCache: true });
+  }
+
   // ── Rate limit check ───────────────────────────────────────────
   if (userId) {
     const usage = await checkAndIncrementUsage(userId);
@@ -395,10 +438,15 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
 
     console.log(`[generate-meal-plan] Done: ${weekDays.length} days, avg ${avgCalories} kcal/day`);
 
-    return res.status(200).json({
+    const responsePayload = {
       nutritionPlan,
       stats: { days: weekDays.length, meals: weekDays.reduce((s, d) => s + d.meals.length, 0), avg_calories_per_day: avgCalories },
-    });
+    };
+
+    // Write to cache (non-blocking)
+    writeCache(cacheKey, responsePayload).catch(() => {});
+
+    return res.status(200).json(responsePayload);
   } catch (err: any) {
     console.error('[generate-meal-plan] Error:', err.message);
     return res.status(500).json({ error: err.message });

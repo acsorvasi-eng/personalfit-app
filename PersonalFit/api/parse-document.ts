@@ -1,6 +1,26 @@
 import Anthropic from '@anthropic-ai/sdk';
+import fs from 'fs';
+import path from 'path';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+/** Read ANTHROPIC_API_KEY from process.env, falling back to .env.local for local dev. */
+function resolveApiKey(): string | undefined {
+  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
+  try {
+    const envFile = path.resolve(process.cwd(), '.env.local');
+    const content = fs.readFileSync(envFile, 'utf8');
+    const match = content.match(/^ANTHROPIC_API_KEY=["']?([^"'\r\n]+)["']?/m);
+    return match?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
+// Lazy-initialized so the key is resolved per first request
+let client: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!client) client = new Anthropic({ apiKey: resolveApiKey() });
+  return client;
+}
 
 /** User daily calorie target (kcal). For now hardcoded; later from user profile (userProfile.dailyCalorieTarget). */
 const DAILY_CALORIE_TARGET = 2000;
@@ -70,8 +90,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { content, text } = req.body;
-  const rawText: string = content || text || '';
+  const { content, text, extracted_text } = req.body;
+  const rawText: string = content || text || extracted_text || '';
 
   if (!rawText) {
     return res.status(400).json({ error: 'No content provided' });
@@ -162,7 +182,7 @@ Return ONLY valid JSON in this exact shape (no markdown):
 TEXT:
 ${cleanedText.substring(0, 45000)}`;
 
-  const message = await client.messages.create({
+  const message = await getClient().messages.create({
     model: 'claude-haiku-4-5',
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],

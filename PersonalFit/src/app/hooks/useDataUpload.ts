@@ -71,19 +71,19 @@ export type UploadStep =
   | 'error';
 
 export const STEP_LABELS: Record<UploadStep, string> = {
-  idle: 'Várakozás...',
-  reading_file: 'Fájl beolvasása...',
-  parsing: 'AI elemzés...',
-  creating_plan: 'Étrend terv létrehozása...',
-  populating_foods: 'Élelmiszerek hozzáadása...',
-  building_meals: 'Étkezések összeállítása...',
-  generating_shopping: 'Bevásárlólista generálása...',
-  processing_measurements: 'Mérések feldolgozása...',
-  processing_training: 'Edzésterv feldolgozása...',
-  creating_versions: 'Verzió mentése...',
-  staging: 'Staging állapotba mentés...',
-  complete: 'Kész!',
-  error: 'Hiba történt',
+  idle: 'upload.idle',
+  reading_file: 'upload.reading_file',
+  parsing: 'upload.parsing',
+  creating_plan: 'upload.creating_plan',
+  populating_foods: 'upload.populating_foods',
+  building_meals: 'upload.building_meals',
+  generating_shopping: 'upload.generating_shopping',
+  processing_measurements: 'upload.processing_measurements',
+  processing_training: 'upload.processing_training',
+  creating_versions: 'upload.creating_versions',
+  staging: 'upload.staging',
+  complete: 'upload.complete',
+  error: 'upload.error',
 };
 
 async function readFileAsDataURL(file: File): Promise<string> {
@@ -344,6 +344,7 @@ export function useDataUpload() {
                   calorie_target: plan.daily_kcal_target ?? undefined,
                 },
                 nutritionPlan,
+                ingredients: Array.isArray(plan.ingredients) ? plan.ingredients : undefined,
                 measurements: [],
                 trainingDays: [],
                 warnings: [],
@@ -485,6 +486,27 @@ export function useDataUpload() {
       let totalMeals = 0;
       let newFoodsCount = 0;
 
+      // ── Step 1b: Pre-populate food catalog from clean ingredient list ──
+      // The API returns 50-80 clean atomic Hungarian ingredient names (e.g. "tojás", "csirkemell").
+      // Pre-creating them here ensures they exist in the catalog BEFORE the nutrition plan importer
+      // tries to match meal ingredients, which can have compound/messy names that fail validation.
+      if (Array.isArray(parsed.ingredients) && parsed.ingredients.length > 0) {
+        console.log(`[Upload] Pre-populating ${parsed.ingredients.length} ingredients from clean list`);
+        const ingredientInputs: FoodCatalogSvc.CreateFoodInput[] = parsed.ingredients.map(name => ({
+          name,
+          description: name,
+          category: 'Feherje' as const,
+          calories_per_100g: 100,
+          protein_per_100g: 10,
+          carbs_per_100g: 10,
+          fat_per_100g: 5,
+          source: 'user_uploaded' as const,
+        }));
+        const batchResult = await FoodCatalogSvc.createFoodsBatch(ingredientInputs);
+        console.log(`[Upload] Ingredients pre-populated: ${batchResult.created.length} new, ${batchResult.skipped.length} skipped`);
+        newFoodsCount += batchResult.created.length;
+      }
+
       if (parsed.nutritionPlan && parsed.nutritionPlan.weeks.length > 0) {
         // Use real extracted nutrition plan
         setStep('populating_foods', 40);
@@ -518,7 +540,7 @@ export function useDataUpload() {
 
         planId = plan.id;
         totalWeeks = parsed.nutritionPlan.detected_weeks;
-        newFoodsCount = plan.stats.createdNew;
+        newFoodsCount += plan.stats.createdNew;
 
         // Log import stats for diagnostics
         console.log('[Upload] Import stats:', JSON.stringify(plan.stats));
@@ -961,48 +983,32 @@ export function useDataUpload() {
           }
 
           // Egyszerű foods-only pipeline a kapott hozzávaló nevekből.
+          // Az API már visszaad tiszta atomikus neveket — NE szűrjük tovább,
+          // csak deduplikálunk és mentjük 'user_uploaded' forrással (átugrik a
+          // korrupció-szűrőn, ami sok helyes nevet dobna el).
           setStep('populating_foods', 40);
 
           const seen = new Set<string>();
           const foodInputs: FoodCatalogSvc.CreateFoodInput[] = [];
 
           for (const rawName of ingredientsFromApi) {
-            const cleanedName = AIParser.cleanFoodName(String(rawName || ''));
-            if (!AIParser.isCleanFoodName(cleanedName)) continue;
+            const name = String(rawName || '').trim();
+            if (!name || name.length < 2 || name.length > 40) continue;
+            const lower = name.toLowerCase();
+            if (seen.has(lower)) continue;
+            seen.add(lower);
 
-            const atomicNames = new Set<string>();
-            for (const part of parseBaseIngredients(cleanedName)) {
-              const normalized = normalizeIngredientName(part);
-              if (!normalized) continue;
-              const lower = normalized.toLowerCase();
-              if (!isSingleBaseIngredientName(normalized)) continue;
-              atomicNames.add(lower);
-            }
-            if (atomicNames.size === 0) continue;
-
-            for (const lower of atomicNames) {
-              if (seen.has(lower)) continue;
-              seen.add(lower);
-
-              const displayName = lower.charAt(0).toUpperCase() + lower.slice(1);
-
-              const category = mapAICategoryToFoodCategory(undefined as any);
-              const calories = 100;
-              const protein = 0;
-              const carbs = 0;
-              const fat = 0;
-
-              foodInputs.push({
-                name: displayName,
-                description: 'AI-ból kinyert étel (quick mód, PDF)',
-                category,
-                calories_per_100g: calories,
-                protein_per_100g: protein,
-                carbs_per_100g: carbs,
-                fat_per_100g: fat,
-                source: 'ai_generated',
-              });
-            }
+            const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+            foodInputs.push({
+              name: displayName,
+              description: displayName,
+              category: 'Feherje' as const,
+              calories_per_100g: 100,
+              protein_per_100g: 10,
+              carbs_per_100g: 10,
+              fat_per_100g: 5,
+              source: 'user_uploaded' as const,
+            });
           }
 
           if (foodInputs.length === 0) {

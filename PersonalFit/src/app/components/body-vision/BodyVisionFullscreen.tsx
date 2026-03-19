@@ -100,7 +100,7 @@ export function BodyVisionFullscreen({
         <span className="text-[11px] text-white/50 w-12 text-center">{Math.round(zoomLevel * 100)}%</span>
         <DSMIconButton icon={ZoomIn} onClick={onZoomIn} disabled={zoomLevel >= 4} variant="default" />
         {zoomLevel > 1 && (
-          <button onClick={onResetZoom} className="ml-2 px-3 py-1.5 bg-white/10 backdrop-blur rounded-full text-[10px] text-white/60">
+          <button onClick={onResetZoom} className="ml-2 px-3 py-1.5 bg-white/10 backdrop-blur rounded-full text-2xs text-white/60">
             Reset
           </button>
         )}

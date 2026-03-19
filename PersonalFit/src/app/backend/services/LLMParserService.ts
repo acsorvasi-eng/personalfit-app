@@ -17,18 +17,51 @@ import { normalizeIngredientName } from './FoodCatalogService';
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-haiku-4-5';
-const MAX_TOKENS = 4096;
+const MAX_TOKENS = 8192;
 
 function getApiKey(): string | null {
   return import.meta.env.VITE_ANTHROPIC_API_KEY ?? null;
 }
 
-const SYSTEM_PROMPT = `Te egy táplálkozási és fitnesz dokumentum elemző vagy.
-A felhasználó PDF-ből kinyert szöveget ad neked. Elemezd és add vissza JSON formátumban.
-Csak a dokumentumban szereplő adatokat add vissza — ne becsülj, ne találj ki értékeket.
-Az étkezési típusok: breakfast, lunch, dinner, snack, post_workout
-A napok számai: 1=Hétfő, 2=Kedd, 3=Szerda, 4=Csütörtök, 5=Péntek, 6=Szombat, 7=Vasárnap
-Válaszolj KIZÁRÓLAG valid JSON formátumban. NE írj magyarázatot, NE használj markdown jelölést.`;
+const SYSTEM_PROMPT = `Te egy táplálkozási dokumentum elemző vagy. A felhasználó egy 30 napos étkezési tervből kinyert szöveget ad neked.
+
+Válaszolj KIZÁRÓLAG valid JSON formátumban — NE írj magyarázatot, NE használj markdown jelölést, NE tegyél code fence jeleket.
+
+A JSON PONTOS SÉMÁJA:
+{
+  "ingredients": string[],
+  "nutritionPlan": {
+    "detected_weeks": number,
+    "detected_days_per_week": number,
+    "weeks": Array<Array<{
+      "week": number,
+      "day": number,
+      "day_label": string,
+      "is_training_day": boolean,
+      "meals": Array<{
+        "meal_type": "breakfast"|"lunch"|"dinner"|"snack"|"post_workout",
+        "name": string,
+        "ingredients": Array<{"name": string, "quantity_grams": number, "unit": "g"|"ml"|"db"}>
+      }>
+    }>>
+  },
+  "confidence": number
+}
+
+SZABÁLYOK az ingredients tömbhöz (KRITIKUS):
+- 50–80 EGYEDI ATOMIKUS alapélelmiszer name, max 25 karakter
+- MINDEN nevet MAGYARUL adj meg — "csirkemell" NEM "chicken breast"
+- NINCS mennyiség, NINCS mértékegység: "tojás" HELYES, "3 tojás" HIBÁS
+- NINCS összetett étel: "lazac" HELYES, "sült lazac olívaolajjal" HIBÁS
+- NINCS kategória szó: "sovány", "komplex", "magas protein" HIBÁS
+- Scan ALL columns and ALL lines of the table — ingredients appear everywhere
+- Translate English names to Hungarian: "walnut"→"dió", "avocado"→"avokádó"
+
+SZABÁLYOK a nutritionPlan.weeks-hez:
+- weeks külső tömb = hetek (4 hét), belső tömb = napok (7 nap/hét)
+- is_training_day: true ha EDZÉS nap, false ha PIHENŐ nap
+- meal_type: "breakfast"=Reggeli, "lunch"=Ebéd, "dinner"=Vacsora, "post_workout"=Edzés után
+- quantity_grams: gramm értéke (ha "180g" akkor 180, ha "3 tojás" akkor ~180)`;
 
 // REQUIREMENT 1: reject garbage and label text (not food)
 const FORBIDDEN_CHARS = /[φ~{}\[\]<>*=]/;
@@ -107,12 +140,13 @@ async function callClaudeAPI(text: string): Promise<string> {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5',
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Elemezd:\n${truncatedText}` }],
+      messages: [{ role: 'user', content: `Elemezd ezt a 30 napos étkezési tervet és add vissza a kért JSON formátumban. Különösen fontos: az ingredients tömbben legyen minden egyedi alapélelmiszer amit megtalálsz (minimum 50 db), kizárólag magyar nevekkel, atomikusan (nem összetett ételek).\n\nSZÖVEG:\n${truncatedText}` }],
     }),
   });
 
@@ -221,9 +255,14 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
 
   const confidence = llmOutput.confidence ?? 0.5;
 
+  const ingredients = Array.isArray(llmOutput.ingredients)
+    ? llmOutput.ingredients.filter((n): n is string => typeof n === 'string' && n.length > 0)
+    : undefined;
+
   return {
     userProfile,
     nutritionPlan,
+    ingredients,
     measurements,
     trainingDays: llmOutput.trainingDays ?? [],
     warnings,
