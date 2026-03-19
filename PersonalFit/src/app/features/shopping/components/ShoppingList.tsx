@@ -38,9 +38,6 @@ import { useLanguage } from "../../../contexts/LanguageContext";
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 import { generateWeeklyShoppingList, getCurrentDayIndex } from "../../../utils/mealPlanToShoppingList";
 import { usePlanData } from "../../../hooks/usePlanData";
-import { useAppData } from "../../../hooks/useAppData";
-import { EmptyState } from "../../../components/EmptyState";
-import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 
 interface ShoppingItem {
@@ -63,9 +60,7 @@ export function ShoppingList() {
   const { consumed, target } = useCalorieTracker();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const appData = useAppData();
   const { planData } = usePlanData();
-  const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
@@ -250,15 +245,8 @@ export function ShoppingList() {
     setTimeout(() => setMealPlanAddedCount(0), 3000);
   }, [shoppingItems, mealPlanSuggestions]);
 
-  // Show EmptyState if no nutrition plan has been uploaded
-  if (!appData.isLoading && !appData.hasActivePlan) {
-    return (
-      <div className="h-full flex flex-col overflow-hidden">
-        <DataUploadSheet open={uploadSheetOpen} onClose={() => setUploadSheetOpen(false)} onComplete={() => appData.refresh()} />
-        <EmptyState variant="shopping" onUpload={() => setUploadSheetOpen(true)} />
-      </div>
-    );
-  }
+  // Note: shopping list is always accessible; the meal-plan auto-populate CTA
+  // only shows when a plan exists. Users can always browse and add products manually.
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
