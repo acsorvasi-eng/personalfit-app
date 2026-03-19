@@ -8,6 +8,7 @@
 
 import { auth } from '../../firebase';
 import { getSetting, setSetting, removeSetting } from '../backend/services/SettingsService';
+import { createOrUpdateUser } from './userFirestoreService';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -31,7 +32,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar: string;
-  provider: 'google' | 'email' | 'demo';
+  provider: 'google' | 'email' | 'demo' | 'local';
   createdAt: string;
   isFirstLogin: boolean;
 }
@@ -138,6 +139,7 @@ export async function registerWithEmail(
 
     const appUser = firebaseUserToAuthUser(fbUser, true);
     await storeUser(appUser);
+    createOrUpdateUser(appUser.id, appUser.name, appUser.email).catch(() => {});
     return appUser;
   } catch (err: any) {
     // Firebase Auth not configured → fall back to demo mode
@@ -162,6 +164,7 @@ export async function loginWithEmail(
     // Returning user
     const appUser = firebaseUserToAuthUser(fbUser, false);
     await storeUser(appUser);
+    createOrUpdateUser(appUser.id, appUser.name, appUser.email).catch(() => {});
     return appUser;
   } catch (err: any) {
     // Firebase Auth not configured → fall back to demo mode
@@ -208,6 +211,7 @@ export async function loginWithGoogle(): Promise<AuthUser> {
     };
 
     await storeUser(appUser);
+    createOrUpdateUser(appUser.id, appUser.name, appUser.email).catch(() => {});
     return appUser;
   } catch (popupError: any) {
     // Firebase Auth not configured → fall back to demo mode immediately
@@ -341,6 +345,35 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
     }
     throw err;
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Local-only auth (no Firebase, no cloud — MVP offline flow)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Create a local-only session identified by display name only.
+ * No email, no password, no Firebase. Everything stays on device.
+ * Terms are auto-accepted for local users.
+ */
+export async function loginLocal(name: string): Promise<AuthUser> {
+  const trimmedName = name.trim() || 'Felhasználó';
+  const id = 'local_' + Date.now();
+  const user: AuthUser = {
+    id,
+    email: '',
+    name: trimmedName,
+    avatar: '',
+    provider: 'local',
+    createdAt: new Date().toISOString(),
+    isFirstLogin: true,
+  };
+  // Store session and auto-accept terms (local = privacy-first, no T&C needed)
+  await Promise.all([
+    storeUser(user),
+    setSetting(TERMS_STORAGE_KEY, 'true'),
+  ]);
+  return user;
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -33,6 +33,7 @@ import { createFoodsBatch } from '../../backend/services/FoodCatalogService';
 import { setSetting } from '../../backend/services/SettingsService';
 import type { CreateFoodInput } from '../../backend/services/FoodCatalogService';
 import { DSMButton } from '../dsm';
+import { canGenerate, incrementUsage } from '../../services/userFirestoreService';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -623,6 +624,15 @@ export function ProfileSetupWizard() {
   // ── Final submit ─────────────────────────────────────────────
 
   const handleGenerate = async () => {
+    // Usage limit check (free tier: 5 generations/day)
+    if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {
+      const usage = await canGenerate(user.id);
+      if (!usage.allowed) {
+        alert(`Ma már felhasználtad a napi ${5} ingyenes generálást.\nPróbáld holnap újra, vagy válts Pro-ra.`);
+        return;
+      }
+    }
+
     setIsGenerating(true);
     try {
       // 1. Save profile
@@ -706,13 +716,18 @@ export function ProfileSetupWizard() {
         console.warn('[ProfileSetup] Plan generation failed, continuing anyway:', planErr);
       }
 
-      // 4. Save sport preferences + clear forceNoActivePlan so all tabs load
+      // 4. Increment usage counter in Firestore
+      if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {
+        incrementUsage(user.id).catch(() => {});
+      }
+
+      // 5. Save sport preferences + clear forceNoActivePlan so all tabs load
       if (sports.length > 0) {
         await setSetting('userSports', JSON.stringify(sports));
       }
       await setSetting('forceNoActivePlan', '0');
 
-      // 5. Mark flow complete
+      // 6. Mark flow complete
       setHasPlanSetup(true);
       setHasCompletedFullFlow(true);
       navigate('/', { replace: true });
