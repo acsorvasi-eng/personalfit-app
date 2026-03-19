@@ -358,7 +358,7 @@ function calcTarget(tdee: number, goal: Goal): number {
 
 function calcWater(weight: number, sports: SportEntry[]): number {
   const base = weight * 0.033;
-  const sportExtra = sports.reduce((sum, s) => sum + (s.days / 7) * (s.minutes / 60) * 0.5, 0);
+  const sportExtra = sports.reduce((sum, s) => sum + (s.days.length / 7) * (s.minutes / 60) * 0.5, 0);
   return Math.round((base + sportExtra) * 10) / 10;
 }
 
@@ -1566,7 +1566,7 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
             <div className="mb-2">
               <p className="text-xs text-gray-500 mb-1.5">{t('wizard.sport.trainingDays')}</p>
               <div className="flex gap-1.5 flex-wrap">
-                {['H','K','Sze','Cs','P','Szo','V'].map((label, idx) => (
+                {t('wizard.sport.weekdayAbbrs').split(',').map((label, idx) => (
                   <button
                     key={idx}
                     type="button"

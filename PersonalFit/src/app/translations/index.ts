@@ -1371,7 +1371,8 @@ export const translations = {
         actModerate: 'Mérsékelt',
         actModerateDesc: '3-4x/hét mozgás',
         actActive: 'Aktív',
-        actActiveDesc: '5-7x/hét mozgás'
+        actActiveDesc: '5-7x/hét mozgás',
+        weekdayAbbrs: 'H,K,Sze,Cs,P,Szo,V'
       },
       sleep: {
         title: 'Alvás',
@@ -2811,7 +2812,8 @@ export const translations = {
         actSedentary: 'Sedentary', actSedentaryDesc: 'Barely any movement',
         actLight: 'Light', actLightDesc: '1-2x/week movement',
         actModerate: 'Moderate', actModerateDesc: '3-4x/week movement',
-        actActive: 'Active', actActiveDesc: '5-7x/week movement'
+        actActive: 'Active', actActiveDesc: '5-7x/week movement',
+        weekdayAbbrs: 'M,T,W,T,F,S,S'
       },
       sleep: {
         title: 'Sleep', subtitle: 'Rest is crucial — we recommend bedtime based on sleep cycles.',
@@ -4239,7 +4241,8 @@ export const translations = {
         actSedentary: 'Sedentar', actSedentaryDesc: 'Aproape deloc mișcare',
         actLight: 'Ușor', actLightDesc: '1-2x/săptămână mișcare',
         actModerate: 'Moderat', actModerateDesc: '3-4x/săptămână mișcare',
-        actActive: 'Activ', actActiveDesc: '5-7x/săptămână mișcare'
+        actActive: 'Activ', actActiveDesc: '5-7x/săptămână mișcare',
+        weekdayAbbrs: 'L,Ma,Mi,J,V,S,D'
       },
       sleep: {
         title: 'Somn', subtitle: 'Odihna este esențială — recomandăm ora de culcare pe baza ciclurilor de somn.',
