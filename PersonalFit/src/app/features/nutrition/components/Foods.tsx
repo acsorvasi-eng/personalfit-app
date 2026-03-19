@@ -48,6 +48,7 @@ import { useFavoriteFoods } from "../../../hooks/useFavoriteFoods";
 import {
   cleanupCorruptedAIFoods,
   createFoodsBatch,
+  updateFood,
   inferSemanticCategoryFromName,
   semanticCategoryToFoodCategory,
 } from "../../../backend/services/FoodCatalogService";
@@ -202,6 +203,46 @@ export function Foods() {
   const [addResultMessage, setAddResultMessage] = useState<string | null>(null);
   // Ref to prevent concurrent fetch requests (state update is async, ref is synchronous)
   const fetchInProgressRef = useRef(false);
+  // Ref to run the 0-kcal auto-repair only once per mount
+  const repairDoneRef = useRef(false);
+
+  // ── Auto-repair: silently fix 0-kcal foods already in the DB ──
+  useEffect(() => {
+    if (planLoading || repairDoneRef.current) return;
+    const zeroFoods = planFoods.filter(f => (f.calories ?? 0) === 0 && f.name);
+    if (zeroFoods.length === 0) return;
+    repairDoneRef.current = true;
+    const names = zeroFoods.map(f => f.name);
+    console.log("[AutoRepair] Fixing 0-kcal foods:", names);
+    fetch("/api/lookup-foods", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ foods: names }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(async (data) => {
+        if (!data) return;
+        const results: any[] = data?.result || data?.foods || [];
+        if (!Array.isArray(results)) return;
+        let fixed = 0;
+        for (let i = 0; i < zeroFoods.length; i++) {
+          const result = results[i];
+          if (!result || result.valid === false || !result.calories_per_100g) continue;
+          try {
+            await updateFood(zeroFoods[i].id, {
+              calories_per_100g: Number(result.calories_per_100g) || 0,
+              protein_per_100g: Number(result.protein_g) || 0,
+              fat_per_100g: Number(result.fat_g) || 0,
+              carbs_per_100g: Number(result.carbs_g) || 0,
+            });
+            fixed++;
+          } catch { /* ignore individual failures */ }
+        }
+        if (fixed > 0) refreshPlanFoods();
+      })
+      .catch(() => { /* silent fail — don't disturb the user */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planLoading]);
 
   const addTokenAsChip = useCallback((token: string) => {
     const value = token.trim();
