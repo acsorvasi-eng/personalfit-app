@@ -830,7 +830,7 @@ export function ProfileSetupWizard() {
             {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} mealModel={mealModel} setMealModel={setMealModel} />}
             {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} />}
             {step === 5 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
-            {step === 6 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} goal={goal} />}
+            {step === 6 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} mealModel={mealModel} goal={goal} />}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -1390,7 +1390,7 @@ function StepMeals({
   ];
 
   const IF_OPTIONS = [
-    { count: 2, model: 'if16_8' as string | undefined, label: t('wizard.meals.optIF16label'), desc: t('wizard.meals.optIF16desc'), emoji: '⏱️' },
+    { count: 1, model: 'if16_8' as string | undefined, label: t('wizard.meals.optIF16label'), desc: t('wizard.meals.optIF16desc'), emoji: '⏱️' },
     { count: 1, model: 'if18_6' as string | undefined, label: t('wizard.meals.optIF18label'), desc: t('wizard.meals.optIF18desc'), emoji: '🌙' },
   ];
 
@@ -1642,9 +1642,9 @@ function StepSleep({ wakeTime, setWakeTime, selectedCycles, setSelectedCycles, b
 // Step 6: Summary
 // ─────────────────────────────────────────────────────────────────
 
-function StepSummary({ dailyTarget, waterLiters, bedtime, sleepDuration, selectedFoodsCount, mealCount, goal }: {
+function StepSummary({ dailyTarget, waterLiters, bedtime, sleepDuration, selectedFoodsCount, mealCount, mealModel, goal }: {
   dailyTarget: number; waterLiters: number; bedtime: string; sleepDuration: string;
-  selectedFoodsCount: number; mealCount: number; goal: Goal;
+  selectedFoodsCount: number; mealCount: number; mealModel?: string; goal: Goal;
 }) {
   const { t } = useLanguage();
   const goalLabel = goal === 'lose' ? t('wizard.summary.goalLose') : goal === 'gain' ? t('wizard.summary.goalGain') : t('wizard.summary.goalMaintain');
@@ -1679,7 +1679,9 @@ function StepSummary({ dailyTarget, waterLiters, bedtime, sleepDuration, selecte
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500">{t('wizard.summary.dailyMeals')}</span>
-          <span className="font-medium text-gray-800">{t('wizard.summary.dailyMealsValue').replace('{n}', String(mealCount))}</span>
+          <span className="font-medium text-gray-800">
+            {mealModel === 'if16_8' ? 'IF 16:8' : mealModel === 'if18_6' ? 'IF 18:6' : t('wizard.summary.dailyMealsValue').replace('{n}', String(mealCount))}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-500">{t('wizard.summary.sleep')}</span>
