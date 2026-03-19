@@ -305,6 +305,8 @@ export default async function handler(req: any, res: any) {
     language = 'hu',
     userProfile,
     userId,
+    trainingDays = [],
+    trainingCaloriesPerDay = {},
   }: {
     ingredients: IngredientInput[];
     dailyCalorieTarget?: number;
@@ -312,6 +314,8 @@ export default async function handler(req: any, res: any) {
     language?: string;
     userProfile?: UserProfileContext;
     userId?: string;
+    trainingDays?: number[];
+    trainingCaloriesPerDay?: Record<string, number>;
   } = req.body || {};
 
   if (!Array.isArray(ingredients) || ingredients.length === 0) {
@@ -366,13 +370,31 @@ export default async function handler(req: any, res: any) {
 
   const userContextBlock = buildUserContextBlock(userProfile);
 
+  // ── Training-day helpers ──────────────────────────────────────
+  const trainingDaySet = new Set<number>(trainingDays);
+  const hasTrainingDays = trainingDaySet.size > 0;
+  const goal = userProfile?.goal ?? '';
+  const trainingDayNames = trainingDays.map(i => dayNames[i] ?? String(i)).join(', ');
+
+  const carbCycleBlock = hasTrainingDays
+    ? `\nSZÉNHIDRÁT CIKLUS (${goal === 'loss' ? 'FOGYÁS CÉL' : 'TARTÁS/NÖVELÉS'}):
+- Edzésnapok (${trainingDayNames}): emelt kalória-cél (alap + sport égetés).
+  ${goal === 'loss'
+    ? 'Ajánlott szénhidrát: rizs, burgonya, tészta, zabpehely — az edzés utáni szénhidrát+fehérje gátolja az izomlebontást és feltölti a glikogénraktárakat.'
+    : 'Normál szénhidrát, edzésnapokon kissé több (rizs, zabpehely, burgonya).'}
+- Pihenőnapok:
+  ${goal === 'loss'
+    ? 'Max 150g szénhidrát, KIZÁRÓLAG lassú felszívódású forrásból: rozskenyér, teljes kiőrlésű kenyér, zöldség. TILOS: fehér rizs, fehér tészta, burgonya, fehér kenyér. Pótold fehérjével és zöldséggel.'
+    : 'Normál szénhidrát.'}\n`
+    : '';
+
   const prompt = `${userContextBlock}${intro}
 
 ALAPANYAGOK / INGREDIENTS: ${ingredientList}
 
-NAPI KALÓRIA / DAILY CALORIES: ${dailyCalorieTarget} kcal
+Napi alapkalória: ${dailyCalorieTarget} kcal${hasTrainingDays ? ` (edzésnapokon magasabb a sport égetéssel)` : ''}.
 ${caloriesBlock}
-${style}
+${carbCycleBlock}${style}
 
 SZABÁLYOK / RULES:
 1. CSAK a megadott alapanyagokat használd / Use ONLY the listed ingredients
@@ -422,18 +444,24 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
       };
     }
 
-    const weekDays = rawDays.slice(0, 7).map((d, i) => ({
-      week: 1,
-      day: (i % 7) + 1,
-      day_label: d.day_label ?? dayNames[i % 7],
-      is_training_day: d.is_training_day ?? false,
-      meals: (d.meals ?? []).map((m: any) => ({
-        meal_type: m.meal_type,
-        name: m.name,
-        total_calories: m.total_calories,
-        ingredients: (m.ingredients ?? []).map(enrichIngredient),
-      })),
-    }));
+    const weekDays = rawDays.slice(0, 7).map((d, i) => {
+      const weekdayIdx = i % 7;
+      const burnBonus = (trainingCaloriesPerDay as Record<string, number>)[String(weekdayIdx)] ?? 0;
+      return {
+        week: 1,
+        day: weekdayIdx + 1,
+        day_label: d.day_label ?? dayNames[weekdayIdx],
+        weekday_index: weekdayIdx,
+        is_training_day: trainingDaySet.has(weekdayIdx) || (d.is_training_day ?? false),
+        daily_calorie_target: dailyCalorieTarget + burnBonus,
+        meals: (d.meals ?? []).map((m: any) => ({
+          meal_type: m.meal_type,
+          name: m.name,
+          total_calories: m.total_calories,
+          ingredients: (m.ingredients ?? []).map(enrichIngredient),
+        })),
+      };
+    });
 
     const nutritionPlan = {
       detected_weeks: 1,
