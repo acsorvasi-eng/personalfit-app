@@ -396,7 +396,7 @@ const SPORT_OPTIONS = [
 export function ProfileSetupWizard() {
   const navigate = useNavigate();
   const { setHasPlanSetup, setHasCompletedFullFlow, user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const STEPS = ['Személyes adatok', 'Étkezési feltételek', 'Alapanyagok', 'Étkezések', 'Sport', 'Alvás', 'Összefoglalás'];
 
@@ -700,11 +700,36 @@ export function ProfileSetupWizard() {
             fat_per_100g: f.fat_per_100g,
           }));
 
-        console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget);
+        // Map mealCount → mealModel string the API understands
+        const mealModelMap: Record<number, string> = { 2: '2meals', 4: '4meals', 5: '5meals' };
+        const mealModel = mealModelMap[mealCount]; // undefined → default 3 meals
+
+        const activeAllergenList = Array.from(activeAllergens).join(', ');
+
+        const userProfilePayload = {
+          goal,
+          activityLevel: activity,
+          age,
+          weight,
+          gender,
+          dietaryPreferences: dietType,
+          allergies: activeAllergenList || undefined,
+          mealCount,
+          mealModel,
+        };
+
+        console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget, 'mealModel:', mealModel ?? '3meals(default)');
         const resp = await fetch('/api/generate-meal-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ingredients, dailyCalorieTarget: dailyTarget, days: 7, language: 'hu', userId: user?.id }),
+          body: JSON.stringify({
+            ingredients,
+            dailyCalorieTarget: dailyTarget,
+            days: 7,
+            language,
+            userId: user?.id,
+            userProfile: userProfilePayload,
+          }),
         });
 
         console.log('[ProfileSetup] API response status:', resp.status);
@@ -713,10 +738,11 @@ export function ProfileSetupWizard() {
           console.log('[ProfileSetup] API response keys:', Object.keys(data));
           if (data.nutritionPlan) {
             console.log('[ProfileSetup] Importing nutrition plan...');
-            const { importFromAIParse } = await import('../../backend/services/NutritionPlanService');
+            const { importFromAIParse, activatePlan } = await import('../../backend/services/NutritionPlanService');
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
-            await importFromAIParse(data.nutritionPlan, label);
-            console.log('[ProfileSetup] Nutrition plan imported OK');
+            const plan = await importFromAIParse(data.nutritionPlan, label);
+            await activatePlan(plan.id);
+            console.log('[ProfileSetup] Nutrition plan imported and activated OK, id:', plan.id);
           } else {
             console.warn('[ProfileSetup] API returned ok but no nutritionPlan key:', data);
           }

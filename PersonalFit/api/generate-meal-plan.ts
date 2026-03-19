@@ -227,6 +227,17 @@ function buildMealConfig(
         schemaExample: `{"days":[{"day":1,"day_label":"${dayLabel}","is_training_day":false,"meals":[{"meal_type":"breakfast","name":"Zabkása","total_calories":${b},"ingredients":[{"name":"zab","g":80}]},{"meal_type":"snack","name":"Alma","total_calories":${s1},"ingredients":[{"name":"alma","g":120}]},{"meal_type":"lunch","name":"Csirkepaprikás","total_calories":${l},"ingredients":[{"name":"csirkemell","g":150}]},{"meal_type":"snack","name":"Joghurt","total_calories":${s2},"ingredients":[{"name":"joghurt","g":150}]},{"meal_type":"dinner","name":"Spenótos tojás","total_calories":${d},"ingredients":[{"name":"tojás","g":120}]}]}]}`,
       };
     }
+    case '4meals': {
+      const b = Math.round(dailyCalorieTarget * 0.25);
+      const s = Math.round(dailyCalorieTarget * 0.10);
+      const l = Math.round(dailyCalorieTarget * 0.35);
+      const d = dailyCalorieTarget - b - s - l;
+      return {
+        caloriesBlock: `- Reggeli/Breakfast: ${b} kcal\n- Tízórai/Snack: ${s} kcal\n- Ebéd/Lunch: ${l} kcal\n- Vacsora/Dinner: ${d} kcal`,
+        mealCountRule: '2. 4 étkezés/nap: breakfast, snack, lunch, dinner',
+        schemaExample: `{"days":[{"day":1,"day_label":"${dayLabel}","is_training_day":false,"meals":[{"meal_type":"breakfast","name":"Zabkása","total_calories":${b},"ingredients":[{"name":"zab","g":80}]},{"meal_type":"snack","name":"Alma","total_calories":${s},"ingredients":[{"name":"alma","g":150}]},{"meal_type":"lunch","name":"Csirkepaprikás","total_calories":${l},"ingredients":[{"name":"csirkemell","g":150}]},{"meal_type":"dinner","name":"Spenótos tojás","total_calories":${d},"ingredients":[{"name":"tojás","g":120}]}]}]}`,
+      };
+    }
     case '2meals': {
       const b = Math.round(dailyCalorieTarget * 0.35);
       const d = dailyCalorieTarget - b;
