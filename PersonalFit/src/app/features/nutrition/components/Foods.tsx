@@ -29,7 +29,6 @@ import {
   Search,
   X,
   Heart,
-  ChevronRight,
   Sparkles,
   Info,
   Flame,
@@ -886,8 +885,12 @@ function FoodCard({
           )}
         </div>
 
-        {/* Right: Favorite + calories + chevron */}
+        {/* Right: calories (right-aligned) → heart (last) */}
         <div className="flex items-center gap-2 shrink-0">
+          <div className="text-right min-w-[48px]">
+            <span className="text-[14px] font-bold text-gray-800">{food.calories}</span>
+            <span className="text-[11px] text-gray-400 ml-0.5">kcal</span>
+          </div>
           <motion.div
             whileTap={{ scale: 0.8 }}
             onClick={(e) => {
@@ -904,11 +907,6 @@ function FoodCard({
               }`}
             />
           </motion.div>
-          <div className="text-right">
-            <span className="text-[14px] font-bold text-gray-800">{food.calories}</span>
-            <span className="text-[11px] text-gray-400 ml-0.5">kcal</span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-400 transition-colors" />
         </div>
       </div>
     </button>

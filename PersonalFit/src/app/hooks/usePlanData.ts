@@ -433,11 +433,14 @@ export function usePlanFoods() {
         }
       }
 
-      // Always include user_uploaded foods (wizard selections + manual uploads)
-      // This ensures the Foods tab is populated even before an AI plan is generated.
+      // Include ALL catalog foods (user selections + manual uploads).
+      // We don't filter by source here because wizard-selected foods that already
+      // existed in the DB get skipped by createFoodsBatch (duplicate check) and
+      // therefore keep their original source — filtering by 'user_uploaded' only
+      // would hide those foods from the catalog.
       const allCatalogFoods = await db.getAll<any>('foods');
       for (const food of allCatalogFoods) {
-        if (food.source === 'user_uploaded' && !addedIds.has(food.id)) {
+        if (!addedIds.has(food.id)) {
           const catLabel = CATEGORY_LABELS[food.category] || food.category;
           categorySet.add(catLabel);
           planFoods.push({
