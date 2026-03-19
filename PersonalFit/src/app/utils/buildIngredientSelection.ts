@@ -55,12 +55,17 @@ export function buildIngredientSelection(
     }
   }
 
+  // Pre-build for O(1) lookup in Step 5
+  const seedNames = new Set(SEED_FOODS.map(f => f.name));
+
   // Step 5 — add allergen alternatives
+  // These are explicit substitutes chosen by the user (e.g. goat dairy instead of cow dairy).
+  // They intentionally bypass the allergen filter: the user chose them knowing their own tolerance.
   for (const alt of alternatives) {
     const names = ALTERNATIVE_NAMES[alt];
     if (names) {
       for (const name of names) {
-        if (SEED_FOODS.some(f => f.name === name)) {
+        if (seedNames.has(name)) {
           result.add(name);
         }
       }
@@ -68,6 +73,7 @@ export function buildIngredientSelection(
   }
 
   // Step 6 — minimum viable set fallback
+  // Fallback items are basic vegetables/grains with no allergens — safe for all profiles.
   if (result.size < 6) {
     return new Set(['Rizs', 'Brokkoli', 'Sárgarépa', 'Alma', 'Burgonya', 'Lencse']);
   }

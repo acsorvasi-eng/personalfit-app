@@ -2,9 +2,9 @@ import { buildIngredientSelection, FoodStyle } from './buildIngredientSelection'
 import { SEED_FOODS, ALTERNATIVE_NAMES } from '../data/seedFoods';
 
 describe('buildIngredientSelection', () => {
-  it('returns a Set', () => {
-    const result = buildIngredientSelection(['sporty'], [], []);
-    expect(result).toBeInstanceOf(Set);
+  it('empty styles still returns at least 6 items (universal categories)', () => {
+    const result = buildIngredientSelection([], [], []);
+    expect(result.size).toBeGreaterThanOrEqual(6);
   });
 
   it('plant-only style excludes non-vegetarian items', () => {
@@ -75,7 +75,7 @@ describe('buildIngredientSelection', () => {
     expect(result.has('Marhahús')).toBe(true);
   });
 
-  it('mediterranean style includes fish category items', () => {
+  it('mediterranean style includes no-category items (fish have no category in catalog)', () => {
     // 'Hal' category doesn't exist in SEED_FOODS; fish items are under 'Fehérje' or no category.
     // Mediterranean still includes Zöldség/Gyümölcs (universal) and items with no category.
     // Items with no category (like Harcsa, Süllő) must be included regardless of style.
