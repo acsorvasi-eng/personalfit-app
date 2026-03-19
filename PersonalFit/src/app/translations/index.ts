@@ -1350,7 +1350,8 @@ export const translations = {
         optIF16label: 'IF 16:8',
         optIF16desc: '8 órás evési ablak · pl. 12:00–20:00',
         optIF18label: 'IF 18:6',
-        optIF18desc: '6 órás evési ablak · pl. 13:00–19:00'
+        optIF18desc: '6 órás evési ablak · pl. 13:00–19:00',
+        ifNote: 'Az AI az étkezéseket az evési ablakra koncentrálja. Böjt alatt javasolt: víz, fekete kávé, tea.'
       },
       sport: {
         title: 'Sport & aktivitás',
@@ -2800,7 +2801,8 @@ export const translations = {
         optIF16label: 'IF 16:8',
         optIF16desc: '8-hour eating window · e.g. 12:00–20:00',
         optIF18label: 'IF 18:6',
-        optIF18desc: '6-hour eating window · e.g. 13:00–19:00'
+        optIF18desc: '6-hour eating window · e.g. 13:00–19:00',
+        ifNote: 'Meals will be scheduled within your eating window. During fasting: water, black coffee, and tea are recommended.'
       },
       sport: {
         title: 'Sport & activity', subtitle: 'Affects your daily calorie needs.',
@@ -4229,7 +4231,8 @@ export const translations = {
         optIF16label: 'IF 16:8',
         optIF16desc: 'Fereastră de mâncat 8 ore · ex. 12:00–20:00',
         optIF18label: 'IF 18:6',
-        optIF18desc: 'Fereastră de mâncat 6 ore · ex. 13:00–19:00'
+        optIF18desc: 'Fereastră de mâncat 6 ore · ex. 13:00–19:00',
+        ifNote: 'Mesele vor fi programate în fereastra de mâncat. În timpul postului: apă, cafea neagră și ceai sunt recomandate.'
       },
       sport: {
         title: 'Sport & activitate', subtitle: 'Influențează necesarul zilnic de calorii.',

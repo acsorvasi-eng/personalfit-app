@@ -1478,6 +1478,13 @@ function StepMeals({
         </div>
 
         {IF_OPTIONS.map(renderOption)}
+
+        {mealModel?.startsWith('if') && (
+          <div className="bg-amber-50 rounded-2xl p-4 flex gap-3">
+            <Clock className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-700">{t('wizard.meals.ifNote')}</p>
+          </div>
+        )}
       </div>
 
       <div className="bg-primary/5 rounded-2xl p-4 flex gap-3">
@@ -1565,13 +1572,13 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
             {/* Day picker */}
             <div className="mb-2">
               <p className="text-xs text-gray-500 mb-1.5">{t('wizard.sport.trainingDays')}</p>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="grid grid-cols-7 gap-1">
                 {t('wizard.sport.weekdayAbbrs').split(',').map((label, idx) => (
                   <button
-                    key={idx}
+                    key={label}
                     type="button"
                     onClick={() => toggleSportDay(s.id, idx)}
-                    className={`text-[0.72rem] font-bold px-2.5 py-1.5 rounded-lg transition-all ${
+                    className={`text-[0.72rem] font-bold py-2.5 min-h-[44px] flex items-center justify-center rounded-lg transition-all ${
                       s.days.includes(idx)
                         ? 'bg-primary text-white'
                         : 'bg-gray-100 text-gray-400'
