@@ -869,6 +869,9 @@ function NumericField({ label, value, onChange, min, max, step, unit }: {
   step: number;
   unit: string;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const valueRef = useRef(value);
@@ -896,56 +899,88 @@ function NumericField({ label, value, onChange, min, max, step, unit }: {
 
   useEffect(() => () => stopPress(), []);
 
+  const openEdit = () => {
+    setDraft(step < 1 ? value.toFixed(1) : String(value));
+    setEditing(true);
+    setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select(); }, 10);
+  };
+
+  const commitEdit = () => {
+    const parsed = parseFloat(draft);
+    if (!isNaN(parsed)) onChange(clamp(parsed));
+    setEditing(false);
+  };
+
   const displayValue = step < 1 ? value.toFixed(1) : String(value);
   const atMin = value <= min;
   const atMax = value >= max;
 
   return (
-    <div className="bg-gray-50 rounded-2xl px-4 py-3.5">
-      <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{label}</div>
-      <div className="flex items-center gap-3">
-        {/* Minus */}
-        <button
-          type="button"
-          onPointerDown={(e) => { e.preventDefault(); startPress(-1); }}
-          onPointerUp={stopPress}
-          onPointerLeave={stopPress}
-          onPointerCancel={stopPress}
-          disabled={atMin}
-          className={`w-[52px] h-[52px] rounded-2xl border flex items-center justify-center text-[22px] font-light select-none transition-colors shrink-0 ${
-            atMin
-              ? 'border-gray-200 bg-white text-gray-300 cursor-not-allowed'
-              : 'border-gray-200 bg-white text-gray-700 active:bg-gray-100 shadow-sm'
-          }`}
-        >
-          −
-        </button>
+    <div className="flex items-center px-4 h-[60px] gap-3">
+      {/* Label */}
+      <div className="w-24 text-sm text-gray-500 font-medium shrink-0">{label}</div>
 
-        {/* Value display */}
-        <div className="flex-1 text-center select-none">
-          <div className="text-[36px] font-bold text-gray-900 tabular-nums leading-none tracking-tight">
+      {/* Minus */}
+      <button
+        type="button"
+        onPointerDown={(e) => { e.preventDefault(); startPress(-1); }}
+        onPointerUp={stopPress}
+        onPointerLeave={stopPress}
+        onPointerCancel={stopPress}
+        disabled={atMin}
+        className={`w-11 h-11 rounded-xl border flex items-center justify-center text-xl font-light select-none transition-colors shrink-0 ${
+          atMin
+            ? 'border-gray-200 bg-white text-gray-300 cursor-not-allowed'
+            : 'border-gray-200 bg-white text-gray-700 active:bg-gray-100 shadow-sm'
+        }`}
+      >
+        −
+      </button>
+
+      {/* Value / inline keypad edit */}
+      <div className="flex-1 flex items-center justify-center gap-1.5 min-w-0">
+        {editing ? (
+          <input
+            ref={inputRef}
+            type="number"
+            inputMode="numeric"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitEdit();
+              if (e.key === 'Escape') setEditing(false);
+            }}
+            className="w-16 text-center text-[28px] font-bold text-gray-900 tabular-nums leading-none bg-transparent border-b-2 border-primary outline-none"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={openEdit}
+            className="text-[28px] font-bold text-gray-900 tabular-nums leading-none active:opacity-60 cursor-pointer"
+          >
             {displayValue}
-          </div>
-          <div className="text-[12px] text-gray-400 font-medium mt-1.5">{unit}</div>
-        </div>
-
-        {/* Plus */}
-        <button
-          type="button"
-          onPointerDown={(e) => { e.preventDefault(); startPress(1); }}
-          onPointerUp={stopPress}
-          onPointerLeave={stopPress}
-          onPointerCancel={stopPress}
-          disabled={atMax}
-          className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-[22px] font-light select-none transition-colors shrink-0 ${
-            atMax
-              ? 'bg-primary/30 text-white cursor-not-allowed'
-              : 'bg-primary text-white active:opacity-80 shadow-md'
-          }`}
-        >
-          +
-        </button>
+          </button>
+        )}
+        <span className="text-sm font-medium text-gray-400">{unit}</span>
       </div>
+
+      {/* Plus */}
+      <button
+        type="button"
+        onPointerDown={(e) => { e.preventDefault(); startPress(1); }}
+        onPointerUp={stopPress}
+        onPointerLeave={stopPress}
+        onPointerCancel={stopPress}
+        disabled={atMax}
+        className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl font-light select-none transition-colors shrink-0 ${
+          atMax
+            ? 'bg-primary/30 text-white cursor-not-allowed'
+            : 'bg-primary text-white active:opacity-80 shadow-md'
+        }`}
+      >
+        +
+      </button>
     </div>
   );
 }
@@ -989,10 +1024,12 @@ function StepPersonal({ gender, setGender, age, setAge, weight, setWeight, heigh
         </div>
       </div>
 
-      {/* Numeric fields */}
-      <NumericField label={t('wizard.personal.age')} value={age} onChange={setAge} min={16} max={80} step={1} unit={t('wizard.personal.yearUnit')} />
-      <NumericField label={t('wizard.personal.weight')} value={weight} onChange={setWeight} min={40} max={150} step={0.5} unit="kg" />
-      <NumericField label={t('wizard.personal.height')} value={height} onChange={setHeight} min={140} max={220} step={1} unit="cm" />
+      {/* Numeric fields — single compact card */}
+      <div className="bg-gray-50 rounded-2xl overflow-hidden divide-y divide-gray-200">
+        <NumericField label={t('wizard.personal.age')} value={age} onChange={setAge} min={16} max={80} step={1} unit={t('wizard.personal.yearUnit')} />
+        <NumericField label={t('wizard.personal.weight')} value={weight} onChange={setWeight} min={40} max={150} step={0.5} unit="kg" />
+        <NumericField label={t('wizard.personal.height')} value={height} onChange={setHeight} min={140} max={220} step={1} unit="cm" />
+      </div>
 
       {/* Goal */}
       <div>
