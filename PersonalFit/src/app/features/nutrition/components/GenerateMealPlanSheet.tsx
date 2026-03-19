@@ -246,7 +246,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       const computedBurnPerDay: Record<number, number> = {};
       for (const s of activity.sports) {
         const met = getMET(s.type); // s.type is the sport name in GenerateMealPlanSheet
-        const kcal = Math.round(met * weightKg * (parseInt(s.minutesPerSession) / 60));
+        const minutes = parseInt(s.minutesPerSession) || 0;
+        if (minutes === 0) continue;
+        const kcal = Math.round(met * weightKg * (minutes / 60));
         for (const day of s.days) {
           computedBurnPerDay[day] = (computedBurnPerDay[day] ?? 0) + kcal;
         }
