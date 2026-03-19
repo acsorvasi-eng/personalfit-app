@@ -127,7 +127,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
     level: "moderate", sports: [],
   });
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
-  const [stats, setStats] = useState<{ days: number; meals: number; avg_calories_per_day: number } | null>(null);
+  const [stats, setStats] = useState<{ days: number; meals_per_day: number; meals: number; avg_calories_per_day: number } | null>(null);
+  const [loadedMealCount, setLoadedMealCount] = useState<number>(3);
   const [error, setError] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
@@ -146,6 +147,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           goal: goalMap[profile.goal] ?? 'maintain',
         });
         setActivity(prev => ({ ...prev, level: actMap[profile.activityLevel] ?? 'moderate' }));
+        setLoadedMealCount((profile as any).mealSettings?.mealCount ?? 3);
         setProfileLoaded(true);
       }
       if (sportsJson) {
@@ -234,6 +236,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           days: 7,
           language,
           userProfile,
+          mealCount: loadedMealCount,
         }),
       });
       const responseBody = await resp.json().catch(() => null);
@@ -277,7 +280,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
 
   const WIZARD_STEPS: WizardStep[] = ["welcome", "personal", "activity", "calc"];
   const wizardIndex = WIZARD_STEPS.indexOf(step as any);
-  const weekDays: any[] = generatedPlan?.weeks?.[0] ?? [];
+  // Flat 30-day array from API — falls back to old weeks[0] for backwards compatibility
+  const allDays: any[] = generatedPlan?.days ?? generatedPlan?.weeks?.[0] ?? [];
 
   return (
     <AnimatePresence>
@@ -653,8 +657,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                 </motion.div>
               )}
 
-              {/* ══ PREVIEW — all 7 days ══ */}
-              {step === "preview" && weekDays.length > 0 && (
+              {/* ══ PREVIEW — 30 days ══ */}
+              {step === "preview" && allDays.length > 0 && (
                 <motion.div key="preview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <h2 className="m-0 mb-[6px] font-extrabold text-[1.15rem] text-foreground">{t('generatePlan.previewTitle')}</h2>
 
@@ -663,7 +667,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     <div className="flex gap-2 mb-[18px]">
                       {[
                         { l: t('generatePlan.statsDays'), v: stats.days },
-                        { l: t('generatePlan.statsMeals'), v: stats.meals },
+                        { l: t('generatePlan.statsMealsPerDay'), v: stats.meals_per_day },
                         { l: t('generatePlan.statsAvgCalories'), v: stats.avg_calories_per_day },
                       ].map(({ l, v }) => (
                         <div key={l} className="flex-1 bg-gray-50 rounded-[11px] px-[7px] py-[9px] text-center">
@@ -674,40 +678,54 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     </div>
                   )}
 
-                  {/* All 7 days */}
+                  {/* All 30 days with week separators */}
                   <div className="flex flex-col gap-3 mb-6">
-                    {weekDays.map((day: any, di: number) => {
+                    {allDays.map((day: any, di: number) => {
                       const dayTotal = (day.meals ?? []).reduce((s: number, m: any) => s + (m.total_calories ?? 0), 0);
+                      const weekNum = day.week ?? Math.floor(di / 7) + 1;
+                      const showWeekHeader = di % 7 === 0;
                       return (
-                        <div key={di} className="border-[1.5px] border-border rounded-[14px] overflow-hidden">
-                          {/* Day header */}
-                          <div className={`px-[14px] py-[10px] flex items-center justify-between border-b border-border ${day.is_training_day ? "bg-primary/10" : "bg-gray-50"}`}>
-                            <div className="flex items-center gap-[7px]">
-                              <span className={`font-extrabold text-[0.92rem] ${day.is_training_day ? "text-primary" : "text-foreground"}`}>
-                                {day.day_label ?? `${di + 1}. nap`}
+                        <div key={di}>
+                          {showWeekHeader && (
+                            <div className="flex items-center gap-2 mt-2 mb-1">
+                              <div className="flex-1 h-px bg-border" />
+                              <span className="text-[0.7rem] font-bold text-gray-400 uppercase tracking-wider px-2">
+                                {weekNum}. {t('generatePlan.weekLabel') || 'hét'}
                               </span>
-                              {day.is_training_day && (
-                                <span className="bg-indigo-500 text-white text-[0.65rem] font-bold px-[7px] py-[2px] rounded-full">
-                                  {t('generatePlan.trainingDayBadge')}
-                                </span>
-                              )}
+                              <div className="flex-1 h-px bg-border" />
                             </div>
-                            <span className="text-[0.78rem] font-bold text-indigo-500">{dayTotal} kcal</span>
-                          </div>
-                          {/* Meals */}
-                          <div>
-                            {(day.meals ?? []).map((meal: any, mi: number) => (
-                              <div key={mi} className={`px-[14px] py-[9px] flex items-center gap-[10px] ${mi < day.meals.length - 1 ? "border-b border-gray-100" : ""}`}>
-                                <span className="text-lg shrink-0">{MEAL_EMOJI[meal.meal_type] ?? "🍽️"}</span>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-[0.7rem] text-gray-400 font-semibold">{{ breakfast: t('generatePlan.mealBreakfast'), lunch: t('generatePlan.mealLunch'), dinner: t('generatePlan.mealDinner'), snack: t('generatePlan.mealSnack') }[meal.meal_type as string] ?? meal.meal_type}</div>
-                                  <div className="text-[0.88rem] text-foreground font-bold truncate">{meal.name}</div>
-                                </div>
-                                <span className="bg-gray-100 rounded-lg px-[9px] py-[3px] text-[0.77rem] text-foreground font-bold shrink-0">
-                                  {meal.total_calories} kcal
+                          )}
+                          <div className="border-[1.5px] border-border rounded-[14px] overflow-hidden">
+                            {/* Day header */}
+                            <div className={`px-[14px] py-[10px] flex items-center justify-between border-b border-border ${day.is_training_day ? "bg-primary/10" : "bg-gray-50"}`}>
+                              <div className="flex items-center gap-[7px]">
+                                <span className="text-[0.68rem] font-semibold text-gray-400 shrink-0">{di + 1}.</span>
+                                <span className={`font-extrabold text-[0.92rem] ${day.is_training_day ? "text-primary" : "text-foreground"}`}>
+                                  {day.day_label ?? `${di + 1}. nap`}
                                 </span>
+                                {day.is_training_day && (
+                                  <span className="bg-indigo-500 text-white text-[0.65rem] font-bold px-[7px] py-[2px] rounded-full">
+                                    {t('generatePlan.trainingDayBadge')}
+                                  </span>
+                                )}
                               </div>
-                            ))}
+                              <span className="text-[0.78rem] font-bold text-indigo-500">{dayTotal} kcal</span>
+                            </div>
+                            {/* Meals */}
+                            <div>
+                              {(day.meals ?? []).map((meal: any, mi: number) => (
+                                <div key={mi} className={`px-[14px] py-[9px] flex items-center gap-[10px] ${mi < day.meals.length - 1 ? "border-b border-gray-100" : ""}`}>
+                                  <span className="text-lg shrink-0">{MEAL_EMOJI[meal.meal_type] ?? "🍽️"}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-[0.7rem] text-gray-400 font-semibold">{{ breakfast: t('generatePlan.mealBreakfast'), lunch: t('generatePlan.mealLunch'), dinner: t('generatePlan.mealDinner'), snack: t('generatePlan.mealSnack') }[meal.meal_type as string] ?? meal.meal_type}</div>
+                                    <div className="text-[0.88rem] text-foreground font-bold truncate">{meal.name}</div>
+                                  </div>
+                                  <span className="bg-gray-100 rounded-lg px-[9px] py-[3px] text-[0.77rem] text-foreground font-bold shrink-0">
+                                    {meal.total_calories} kcal
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       );

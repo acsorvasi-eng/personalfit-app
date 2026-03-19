@@ -60,9 +60,23 @@ const CUISINE: Record<string, { intro: string; style: string }> = {
   },
 };
 
+// ─── mealCount number → model string ─────────────────────────
+function mealCountToModel(count: number | undefined, fallback?: string): string {
+  if (fallback && fallback !== '3meals') return fallback;
+  switch (count) {
+    case 1: return '1meal';
+    case 2: return '2meals';
+    case 4: return '4meals';
+    case 5: return '5meals';
+    default: return fallback ?? '3meals';
+  }
+}
+
 // ─── Meal model → calorie split ───────────────────────────────
 function getMealCalories(model: string | undefined, target: number) {
   switch (model) {
+    case '1meal': return { lunch: target };
+    case '2meals': return { breakfast: Math.round(target * 0.40), dinner: target - Math.round(target * 0.40) };
     case '5meals': return { breakfast: Math.round(target * 0.25), snack1: Math.round(target * 0.10), lunch: Math.round(target * 0.30), snack2: Math.round(target * 0.10), dinner: target - Math.round(target * 0.75) };
     case '4meals': return { breakfast: Math.round(target * 0.25), snack: Math.round(target * 0.10), lunch: Math.round(target * 0.35), dinner: target - Math.round(target * 0.70) };
     default:       return { breakfast: Math.round(target * 0.25), lunch: Math.round(target * 0.40), dinner: target - Math.round(target * 0.65) };
@@ -71,6 +85,8 @@ function getMealCalories(model: string | undefined, target: number) {
 
 function getMealTypes(model: string | undefined): string[] {
   switch (model) {
+    case '1meal': return ['lunch'];
+    case '2meals': return ['breakfast', 'dinner'];
     case '5meals': return ['breakfast', 'snack', 'lunch', 'snack', 'dinner'];
     case '4meals': return ['breakfast', 'snack', 'lunch', 'dinner'];
     default:       return ['breakfast', 'lunch', 'dinner'];
@@ -124,12 +140,14 @@ export default async function handler(req: any, res: any) {
       days = 7,
       language = 'hu',
       userProfile,
+      mealCount,
     }: {
       ingredients: Ingredient[];
       dailyCalorieTarget?: number;
       days?: number;
       language?: string;
       userProfile?: UserProfile;
+      mealCount?: number;
     } = req.body || {};
 
     // Filter out foods with no calorie data
@@ -147,8 +165,9 @@ export default async function handler(req: any, res: any) {
     const lang = ['hu', 'ro', 'en'].includes(language) ? language : 'hu';
     const dayNames = DAY_NAMES[lang];
     const { intro, style } = CUISINE[lang];
-    const mealCals = getMealCalories(userProfile?.mealModel, dailyCalorieTarget);
-    const mealTypes = getMealTypes(userProfile?.mealModel);
+    const effectiveModel = mealCountToModel(mealCount, userProfile?.mealModel);
+    const mealCals = getMealCalories(effectiveModel, dailyCalorieTarget);
+    const mealTypes = getMealTypes(effectiveModel);
 
     // Build ingredient lookup map
     const ingMap = new Map<string, Ingredient>();
@@ -196,7 +215,7 @@ SÉMA:
 
 Generáld le mind a ${clampedDays} napot:`;
 
-    console.log(`[generate-meal-plan] Starting: lang=${lang} days=${clampedDays} ingredients=${selected.length} target=${dailyCalorieTarget}kcal model=${userProfile?.mealModel ?? '3meals'}`);
+    console.log(`[generate-meal-plan] Starting: lang=${lang} days=${clampedDays} ingredients=${selected.length} target=${dailyCalorieTarget}kcal model=${effectiveModel}`);
 
     let parsed: { days?: any[] } | null = null;
     let lastErr = '';
@@ -238,9 +257,7 @@ Generáld le mind a ${clampedDays} napot:`;
       };
     }
 
-    const week1 = parsed.days.slice(0, 7).map((d: any, i: number) => ({
-      week: 1,
-      day: i + 1,
+    const baseWeek = parsed.days.slice(0, 7).map((d: any, i: number) => ({
       day_label: d.day_label ?? dayNames[i % 7],
       is_training_day: d.is_training_day ?? false,
       meals: (d.meals ?? []).map((m: any) => ({
@@ -251,29 +268,35 @@ Generáld le mind a ${clampedDays} napot:`;
       })),
     }));
 
-    // Expand to 4 weeks (rotate the same 7-day plan)
-    const allWeeks = [1, 2, 3, 4].map(w =>
-      week1.map((d: any) => ({ ...d, week: w }))
-    );
+    // Expand to 30 days (rotate the 7-day pattern)
+    const TOTAL_DAYS = 30;
+    const allDays = Array.from({ length: TOTAL_DAYS }, (_, i) => {
+      const base = baseWeek[i % baseWeek.length];
+      return {
+        ...base,
+        week: Math.floor(i / 7) + 1,
+        day: i + 1,
+        day_label: dayNames[i % 7],
+      };
+    });
 
     const avgCal = Math.round(
-      week1.reduce((sum: number, d: any) =>
+      baseWeek.reduce((sum: number, d: any) =>
         sum + d.meals.reduce((s: number, m: any) => s + (m.total_calories ?? 0), 0), 0)
-      / week1.length
+      / baseWeek.length
     );
 
-    console.log(`[generate-meal-plan] Done: ${week1.length} days × 4 weeks, avg ${avgCal} kcal/day`);
+    console.log(`[generate-meal-plan] Done: ${TOTAL_DAYS} days (${baseWeek.length}-day rotation), avg ${avgCal} kcal/day, model=${effectiveModel}`);
 
     return res.status(200).json({
       nutritionPlan: {
-        detected_weeks: 4,
-        detected_days_per_week: week1.length,
-        weeks: allWeeks,
+        days: allDays,
+        meal_model: effectiveModel,
       },
       stats: {
-        days: week1.length,
-        weeks: 4,
-        meals: week1.reduce((s: number, d: any) => s + d.meals.length, 0),
+        days: TOTAL_DAYS,
+        meals_per_day: mealTypes.length,
+        meals: TOTAL_DAYS * mealTypes.length,
         avg_calories_per_day: avgCal,
       },
     });
