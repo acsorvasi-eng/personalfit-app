@@ -4,7 +4,7 @@
  * Everything saved locally — no cloud, no Firebase.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -856,7 +856,8 @@ export function ProfileSetupWizard() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Reusable numeric field: slider + tappable inline edit
+// Reusable numeric stepper: − / value / + with long-press fast step
+// No slider, no keyboard, no layout shift — mobile-first best practice
 // ─────────────────────────────────────────────────────────────────
 
 function NumericField({ label, value, onChange, min, max, step, unit }: {
@@ -868,57 +869,83 @@ function NumericField({ label, value, onChange, min, max, step, unit }: {
   step: number;
   unit: string;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const valueRef = useRef(value);
+  useEffect(() => { valueRef.current = value; }, [value]);
 
-  const startEdit = () => {
-    setDraft(String(value));
-    setEditing(true);
-    setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select(); }, 0);
+  const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * 10) / 10));
+
+  const step_ = (dir: 1 | -1) => {
+    const next = clamp(valueRef.current + dir * step);
+    valueRef.current = next;
+    onChange(next);
   };
 
-  const commit = () => {
-    const n = parseFloat(draft.replace(',', '.'));
-    if (!isNaN(n)) onChange(Math.min(max, Math.max(min, n)));
-    setEditing(false);
+  const startPress = (dir: 1 | -1) => {
+    step_(dir);
+    timeoutRef.current = setTimeout(() => {
+      intervalRef.current = setInterval(() => step_(dir), 80);
+    }, 380);
   };
+
+  const stopPress = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  useEffect(() => () => stopPress(), []);
+
+  const displayValue = step < 1 ? value.toFixed(1) : String(value);
+  const atMin = value <= min;
+  const atMax = value >= max;
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
-        {editing ? (
-          <div className="flex items-center gap-1">
-            <input
-              ref={inputRef}
-              type="number"
-              inputMode="decimal"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onBlur={commit}
-              onKeyDown={e => { if (e.key === 'Enter') { commit(); } if (e.key === 'Escape') setEditing(false); }}
-              className="w-16 text-right text-sm font-bold text-primary bg-transparent border-b-2 border-primary focus:outline-none tabular-nums"
-            />
-            <span className="text-xs text-gray-400">{unit}</span>
+    <div className="bg-gray-50 rounded-2xl px-4 py-3.5">
+      <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">{label}</div>
+      <div className="flex items-center gap-3">
+        {/* Minus */}
+        <button
+          type="button"
+          onPointerDown={(e) => { e.preventDefault(); startPress(-1); }}
+          onPointerUp={stopPress}
+          onPointerLeave={stopPress}
+          onPointerCancel={stopPress}
+          disabled={atMin}
+          className={`w-[52px] h-[52px] rounded-2xl border flex items-center justify-center text-[22px] font-light select-none transition-colors shrink-0 ${
+            atMin
+              ? 'border-gray-200 bg-white text-gray-300 cursor-not-allowed'
+              : 'border-gray-200 bg-white text-gray-700 active:bg-gray-100 shadow-sm'
+          }`}
+        >
+          −
+        </button>
+
+        {/* Value display */}
+        <div className="flex-1 text-center select-none">
+          <div className="text-[36px] font-bold text-gray-900 tabular-nums leading-none tracking-tight">
+            {displayValue}
           </div>
-        ) : (
-          <button
-            onClick={startEdit}
-            className="flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-primary/5 transition-colors active:scale-95"
-          >
-            <span className="text-sm font-bold text-primary tabular-nums">{value}</span>
-            <span className="text-xs text-primary">{unit}</span>
-          </button>
-        )}
+          <div className="text-[12px] text-gray-400 font-medium mt-1.5">{unit}</div>
+        </div>
+
+        {/* Plus */}
+        <button
+          type="button"
+          onPointerDown={(e) => { e.preventDefault(); startPress(1); }}
+          onPointerUp={stopPress}
+          onPointerLeave={stopPress}
+          onPointerCancel={stopPress}
+          disabled={atMax}
+          className={`w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-[22px] font-light select-none transition-colors shrink-0 ${
+            atMax
+              ? 'bg-primary/30 text-white cursor-not-allowed'
+              : 'bg-primary text-white active:opacity-80 shadow-md'
+          }`}
+        >
+          +
+        </button>
       </div>
-      <input
-        type="range"
-        min={min} max={max} step={step}
-        value={value}
-        onChange={e => onChange(+e.target.value)}
-        className="w-full accent-primary h-1.5"
-      />
     </div>
   );
 }
