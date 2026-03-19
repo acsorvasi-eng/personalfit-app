@@ -433,14 +433,14 @@ export function usePlanFoods() {
         }
       }
 
-      // Include ALL catalog foods (user selections + manual uploads).
-      // We don't filter by source here because wizard-selected foods that already
-      // existed in the DB get skipped by createFoodsBatch (duplicate check) and
-      // therefore keep their original source — filtering by 'user_uploaded' only
-      // would hide those foods from the catalog.
+      // Include only user-selected catalog foods (source: 'user_uploaded').
+      // AI-generated extras created during plan import (source: 'ai_generated')
+      // are intentionally excluded from the catalog view.
+      // Note: wizard now calls createFoodsBatch with upsertSource:true so that
+      // pre-existing foods selected in the wizard also get source='user_uploaded'.
       const allCatalogFoods = await db.getAll<any>('foods');
       for (const food of allCatalogFoods) {
-        if (!addedIds.has(food.id)) {
+        if (!addedIds.has(food.id) && food.source === 'user_uploaded') {
           const catLabel = CATEGORY_LABELS[food.category] || food.category;
           categorySet.add(catLabel);
           planFoods.push({

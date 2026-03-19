@@ -669,7 +669,7 @@ export function ProfileSetupWizard() {
           source: 'user_uploaded' as any,
         }));
       console.log('[ProfileSetup] Saving', foodsToSave.length, 'foods to catalog');
-      await createFoodsBatch(foodsToSave);
+      await createFoodsBatch(foodsToSave, { upsertSource: true });
       console.log('[ProfileSetup] Foods saved OK');
 
       // 3. Generate meal plan (non-blocking — failure is OK)

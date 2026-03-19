@@ -541,11 +541,19 @@ export async function createFood(input: CreateFoodInput): Promise<FoodEntity> {
  * Batch create foods (for AI extraction results).
  * Skips duplicates silently.
  * v4.1: Final gate — rejects corrupted names before DB write.
+ *
+ * @param upsertSource — when true, existing foods with the same name get their
+ *   source updated to match the input. Use from the wizard so wizard-selected
+ *   foods that already exist in the DB still get tagged as 'user_uploaded'.
  */
-export async function createFoodsBatch(inputs: CreateFoodInput[]): Promise<{ created: FoodEntity[]; skipped: string[] }> {
+export async function createFoodsBatch(
+  inputs: CreateFoodInput[],
+  options?: { upsertSource?: boolean }
+): Promise<{ created: FoodEntity[]; skipped: string[] }> {
   const db = await getDB();
   const existing = await db.getAll<FoodEntity>('foods');
-  const existingNames = new Set(existing.map(f => f.name.toLowerCase()));
+  const existingByName = new Map(existing.map(f => [f.name.toLowerCase(), f]));
+  const existingNames = new Set(existingByName.keys());
   const now = nowISO();
   const created: FoodEntity[] = [];
   const skipped: string[] = [];
@@ -568,7 +576,19 @@ export async function createFoodsBatch(inputs: CreateFoodInput[]): Promise<{ cre
     }
 
     if (existingNames.has(input.name.toLowerCase())) {
-      console.log('[FoodCatalog] createFoodsBatch skipped duplicate name:', input.name);
+      // If upsertSource is requested, update the existing record's source so
+      // wizard-selected foods that already existed keep the correct source tag.
+      if (options?.upsertSource) {
+        const existingFood = existingByName.get(input.name.toLowerCase())!;
+        if (existingFood.source !== input.source) {
+          const updated: FoodEntity = { ...existingFood, source: input.source, updated_at: now };
+          await db.put('foods', updated);
+          existingByName.set(input.name.toLowerCase(), updated);
+          console.log(`[FoodCatalog] createFoodsBatch upserted source for "${input.name}": ${existingFood.source} → ${input.source}`);
+        }
+      } else {
+        console.log('[FoodCatalog] createFoodsBatch skipped duplicate name:', input.name);
+      }
       skipped.push(input.name);
       continue;
     }
