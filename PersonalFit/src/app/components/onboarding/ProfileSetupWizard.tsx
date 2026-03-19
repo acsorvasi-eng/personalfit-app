@@ -34,6 +34,8 @@ import type { CreateFoodInput } from '../../backend/services/FoodCatalogService'
 import { DSMButton } from '../dsm';
 import { canGenerate, incrementUsage } from '../../services/userFirestoreService';
 import { getMET } from '../../utils/metHelpers';
+import { FoodStyle, buildIngredientSelection } from '../../utils/buildIngredientSelection';
+import { StepFoodStyle } from './StepFoodStyle';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -377,6 +379,8 @@ const slideVariants = {
 // Sport options
 // ─────────────────────────────────────────────────────────────────
 
+const LEGACY_FOODS_STEP = 99;
+
 const SPORT_OPTIONS = [
   { label: 'Futás', emoji: '🏃' },
   { label: 'Edzőterem', emoji: '🏋️' },
@@ -401,8 +405,7 @@ export function ProfileSetupWizard() {
 
   const STEPS = [
     t('wizard.personal.title'),
-    t('wizard.criteria.title'),
-    t('wizard.foods.title'),
+    t('wizard.foodStyle.title'),
     t('wizard.meals.title'),
     t('wizard.sport.title'),
     t('wizard.sleep.title'),
@@ -419,6 +422,10 @@ export function ProfileSetupWizard() {
   const [weight, setWeight] = useState(75);
   const [height, setHeight] = useState(175);
   const [goal, setGoal] = useState<Goal>('maintain');
+
+  // Step 1: Food Style
+  const [selectedStyles, setSelectedStyles] = useState<FoodStyle[]>([]);
+  const [usedLegacyFoodPicker, setUsedLegacyFoodPicker] = useState(false);
 
   // Step 2: Foods
   const [dietType, setDietType] = useState<DietType>('omnivore');
@@ -492,16 +499,25 @@ export function ProfileSetupWizard() {
   // ── Navigation ──────────────────────────────────────────────
 
   const goNext = useCallback(() => {
-    if (step === 1 && selectedAlternativeKeys.size > 0) {
-      processAlternatives(selectedAlternativeKeys);
+    if (step === LEGACY_FOODS_STEP) {
+      // Exit from legacy food picker back to main flow
+      setDirection(1);
+      setStep(2);
+      return;
     }
     if (step < STEPS.length - 1) {
       setDirection(1);
       setStep(s => s + 1);
     }
-  }, [step, selectedAlternativeKeys, processAlternatives]);
+  }, [step, STEPS.length]);
 
   const goPrev = useCallback(() => {
+    if (step === LEGACY_FOODS_STEP) {
+      // Back from legacy food picker goes to step 1 (food style)
+      setDirection(-1);
+      setStep(1);
+      return;
+    }
     if (step > 0) {
       setDirection(-1);
       setStep(s => s - 1);
@@ -521,7 +537,7 @@ export function ProfileSetupWizard() {
   const allFoods = [...SEED_FOODS, ...extraFoods];
 
   const visibleFoods = allFoods.filter(f => {
-    if (dietType === 'vegetarian' && !f.vegetarian) return false;
+    if (selectedStyles.includes('plant') && selectedStyles.length === 1 && !f.vegetarian) return false;
     if (foodTab !== 'Minden' && f.category !== foodTab) return false;
     if (foodSearch) {
       const q = foodSearch.toLowerCase();
@@ -670,16 +686,24 @@ export function ProfileSetupWizard() {
         wakeTime,
         bedtime,
         sleepCycles: selectedCycles,
-        dietaryPreferences: dietType,
+        dietaryPreferences: (selectedStyles.includes('plant') && selectedStyles.length === 1) ? 'vegetarian' : 'omnivore',
         mealSettings,
       });
 
       await saveMealSettings(mealSettings);
 
       // 2. Save selected foods to catalog (SEED_FOODS + any AI-looked-up extra foods)
+      // Use manual food selection if user went through legacy picker; otherwise auto-build from styles
+      const effectiveSelectedFoods: Set<string> = usedLegacyFoodPicker || selectedFoods.size > 0
+        ? selectedFoods
+        : buildIngredientSelection(
+            selectedStyles,
+            Array.from(activeAllergens),
+            Array.from(selectedAlternativeKeys)
+          );
       const allKnownFoods = [...SEED_FOODS, ...extraFoods];
       const foodsToSave: CreateFoodInput[] = allKnownFoods
-        .filter(f => selectedFoods.has(f.name))
+        .filter(f => effectiveSelectedFoods.has(f.name))
         .map(f => ({
           name: f.name,
           description: '',
@@ -697,7 +721,7 @@ export function ProfileSetupWizard() {
       // 3. Generate meal plan (non-blocking — failure is OK)
       try {
         const ingredients = allKnownFoods
-          .filter(f => selectedFoods.has(f.name))
+          .filter(f => effectiveSelectedFoods.has(f.name))
           .map(f => ({
             name: f.name,
             calories_per_100g: f.calories_per_100g,
@@ -714,7 +738,7 @@ export function ProfileSetupWizard() {
           age,
           weight,
           gender,
-          dietaryPreferences: dietType,
+          dietaryPreferences: (selectedStyles.includes('plant') && selectedStyles.length === 1) ? 'vegetarian' : 'omnivore',
           allergies: activeAllergenList || undefined,
           mealCount,
           mealModel: effectiveMealModel,
@@ -810,7 +834,7 @@ export function ProfileSetupWizard() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
       <div className="flex items-center gap-3 px-4 pt-6 pb-3">
-        {step > 0 && (
+        {(step > 0 || step === LEGACY_FOODS_STEP) && (
           <button onClick={goPrev} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
@@ -818,19 +842,19 @@ export function ProfileSetupWizard() {
         <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-primary"
-            animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+            animate={{ width: `${(step === LEGACY_FOODS_STEP ? 2 : (step + 1)) / STEPS.length * 100}%` }}
             transition={{ type: 'spring', stiffness: 200, damping: 30 }}
           />
         </div>
         <span className="text-xs text-gray-400 tabular-nums w-10 text-right">
-          {step + 1}/{STEPS.length}
+          {step === LEGACY_FOODS_STEP ? 2 : step + 1}/{STEPS.length}
         </span>
       </div>
 
       {/* Step title */}
       <div className="px-6 pb-2">
         <p className="text-xs text-primary font-medium uppercase tracking-wider">
-          {STEPS[step]}
+          {step === LEGACY_FOODS_STEP ? t('wizard.foods.title') : STEPS[step]}
         </p>
       </div>
 
@@ -847,41 +871,75 @@ export function ProfileSetupWizard() {
             className="px-6 pb-6"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
-            {step === 1 && <StepCriteria dietType={dietType} setDietType={setDietType} activeAllergens={activeAllergens} toggleAllergen={toggleAllergen} selectedAlternativeKeys={selectedAlternativeKeys} setSelectedAlternativeKeys={setSelectedAlternativeKeys} />}
-            {step === 2 && <StepFoods foodTab={foodTab} setFoodTab={setFoodTab} foodSearch={foodSearch} setFoodSearch={setFoodSearch} selectedFoods={selectedFoods} toggleFood={toggleFood} visibleFoods={visibleFoods} lookupStatus={lookupStatus} lookupResults={lookupResults} onLookupFood={handleLookupFood} onAddResult={addLookupResult} selectAllVisible={selectAllVisible} deselectAll={deselectAll} />}
-            {step === 3 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} mealModel={mealModel} setMealModel={setMealModel} />}
-            {step === 4 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} toggleSportDay={toggleSportDay} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} weightKg={weight || 70} />}
-            {step === 5 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
-            {step === 6 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} mealModel={mealModel} goal={goal} />}
+            {step === 1 && (
+              <StepFoodStyle
+                selectedStyles={selectedStyles}
+                setSelectedStyles={setSelectedStyles}
+                activeAllergens={activeAllergens}
+                setActiveAllergens={setActiveAllergens}
+                selectedAlternativeKeys={selectedAlternativeKeys}
+                setSelectedAlternativeKeys={setSelectedAlternativeKeys}
+                onDetailedSetup={() => setStep(LEGACY_FOODS_STEP)}
+              />
+            )}
+            {step === 2 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} mealModel={mealModel} setMealModel={setMealModel} />}
+            {step === 3 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} toggleSportDay={toggleSportDay} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} weightKg={weight || 70} />}
+            {step === 4 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
+            {step === 5 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} mealModel={mealModel} goal={goal} />}
+            {step === LEGACY_FOODS_STEP && (
+              <div>
+                <StepFoods
+                  foodTab={foodTab} setFoodTab={setFoodTab}
+                  foodSearch={foodSearch} setFoodSearch={setFoodSearch}
+                  selectedFoods={selectedFoods} toggleFood={toggleFood}
+                  visibleFoods={visibleFoods}
+                  lookupStatus={lookupStatus} lookupResults={lookupResults}
+                  onLookupFood={handleLookupFood} onAddResult={addLookupResult}
+                  selectAllVisible={selectAllVisible} deselectAll={deselectAll}
+                />
+                <button
+                  onClick={() => { setUsedLegacyFoodPicker(true); setStep(2); }}
+                  className="mt-3 w-full text-sm text-center text-gray-500 underline"
+                >
+                  {t('wizard.next')}
+                </button>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* Bottom CTA */}
-      <div className="sticky bottom-0 bg-white px-6 pb-10 pt-3 border-t border-gray-100">
-        {step < STEPS.length - 1 ? (
-          <DSMButton
-            onClick={goNext}
-            variant="primary"
-            className="w-full h-14 rounded-2xl gap-2 text-base"
-          >
-            {t('wizard.next')} <ChevronRight className="w-5 h-5" />
-          </DSMButton>
-        ) : (
-          <DSMButton
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            variant="primary"
-            className="w-full h-14 rounded-2xl gap-2 text-base"
-          >
-            {isGenerating ? (
-              <><Loader2 className="w-5 h-5 animate-spin" /> {t('wizard.generating')}</>
-            ) : (
-              <><Sparkles className="w-5 h-5" /> {t('wizard.generate')}</>
-            )}
-          </DSMButton>
-        )}
-      </div>
+      {step !== LEGACY_FOODS_STEP && (
+        <div className="sticky bottom-0 bg-white px-6 pb-10 pt-3 border-t border-gray-100">
+          {step < STEPS.length - 1 ? (
+            <DSMButton
+              onClick={goNext}
+              disabled={step === 1 && selectedStyles.length < 1}
+              variant="primary"
+              className="w-full h-14 rounded-2xl gap-2 text-base"
+            >
+              {step === 1 && selectedStyles.length < 1
+                ? t('wizard.foodStyle.ctaDisabled')
+                : <>{t('wizard.next')} <ChevronRight className="w-5 h-5" /></>
+              }
+            </DSMButton>
+          ) : (
+            <DSMButton
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              variant="primary"
+              className="w-full h-14 rounded-2xl gap-2 text-base"
+            >
+              {isGenerating ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> {t('wizard.generating')}</>
+              ) : (
+                <><Sparkles className="w-5 h-5" /> {t('wizard.generate')}</>
+              )}
+            </DSMButton>
+          )}
+        </div>
+      )}
     </div>
   );
 }
