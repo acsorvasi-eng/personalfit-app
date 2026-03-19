@@ -434,35 +434,6 @@ export function ProfileSetupWizard() {
   const [wakeTime, setWakeTime] = useState('07:00');
   const [selectedCycles, setSelectedCycles] = useState(5);
 
-  // ── Navigation ──────────────────────────────────────────────
-
-  const goNext = useCallback(() => {
-    if (step === 1 && selectedAlternativeKeys.size > 0) {
-      processAlternatives(selectedAlternativeKeys);
-    }
-    if (step < STEPS.length - 1) {
-      setDirection(1);
-      setStep(s => s + 1);
-    }
-  }, [step, selectedAlternativeKeys, processAlternatives]);
-
-  const goPrev = useCallback(() => {
-    if (step > 0) {
-      setDirection(-1);
-      setStep(s => s - 1);
-    }
-  }, [step]);
-
-  // ── Derived calorie values ───────────────────────────────────
-
-  const bmr = calcBMR(gender, weight, height, age);
-  const tdee = calcTDEE(bmr, activity);
-  const dailyTarget = calcTarget(tdee, goal);
-  const waterLiters = calcWater(weight, sports);
-  const bedtimeOptions = SleepService.getBedtimeOptions(wakeTime);
-  const bedtime = bedtimeOptions.find(o => o.cycleCount === selectedCycles)?.bedtime ?? '23:00';
-  const sleepDuration = bedtimeOptions.find(o => o.cycleCount === selectedCycles)?.sleepDuration ?? '7h 30p';
-
   // ── Food toggle ──────────────────────────────────────────────
 
   const toggleFood = (name: string) => {
@@ -523,6 +494,35 @@ export function ProfileSetupWizard() {
       });
     }
   }, [extraFoods]);
+
+  // ── Navigation ──────────────────────────────────────────────
+
+  const goNext = useCallback(() => {
+    if (step === 1 && selectedAlternativeKeys.size > 0) {
+      processAlternatives(selectedAlternativeKeys);
+    }
+    if (step < STEPS.length - 1) {
+      setDirection(1);
+      setStep(s => s + 1);
+    }
+  }, [step, selectedAlternativeKeys, processAlternatives]);
+
+  const goPrev = useCallback(() => {
+    if (step > 0) {
+      setDirection(-1);
+      setStep(s => s - 1);
+    }
+  }, [step]);
+
+  // ── Derived calorie values ───────────────────────────────────
+
+  const bmr = calcBMR(gender, weight, height, age);
+  const tdee = calcTDEE(bmr, activity);
+  const dailyTarget = calcTarget(tdee, goal);
+  const waterLiters = calcWater(weight, sports);
+  const bedtimeOptions = SleepService.getBedtimeOptions(wakeTime);
+  const bedtime = bedtimeOptions.find(o => o.cycleCount === selectedCycles)?.bedtime ?? '23:00';
+  const sleepDuration = bedtimeOptions.find(o => o.cycleCount === selectedCycles)?.sleepDuration ?? '7h 30p';
 
   const allFoods = [...SEED_FOODS, ...extraFoods];
 
