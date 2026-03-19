@@ -263,7 +263,19 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
     setStep("saving");
     try {
       const label = `AI diet — ${new Date().toLocaleDateString()}`;
-      const plan = await NutritionPlanSvc.importFromAIParse(generatedPlan, label);
+      // Convert flat days array → weeks format expected by importFromAIParse
+      let planToSave = generatedPlan;
+      if (generatedPlan.days && !generatedPlan.weeks) {
+        const weeksMap = new Map<number, any[]>();
+        for (const day of generatedPlan.days) {
+          const weekNum = day.week ?? 1;
+          if (!weeksMap.has(weekNum)) weeksMap.set(weekNum, []);
+          weeksMap.get(weekNum)!.push(day);
+        }
+        const weeks = Array.from(weeksMap.values());
+        planToSave = { weeks, detected_weeks: weeks.length };
+      }
+      const plan = await NutritionPlanSvc.importFromAIParse(planToSave, label);
       await NutritionPlanSvc.activatePlan(plan.id);
       setStep("done");
       toast.success(t('generatePlan.dietSaved'));
