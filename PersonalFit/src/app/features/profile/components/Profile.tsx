@@ -33,6 +33,7 @@ import { getSetting, setSetting } from "../../../backend/services/SettingsServic
 import { SleepSetup } from "../../sleep/components/SleepSetup";
 import { SleepService } from "../../../backend/services/SleepService";
 import { showToast } from "../../../shared/components/Toast";
+import SettingsSheet from "./SettingsSheet";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ProfileData {
@@ -181,6 +182,7 @@ export function Profile() {
   }, [weightHistory, weightGoal.startDate, profile]);
 
   // ─── Data Upload ────────────────────────────────────────────────
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isBodyCompUploadOpen, setIsBodyCompUploadOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -459,6 +461,33 @@ export function Profile() {
           reReadProfile();
           showToast(t('toast.gmonLoaded'));
         }}
+      />
+
+      {/* SETTINGS BOTTOM SHEET */}
+      <SettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        appData={appData}
+        staging={staging}
+        onUploadOpen={() => setIsUploadOpen(true)}
+        onBodyCompOpen={() => setIsBodyCompUploadOpen(true)}
+        onPublish={async () => {
+          const success = await staging.publish();
+          if (success) { appData.refresh(); reReadProfile(); }
+        }}
+        showResetConfirm={showResetConfirm}
+        showResetFinal={showResetFinal}
+        isResetting={isResetting}
+        onShowResetConfirm={setShowResetConfirm}
+        onShowResetFinal={setShowResetFinal}
+        onReset={async () => {
+          setIsResetting(true);
+          const result = await performFullReset({ clearTheme: false, reseed: false });
+          setIsResetting(false);
+          if (result.success) { setShowResetFinal(false); setShowResetConfirm(false); appData.refresh(); }
+        }}
+        onLogout={() => { logout(); navigate('/splash'); }}
+        reReadProfile={reReadProfile}
       />
 
       {/* Hidden file input for avatar upload from header */}
