@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
+    "dev": "concurrently -k -n \"API,UI\" -c \"cyan,green\" \"cd .. && vercel dev --listen 3001\" \"vite\"",
+    "dev:ui": "vite",
+    "dev:api": "cd .. && vercel dev --listen 3001",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -80,6 +82,7 @@
     "@types/react-dom": "^18.3.1",
     "@vercel/node": "^3.2.0",
     "@vitejs/plugin-react": "4.7.0",
+    "concurrently": "^9.2.1",
     "tailwindcss": "4.1.12",
     "typescript": "^5.7.2",
     "vite": "6.3.5",
