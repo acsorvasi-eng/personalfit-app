@@ -1389,6 +1389,7 @@ export const translations = {
         sportsLabel: 'Sportok (opcionális)',
         addSport: 'Hozzáad',
         noSports: 'Nincs sport hozzáadva',
+        noSportsHint: 'Ez a lépés kihagyható — nyomj a Tovább gombra a folytatáshoz',
         daysPerWeek: 'Napok/hét',
         minutesPer: 'Perc/alkalom',
         trainingDays: 'Edzésnapok',
@@ -2873,7 +2874,7 @@ export const translations = {
       sport: {
         title: 'Sport & activity', subtitle: 'Affects your daily calorie needs.',
         activityLabel: 'General activity', sportsLabel: 'Sports (optional)',
-        addSport: 'Add', noSports: 'No sports added', daysPerWeek: 'Days/week', minutesPer: 'Minutes/session',
+        addSport: 'Add', noSports: 'No sports added', noSportsHint: 'This step is optional — tap Next to continue', daysPerWeek: 'Days/week', minutesPer: 'Minutes/session',
         trainingDays: 'Training days',
         burnEstimate: '~{n} kcal/session',
         pickSport: 'Choose a sport',
@@ -4340,7 +4341,7 @@ export const translations = {
       sport: {
         title: 'Sport & activitate', subtitle: 'Influențează necesarul zilnic de calorii.',
         activityLabel: 'Activitate generală', sportsLabel: 'Sporturi (opțional)',
-        addSport: 'Adaugă', noSports: 'Niciun sport adăugat', daysPerWeek: 'Zile/săptămână', minutesPer: 'Minute/sesiune',
+        addSport: 'Adaugă', noSports: 'Niciun sport adăugat', noSportsHint: 'Acest pas este opțional — apasă Înainte pentru a continua', daysPerWeek: 'Zile/săptămână', minutesPer: 'Minute/sesiune',
         trainingDays: 'Zile antrenament',
         burnEstimate: '~{n} kcal/sesiune',
         pickSport: 'Alege un sport',

@@ -1540,7 +1540,10 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
         </div>
 
         {sports.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">{t('wizard.sport.noSports')}</p>
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-400">{t('wizard.sport.noSports')}</p>
+            <p className="text-xs text-gray-300 mt-1">{t('wizard.sport.noSportsHint')}</p>
+          </div>
         )}
 
         {sports.map(s => (
