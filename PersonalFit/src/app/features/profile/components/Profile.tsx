@@ -15,10 +15,8 @@ import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../../../utils/currencyConverter";
-import { ProfileHeader } from "../../../components/ProfileHeader";
 import { DSMCard, DSMSectionTitle, DSMButton } from "../../../components/dsm";
 import { DSMBottomSheet } from "../../../components/dsm/ux-patterns";
-import { DSMProfileTabs } from "../../../components/dsm/ProfileTabs";
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 import { getTrialInfo, TRIAL_DAYS } from "../../../components/onboarding/SubscriptionScreen";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
@@ -498,53 +496,20 @@ export function Profile() {
       />
 
       {/* HEADER */}
-      <div className="flex-shrink-0">
-        <ProfileHeader
-          name={profile.name}
-          age={profile.age}
-          consumed={consumed}
-          dailyTarget={targetCalories}
-          workoutCalories={workoutCalories}
-          avatar={profile.avatar}
-          subtitle={`${t('profile.appVersion')} 0.0.1`}
-          onNameSave={(name) => {
-            const updated = { ...profile, name };
-            setProfile(updated);
-            saveUserProfile({ name }).then(() => {
-              try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-              showToast(t('toast.saved'));
-            });
-          }}
-          onAgeSave={(age) => {
-            const updated = { ...profile, age };
-            setProfile(updated);
-            saveUserProfile({ age }).then(() => {
-              try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-              showToast(t('toast.saved'));
-            });
-          }}
-          onAvatarClick={() => avatarInputRef.current?.click()}
-        />
+      <div className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-2">
+        <h1 className="text-xl font-bold text-gray-900">{t('profile.title') || 'Profilom'}</h1>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+          aria-label={t('profile.tabSettings')}
+        >
+          <Settings className="w-5 h-5 text-gray-600" />
+        </button>
       </div>
 
       {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-6 py-4 space-y-4">
-
-        <DSMProfileTabs
-          tabs={[
-            { id: "me", label: t('profile.tabMe') },
-            { id: "goals", label: t('profile.tabGoals') },
-            { id: "settings", label: t('profile.tabSettings') },
-          ]}
-          defaultTab={(location.state as any)?.tab ?? "me"}
-          variant="pill"
-          ariaLabel={t('ui.profileSections')}
-        >
-          {(activeTab) => (
-            <div className="space-y-4">
-              {/* TAB 1 — Én / Me */}
-              {activeTab === "me" && (
-                <>
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 space-y-3">
+        {/* Me tab content — Personal data, Body metrics, Weight chart, Activity */}
         {/* Tab 1 — Personal data */}
         <DSMCard>
           <DSMSectionTitle icon={User} iconColor="text-gray-500" title={t('profile.personalData')} className="mb-3" />
@@ -821,61 +786,6 @@ export function Profile() {
             </div>
           )}
         </DSMCard>
-                </>
-              )}
-
-              {/* TAB 2 — Célok / Goals */}
-              {activeTab === "goals" && (
-                <ProfileGoalsTab
-                  profile={profile}
-                  targetCalories={targetCalories}
-                  dailyCalories={dailyCalories}
-                  onProfileUpdate={(partial) => {
-                    setProfile((p) => ({ ...p, ...partial }));
-                    saveUserProfile(partial as any).then(() => {
-                      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-                      showToast(t('toast.saved'));
-                    });
-                  }}
-                  t={t}
-                />
-              )}
-
-              {/* TAB 3 — Beállítások / Settings (clean minimal, black & white) */}
-              {activeTab === "settings" && (
-                <SettingsTabContent
-                  appData={appData}
-                  staging={staging}
-                  onUploadOpen={() => setIsUploadOpen(true)}
-                  onBodyCompOpen={() => setIsBodyCompUploadOpen(true)}
-                  onPublish={async () => {
-                    const success = await staging.publish();
-                    if (success) { appData.refresh(); reReadProfile(); }
-                  }}
-                  showResetConfirm={showResetConfirm}
-                  showResetFinal={showResetFinal}
-                  isResetting={isResetting}
-                  onShowResetConfirm={setShowResetConfirm}
-                  onShowResetFinal={setShowResetFinal}
-                  onReset={async () => {
-                    setIsResetting(true);
-                    if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
-                    const result = await performFullReset({ clearTheme: false, reseed: false });
-                    setIsResetting(false);
-                    if (result.success) {
-                      setShowResetFinal(false);
-                      setShowResetConfirm(false);
-                      appData.refresh();
-                    }
-                  }}
-                  onLogout={() => { logout(); navigate('/splash'); }}
-                  reReadProfile={reReadProfile}
-                />
-              )}
-            </div>
-          )}
-        </DSMProfileTabs>
-
         <div className="h-4" />
       </div>
     </div>
