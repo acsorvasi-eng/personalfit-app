@@ -581,7 +581,7 @@ export function Profile() {
         <DSMCard>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-600" />
+              <Activity className="w-4 h-4 text-teal-600" />
               <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>{t('profile.weightProgress')}</span>
             </div>
             <button
@@ -595,7 +595,7 @@ export function Profile() {
               className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
               aria-label={t('profile.editGoal')}
             >
-              <Pencil className={`w-3.5 h-3.5 ${isGoalEditing ? 'text-blue-500' : 'text-gray-400'}`} />
+              <Pencil className={`w-3.5 h-3.5 ${isGoalEditing ? 'text-teal-500' : 'text-gray-400'}`} />
             </button>
           </div>
 
@@ -651,7 +651,7 @@ export function Profile() {
             {/* Legend */}
             <div className="flex items-center justify-center gap-4 mt-2 pb-0.5">
               <div className="flex items-center gap-1.5">
-                <div className="w-4 h-[2.5px] bg-blue-600 rounded-full" />
+                <div className="w-4 h-[2.5px] bg-teal-600 rounded-full" />
                 <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.measured')}</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -659,7 +659,7 @@ export function Profile() {
                 <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.predicted')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-blue-600 border-2 border-white shadow-sm" />
+                <div className="w-3 h-3 rounded-full bg-teal-600 border-2 border-white shadow-sm" />
                 <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.now')}</span>
               </div>
             </div>
@@ -683,7 +683,7 @@ export function Profile() {
                   ? 'bg-green-50/60 border-green-200/60'
                   : deviation > 0
                     ? 'bg-amber-50/60 border-amber-200/60'
-                    : 'bg-blue-50/60 border-blue-200/60'
+                    : 'bg-teal-50/60 border-teal-200/60'
               }`}>
                 <div className="flex items-center gap-2">
                   {Math.abs(deviation) <= 0.5 ? (
@@ -691,7 +691,7 @@ export function Profile() {
                   ) : deviation > 0 ? (
                     <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
                   ) : (
-                    <TrendingDown className="w-3.5 h-3.5 text-blue-600" />
+                    <TrendingDown className="w-3.5 h-3.5 text-teal-600" />
                   )}
                   <span className="text-[11px] text-gray-700" style={{ fontWeight: 500 }}>
                     {Math.abs(deviation) <= 0.5
@@ -711,16 +711,16 @@ export function Profile() {
 
           {/* Goal editing fields — only visible when pencil is active */}
           {isGoalEditing && (
-            <div className="mt-3 p-3 bg-blue-50/50 rounded-xl border border-blue-200/50">
+            <div className="mt-3 p-3 bg-teal-50/50 rounded-xl border border-teal-200/50">
               <div className="flex items-center gap-2 mb-2.5">
-                <Target className="w-3.5 h-3.5 text-blue-600" />
+                <Target className="w-3.5 h-3.5 text-teal-600" />
                 <span className="text-[11px] text-gray-700" style={{ fontWeight: 600 }}>{t('profile.goal')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <label className="text-2xs text-gray-500 mb-1 block">{t('profile.targetWeight')}</label>
                   <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 px-2 py-1.5">
-                    <Target className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                    <Target className="w-3 h-3 text-teal-400 flex-shrink-0" />
                     <input
                       type="number"
                       inputMode="decimal"
@@ -735,7 +735,7 @@ export function Profile() {
                 <div className="flex-1">
                   <label className="text-2xs text-gray-500 mb-1 block">{t('profile.timeframe')}</label>
                   <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 px-2 py-1.5">
-                    <Calendar className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                    <Calendar className="w-3 h-3 text-teal-400 flex-shrink-0" />
                     <input
                       type="number"
                       inputMode="numeric"
@@ -761,7 +761,7 @@ export function Profile() {
                   setIsGoalEditing(false);
                   if (navigator.vibrate) navigator.vibrate(10);
                 }}
-                className="mt-2.5 w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs transition-colors"
+                className="mt-2.5 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs transition-colors"
                 style={{ fontWeight: 600 }}
               >
                 {t('profile.save')}
@@ -811,7 +811,7 @@ function EditableFieldRow({ label, value, type = 'text', onSave }: { label: stri
           onChange={(e) => setDraft(e.target.value)}
           onBlur={save}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); }}
-          className="mt-0.5 w-full text-base font-semibold border-none border-b-2 border-blue-500 outline-none bg-transparent py-0.5 text-gray-900"
+          className="mt-0.5 w-full text-base font-semibold border-none border-b-2 border-teal-500 outline-none bg-transparent py-0.5 text-gray-900"
         />
       ) : (
         <div onClick={() => setEditing(true)} className="mt-0.5 text-base font-semibold py-0.5 cursor-pointer text-gray-900" style={{ color: value ? undefined : '#9ca3af' }}>{value || '—'}</div>
@@ -944,7 +944,7 @@ function ProfileGoalsTab({
             inputMode="numeric"
             value={kcal || ''}
             onChange={(e) => onProfileUpdate({ calorieTarget: e.target.value === '' ? undefined : Number(e.target.value) })}
-            className="w-32 text-center text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-blue-500 py-1"
+            className="w-32 text-center text-2xl font-semibold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-teal-500 py-1"
           />
           <span className="text-sm text-gray-500">{t('profile.kcalPerDay')}</span>
           <p className="text-xs text-gray-400">{t('profile.recommendedKcal').replace('{kcal}', String(dailyCalories))}</p>
@@ -978,7 +978,7 @@ function ProfileGoalsTab({
               inputMode="numeric"
               value={waterGoal || ''}
               onChange={(e) => onProfileUpdate({ waterGoalMl: e.target.value === '' ? undefined : Number(e.target.value) })}
-              className="flex-1 text-lg font-semibold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-blue-500 py-1"
+              className="flex-1 text-lg font-semibold text-gray-900 bg-transparent border-b-2 border-gray-200 focus:outline-none focus:border-teal-500 py-1"
             />
             <span className="text-sm text-gray-500">{t('profile.waterGoalMlPerDay')}</span>
           </div>
@@ -1026,7 +1026,7 @@ function ProfileGoalsTab({
   );
 }
 
-// ─── Settings tab: minimal row + card ─────────────────────────────────
+// ─── SettingsSheet sub-components ──────────────────────────────────────
 function SettingsRow({
   title,
   subtitle,
@@ -1522,8 +1522,8 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
       {/* User info header */}
       {user && (
         <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl mb-3">
-          <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-blue-600" />
+          <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-teal-600" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm text-gray-900 truncate">{user.email}</div>
@@ -1547,10 +1547,10 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
         <div className="flex gap-2 mb-3">
           <button
             onClick={() => { setEditMode('email'); setError(null); setSuccess(null); }}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200/60 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-teal-50 hover:bg-teal-100 border border-teal-200/60 transition-colors"
           >
-            <Mail className="w-3.5 h-3.5 text-blue-600" />
-            <span className="text-xs text-blue-700" style={{ fontWeight: 600 }}>
+            <Mail className="w-3.5 h-3.5 text-teal-600" />
+            <span className="text-xs text-teal-700" style={{ fontWeight: 600 }}>
               {t('profile.account.changeEmail')}
             </span>
           </button>
@@ -1568,9 +1568,9 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
 
       {/* ── Email Change Form ───────────────────────── */}
       {editMode === 'email' && (
-        <form onSubmit={handleChangeEmail} className="mb-3 p-3 bg-blue-50/50 rounded-xl border border-blue-200/50 space-y-2.5">
+        <form onSubmit={handleChangeEmail} className="mb-3 p-3 bg-teal-50/50 rounded-xl border border-teal-200/50 space-y-2.5">
           <div className="flex items-center gap-2 mb-1">
-            <Mail className="w-3.5 h-3.5 text-blue-600" />
+            <Mail className="w-3.5 h-3.5 text-teal-600" />
             <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>
               {t('profile.account.changeEmail')}
             </span>
@@ -1582,7 +1582,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
             onChange={(e) => setNewEmail(e.target.value)}
             placeholder={t('profile.account.newEmailPlaceholder')}
             required
-            className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all"
           />
 
           <div className="relative">
@@ -1592,7 +1592,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
               onChange={(e) => setEmailCurrentPw(e.target.value)}
               placeholder={t('profile.account.currentPasswordPlaceholder')}
               required
-              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className="w-full h-10 px-3 pr-10 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all"
             />
             <button type="button" onClick={() => setShowEmailPw(!showEmailPw)} tabIndex={-1}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
@@ -1732,7 +1732,7 @@ function ThemeToggleCard() {
         </div>
         <div
           className={`relative w-12 h-7 rounded-full transition-all duration-300 flex-shrink-0 pointer-events-none ${
-            isDark ? 'bg-blue-500' : 'bg-gray-300'
+            isDark ? 'bg-teal-500' : 'bg-gray-300'
           }`}
         >
           <div
@@ -1761,8 +1761,8 @@ function LanguageSelectorCard() {
   return (
     <DSMCard>
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-          <Globe className="w-4.5 h-4.5 text-blue-500" />
+        <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center">
+          <Globe className="w-4.5 h-4.5 text-teal-500" />
         </div>
         <div>
           <div className="text-sm text-gray-900" style={{ fontWeight: 700 }}>
@@ -1787,19 +1787,19 @@ function LanguageSelectorCard() {
               }}
               className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all cursor-pointer ${
                 isActive
-                  ? 'border-blue-500 bg-blue-50 shadow-sm'
+                  ? 'border-teal-500 bg-teal-50 shadow-sm'
                   : 'border-gray-100 bg-gray-50 hover:border-gray-200 active:bg-gray-100'
               }`}
             >
               <span className="text-2xl leading-none pointer-events-none">{lang.flag}</span>
               <span
-                className={`text-xs pointer-events-none ${isActive ? 'text-blue-700' : 'text-gray-600'}`}
+                className={`text-xs pointer-events-none ${isActive ? 'text-teal-700' : 'text-gray-600'}`}
                 style={{ fontWeight: isActive ? 700 : 500 }}
               >
                 {lang.name}
               </span>
               {isActive && (
-                <div className="absolute top-1.5 right-1.5 w-4.5 h-4.5 rounded-full bg-blue-500 flex items-center justify-center pointer-events-none">
+                <div className="absolute top-1.5 right-1.5 w-4.5 h-4.5 rounded-full bg-teal-500 flex items-center justify-center pointer-events-none">
                   <Check className="w-3 h-3 text-white" />
                 </div>
               )}
