@@ -20,6 +20,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Claude / Cursor superpowers — local brainstorm servers, PIDs, session HTML (do not commit)
+.superpowers/
+
 # Logs
 *.log
 npm-debug.log*
