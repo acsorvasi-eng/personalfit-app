@@ -3,12 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  LogOut, Crown, Gift, Clock,
-  Sun, Moon, ChevronRight,
-  Upload, Trash2, Scan, AlertTriangle, Zap, Layers,
-  Eye, EyeOff, KeyRound, Globe, Mail,
-} from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { DSMBottomSheet } from "../../../components/dsm/ux-patterns";
 import { SleepSetup } from "../../sleep/components/SleepSetup";
 import { SleepService } from "../../../backend/services/SleepService";
@@ -17,7 +12,6 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
 import { useNavigate } from "react-router";
 import { useAppData } from "../../../hooks/useAppData";
-import { useStagingManager } from "../../../hooks/useStagingManager";
 import { getTrialInfo, TRIAL_DAYS } from "../../../components/onboarding/SubscriptionScreen";
 import { getMealSettings, getUserProfile } from "../../../backend/services/UserProfileService";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
@@ -243,10 +237,8 @@ export interface SettingsSheetProps {
   open: boolean;
   onClose: () => void;
   appData: ReturnType<typeof useAppData>;
-  staging: ReturnType<typeof useStagingManager>;
   onUploadOpen: () => void;
   onBodyCompOpen: () => void;
-  onPublish: () => Promise<void>;
   showResetConfirm: boolean;
   showResetFinal: boolean;
   isResetting: boolean;
@@ -254,17 +246,16 @@ export interface SettingsSheetProps {
   onShowResetFinal: (v: boolean) => void;
   onReset: () => Promise<void>;
   onLogout: () => void;
-  reReadProfile: () => void;
 }
 
 export default function SettingsSheet(props: SettingsSheetProps) {
   const {
     open, onClose,
-    appData, staging,
-    onUploadOpen, onBodyCompOpen, onPublish,
+    appData,
+    onUploadOpen, onBodyCompOpen,
     showResetConfirm, showResetFinal, isResetting,
     onShowResetConfirm, onShowResetFinal, onReset,
-    onLogout, reReadProfile,
+    onLogout,
   } = props;
 
   const { t } = useLanguage();

@@ -468,13 +468,8 @@ export function Profile() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         appData={appData}
-        staging={staging}
         onUploadOpen={() => setIsUploadOpen(true)}
         onBodyCompOpen={() => setIsBodyCompUploadOpen(true)}
-        onPublish={async () => {
-          const success = await staging.publish();
-          if (success) { appData.refresh(); reReadProfile(); }
-        }}
         showResetConfirm={showResetConfirm}
         showResetFinal={showResetFinal}
         isResetting={isResetting}
@@ -487,7 +482,6 @@ export function Profile() {
           if (result.success) { setShowResetFinal(false); setShowResetConfirm(false); appData.refresh(); }
         }}
         onLogout={() => { logout(); navigate('/splash'); }}
-        reReadProfile={reReadProfile}
       />
 
       {/* Hidden file input for avatar upload from header */}
