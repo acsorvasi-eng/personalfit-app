@@ -288,61 +288,61 @@ const CURATED_ALTERNATIVES: Record<string, SeedFood[]> = {
 // Keys that start with uppercase match SEED_FOOD names directly.
 // Lowercase keys map to CURATED_ALTERNATIVES entries.
 // ─────────────────────────────────────────────────────────────────
-const ALLERGEN_ALTERNATIVES: Record<string, Array<{ key: string; label: string; emoji: string }>> = {
-  'laktóz': [
-    { key: 'kecske',      label: 'Kecske termékek',  emoji: '🐐' },
-    { key: 'juh',         label: 'Juh termékek',      emoji: '🐑' },
-    { key: 'bivaly',      label: 'Bivaly termékek',   emoji: '🐃' },
-    { key: 'mandula tej', label: 'Mandula ital',      emoji: '🥛' },
-    { key: 'zab tej',     label: 'Zab ital',          emoji: '🌾' },
-    { key: 'kókusz',      label: 'Kókusz ital',       emoji: '🥥' },
-    { key: 'rizs tej',    label: 'Rizs ital',         emoji: '🍚' },
-    { key: 'szója tej',   label: 'Szója ital',        emoji: '🫘' },
+const ALLERGEN_ALTERNATIVES: Record<string, Array<{ key: string; names: { hu: string; en: string; ro: string }; emoji: string }>> = {
+  lactose: [
+    { key: 'kecske',      emoji: '🐐', names: { hu: 'Kecske termékek', en: 'Goat products',   ro: 'Produse caprine'  } },
+    { key: 'juh',         emoji: '🐑', names: { hu: 'Juh termékek',    en: 'Sheep products',  ro: 'Produse de oaie'  } },
+    { key: 'bivaly',      emoji: '🐃', names: { hu: 'Bivaly termékek', en: 'Buffalo products', ro: 'Produse de bivol' } },
+    { key: 'mandula_tej', emoji: '🥛', names: { hu: 'Mandula ital',    en: 'Almond milk',     ro: 'Lapte de migdale' } },
+    { key: 'zab_tej',     emoji: '🌾', names: { hu: 'Zab ital',        en: 'Oat milk',        ro: 'Lapte de ovăz'   } },
+    { key: 'kokusz',      emoji: '🥥', names: { hu: 'Kókusz ital',     en: 'Coconut milk',    ro: 'Lapte de cocos'  } },
+    { key: 'rizs_tej',    emoji: '🍚', names: { hu: 'Rizs ital',       en: 'Rice milk',       ro: 'Lapte de orez'   } },
+    { key: 'szoja_tej',   emoji: '🫘', names: { hu: 'Szója ital',      en: 'Soy milk',        ro: 'Lapte de soia'   } },
   ],
-  'glutén': [
-    { key: 'Rizs',          label: 'Rizs',          emoji: '🍚' },
-    { key: 'Barna rizs',    label: 'Barna rizs',    emoji: '🍚' },
-    { key: 'Kukorica',      label: 'Kukorica',      emoji: '🌽' },
-    { key: 'Hajdina',       label: 'Hajdina',       emoji: '🌾' },
-    { key: 'Quinoa',        label: 'Quinoa',        emoji: '🌾' },
-    { key: 'Burgonya',      label: 'Burgonya',      emoji: '🥔' },
-    { key: 'Édesburgonya',  label: 'Édesburgonya',  emoji: '🍠' },
+  gluten: [
+    { key: 'rizs',          emoji: '🍚', names: { hu: 'Rizs',          en: 'Rice',            ro: 'Orez'            } },
+    { key: 'barna_rizs',    emoji: '🍚', names: { hu: 'Barna rizs',    en: 'Brown rice',      ro: 'Orez brun'       } },
+    { key: 'kukorica',      emoji: '🌽', names: { hu: 'Kukorica',      en: 'Corn',            ro: 'Porumb'          } },
+    { key: 'hajdina',       emoji: '🌾', names: { hu: 'Hajdina',       en: 'Buckwheat',       ro: 'Hrișcă'          } },
+    { key: 'quinoa',        emoji: '🌾', names: { hu: 'Quinoa',        en: 'Quinoa',          ro: 'Quinoa'          } },
+    { key: 'burgonya',      emoji: '🥔', names: { hu: 'Burgonya',      en: 'Potato',          ro: 'Cartofi'         } },
+    { key: 'edesburgonya',  emoji: '🍠', names: { hu: 'Édesburgonya',  en: 'Sweet potato',    ro: 'Cartofi dulci'   } },
   ],
-  'tojás': [
-    { key: 'Chia mag',  label: 'Chia mag',  emoji: '🌱' },
-    { key: 'Lenmag',    label: 'Lenmag',    emoji: '🌱' },
-    { key: 'Tofu',      label: 'Tofu',      emoji: '🫘' },
-    { key: 'Banán',     label: 'Banán',     emoji: '🍌' },
-    { key: 'Avokádó',   label: 'Avokádó',   emoji: '🥑' },
+  egg: [
+    { key: 'chia',    emoji: '🌱', names: { hu: 'Chia mag', en: 'Chia seeds', ro: 'Semințe de chia' } },
+    { key: 'lenmag',  emoji: '🌱', names: { hu: 'Lenmag',   en: 'Flaxseed',   ro: 'Semințe de in'   } },
+    { key: 'tofu',    emoji: '🫘', names: { hu: 'Tofu',     en: 'Tofu',       ro: 'Tofu'            } },
+    { key: 'banan',   emoji: '🍌', names: { hu: 'Banán',    en: 'Banana',     ro: 'Banană'          } },
+    { key: 'avokado', emoji: '🥑', names: { hu: 'Avokádó',  en: 'Avocado',    ro: 'Avocado'         } },
   ],
-  'hal': [
-    { key: 'Csirkemell',    label: 'Csirkemell',    emoji: '🍗' },
-    { key: 'Pulykamell',    label: 'Pulykamell',    emoji: '🦃' },
-    { key: 'Lencse',        label: 'Lencse',        emoji: '🫘' },
-    { key: 'Csicseriborsó', label: 'Csicseriborsó', emoji: '🫘' },
-    { key: 'Tofu',          label: 'Tofu',          emoji: '🫘' },
-    { key: 'Tempeh',        label: 'Tempeh',        emoji: '🫘' },
+  fish: [
+    { key: 'csirkemell',    emoji: '🍗', names: { hu: 'Csirkemell',    en: 'Chicken breast', ro: 'Piept de pui'    } },
+    { key: 'pulykamell',    emoji: '🦃', names: { hu: 'Pulykamell',    en: 'Turkey breast',  ro: 'Piept de curcan' } },
+    { key: 'lencse',        emoji: '🫘', names: { hu: 'Lencse',        en: 'Lentils',        ro: 'Linte'           } },
+    { key: 'csicseriborsó', emoji: '🫘', names: { hu: 'Csicseriborsó', en: 'Chickpeas',      ro: 'Năut'            } },
+    { key: 'tofu',          emoji: '🫘', names: { hu: 'Tofu',          en: 'Tofu',           ro: 'Tofu'            } },
+    { key: 'tempeh',        emoji: '🫘', names: { hu: 'Tempeh',        en: 'Tempeh',         ro: 'Tempeh'          } },
   ],
-  'diófélék': [
-    { key: 'Tök mag',   label: 'Tökmag',        emoji: '🌱' },
-    { key: 'Chia mag',  label: 'Chia mag',      emoji: '🌱' },
-    { key: 'Lenmag',    label: 'Lenmag',        emoji: '🌱' },
-    { key: 'Avokádó',   label: 'Avokádó',       emoji: '🥑' },
-    { key: 'Olívaolaj', label: 'Olívaolaj',     emoji: '🫒' },
+  nuts: [
+    { key: 'tokmag',    emoji: '🌱', names: { hu: 'Tökmag',    en: 'Pumpkin seeds', ro: 'Semințe de dovleac' } },
+    { key: 'chiamag',   emoji: '🌱', names: { hu: 'Chia mag',  en: 'Chia seeds',    ro: 'Semințe de chia'    } },
+    { key: 'lenmag',    emoji: '🌱', names: { hu: 'Lenmag',    en: 'Flaxseed',      ro: 'Semințe de in'      } },
+    { key: 'avokado',   emoji: '🥑', names: { hu: 'Avokádó',   en: 'Avocado',       ro: 'Avocado'            } },
+    { key: 'olivaolaj', emoji: '🫒', names: { hu: 'Olívaolaj', en: 'Olive oil',     ro: 'Ulei de măsline'    } },
   ],
-  'szója': [
-    { key: 'Csicseriborsó', label: 'Csicseriborsó', emoji: '🫘' },
-    { key: 'Lencse',        label: 'Lencse',        emoji: '🫘' },
-    { key: 'Fekete bab',    label: 'Fekete bab',    emoji: '🫘' },
-    { key: 'Fehér bab',     label: 'Fehér bab',     emoji: '🫘' },
-    { key: 'kókusz',        label: 'Kókusz aminos', emoji: '🥥' },
+  soy: [
+    { key: 'csicseriborsó', emoji: '🫘', names: { hu: 'Csicseriborsó', en: 'Chickpeas',     ro: 'Năut'            } },
+    { key: 'lencse',        emoji: '🫘', names: { hu: 'Lencse',        en: 'Lentils',       ro: 'Linte'           } },
+    { key: 'fekete_bab',    emoji: '🫘', names: { hu: 'Fekete bab',    en: 'Black beans',   ro: 'Fasole neagră'   } },
+    { key: 'feher_bab',     emoji: '🫘', names: { hu: 'Fehér bab',     en: 'White beans',   ro: 'Fasole albă'     } },
+    { key: 'kokusz_aminos', emoji: '🥥', names: { hu: 'Kókusz aminos', en: 'Coconut aminos', ro: 'Aminoacizi cocos'} },
   ],
-  'rákféle': [
-    { key: 'Csirkemell',    label: 'Csirkemell',    emoji: '🍗' },
-    { key: 'Lazac',         label: 'Lazac',         emoji: '🐟' },
-    { key: 'Tonhal',        label: 'Tonhal',        emoji: '🐠' },
-    { key: 'Lencse',        label: 'Lencse',        emoji: '🫘' },
-    { key: 'Tofu',          label: 'Tofu',          emoji: '🫘' },
+  shellfish: [
+    { key: 'csirkemell', emoji: '🍗', names: { hu: 'Csirkemell', en: 'Chicken breast', ro: 'Piept de pui' } },
+    { key: 'lazac',      emoji: '🐟', names: { hu: 'Lazac',      en: 'Salmon',         ro: 'Somon'        } },
+    { key: 'tonhal',     emoji: '🐠', names: { hu: 'Tonhal',     en: 'Tuna',           ro: 'Ton'          } },
+    { key: 'lencse',     emoji: '🫘', names: { hu: 'Lencse',     en: 'Lentils',        ro: 'Linte'        } },
+    { key: 'tofu',       emoji: '🫘', names: { hu: 'Tofu',       en: 'Tofu',           ro: 'Tofu'         } },
   ],
 };
 
@@ -1224,7 +1224,15 @@ function StepCriteria({
   selectedAlternativeKeys: Set<string>;
   setSelectedAlternativeKeys: (fn: (prev: Set<string>) => Set<string>) => void;
 }) {
-  const ALLERGEN_LABELS = ['Laktóz', 'Glutén', 'Tojás', 'Hal', 'Diófélék', 'Szója', 'Rákféle'] as const;
+  const ALLERGENS = [
+    { id: 'lactose',   names: { hu: 'Laktóz',   en: 'Lactose',   ro: 'Lactoză'   } },
+    { id: 'gluten',    names: { hu: 'Glutén',   en: 'Gluten',    ro: 'Gluten'    } },
+    { id: 'egg',       names: { hu: 'Tojás',    en: 'Egg',       ro: 'Ouă'       } },
+    { id: 'fish',      names: { hu: 'Hal',      en: 'Fish',      ro: 'Pește'     } },
+    { id: 'nuts',      names: { hu: 'Diófélék', en: 'Nuts',      ro: 'Nuci'      } },
+    { id: 'soy',       names: { hu: 'Szója',    en: 'Soy',       ro: 'Soia'      } },
+    { id: 'shellfish', names: { hu: 'Rákféle',  en: 'Shellfish', ro: 'Crustacee' } },
+  ] as const;
 
   const toggleAlternative = (key: string) => {
     setSelectedAlternativeKeys(prev => {
@@ -1235,8 +1243,8 @@ function StepCriteria({
     });
   };
 
-  const { t } = useLanguage();
-  const activeList = ALLERGEN_LABELS.filter(l => activeAllergens.has(l.toLowerCase()));
+  const { t, language } = useLanguage();
+  const activeList = ALLERGENS.filter(a => activeAllergens.has(a.id));
 
   return (
     <div className="space-y-6 pt-2">
@@ -1268,21 +1276,20 @@ function StepCriteria({
         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('wizard.criteria.allergiesLabel')}</p>
         <p className="text-xs text-gray-400">{t('wizard.criteria.allergiesHint')}</p>
         <div className="flex flex-wrap gap-2">
-          {ALLERGEN_LABELS.map(label => {
-            const key = label.toLowerCase();
-            const active = activeAllergens.has(key);
+          {ALLERGENS.map(allergen => {
+            const active = activeAllergens.has(allergen.id);
             return (
               <button
-                key={key}
+                key={allergen.id}
                 type="button"
-                onClick={() => toggleAllergen(key)}
+                onClick={() => toggleAllergen(allergen.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
                   active
                     ? 'bg-red-50 border-red-300 text-red-700'
                     : 'bg-gray-50 border-border text-gray-600 hover:border-red-200'
                 }`}
               >
-                {active ? '🚫 ' : ''}{label}
+                {active ? '🚫 ' : ''}{allergen.names[language]}
               </button>
             );
           })}
@@ -1292,16 +1299,15 @@ function StepCriteria({
       {/* Per-allergen alternatives */}
       {activeList.length > 0 && (
         <div className="space-y-4">
-          {activeList.map(label => {
-            const key = label.toLowerCase();
-            const options = ALLERGEN_ALTERNATIVES[key] ?? [];
+          {activeList.map(allergen => {
+            const options = ALLERGEN_ALTERNATIVES[allergen.id] ?? [];
             if (options.length === 0) return null;
             const selectedCount = options.filter(o => selectedAlternativeKeys.has(o.key)).length;
             return (
-              <div key={key} className="rounded-2xl border border-border bg-gray-50 p-4 space-y-3">
+              <div key={allergen.id} className="rounded-2xl border border-border bg-gray-50 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-800">
-                    {t('wizard.criteria.alternativeHeading').replace('{label}', label)}
+                    {t('wizard.criteria.alternativeHeading').replace('{label}', allergen.names[language])}
                   </p>
                   {selectedCount > 0 && (
                     <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
@@ -1324,7 +1330,7 @@ function StepCriteria({
                         }`}
                       >
                         <span>{opt.emoji}</span>
-                        <span>{opt.label}</span>
+                        <span>{opt.names[language]}</span>
                         {selected && <span className="text-primary">✓</span>}
                       </button>
                     );
