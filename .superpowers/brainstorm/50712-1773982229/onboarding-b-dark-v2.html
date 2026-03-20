@@ -1,0 +1,330 @@
+<h2>B — Egységes sötét stílus</h2>
+<p class="subtitle">Mindkét állapot ugyanazon a sötét felületen — folyamatos, törés nélküli átmenet.</p>
+
+<style>
+.flow-row {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.flow-arrow {
+  font-size: 1.8rem;
+  color: #94a3b8;
+  align-self: center;
+  margin-top: 20px;
+}
+.phone {
+  width: 200px;
+  background: #0f172a;
+  border-radius: 34px;
+  border: 2.5px solid #1e293b;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  flex-shrink: 0;
+}
+.notch {
+  width: 70px; height: 9px;
+  background: #1e293b;
+  border-radius: 0 0 8px 8px;
+  margin: 0 auto;
+}
+.label-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+  color: #6366f1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 8px 0 6px;
+}
+
+/* ── SHARED dark background ── */
+.dark-screen {
+  background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.ambient-circle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(50px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+.c1 { width: 140px; height: 140px; background: #6366f1; top: -40px; right: -30px; }
+.c2 { width: 90px; height: 90px; background: #10b981; bottom: 10px; left: -20px; }
+.c3 { width: 80px; height: 80px; background: #818cf8; top: 50%; right: -20px; }
+
+/* ── STATE 1 content ── */
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  position: relative;
+  z-index: 1;
+}
+.logo-sm {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg,#6366f1,#818cf8);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  box-shadow: 0 2px 14px rgba(99,102,241,0.55);
+}
+.lang-pills { display: flex; gap: 3px; }
+.lp {
+  font-size: 0.48rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.07);
+  color: #94a3b8;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-weight: 700;
+}
+.lp.active-lp {
+  background: rgba(99,102,241,0.4);
+  border-color: #818cf8;
+  color: white;
+}
+.big-icon {
+  font-size: 3.8rem;
+  text-align: center;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+.slide-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: white;
+  text-align: center;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+.slide-desc {
+  font-size: 0.6rem;
+  color: #a5b4fc;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 1;
+}
+.trust-chips {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.tc {
+  font-size: 0.5rem;
+  padding: 3px 7px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.07);
+  color: #c7d2fe;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.slide-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+}
+.skip-btn { font-size: 0.55rem; color: rgba(255,255,255,0.3); }
+.start-btn {
+  background: linear-gradient(135deg,#6366f1,#4f46e5);
+  color: white;
+  border-radius: 9px;
+  padding: 6px 14px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  box-shadow: 0 3px 14px rgba(99,102,241,0.5);
+}
+
+/* ── STATE 2 content ── */
+.back-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+.back-icon { font-size: 0.8rem; color: #a5b4fc; }
+.back-label { font-size: 0.55rem; color: #a5b4fc; }
+
+.greeting {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 3px;
+  position: relative;
+  z-index: 1;
+}
+.greeting-sub {
+  font-size: 0.58rem;
+  color: #a5b4fc;
+  margin-bottom: 16px;
+  line-height: 1.45;
+  position: relative;
+  z-index: 1;
+}
+.dark-input {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+.sep-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0;
+  position: relative;
+  z-index: 1;
+}
+.sep-line { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+.sep-text { font-size: 0.5rem; color: rgba(255,255,255,0.25); }
+
+.google-btn {
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.email-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #c7d2fe;
+  text-align: center;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+}
+.privacy-note {
+  font-size: 0.48rem;
+  color: rgba(255,255,255,0.25);
+  text-align: center;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+}
+.privacy-note span { color: #818cf8; }
+</style>
+
+<div class="flow-row">
+
+  <!-- STATE 1: slide -->
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div class="label-tag">1. állapot</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="dark-screen">
+        <div class="ambient-circle c1"></div>
+        <div class="ambient-circle c2"></div>
+        <div class="top-row">
+          <div class="logo-sm">🥗</div>
+          <div class="lang-pills">
+            <div class="lp active-lp">HU</div>
+            <div class="lp">RO</div>
+            <div class="lp">EN</div>
+          </div>
+        </div>
+        <div class="big-icon">🔒</div>
+        <div class="slide-title">Adataid csak a tiéd</div>
+        <div class="slide-desc">Minden a telefonodra kerül.<br>Nincs felhő, nincs megosztás.</div>
+        <div class="trust-chips">
+          <span class="tc">🛡️ Lokális titkosítás</span>
+          <span class="tc">📵 Nincs szerver</span>
+          <span class="tc">✅ GDPR</span>
+        </div>
+        <div class="slide-nav">
+          <div class="skip-btn">Kihagyás</div>
+          <div class="start-btn">Kezdjük ✨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">→</div>
+
+  <!-- STATE 2: login, dark -->
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div class="label-tag">2. állapot</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="dark-screen">
+        <div class="ambient-circle c1"></div>
+        <div class="ambient-circle c3"></div>
+        <div class="back-row">
+          <div class="back-icon">←</div>
+          <div class="back-label">Vissza</div>
+        </div>
+        <div class="greeting">Üdv, ki vagy te?</div>
+        <div class="greeting-sub">Adj meg egy nevet — mi a többi elvégezzük</div>
+        <div class="dark-input">Hogy hívnak? ✏️</div>
+        <div class="sep-row">
+          <div class="sep-line"></div>
+          <div class="sep-text">vagy lépj be</div>
+          <div class="sep-line"></div>
+        </div>
+        <div class="google-btn">
+          <span style="font-size:0.85rem;font-weight:900;color:#4285f4;">G</span>
+          Folytatás Google-lal
+        </div>
+        <div class="email-btn">📧 Email / jelszó</div>
+        <div class="privacy-note">
+          Belépéssel elfogadod a <span>Feltételeket</span><br>és az <span>Adatvédelmi szabályzatot</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="background:#1e1b4b;border-radius:12px;padding:16px;max-width:700px;margin:0 auto;font-size:0.8rem;color:#a5b4fc;line-height:1.7;border:1px solid rgba(99,102,241,0.2)">
+  <strong style="color:white">Animáció terv (framer-motion):</strong><br>
+  • 1→2 váltás: a slide <strong>slide-out balra</strong>, a login panel <strong>slide-in jobbról</strong> — Spring easing, 400ms<br>
+  • A sötét háttér <strong>nem változik</strong> — csak a tartalom mozog → törésmentes érzés<br>
+  • Az ambient körök lassan <strong>átpozicionálódnak</strong> (opacity + translate animáció) a váltás alatt<br>
+  • Swipe gesztus is működik (← visszafelé), ha Capacitorral mobilra kerül
+</div>

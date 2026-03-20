@@ -1,0 +1,287 @@
+<h2>Splash — szín opciók</h2>
+<p class="subtitle">Komoly, levegős, professzionális hangvétel. Melyik irány illik a PersonalFit-hez?</p>
+
+<style>
+.phone-row {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.phone-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.phone {
+  width: 175px;
+  border-radius: 32px;
+  border: 2px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+.notch {
+  width: 60px; height: 8px;
+  border-radius: 0 0 7px 7px;
+  margin: 0 auto;
+  background: rgba(0,0,0,0.3);
+}
+.screen {
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 13px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  pointer-events: none;
+}
+.top-r {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
+}
+.logo-box {
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+.lang-row { display: flex; gap: 3px; }
+.lang-chip {
+  font-size: 0.44rem;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.6);
+}
+.lang-chip.on {
+  background: rgba(255,255,255,0.18);
+  color: white;
+}
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 10px 0 6px;
+}
+.big-icon { font-size: 3rem; margin-bottom: 12px; }
+.brand {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.tagline {
+  font-size: 0.56rem;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  opacity: 0.65;
+  color: white;
+}
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+.chip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+.chip-ico { font-size: 0.75rem; }
+.chip-txt {
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+  line-height: 1.3;
+}
+.cta {
+  width: 100%;
+  border-radius: 10px;
+  padding: 9px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+}
+.caption {
+  font-size: 0.72rem;
+  text-align: center;
+  color: #64748b;
+  margin-top: 10px;
+  line-height: 1.5;
+  padding: 0 4px;
+  max-width: 175px;
+}
+.badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
+</style>
+
+<div class="phone-row">
+
+  <!-- A: Deep Navy -->
+  <div class="option phone-wrap" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer;">
+    <div class="phone" style="border-color:rgba(99,172,255,0.15);">
+      <div class="notch"></div>
+      <div class="screen" style="background:linear-gradient(150deg,#0a1628 0%,#0d2045 55%,#0f2d5e 100%);">
+        <div class="blob" style="width:130px;height:130px;background:#1d4ed8;top:-40px;right:-30px;opacity:0.3;"></div>
+        <div class="blob" style="width:80px;height:80px;background:#0ea5e9;bottom:0;left:-20px;opacity:0.2;"></div>
+        <div class="top-r">
+          <div class="logo-box" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);box-shadow:0 2px 12px rgba(29,78,216,0.5);">🥗</div>
+          <div class="lang-row">
+            <div class="lang-chip on">HU</div>
+            <div class="lang-chip">RO</div>
+            <div class="lang-chip">EN</div>
+          </div>
+        </div>
+        <div class="main-area">
+          <div class="big-icon">🥗</div>
+          <div class="brand">PersonalFit</div>
+          <div class="tagline">Személyre szabott étrend,<br>amit tényleg betartasz</div>
+          <div class="chips">
+            <div class="chip-row"><span class="chip-ico">🔒</span><span class="chip-txt">Adataid kizárólag nálad</span></div>
+            <div class="chip-row"><span class="chip-ico">🧠</span><span class="chip-txt">AI-alapú, tudományos háttérrel</span></div>
+            <div class="chip-row"><span class="chip-ico">🛒</span><span class="chip-txt">Helyi bolt alapján épül fel</span></div>
+          </div>
+        </div>
+        <div class="cta" style="background:linear-gradient(135deg,#1d4ed8,#2563eb);">Kezdjük el ✨</div>
+      </div>
+    </div>
+    <div class="caption"><strong>A — Mély tengerkék</strong><br>Komoly, megbízható, orvosi presztízs</div>
+  </div>
+
+  <!-- B: Charcoal / Near-black -->
+  <div class="option phone-wrap" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer;">
+    <div class="phone" style="border-color:rgba(255,255,255,0.06);">
+      <div class="notch"></div>
+      <div class="screen" style="background:linear-gradient(150deg,#0a0a0a 0%,#111118 60%,#18181f 100%);">
+        <div class="blob" style="width:120px;height:120px;background:#6366f1;top:-30px;right:-20px;opacity:0.18;"></div>
+        <div class="blob" style="width:100px;height:100px;background:#10b981;bottom:-10px;left:-20px;opacity:0.12;"></div>
+        <div class="top-r">
+          <div class="logo-box" style="background:linear-gradient(135deg,#27272a,#3f3f46);border:1px solid rgba(255,255,255,0.1);">🥗</div>
+          <div class="lang-row">
+            <div class="lang-chip on" style="background:rgba(255,255,255,0.1);color:white;">HU</div>
+            <div class="lang-chip">RO</div>
+            <div class="lang-chip">EN</div>
+          </div>
+        </div>
+        <div class="main-area">
+          <div class="big-icon">🥗</div>
+          <div class="brand" style="letter-spacing:0.06em;font-size:0.95rem;text-transform:uppercase;">PersonalFit</div>
+          <div class="tagline" style="opacity:0.45;">Személyre szabott étrend,<br>amit tényleg betartasz</div>
+          <div class="chips">
+            <div class="chip-row" style="border-color:rgba(255,255,255,0.06);"><span class="chip-ico">🔒</span><span class="chip-txt">Adataid kizárólag nálad</span></div>
+            <div class="chip-row" style="border-color:rgba(255,255,255,0.06);"><span class="chip-ico">🧠</span><span class="chip-txt">AI-alapú, tudományos háttérrel</span></div>
+            <div class="chip-row" style="border-color:rgba(255,255,255,0.06);"><span class="chip-ico">🛒</span><span class="chip-txt">Helyi bolt alapján épül fel</span></div>
+          </div>
+        </div>
+        <div class="cta" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);">Kezdjük el →</div>
+      </div>
+    </div>
+    <div class="caption"><strong>B — Fekete, prémium</strong><br>Ultra-minimál, luxus app érzés</div>
+  </div>
+
+  <!-- C: Forest green / health -->
+  <div class="option phone-wrap" data-choice="c" onclick="toggleSelect(this)" style="cursor:pointer;">
+    <div class="phone" style="border-color:rgba(16,185,129,0.15);">
+      <div class="notch"></div>
+      <div class="screen" style="background:linear-gradient(150deg,#052e16 0%,#064e3b 55%,#065f46 100%);">
+        <div class="blob" style="width:120px;height:120px;background:#10b981;top:-30px;right:-20px;opacity:0.3;"></div>
+        <div class="blob" style="width:90px;height:90px;background:#34d399;bottom:0;left:-15px;opacity:0.2;"></div>
+        <div class="top-r">
+          <div class="logo-box" style="background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 2px 12px rgba(5,150,105,0.5);">🥗</div>
+          <div class="lang-row">
+            <div class="lang-chip on" style="background:rgba(52,211,153,0.2);border-color:rgba(52,211,153,0.3);color:#6ee7b7;">HU</div>
+            <div class="lang-chip">RO</div>
+            <div class="lang-chip">EN</div>
+          </div>
+        </div>
+        <div class="main-area">
+          <div class="big-icon">🥗</div>
+          <div class="brand">PersonalFit</div>
+          <div class="tagline" style="color:#a7f3d0;">Személyre szabott étrend,<br>amit tényleg betartasz</div>
+          <div class="chips">
+            <div class="chip-row" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.15);"><span class="chip-ico">🔒</span><span class="chip-txt" style="color:#a7f3d0;">Adataid kizárólag nálad</span></div>
+            <div class="chip-row" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.15);"><span class="chip-ico">🧠</span><span class="chip-txt" style="color:#a7f3d0;">AI-alapú, tudományos háttérrel</span></div>
+            <div class="chip-row" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.15);"><span class="chip-ico">🛒</span><span class="chip-txt" style="color:#a7f3d0;">Helyi bolt alapján épül fel</span></div>
+          </div>
+        </div>
+        <div class="cta" style="background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 4px 18px rgba(5,150,105,0.45);">Kezdjük el ✨</div>
+      </div>
+    </div>
+    <div class="caption"><strong>C — Erdőzöld</strong><br>Egészség, természet, frissesség</div>
+  </div>
+
+  <!-- D: Deep slate + warm gold accent -->
+  <div class="option phone-wrap" data-choice="d" onclick="toggleSelect(this)" style="cursor:pointer;">
+    <div class="phone" style="border-color:rgba(251,191,36,0.12);">
+      <div class="notch"></div>
+      <div class="screen" style="background:linear-gradient(150deg,#0f0f14 0%,#1a1a2e 55%,#16213e 100%);">
+        <div class="blob" style="width:110px;height:110px;background:#f59e0b;top:-30px;right:-20px;opacity:0.15;"></div>
+        <div class="blob" style="width:90px;height:90px;background:#6366f1;bottom:0;left:-20px;opacity:0.2;"></div>
+        <div class="top-r">
+          <div class="logo-box" style="background:linear-gradient(135deg,#78350f,#d97706);box-shadow:0 2px 12px rgba(217,119,6,0.4);">🥗</div>
+          <div class="lang-row">
+            <div class="lang-chip on" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.25);color:#fcd34d;">HU</div>
+            <div class="lang-chip">RO</div>
+            <div class="lang-chip">EN</div>
+          </div>
+        </div>
+        <div class="main-area">
+          <div class="big-icon">🥗</div>
+          <div class="brand">PersonalFit</div>
+          <div class="tagline" style="color:#fde68a;opacity:0.7;">Személyre szabott étrend,<br>amit tényleg betartasz</div>
+          <div class="chips">
+            <div class="chip-row" style="background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.1);"><span class="chip-ico">🔒</span><span class="chip-txt" style="color:rgba(253,230,138,0.8);">Adataid kizárólag nálad</span></div>
+            <div class="chip-row" style="background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.1);"><span class="chip-ico">🧠</span><span class="chip-txt" style="color:rgba(253,230,138,0.8);">AI-alapú, tudományos háttérrel</span></div>
+            <div class="chip-row" style="background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.1);"><span class="chip-ico">🛒</span><span class="chip-txt" style="color:rgba(253,230,138,0.8);">Helyi bolt alapján épül fel</span></div>
+          </div>
+        </div>
+        <div class="cta" style="background:linear-gradient(135deg,#b45309,#d97706);box-shadow:0 4px 18px rgba(180,83,9,0.4);">Kezdjük el ✨</div>
+      </div>
+    </div>
+    <div class="caption"><strong>D — Éjkék + arany</strong><br>Prémium, meleg, elegáns</div>
+  </div>
+
+</div>
+
+<div style="background:#f8fafc;border-radius:12px;padding:14px 16px;max-width:740px;margin:0 auto;font-size:0.78rem;color:#475569;line-height:1.7">
+  <strong style="color:#111">Az én ajánlásom: A vagy D.</strong><br>
+  <strong>A (tengerkék)</strong> — egészségügyi appokra bevált, komoly és megbízható, kontrasztban van a login fehérjével.<br>
+  <strong>D (éjkék+arany)</strong> — egyedi, meleg, prémium érzés — még nem látott szín kombináció a health app piacon.
+</div>

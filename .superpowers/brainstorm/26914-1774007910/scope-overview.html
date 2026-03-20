@@ -1,0 +1,75 @@
+<h2>Teljes language consistency + sport redesign</h2>
+<p class="subtitle">3 független feladat — mindegyik külön spec + plan + implementáció ciklus</p>
+
+<div style="display:flex;flex-direction:column;gap:16px;max-width:720px;">
+
+  <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="background:#f0fdfa;color:#0d9488;border-radius:10px;padding:8px 14px;font-size:20px;">1</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">Sport picker redesign</div>
+        <div style="font-size:12px;color:#64748b;">10 → ~20 sport, kategóriák, HU/EN/RO fordítás, új UI</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;">
+        <div style="font-weight:600;color:#0d9488;margin-bottom:4px;">KARDIÓ</div>
+        Futás, Kerékpár, Úszás, Gyaloglás, Evezés, Ugrókötél
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;">
+        <div style="font-weight:600;color:#0d9488;margin-bottom:4px;">ERŐ</div>
+        Edzőterem, CrossFit, Calisthenics, Súlyemelés
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;">
+        <div style="font-weight:600;color:#0d9488;margin-bottom:4px;">CSAPATSPORT</div>
+        Futball, Kosárlabda, Tenisz, Röplabda, Squash
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;">
+        <div style="font-weight:600;color:#0d9488;margin-bottom:4px;">MINDFULNESS</div>
+        Jóga, Pilates, Meditáció
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:#94a3b8;">Implementáció: SPORT_OPTIONS → locale map (mint Workout.tsx), kategória csoportosítás, chip UI</div>
+  </div>
+
+  <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="background:#f0fdfa;color:#0d9488;border-radius:10px;padding:8px 14px;font-size:20px;">2</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">Allergén fordítás</div>
+        <div style="font-size:12px;color:#64748b;">ALLERGEN_LABELS + alternatívák → t() kulcsok</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <span style="background:#fef2f2;color:#dc2626;border-radius:999px;padding:4px 12px;font-size:12px;border:1px solid #fecaca;">🇷🇴 Lactoză</span>
+      <span style="background:#fef2f2;color:#dc2626;border-radius:999px;padding:4px 12px;font-size:12px;border:1px solid #fecaca;">🇷🇴 Gluten</span>
+      <span style="background:#fef2f2;color:#dc2626;border-radius:999px;padding:4px 12px;font-size:12px;border:1px solid #fecaca;">🇷🇴 Ouă</span>
+      <span style="background:#f0fdf4;color:#16a34a;border-radius:999px;padding:4px 12px;font-size:12px;border:1px solid #bbf7d0;">🇬🇧 Lactose</span>
+      <span style="background:#f0fdf4;color:#16a34a;border-radius:999px;padding:4px 12px;font-size:12px;border:1px solid #bbf7d0;">🇬🇧 Gluten</span>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;">Belső ID-k maradnak, display réteg kerül t() mögé. ALLERGEN_ALTERNATIVES szintén fordítva.</div>
+  </div>
+
+  <div style="background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="background:#f0fdfa;color:#0d9488;border-radius:10px;padding:8px 14px;font-size:20px;">3</div>
+      <div>
+        <div style="font-weight:700;font-size:15px;">Étel nevek (~90 db)</div>
+        <div style="font-size:12px;color:#64748b;">SEED_FOODS → names: &#123;hu, en, ro&#125; struktúra</div>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px;font-size:12px;font-family:monospace;color:#374151;">
+      &#123; id: 'chicken_breast', emoji: '🍗', names: &#123;<br>
+      &nbsp;&nbsp;hu: 'Csirkemell',<br>
+      &nbsp;&nbsp;en: 'Chicken breast',<br>
+      &nbsp;&nbsp;ro: 'Piept de pui'<br>
+      &#125;, calories: 165 &#125;
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:#94a3b8;">food.names[language] → mindig a helyes nyelven jelenik meg. ~90 étel × 3 nyelv.</div>
+  </div>
+
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px;font-size:12px;color:#92400e;">
+    <strong>⚡ Sorrend:</strong> 1 → 2 → 3. Mindegyik önállóan tesztelhető és deployolható. A 3. a leghosszabb (étel adat + display refactor).
+  </div>
+
+</div>

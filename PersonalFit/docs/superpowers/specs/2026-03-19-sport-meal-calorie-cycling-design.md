@@ -163,8 +163,12 @@ const MET_MAP: Record<string, number> = {
   gyaloglas: 3.5,
 };
 
+function normAccent(s: string): string {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 function getMET(label: string): number {
-  const key = norm(label); // norm() already exists — accent-strip + lowercase
+  const key = normAccent(label);
   return Object.entries(MET_MAP).find(([k]) => key.includes(k))?.[1] ?? 6;
 }
 

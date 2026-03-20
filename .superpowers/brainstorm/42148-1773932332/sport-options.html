@@ -1,0 +1,81 @@
+<h2>Sport beállítás — melyik megközelítés?</h2>
+<p class="subtitle">Hogyan rögzíti a felhasználó a sport napjait a varázslóban?</p>
+
+<div class="section">
+  <div class="options">
+
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Fix heti napok (ajánlott)</h3>
+        <p>A felhasználó konkrét napokat pipál be minden sporthoz. Pl. kerékpározás → H / Sze / P</p>
+        <div style="margin: 12px 0; background:#f8f8f8; border-radius:12px; padding:12px;">
+          <div style="font-size:0.8rem; font-weight:600; color:#666; margin-bottom:8px;">🚴 Kerékpározás &nbsp; <span style="color:#888;font-weight:400">60 perc</span></div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span style="background:#6366f1;color:#fff;border-radius:8px;padding:5px 10px;font-size:0.78rem;font-weight:700">H</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">K</span>
+            <span style="background:#6366f1;color:#fff;border-radius:8px;padding:5px 10px;font-size:0.78rem;font-weight:700">Sze</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">Cs</span>
+            <span style="background:#6366f1;color:#fff;border-radius:8px;padding:5px 10px;font-size:0.78rem;font-weight:700">P</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">Szo</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">V</span>
+          </div>
+        </div>
+        <div style="margin: 12px 0; background:#f8f8f8; border-radius:12px; padding:12px;">
+          <div style="font-size:0.8rem; font-weight:600; color:#666; margin-bottom:8px;">🏊 Úszás &nbsp; <span style="color:#888;font-weight:400">45 perc</span></div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">H</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">K</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">Sze</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">Cs</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">P</span>
+            <span style="background:#6366f1;color:#fff;border-radius:8px;padding:5px 10px;font-size:0.78rem;font-weight:700">Szo</span>
+            <span style="background:#eee;color:#888;border-radius:8px;padding:5px 10px;font-size:0.78rem;">V</span>
+          </div>
+        </div>
+        <div style="font-size:0.78rem;color:#6366f1;margin-top:6px">⚡ Edzésnapok: H, Sze, P, Szo → szénhidrát-ciklus pontosan működik</div>
+        <div class="pros-cons">
+          <div class="pros"><h4>Előny</h4><ul><li>Szénhidrát-ciklus 100% pontos</li><li>Vizuális, gyors</li><li>Több sport → napok összeadódnak</li></ul></div>
+          <div class="cons"><h4>Hátrány</h4><ul><li>Rugalmatlan akiknek változó a program</li></ul></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Heti X nap + automatikus szétterítés</h3>
+        <p>Marad a régi csúszka (heti 1-7x), de a rendszer automatikusan szétteríti a napokat egyenletesen a héten.</p>
+        <div style="margin:12px 0;background:#f8f8f8;border-radius:12px;padding:12px;">
+          <div style="font-size:0.8rem;font-weight:600;color:#666;margin-bottom:6px;">🏋️ Edzőterem – heti <strong>3x</strong></div>
+          <input type="range" min="1" max="7" value="3" style="width:100%;accent-color:#6366f1" disabled>
+          <div style="font-size:0.75rem;color:#999;margin-top:4px">→ Rendszer: H / Sze / P (egyenletesen elosztva)</div>
+        </div>
+        <div class="pros-cons">
+          <div class="pros"><h4>Előny</h4><ul><li>Gyorsabb kitöltés</li><li>Rugalmas "nem tudom melyik nap"</li></ul></div>
+          <div class="cons"><h4>Hátrány</h4><ul><li>Automatikus napok pontatlanok lehetnek</li><li>A szénhidrát-ciklus csak közelítő</li></ul></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Kombinált — csúszka + opcionális nap-pontosítás</h3>
+        <p>Először a csúszka (heti X nap), majd egy "Szeretnéd megadni a konkrét napokat?" opcióval finomíthat.</p>
+        <div style="margin:12px 0;background:#f8f8f8;border-radius:12px;padding:12px;">
+          <div style="font-size:0.8rem;font-weight:600;color:#666;margin-bottom:6px;">🏋️ Edzőterem – heti <strong>3x</strong></div>
+          <input type="range" min="1" max="7" value="3" style="width:100%;accent-color:#6366f1" disabled>
+          <button style="margin-top:8px;font-size:0.75rem;color:#6366f1;background:none;border:1px solid #6366f1;border-radius:8px;padding:4px 10px;cursor:pointer">+ Napok kiválasztása (opcionális)</button>
+        </div>
+        <div class="pros-cons">
+          <div class="pros"><h4>Előny</h4><ul><li>Mindkét típusú felhasználónak jó</li><li>Nem kötelező a pontosítás</li></ul></div>
+          <div class="cons"><h4>Hátrány</h4><ul><li>Bonyolultabb UI</li><li>Sokan kihagyják az opcionális részt</li></ul></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<p class="subtitle">Kattints a preferált opcióra a böngészőben, vagy írd meg a terminálban.</p>

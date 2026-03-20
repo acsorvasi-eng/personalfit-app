@@ -421,13 +421,13 @@ Inside `StepSport`, find the sport card content (lines 1491–1506) — the two-
 {s.days.length > 0 && (
   <p className="text-[0.72rem] text-primary mt-1">
     ⚡ {t('wizard.sport.burnEstimate').replace('{n}', String(
-      Math.round(getMETForLabel(s.label) * weightKg * (s.minutes / 60))
+      Math.round(getMET(s.label) * weightKg * (s.minutes / 60))
     ))}
   </p>
 )}
 ```
 
-- [ ] **Step 7: Add `getMETForLabel` helper near the top of the wizard file**
+- [ ] **Step 7: Add `getMET` helper near the top of the wizard file**
 
 Place just before the `ProfileSetupWizard` function definition (around line 400):
 
@@ -444,7 +444,7 @@ function normAccent(s: string): string {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
-function getMETForLabel(label: string): number {
+function getMET(label: string): number {
   const key = normAccent(label);
   return Object.entries(MET_MAP).find(([k]) => key.includes(k))?.[1] ?? 6;
 }
@@ -461,7 +461,7 @@ const trainingDayIndices = [...new Set(sports.flatMap(s => s.days))].sort();
 const wizardWeight = weight || 70;
 const wizardBurnPerDay: Record<number, number> = {};
 for (const s of sports) {
-  const met = getMETForLabel(s.label);
+  const met = getMET(s.label);
   const kcal = Math.round(met * wizardWeight * (s.minutes / 60));
   for (const day of s.days) {
     wizardBurnPerDay[day] = (wizardBurnPerDay[day] ?? 0) + kcal;
@@ -503,7 +503,7 @@ git commit -m "feat: replace sport days slider with weekday picker in wizard, ad
 
 - [ ] **Step 1: Add `getMET` helper to GenerateMealPlanSheet**
 
-The `norm` function already exists in this file (used in `calcWater`). Add the `MET_MAP` and `getMET` function near the top of the file, after the `norm` function or near other helpers:
+Add the `MET_MAP`, `normAccent` normalization helper, and `getMET` function near the top of the file:
 
 ```typescript
 const MET_MAP: Record<string, number> = {
@@ -513,8 +513,12 @@ const MET_MAP: Record<string, number> = {
   gyaloglas: 3.5,
 };
 
+function normAccent(s: string): string {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 function getMET(label: string): number {
-  const key = norm(label);
+  const key = normAccent(label);
   return Object.entries(MET_MAP).find(([k]) => key.includes(k))?.[1] ?? 6;
 }
 ```

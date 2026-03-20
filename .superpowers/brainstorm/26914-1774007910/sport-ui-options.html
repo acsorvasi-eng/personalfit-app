@@ -1,0 +1,78 @@
+<h2>Sport picker — melyik UI irány tetszik?</h2>
+<p class="subtitle">A jelenlegi 10 sport bővül ~20-ra. Melyik megjelenítés illik az apphoz?</p>
+
+<div class="cards">
+
+  <!-- Option A: Current style improved -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;">
+      <div style="font-size:11px;color:#64748b;margin-bottom:8px;font-weight:600;letter-spacing:.05em;">SPORT KIVÁLASZTÁSA</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;">🏃 Futás</div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;">🏋️ Edzőterem</div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;">🚴 Kerékpár</div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;">🏊 Úszás</div>
+        <div style="background:#f0fdfa;border:1.5px solid #0d9488;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;color:#0d9488;font-weight:500;">✓ 🧘 Jóga</div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;">⚽ Futball</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — 2 oszlopos kártya (jelenlegi fejlesztve)</h3>
+      <p>Fehér kártyák, teal kijelölt állapot. Egyszerű, tiszta. 20 sport fér el scrollolással.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Chip/pill style -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;">
+      <div style="font-size:11px;color:#64748b;margin-bottom:8px;font-weight:600;letter-spacing:.05em;">SPORT KIVÁLASZTÁSA</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="background:#f0fdfa;border:1.5px solid #0d9488;color:#0d9488;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:500;">✓ 🏃 Futás</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🏋️ Edzőterem</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🚴 Kerékpár</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🏊 Úszás</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🧘 Jóga</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">⚽ Futball</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🏀 Kosár</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🎾 Tenisz</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🚶 Gyaloglás</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">⛷️ Sí</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🥊 Box</span>
+        <span style="background:white;border:1px solid #e2e8f0;border-radius:999px;padding:7px 14px;font-size:13px;color:#374151;">🏐 Röplabda</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Chip/pill stílus (folyó szöveg)</h3>
+      <p>Kerekített chipek, wrap-pel. Sok sport fér el kevés helyen. Modern, könnyű érinteni.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Category grouped -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:16px;">
+      <div style="font-size:11px;color:#64748b;margin-bottom:8px;font-weight:600;letter-spacing:.05em;">SPORT KIVÁLASZTÁSA</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:#9ca3af;font-weight:600;letter-spacing:.08em;margin-bottom:6px;">KARDIÓ</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="background:#f0fdfa;border:1.5px solid #0d9488;color:#0d9488;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:500;">✓ 🏃 Futás</span>
+          <span style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:6px 12px;font-size:12px;color:#374151;">🚴 Kerékpár</span>
+          <span style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:6px 12px;font-size:12px;color:#374151;">🏊 Úszás</span>
+          <span style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:6px 12px;font-size:12px;color:#374151;">🚶 Gyaloglás</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#9ca3af;font-weight:600;letter-spacing:.08em;margin-bottom:6px;">ERŐ & CSAPAT</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:6px 12px;font-size:12px;color:#374151;">🏋️ Edzőterem</span>
+          <span style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:6px 12px;font-size:12px;color:#374151;">⚽ Futball</span>
+          <span style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:6px 12px;font-size:12px;color:#374151;">🏀 Kosár</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Kategóriák szerint csoportosítva</h3>
+      <p>Kardió / Erő / Csapatsport / Egyéb csoportok. Könnyen megtalálható, de komplexebb.</p>
+    </div>
+  </div>
+
+</div>
