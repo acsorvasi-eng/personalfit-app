@@ -42,9 +42,9 @@ import { getUserProfile } from "../../backend/services/UserProfileService";
 
 export const DSM_TOKENS = {
   colors: {
-    primary:      '#2563EB',
-    primaryHover: '#1D4ED8',
-    primaryLight: '#EFF6FF',
+    primary:      '#0d9488',
+    primaryHover: '#0f766e',
+    primaryLight: '#f0fdfa',
     success:      '#10B981',
     warning:      '#F59E0B',
     error:        '#EF4444',
@@ -528,9 +528,9 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
         <svg viewBox="0 0 28 36" className="w-full h-full">
           <defs>
             <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{ stopColor: "#60A5FA", stopOpacity: 0.85 }} />
-              <stop offset="50%" style={{ stopColor: "#3B82F6", stopOpacity: 0.95 }} />
-              <stop offset="100%" style={{ stopColor: "#2563EB", stopOpacity: 1 }} />
+              <stop offset="0%" style={{ stopColor: "#5eead4", stopOpacity: 0.85 }} />
+              <stop offset="50%" style={{ stopColor: "#14b8a6", stopOpacity: 0.95 }} />
+              <stop offset="100%" style={{ stopColor: "#0d9488", stopOpacity: 1 }} />
             </linearGradient>
             <clipPath id={clipId}>
               <path d="M 5 3 L 23 3 L 24 33 L 4 33 Z" />
@@ -556,7 +556,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
                 cx="14"
                 rx="10"
                 ry="1.2"
-                fill="#93C5FD"
+                fill="#99f6e4"
                 opacity={0.5}
                 initial={false}
                 animate={{ cy: 33 - (fillPct * 0.30) }}
@@ -569,19 +569,19 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
           <path
             d="M 5 3 L 23 3 L 24 33 L 4 33 Z"
             fill="none"
-            stroke={isFull ? "#3B82F6" : "#60A5FA"}
+            stroke={isFull ? "#0d9488" : "#14b8a6"}
             strokeWidth="1.8"
             opacity={isFull ? 0.9 : 0.6}
             strokeLinejoin="round"
           />
 
           {/* Glass rim highlight */}
-          <line x1="6" y1="3" x2="22" y2="3" stroke="#93C5FD" strokeWidth="1" opacity="0.4" />
+          <line x1="6" y1="3" x2="22" y2="3" stroke="#99f6e4" strokeWidth="1" opacity="0.4" />
 
           {/* Droplet icon when empty */}
           {isEmpty && (
             <g opacity="0.3">
-              <path d="M 14 13 Q 10 20 14 24 Q 18 20 14 13 Z" fill="#60A5FA" />
+              <path d="M 14 13 Q 10 20 14 24 Q 18 20 14 13 Z" fill="#14b8a6" />
             </g>
           )}
         </svg>
@@ -690,7 +690,7 @@ export function WaterButton({
       ? { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(255,255,255,0.5)", color: "white" }
       : skin === "morning"
         ? { background: "#f59e0b", border: "none", color: "white" }
-        : { background: "linear-gradient(135deg, #3b82f6, #06b6d4)", border: "none", color: "white" };
+        : { background: "linear-gradient(135deg, #0f766e, #0d9488)", border: "none", color: "white" };
 
   return (
     <button

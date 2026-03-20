@@ -50,7 +50,7 @@ export function PageHeader({
         position: "sticky",
         top: 0,
         zIndex: 50,
-        background: "linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)",
+        background: "linear-gradient(135deg, #0f766e 0%, #0d9488 60%, #14b8a6 100%)",
         color: "white",
         paddingTop: "48px",
         paddingBottom: "1.25rem",

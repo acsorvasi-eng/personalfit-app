@@ -648,7 +648,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
 
                   {/* Water intake */}
                   <div className="flex items-center gap-3 bg-primary/5 border-[1.5px] border-primary/30 rounded-[13px] px-[15px] py-3 mb-3">
-                    <Droplets size={22} color="#3b82f6" className="shrink-0" />
+                    <Droplets size={22} color="#0d9488" className="shrink-0" />
                     <div>
                       <div className="font-bold text-[0.88rem] text-primary">
                         {t('generatePlan.waterRecommendation').replace('{n}', String(waterL))}

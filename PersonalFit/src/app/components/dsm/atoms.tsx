@@ -342,7 +342,7 @@ interface DSMGradientTextProps {
 }
 
 export function DSMGradientText({
-  from = "from-[#2563EB]",
+  from = "from-[#0d9488]",
   via,
   to = "to-[#12CFA6]",
   className = "",

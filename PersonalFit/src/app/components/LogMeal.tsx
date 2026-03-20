@@ -646,7 +646,7 @@ export function LogMeal() {
               <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>kcal</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontWeight: 700, color: "#3b82f6" }}>{protein}g</div>
+              <div style={{ fontWeight: 700, color: "#0d9488" }}>{protein}g</div>
               <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{t("macros.protein")}</div>
             </div>
             <div style={{ textAlign: "center" }}>

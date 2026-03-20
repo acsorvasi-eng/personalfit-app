@@ -624,7 +624,7 @@ export function Profile() {
                 {/* Várható (predicted) — szaggatott szürke vonal */}
                 <Line type="monotone" dataKey="predictedWeight" stroke="#9ca3af" strokeWidth={2} strokeDasharray="6 4" dot={false} connectNulls />
                 {/* Mért (actual) — folytonos kék vonal */}
-                <Line type="monotone" dataKey="weight" stroke="#2563eb" strokeWidth={2.5}
+                <Line type="monotone" dataKey="weight" stroke="#0d9488" strokeWidth={2.5}
                   dot={(props: any) => {
                     const { cx, cy, index, payload } = props;
                     if (payload.weight == null) return <circle key={`dot-${index}`} r={0} cx={cx} cy={cy} />;
@@ -633,9 +633,9 @@ export function Profile() {
                       return (
                         <g key={`dot-${index}`}>
                           {/* Outer pulse ring */}
-                          <circle cx={cx} cy={cy} r={10} fill="#2563eb" opacity={0.12} />
+                          <circle cx={cx} cy={cy} r={10} fill="#0d9488" opacity={0.12} />
                           {/* White border ring */}
-                          <circle cx={cx} cy={cy} r={6.5} fill="#2563eb" stroke="#fff" strokeWidth={3} />
+                          <circle cx={cx} cy={cy} r={6.5} fill="#0d9488" stroke="#fff" strokeWidth={3} />
                         </g>
                       );
                     }
@@ -645,13 +645,13 @@ export function Profile() {
                         cx={cx}
                         cy={cy}
                         r={3}
-                        fill="#2563eb"
+                        fill="#0d9488"
                         stroke="#fff"
                         strokeWidth={1.5}
                       />
                     );
                   }}
-                  activeDot={{ r: 5, fill: '#2563eb', stroke: '#fff', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: '#0d9488', stroke: '#fff', strokeWidth: 2 }}
                   connectNulls />
               </LineChart>
             </ResponsiveContainer>
@@ -895,7 +895,7 @@ function BMIBar({ value }: { value: number; t: (k: string) => string }) {
   const maxBmi = 40;
   const pct = value <= 0 ? 0 : Math.min(100, (value / maxBmi) * 100);
   const zones = [
-    { end: 18.5 / maxBmi * 100, color: '#3b82f6' },
+    { end: 18.5 / maxBmi * 100, color: '#0d9488' },
     { end: 25 / maxBmi * 100, color: '#22c55e' },
     { end: 30 / maxBmi * 100, color: '#eab308' },
     { end: 100, color: '#ef4444' },
@@ -1125,7 +1125,7 @@ function SettingsRow({
         )}
       </div>
       {rightElement != null ? rightElement : (rightText != null && rightText !== '' && (
-        <span style={{ color: '#3b82f6', fontSize: '0.875rem' }}>{rightText}</span>
+        <span style={{ color: '#0d9488', fontSize: '0.875rem' }}>{rightText}</span>
       ))}
     </div>
   );

@@ -64,7 +64,7 @@ export function ProgressChart({
         >
           <defs>
             <linearGradient id="progressGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#3b82f6" />
+              <stop offset="0%" stopColor="#0d9488" />
               <stop offset="100%" stopColor="#14b8a6" />
             </linearGradient>
           </defs>

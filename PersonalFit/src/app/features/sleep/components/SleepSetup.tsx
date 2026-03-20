@@ -23,7 +23,7 @@ export interface SleepSetupProps {
 
 const QUALITY_DOT_COLOR: Record<BedtimeOption["quality"], string> = {
   optimal: "#22c55e",
-  good: "#3b82f6",
+  good: "#0d9488",
   minimum: "#9ca3af",
 };
 
@@ -112,8 +112,8 @@ export function SleepSetup({
                   gap: "0.75rem",
                   width: "100%",
                   textAlign: "left",
-                  background: isSelected ? "#eff6ff" : "white",
-                  border: isSelected ? "2px solid #3b82f6" : "1.5px solid #e5e7eb",
+                  background: isSelected ? "#f0fdfa" : "white",
+                  border: isSelected ? "2px solid #0d9488" : "1.5px solid #e5e7eb",
                   borderRadius: "0.75rem",
                   padding: "1rem",
                   marginBottom: 0,

@@ -1761,10 +1761,10 @@ function RestTimerCard({
 
           {/* 3. Rest progress bar + % remaining (4px height) */}
           <div className="space-y-0.5">
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(59,130,246,0.15)" }}>
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(13,148,136,0.15)" }}>
               <motion.div
                 className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, #3b82f6, #14b8a6)", borderRadius: 9999 }}
+                style={{ background: "linear-gradient(90deg, #0f766e, #14b8a6)", borderRadius: 9999 }}
                 initial={{ width: 0 }}
                 animate={{ width: `${percentRemaining}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}

@@ -525,7 +525,7 @@ export function BodyVision3D() {
               type="button"
               onClick={() => navigate('/profile')}
               style={{
-                background: 'linear-gradient(135deg, #3b82f6, #14b8a6)',
+                background: 'linear-gradient(135deg, #0f766e, #14b8a6)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.75rem',
