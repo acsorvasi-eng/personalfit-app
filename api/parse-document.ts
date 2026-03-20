@@ -357,7 +357,7 @@ ${cleanedText.substring(0, 3000)}`;
 
   try {
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 16,
       messages: [{ role: 'user', content: detectPrompt }],
     });
@@ -555,7 +555,7 @@ TEXT TO PARSE:
 ${cleanedText.substring(0, 45000)}`;
 
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 16000,
       messages: [{ role: 'user', content: prompt }],
     });
@@ -644,7 +644,7 @@ TEXT:
 ${cleanedText}`;
 
   const optionsMessage = await client.messages.create({
-    model: 'claude-haiku-4-5',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 16000,
     messages: [{ role: 'user', content: optionsPrompt }],
   });
