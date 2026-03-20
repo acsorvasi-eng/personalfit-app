@@ -54,8 +54,8 @@ type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active';
 type DietType = 'omnivore' | 'vegetarian';
 
 interface SportEntry {
-  id: string;
-  label: string;
+  id: string;      // UUID for React key / removal
+  sportId: string; // stable sport identifier (e.g. 'running', 'gym')
   days: number[];  // weekday indices: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
   minutes: number; // per session
 }
@@ -388,18 +388,60 @@ const slideVariants = {
 
 const LEGACY_FOODS_STEP = 99;
 
-const SPORT_OPTIONS = [
-  { label: 'Futás', emoji: '🏃' },
-  { label: 'Edzőterem', emoji: '🏋️' },
-  { label: 'Kerékpározás', emoji: '🚴' },
-  { label: 'Úszás', emoji: '🏊' },
-  { label: 'Jóga', emoji: '🧘' },
-  { label: 'Futball', emoji: '⚽' },
-  { label: 'Kosárlabda', emoji: '🏀' },
-  { label: 'Tenisz', emoji: '🎾' },
-  { label: 'Gyaloglás', emoji: '🚶' },
-  { label: 'Más', emoji: '💪' },
+interface SportDef { id: string; emoji: string; names: { hu: string; en: string; ro: string } }
+interface SportCategory { key: string; sports: SportDef[] }
+
+const SPORT_CATEGORIES: SportCategory[] = [
+  {
+    key: 'cardio',
+    sports: [
+      { id: 'running',  emoji: '🏃', names: { hu: 'Futás',        en: 'Running',   ro: 'Alergare'    } },
+      { id: 'cycling',  emoji: '🚴', names: { hu: 'Kerékpározás', en: 'Cycling',   ro: 'Ciclism'     } },
+      { id: 'swimming', emoji: '🏊', names: { hu: 'Úszás',        en: 'Swimming',  ro: 'Înot'        } },
+      { id: 'walking',  emoji: '🚶', names: { hu: 'Gyaloglás',    en: 'Walking',   ro: 'Mers pe jos' } },
+      { id: 'rowing',   emoji: '🚣', names: { hu: 'Evezés',       en: 'Rowing',    ro: 'Canotaj'     } },
+      { id: 'jumprope', emoji: '🪢', names: { hu: 'Ugrókötél',    en: 'Jump rope', ro: 'Săritură'    } },
+    ],
+  },
+  {
+    key: 'strength',
+    sports: [
+      { id: 'gym',          emoji: '🏋️', names: { hu: 'Edzőterem',    en: 'Gym',          ro: 'Sală'         } },
+      { id: 'crossfit',     emoji: '💥',  names: { hu: 'CrossFit',     en: 'CrossFit',     ro: 'CrossFit'     } },
+      { id: 'calisthenics', emoji: '🤸',  names: { hu: 'Calisthenics', en: 'Calisthenics', ro: 'Calisthenics' } },
+      { id: 'weightlifting',emoji: '🏋️', names: { hu: 'Súlyemelés',   en: 'Weightlifting',ro: 'Haltere'      } },
+    ],
+  },
+  {
+    key: 'team',
+    sports: [
+      { id: 'football',   emoji: '⚽', names: { hu: 'Futball',    en: 'Football',   ro: 'Fotbal'  } },
+      { id: 'basketball', emoji: '🏀', names: { hu: 'Kosárlabda', en: 'Basketball', ro: 'Baschet' } },
+      { id: 'tennis',     emoji: '🎾', names: { hu: 'Tenisz',     en: 'Tennis',     ro: 'Tenis'   } },
+      { id: 'volleyball', emoji: '🏐', names: { hu: 'Röplabda',   en: 'Volleyball', ro: 'Volei'   } },
+      { id: 'squash',     emoji: '🎱', names: { hu: 'Squash',     en: 'Squash',     ro: 'Squash'  } },
+    ],
+  },
+  {
+    key: 'mindfulness',
+    sports: [
+      { id: 'yoga',       emoji: '🧘', names: { hu: 'Jóga',      en: 'Yoga',       ro: 'Yoga'      } },
+      { id: 'pilates',    emoji: '🤸', names: { hu: 'Pilates',   en: 'Pilates',    ro: 'Pilates'   } },
+      { id: 'meditation', emoji: '🙏', names: { hu: 'Meditáció', en: 'Meditation', ro: 'Meditație' } },
+    ],
+  },
+  {
+    key: 'other',
+    sports: [
+      { id: 'other', emoji: '💪', names: { hu: 'Más', en: 'Other', ro: 'Altele' } },
+    ],
+  },
 ];
+
+// Flat lookup: sportId → SportDef
+const SPORT_BY_ID: Record<string, SportDef> = Object.fromEntries(
+  SPORT_CATEGORIES.flatMap(c => c.sports.map(s => [s.id, s]))
+);
 
 // ─────────────────────────────────────────────────────────────────
 // Main component
@@ -639,8 +681,9 @@ export function ProfileSetupWizard() {
 
   // ── Sport helpers ────────────────────────────────────────────
 
-  const addSport = (label: string) => {
-    setSports(prev => [...prev, { id: Date.now().toString(), label, days: [], minutes: 45 }]);
+  const addSport = (sportId: string) => {
+    if (sports.some(s => s.sportId === sportId)) return; // prevent duplicates
+    setSports(prev => [...prev, { id: crypto.randomUUID(), sportId, days: [], minutes: 45 }]);
     setShowSportPicker(false);
   };
 
@@ -763,7 +806,7 @@ export function ProfileSetupWizard() {
         const wizardWeight = weight || 70;
         const wizardBurnPerDay: Record<number, number> = {};
         for (const s of sports) {
-          const met = getMET(s.label);
+          const met = getMET(s.sportId);
           const kcal = Math.round(met * wizardWeight * (s.minutes / 60));
           for (const day of s.days) {
             wizardBurnPerDay[day] = (wizardBurnPerDay[day] ?? 0) + kcal;
@@ -1558,13 +1601,13 @@ function StepMeals({
 
 function StepSport({ activity, setActivity, sports, addSport, removeSport, updateSport, toggleSportDay, showSportPicker, setShowSportPicker, weightKg }: {
   activity: ActivityLevel; setActivity: (v: ActivityLevel) => void;
-  sports: SportEntry[]; addSport: (label: string) => void; removeSport: (id: string) => void;
+  sports: SportEntry[]; addSport: (sportId: string) => void; removeSport: (id: string) => void;
   updateSport: (id: string, patch: Partial<SportEntry>) => void;
   toggleSportDay: (id: string, dayIdx: number) => void;
   showSportPicker: boolean; setShowSportPicker: (v: boolean) => void;
   weightKg: number;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const ACTIVITY_OPTIONS = [
     { val: 'sedentary' as ActivityLevel, emoji: '💺', label: t('wizard.sport.actSedentary'), desc: t('wizard.sport.actSedentaryDesc') },
     { val: 'light' as ActivityLevel, emoji: '🚶', label: t('wizard.sport.actLight'), desc: t('wizard.sport.actLightDesc') },
@@ -1620,7 +1663,7 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
           <div key={s.id} className="bg-gray-50 rounded-2xl p-3 mb-2">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-800">
-                {SPORT_OPTIONS.find(o => o.label === s.label)?.emoji ?? '💪'} {s.label}
+                {SPORT_BY_ID[s.sportId]?.emoji ?? '💪'} {SPORT_BY_ID[s.sportId]?.names[language] ?? s.sportId}
               </span>
               <button onClick={() => removeSport(s.id)} className="text-gray-400 hover:text-red-400 transition-colors">
                 <Minus className="w-4 h-4" />
@@ -1664,7 +1707,7 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
             {s.days.length > 0 && (
               <p className="text-[0.72rem] text-primary mt-1">
                 ⚡ {t('wizard.sport.burnEstimate').replace('{n}', String(
-                  Math.round(getMET(s.label) * weightKg * (s.minutes / 60))
+                  Math.round(getMET(s.sportId) * weightKg * (s.minutes / 60))
                 ))}
               </p>
             )}
@@ -1691,15 +1734,33 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
               onClick={e => e.stopPropagation()}
             >
               <h3 className="text-base font-semibold text-gray-900 mb-4">{t('wizard.sport.pickSport')}</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {SPORT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.label}
-                    onClick={() => addSport(opt.label)}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-100 text-sm text-gray-700"
-                  >
-                    <span className="text-xl">{opt.emoji}</span> {opt.label}
-                  </button>
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pb-2">
+                {SPORT_CATEGORIES.map(cat => (
+                  <div key={cat.key}>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                      {t(`wizard.sport.sportCategory${cat.key.charAt(0).toUpperCase() + cat.key.slice(1)}`)}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {cat.sports.map(sport => {
+                        const alreadyAdded = sports.some(s => s.sportId === sport.id);
+                        return (
+                          <button
+                            key={sport.id}
+                            onClick={() => !alreadyAdded && addSport(sport.id)}
+                            disabled={alreadyAdded}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-all ${
+                              alreadyAdded
+                                ? 'bg-primary/10 border-primary text-primary font-medium opacity-60 cursor-default'
+                                : 'bg-white border-border text-gray-700 hover:border-primary/50 active:bg-gray-50'
+                            }`}
+                          >
+                            <span>{sport.emoji}</span>
+                            <span>{sport.names[language]}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
               </div>
             </motion.div>
