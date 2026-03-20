@@ -104,18 +104,15 @@ const hu = {
   'toast.mealSettingsSaved': 'Étkezési beállítás mentve ✓',
   'toast.gmonLoaded': 'GMON adatok betöltve ✓',
 
-  'onboarding.skip': 'Kihagyom',
+  'onboarding.skip': 'Kihagyás',
   'onboarding.next': 'Tovább',
-  'onboarding.start': 'Kezdjük el!',
-  'onboarding.slide1.badge': '100% privát',
-  'onboarding.slide1.title': 'Semmi nem hagyja el a telefonod',
-  'onboarding.slide1.desc': 'Adataid kizárólag nálad vannak. Nincs felhő, nincs szerver, nincs nyomkövetés. Csak te és az alkalmazás.',
-  'onboarding.slide2.badge': 'Személyre szabva',
-  'onboarding.slide2.title': 'Az étrendjed, az életed alapján',
-  'onboarding.slide2.desc': 'Megadod a tested, szokásaid, sportodat — mi kiszámoljuk a kalóriát és generálunk egy teljes heti tervet.',
-  'onboarding.slide3.badge': 'AI-generált étrend',
-  'onboarding.slide3.title': 'Egy heti terv, azonnal',
-  'onboarding.slide3.desc': 'A megadott alapanyagaid alapján az AI valódi, ízletes receptnevekkel tölti fel a heti étrenddet — automatikusan.',
+  'onboarding.start': 'Kezdjük el',
+  'onboarding.slide1.title': 'Ne alkalmazkodj az étrendhez.\nAz alkalmazkodjon hozzád.',
+  'onboarding.slide1.desc': 'Az étrended a helyi ételekre és a szokásaidra épül — így végre működik a valós életben is.',
+  'onboarding.slide2.title': 'Adataid a telefonodon maradnak',
+  'onboarding.slide2.desc': 'Teljesen offline működik. Te döntesz arról, mi történik az adataiddal — mindig.',
+  'onboarding.slide3.title': 'Az egész napod formálja az étrendedet',
+  'onboarding.slide3.desc': 'Mozgás és alvás is számít. Az étrended ezekhez igazodik — valódi egyensúly, minden nap.',
 
   'login.heading': 'Hogy hívnak?',
   'login.subheading': 'Ez csak nálad marad — nincs szükség e-mailre, jelszóra, vagy fiókra.',
@@ -138,6 +135,8 @@ const hu = {
   'upload.staging': 'Staging állapotba mentés...',
   'upload.complete': 'Kész!',
   'upload.error': 'Hiba történt',
+
+  'splash.appSubtitle': 'Személyre szabott étrend, amit tényleg betartasz.',
 } as const;
 
 export default hu;

@@ -103,16 +103,13 @@ const en: LocalePartial = {
 
   'onboarding.skip': 'Skip',
   'onboarding.next': 'Next',
-  'onboarding.start': "Let's go!",
-  'onboarding.slide1.badge': '100% private',
-  'onboarding.slide1.title': 'Nothing leaves your phone',
-  'onboarding.slide1.desc': 'Your data stays exclusively with you. No cloud, no server, no tracking. Just you and the app.',
-  'onboarding.slide2.badge': 'Personalized',
-  'onboarding.slide2.title': 'Your diet, based on your life',
-  'onboarding.slide2.desc': 'Enter your body, habits, sport — we calculate the calories and generate a complete weekly plan.',
-  'onboarding.slide3.badge': 'AI-generated diet',
-  'onboarding.slide3.title': 'A weekly plan, instantly',
-  'onboarding.slide3.desc': 'Based on your ingredients, AI fills your weekly diet with real, delicious recipe names — automatically.',
+  'onboarding.start': 'Get started',
+  'onboarding.slide1.title': "Don't adapt to a diet.\nLet the diet adapt to you.",
+  'onboarding.slide1.desc': 'Your meal plan is built around local foods and your habits — so it finally works in real life.',
+  'onboarding.slide2.title': 'Your data stays on your phone',
+  'onboarding.slide2.desc': 'Works completely offline. You decide what happens with your data — always.',
+  'onboarding.slide3.title': 'Your whole day shapes your diet',
+  'onboarding.slide3.desc': 'Movement and sleep matter too. Your plan adapts to them — real balance, every day.',
 
   'login.heading': "What's your name?",
   'login.subheading': 'This stays with you only — no email, password, or account needed.',
@@ -135,6 +132,8 @@ const en: LocalePartial = {
   'upload.staging': 'Saving to staging...',
   'upload.complete': 'Done!',
   'upload.error': 'An error occurred',
+
+  'splash.appSubtitle': 'Personalized nutrition you actually stick to.',
 };
 
 export default en;

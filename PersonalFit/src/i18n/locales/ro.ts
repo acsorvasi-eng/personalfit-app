@@ -101,18 +101,15 @@ const ro: LocalePartial = {
   'toast.mealSettingsSaved': 'Setări masă salvate ✓',
   'toast.gmonLoaded': 'Date GMON încărcate ✓',
 
-  'onboarding.skip': 'Omite',
+  'onboarding.skip': 'Sari peste',
   'onboarding.next': 'Înainte',
-  'onboarding.start': 'Să începem!',
-  'onboarding.slide1.badge': '100% privat',
-  'onboarding.slide1.title': 'Nimic nu părăsește telefonul tău',
-  'onboarding.slide1.desc': 'Datele tale sunt exclusiv la tine. Niciun cloud, niciun server, nicio urmărire. Doar tu și aplicația.',
-  'onboarding.slide2.badge': 'Personalizat',
-  'onboarding.slide2.title': 'Dieta ta, pe baza vieții tale',
-  'onboarding.slide2.desc': 'Introduci corpul, obiceiurile, sportul — noi calculăm caloriile și generăm un plan săptămânal complet.',
-  'onboarding.slide3.badge': 'Dietă generată de AI',
-  'onboarding.slide3.title': 'Un plan săptămânal, instant',
-  'onboarding.slide3.desc': 'Pe baza ingredientelor tale, AI-ul completează dieta săptămânală cu rețete reale, delicioase — automat.',
+  'onboarding.start': 'Intră',
+  'onboarding.slide1.title': 'Nu te adapta la dietă.\nLasă dieta să se adapteze la tine.',
+  'onboarding.slide1.desc': 'Dieta ta se construiește pe alimentele locale și obiceiurile tale — așa funcționează în viața reală.',
+  'onboarding.slide2.title': 'Datele tale rămân pe telefon',
+  'onboarding.slide2.desc': 'Funcționează complet offline. Tu decizi ce se întâmplă cu datele tale — mereu.',
+  'onboarding.slide3.title': 'Întreaga ta zi îți modelează dieta',
+  'onboarding.slide3.desc': 'Mișcarea și somnul contează. Dieta ta se adaptează la acestea — echilibru real, în fiecare zi.',
 
   'login.heading': 'Cum te cheamă?',
   'login.subheading': 'Rămâne doar la tine — nu ai nevoie de e-mail, parolă sau cont.',
@@ -135,6 +132,8 @@ const ro: LocalePartial = {
   'upload.staging': 'Salvare în staging...',
   'upload.complete': 'Gata!',
   'upload.error': 'A apărut o eroare',
+
+  'splash.appSubtitle': 'Dietă personalizată, pe care chiar o respecți.',
 };
 
 export default ro;
