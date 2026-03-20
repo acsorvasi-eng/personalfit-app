@@ -1,64 +1,123 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShoppingCart,
   Trash2,
   Check,
-  MapPin,
-  Navigation,
-  Store,
   Sparkles,
-  Clock,
-  ChevronRight,
   X,
   Search,
-  Truck,
   Plus,
   ShoppingBag,
-  Zap,
-  BadgeCheck,
-  Package,
-  Leaf,
-  Heart,
-  CalendarDays,
-  ListChecks,
 } from "lucide-react";
-import { PageHeader } from "../../../components/PageHeader";
 import { DSMSwipeAction, DSMCoachMark } from "../../../components/dsm/ux-patterns";
 import {
   Product,
   productDatabase,
   searchProducts,
-  localStores,
-  StoreInfo,
-  loadUserDietProfile,
 } from "../../../data/productDatabase";
 import { useLanguage } from "../../../contexts/LanguageContext";
-import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
-import { generateWeeklyShoppingList, getCurrentDayIndex } from "../../../utils/mealPlanToShoppingList";
+import { generateWeeklyShoppingList } from "../../../utils/mealPlanToShoppingList";
 import { usePlanData } from "../../../hooks/usePlanData";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
+import { ShoppingItem } from "../types";
+import {
+  computeStoreRecommendations,
+  computeBestTwoStoreCombo,
+  StoreRecommendation,
+  TwoStoreRecommendation,
+  UserLocation,
+  StorePreferences,
+} from "../../../utils/storeRecommendation";
+import { StoreStopBySheet } from "./StoreStopBySheet";
+import { OrderDeliverySheet } from "./OrderDeliverySheet";
 
-interface ShoppingItem {
-  product: Product;
-  quantity: number;
-  checked: boolean;
+function SmartStorePanel({
+  topRec,
+  twoStoreCombo,
+  uncheckedCount,
+  onStopBy,
+  onOrder,
+}: {
+  topRec: StoreRecommendation;
+  twoStoreCombo: TwoStoreRecommendation | null;
+  uncheckedCount: number;
+  onStopBy: () => void;
+  onOrder: () => void;
+}) {
+  return (
+    <div className="mx-4 mb-4 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-3 border border-teal-200">
+      <div className="text-2xs font-bold text-teal-600 tracking-wide mb-2.5">
+        🏪 LEGJOBB BOLT MOST
+      </div>
+
+      {/* Best single store */}
+      <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2.5 border-2 border-teal-600 mb-2">
+        <div>
+          <div className="text-sm font-bold text-gray-800">
+            {topRec.store.name}
+            {topRec.isPreferred && (
+              <span className="ml-1.5 text-2xs text-amber-500 font-semibold">⭐ Megszokott</span>
+            )}
+          </div>
+          <div className="text-2xs text-gray-500">
+            {topRec.matchCount}/{uncheckedCount} termék elérhető
+            {" · "}{topRec.distanceKm} km
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-sm font-extrabold text-teal-600">
+            ~{topRec.estimatedTotal.toFixed(0)} lei
+          </div>
+          {topRec.missingItems.length > 0 && (
+            <div className="text-2xs text-gray-400">
+              {topRec.missingItems.length} hiányzó
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Two-store combo */}
+      {twoStoreCombo && (
+        <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2.5 border border-gray-200 mb-2">
+          <div>
+            <div className="text-sm font-semibold text-gray-800">
+              {twoStoreCombo.primary.store.name} + {twoStoreCombo.secondary.store.name}
+            </div>
+            <div className="text-2xs text-gray-500">
+              {twoStoreCombo.combinedMatchCount}/{uncheckedCount} termék · 2 futár
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-extrabold text-gray-700">
+              ~{(twoStoreCombo.combinedTotal + twoStoreCombo.combinedDeliveryFee).toFixed(0)} lei
+            </div>
+            <div className="text-2xs text-red-400">
+              +{twoStoreCombo.combinedDeliveryFee.toFixed(2)} lei futár (2×)
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={onStopBy}
+          className="flex-1 py-2.5 bg-white border-2 border-teal-600 rounded-xl text-xs font-semibold text-teal-600 active:scale-95 transition-all"
+        >
+          🚶 Megállok útban
+        </button>
+        <button
+          onClick={onOrder}
+          className="flex-1 py-2.5 bg-teal-600 rounded-xl text-xs font-semibold text-white active:scale-95 transition-all"
+        >
+          🛵 Megrendelem
+        </button>
+      </div>
+    </div>
+  );
 }
 
-// AI-powered smart suggestions — labels are translation keys
-const SMART_SUGGESTION_DEFS = [
-  { labelKey: "menu.breakfast", emoji: "🌅", query: "zabpehely tej tojás" },
-  { labelKey: "menu.lunch", emoji: "🍽️", query: "csirkemell rizs brokkoli" },
-  { labelKey: "menu.dinner", emoji: "🌙", query: "lazac spenót burgonya" },
-  { labelKey: "menu.snack", emoji: "🥜", query: "mandula áfonya" },
-  { labelKey: "categories.dairy", emoji: "🧀", query: "kecskesajt joghurt túró" },
-  { labelKey: "categories.fruits", emoji: "🍎", query: "alma banán eper" },
-];
-
 export function ShoppingList() {
-  const { consumed, target } = useCalorieTracker();
-  const navigate = useNavigate();
   const { t } = useLanguage();
   const { planData } = usePlanData();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -76,15 +135,29 @@ export function ShoppingList() {
     });
   }, []);
 
+  // Load saved store preferences
+  useEffect(() => {
+    getSetting("storePreferences").then((saved) => {
+      if (!saved) return;
+      try { setStorePreferences(JSON.parse(saved)); } catch { /* ignore */ }
+    });
+  }, []);
+
+  // Request GPS location
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => { /* permission denied — silently use static distances */ }
+    );
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [showStoreView, setShowStoreView] = useState(false);
-  const [isLoadingStores, setIsLoadingStores] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedStore, setSelectedStore] = useState<string | null>(null);
-
-  // User location: Târgu Mureș center
-  const userLocation = { lat: 46.5450, lng: 24.5620 };
+  const [stopByOpen, setStopByOpen] = useState(false);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [storePreferences, setStorePreferences] = useState<StorePreferences>({});
 
   const updateShoppingItems = (updater: (prev: ShoppingItem[]) => ShoppingItem[]) => {
     setShoppingItems((prev) => {
@@ -94,18 +167,24 @@ export function ShoppingList() {
     });
   };
 
+  const recordStoreVisit = (storeName: string) => {
+    setStorePreferences((prev) => {
+      const next = { ...prev, [storeName]: (prev[storeName] ?? 0) + 1 };
+      setSetting("storePreferences", JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
+
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim() && !selectedCategory) return [];
-    // Split multi-word queries to search individually
+    if (!searchQuery.trim()) return [];
     const terms = searchQuery.trim().split(/\s+/).filter(Boolean);
     if (terms.length <= 1) {
-      return searchProducts(searchQuery, selectedCategory || undefined);
+      return searchProducts(searchQuery, undefined);
     }
-    // Multi-term: union of results
     const seen = new Set<string>();
     const results: Product[] = [];
     terms.forEach((term) => {
-      searchProducts(term, selectedCategory || undefined).forEach((p) => {
+      searchProducts(term, undefined).forEach((p) => {
         if (!seen.has(p.id)) {
           seen.add(p.id);
           results.push(p);
@@ -113,30 +192,21 @@ export function ShoppingList() {
       });
     });
     return results;
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery]);
 
-  // When no search query and no category, show diet-prioritized products
   const browseProducts = useMemo(() => {
-    if (searchQuery.trim() || selectedCategory) return [];
-    // Show recommended products based on user's diet profile
+    if (searchQuery.trim()) return [];
     return searchProducts('', undefined);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery]);
 
-  const unfilteredProducts = searchResults.length > 0 ? searchResults : browseProducts;
-  const displayProducts = selectedStore
-    ? unfilteredProducts.filter((p) => p.store === selectedStore)
-    : unfilteredProducts;
-
-  const filteredShoppingItems = selectedStore
-    ? shoppingItems.filter((i) => i.product.store === selectedStore)
-    : shoppingItems;
+  const displayProducts = searchResults.length > 0 ? searchResults : browseProducts;
 
   const totalItems = shoppingItems.length;
-  const checkedCount = filteredShoppingItems.filter((i) => i.checked).length;
+  const checkedCount = shoppingItems.filter((i) => i.checked).length;
 
   const totalPrice = useMemo(() => {
-    return filteredShoppingItems.reduce((sum, item) => sum + item.product.price, 0);
-  }, [filteredShoppingItems]);
+    return shoppingItems.reduce((sum, item) => sum + item.product.price, 0);
+  }, [shoppingItems]);
 
   const addProduct = (product: Product) => {
     const exists = shoppingItems.some((i) => i.product.id === product.id);
@@ -159,57 +229,26 @@ export function ShoppingList() {
 
   const isInList = (productId: string) => shoppingItems.some((i) => i.product.id === productId);
 
-  const categories = useMemo(() => {
-    const cats = new Set(productDatabase.map((p) => p.category));
-    return Array.from(cats);
-  }, []);
+  const uncheckedItems = useMemo(
+    () => shoppingItems.filter((i) => !i.checked),
+    [shoppingItems]
+  );
 
-  // Store matching: which stores have the most items from the list
-  const storeMatches = useMemo(() => {
-    if (totalItems === 0) return [];
-    const storeMap = new Map<string, { count: number; total: number; items: ShoppingItem[] }>();
+  const storeRecommendations = useMemo(
+    () => computeStoreRecommendations(
+      uncheckedItems,
+      userLocation ?? undefined,
+      storePreferences
+    ),
+    [uncheckedItems, userLocation, storePreferences]
+  );
 
-    shoppingItems.forEach((item) => {
-      const storeName = item.product.store;
-      const existing = storeMap.get(storeName) || { count: 0, total: 0, items: [] };
-      existing.count++;
-      existing.total += item.product.price;
-      existing.items.push(item);
-      storeMap.set(storeName, existing);
-    });
+  const topRecommendation = storeRecommendations[0] ?? null;
 
-    return localStores
-      .map((store) => {
-        const data = storeMap.get(store.name) || { count: 0, total: 0, items: [] };
-        return {
-          ...store,
-          matchCount: data.count,
-          matchPercent: totalItems > 0 ? Math.round((data.count / totalItems) * 100) : 0,
-          estimatedTotal: Math.round(data.total * 100) / 100,
-          matchedItems: data.items,
-        };
-      })
-      .filter((s) => s.matchCount > 0)
-      .sort((a, b) => b.matchCount - a.matchCount);
-  }, [shoppingItems, totalItems]);
-
-  const handleFindStores = async () => {
-    setShowStoreView(true);
-    setIsLoadingStores(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsLoadingStores(false);
-  };
-
-  const openInGoogleMaps = (store: StoreInfo) => {
-    const url = `https://www.google.com/maps/dir/${userLocation.lat},${userLocation.lng}/${store.coordinates.lat},${store.coordinates.lng}`;
-    window.open(url, "_blank");
-  };
-
-  const handleSmartSuggestion = (suggestion: typeof SMART_SUGGESTION_DEFS[0]) => {
-    setSearchQuery(suggestion.query);
-    setIsSearchFocused(true);
-    searchInputRef.current?.focus();
-  };
+  const twoStoreCombo = useMemo(
+    () => computeBestTwoStoreCombo(storeRecommendations),
+    [storeRecommendations]
+  );
 
   // ─── Auto-populate from meal plan ───
   const [showMealPlanImport, setShowMealPlanImport] = useState(false);
@@ -248,287 +287,137 @@ export function ShoppingList() {
     setMealPlanAddedCount(addedCount);
     setShowMealPlanImport(false);
 
-    // Auto-dismiss success message
     setTimeout(() => setMealPlanAddedCount(0), 3000);
   }, [shoppingItems, mealPlanSuggestions]);
 
-  // Note: shopping list is always accessible; the meal-plan auto-populate CTA
-  // only shows when a plan exists. Users can always browse and add products manually.
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {/* Fixed Page Header */}
-      <div className="flex-shrink-0">
-        <PageHeader
-          icon={ShoppingCart}
-          title={t("shopping.title")}
-          subtitle={`${totalItems} ${t('shopping.product')} · Târgu Mureș`}
-          stats={[
-            {
-              label: t("shopping.estimatedPrice"),
-              value: `${totalPrice.toFixed(0)}`,
-              suffix: "lei",
-            },
-            {
-              label: t("shopping.products"),
-              value: totalItems,
-              suffix: t('common.pcs'),
-            },
-          ]}
-        />
+      {/* Header */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-extrabold text-gray-800">Bevásárlólista</h1>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {totalItems > 0
+              ? `${totalItems} termék · Târgu Mureș`
+              : "Üres lista · adj hozzá termékeket"}
+          </p>
+        </div>
+        {totalItems > 0 && (
+          <div className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
+            {totalItems} db
+          </div>
+        )}
       </div>
 
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto pb-20">
-        {/* Smart AI Search */}
-        <div className="px-3 sm:px-4 lg:px-6 pt-4 pb-2 bg-white sticky top-0 z-30 border-b border-gray-100">
-          <div className="relative" role="search" aria-label={t('common.productSearch')}>
-            <div className="flex items-center bg-gray-50 border-2 border-gray-200 rounded-2xl px-4 py-3 gap-3 focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
-              <Sparkles className="w-5 h-5 text-indigo-500 flex-shrink-0" aria-hidden="true" />
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Search bar */}
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-3 sm:px-4 lg:px-6 py-3 border-b border-gray-100">
+          <div className="relative">
+            <div className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 transition-all ${
+              isSearchFocused ? "border-teal-400 bg-teal-50/30" : "border-gray-200 bg-gray-50"
+            }`}>
+              <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
-                placeholder={t('shopping.searchPlaceholder')}
-                aria-label={t('shopping.searchPlaceholder')}
-                className="flex-1 bg-transparent focus:outline-none text-gray-900 placeholder-gray-400"
+                onBlur={() => setIsSearchFocused(false)}
+                placeholder={t('shopping.addProduct')}
+                className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
               />
               {searchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedCategory(null);
-                    setSelectedStore(null);
-                  }}
-                  className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                  aria-label={t('shopping.clearSearch')}
-                >
-                  <X className="w-4 h-4 text-gray-500" />
+                <button onClick={() => setSearchQuery("")} className="p-0.5 hover:bg-gray-200 rounded-full">
+                  <X className="w-3.5 h-3.5 text-gray-400" />
                 </button>
               )}
-              <Search className="w-5 h-5 text-gray-400 flex-shrink-0" aria-hidden="true" />
             </div>
-          </div>
-
-          {/* Category pills */}
-          <div className="flex gap-2 overflow-x-auto pb-2 mt-3 scrollbar-hide" role="tablist" aria-label={t('common.productCategories')}>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              role="tab"
-              aria-selected={!selectedCategory}
-              className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all ${
-                !selectedCategory
-                  ? "bg-indigo-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-              style={{ fontWeight: 700 }}
-            >
-              {t('shopping.all')}
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                role="tab"
-                aria-selected={selectedCategory === cat}
-                className={`px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all ${
-                  selectedCategory === cat
-                    ? "bg-indigo-500 text-white shadow-md"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-                style={{ fontWeight: 700 }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Store filter pills */}
-          <div className="flex gap-2 overflow-x-auto pb-1 mt-1 scrollbar-hide" role="tablist" aria-label="Bolt szűrő">
-            <button
-              onClick={() => setSelectedStore(null)}
-              role="tab"
-              aria-selected={!selectedStore}
-              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-all flex items-center gap-1 ${
-                !selectedStore
-                  ? "bg-gray-800 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
-              style={{ fontWeight: 700 }}
-            >
-              🏪 Mind
-            </button>
-            {localStores.map((store) => (
-              <button
-                key={store.name}
-                onClick={() => setSelectedStore(selectedStore === store.name ? null : store.name)}
-                role="tab"
-                aria-selected={selectedStore === store.name}
-                className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition-all flex items-center gap-1 ${
-                  selectedStore === store.name
-                    ? "bg-gray-800 text-white shadow-md"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-                style={{ fontWeight: 700 }}
-              >
-                {store.logo} {store.name}
-              </button>
-            ))}
           </div>
         </div>
 
-        {/* Smart Suggestions - only when no search */}
-        {!searchQuery && !selectedCategory && totalItems === 0 && (
-          <div className="px-3 sm:px-4 lg:px-6 py-4">
-            <h3 className="text-sm text-gray-500 mb-3" style={{ fontWeight: 700 }}>
-              <Zap className="w-4 h-4 inline text-amber-500 mr-1" />
-              {t('shopping.quickSearch')}
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              {SMART_SUGGESTION_DEFS.map((s) => (
-                <button
-                  key={s.labelKey}
-                  onClick={() => handleSmartSuggestion(s)}
-                  className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 hover:bg-indigo-50 hover:border-indigo-300 transition-all text-left active:scale-95"
-                >
-                  <span className="text-lg">{s.emoji}</span>
-                  <span className="text-xs text-gray-700 truncate" style={{ fontWeight: 600 }}>{t(s.labelKey)}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* ── Auto-populate from meal plan CTA ── */}
-            {mealPlanSuggestions.length > 0 && (
-              <motion.button
-                onClick={handleAutoPopulateFromMealPlan}
-                className="w-full mt-4 bg-primary/5 border-2 border-primary/20 rounded-2xl p-4 text-left hover:border-emerald-400 hover:shadow-md transition-all active:scale-[0.98]"
-                whileTap={{ scale: 0.97 }}
-                aria-label={t('shopping.populateFromPlan')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-primary rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
-                    <CalendarDays className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-emerald-800 text-[9px] font-bold tracking-wider uppercase">{t('shopping.weeklyMealPlan')}</div>
-                    <h4 className="text-sm text-gray-900 mt-0.5" style={{ fontWeight: 700 }}>
-                      {t('shopping.populateFromPlan')}
-                    </h4>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      {mealPlanSuggestions.length} {t('shopping.ingredientsFromMenu')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className="text-[13px] text-emerald-600" style={{ fontWeight: 800 }}>
-                      +{mealPlanSuggestions.length}
-                    </span>
-                    <ListChecks className="w-5 h-5 text-emerald-500" />
-                  </div>
-                </div>
-              </motion.button>
-            )}
-          </div>
-        )}
-
-        {/* ── Success toast for meal plan auto-populate ── */}
+        {/* Search results or browse grid */}
         <AnimatePresence>
-          {mealPlanAddedCount > 0 && (
+          {displayProducts.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="sticky top-[120px] z-40 mx-3 sm:mx-4 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg"
+              exit={{ opacity: 0 }}
+              className="px-3 sm:px-4 lg:px-6 py-3"
             >
-              <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span className="text-[13px] text-emerald-800 font-medium">
-                {mealPlanAddedCount} {t('shopping.productsAdded')}
-              </span>
+              <div className="flex items-center gap-2 mb-3">
+                <Search className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs text-gray-500" style={{ fontWeight: 600 }}>
+                  {searchQuery ? t('shopping.searchResults') : t('shopping.recommended')}
+                </span>
+                <span className="text-xs text-gray-400 ml-auto">{displayProducts.length} {t('shopping.product')}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {displayProducts.map((product) => {
+                  const alreadyAdded = isInList(product.id);
+                  return (
+                    <button
+                      key={product.id}
+                      onClick={() => addProduct(product)}
+                      disabled={alreadyAdded}
+                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all active:scale-95 ${
+                        alreadyAdded
+                          ? "border-green-200 bg-green-50 opacity-60 cursor-default"
+                          : "border-gray-100 bg-white hover:border-teal-200 hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="text-2xl mb-1">{product.image}</div>
+                      <div className="text-xs font-semibold text-gray-800 text-center truncate w-full">{product.name}</div>
+                      <div className="text-xs text-gray-500 truncate w-full text-center">{product.store}</div>
+                      <div className="text-xs font-bold text-teal-600">{product.price.toFixed(2)} lei</div>
+                      {!alreadyAdded && (
+                        <div className="mt-1 w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center">
+                          <Plus className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Search Results / Browse Grid */}
-        {(isSearchFocused || searchQuery || selectedCategory) && displayProducts.length > 0 && (
-          <div className="px-3 sm:px-4 lg:px-6 py-3">
-            <h3 className="text-xs text-gray-500 mb-2" style={{ fontWeight: 700 }}>
-              {searchQuery
-                ? `${t('shopping.results')} (${displayProducts.length})`
-                : selectedCategory
-                ? `${selectedCategory} (${displayProducts.length})`
-                : t('shopping.popular')}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="list" aria-label={t('common.searchResults')}>
-              {displayProducts.map((product) => {
-                const alreadyAdded = isInList(product.id);
-                const isMealPlan = product.tags.includes('meal-plan');
-                const isDietFriendly = product.tags.includes('high-protein') || product.tags.includes('low-calorie') || product.tags.includes('clean-eating');
-                const storeInfo = localStores.find(s => s.name === product.store);
-                return (
-                  <button
-                    key={product.id}
-                    onClick={() => !alreadyAdded && addProduct(product)}
-                    disabled={alreadyAdded}
-                    aria-label={`${product.name} — ${product.price.toFixed(2)} lei, ${product.store}${alreadyAdded ? ` (${t('common.alreadyOnList')})` : ''}`}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
-                      alreadyAdded
-                        ? "border-green-300 bg-green-50 opacity-70"
-                        : isMealPlan
-                        ? "border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 active:scale-[0.98]"
-                        : "border-gray-100 bg-white hover:border-indigo-300 hover:bg-indigo-50 active:scale-[0.98]"
-                    }`}
-                  >
-                    <span className="text-3xl flex-shrink-0">{product.image}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-gray-900 truncate" style={{ fontWeight: 700 }}>
-                          {product.name}
-                        </span>
-                        {isMealPlan && (
-                          <Leaf className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <span className="text-2xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">
-                          {product.store}
-                        </span>
-                        <span className="text-2xs text-gray-400">{product.brand}</span>
-                        {storeInfo && (
-                          <span className="text-2xs text-gray-400">· {storeInfo.distanceKm} km</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-0.5 text-[9px] text-gray-400">
-                        <span>{product.caloriesPer100} kcal</span>
-                        <span>{t('logMealExt.proteinShort')}: {product.protein}g</span>
-                        <span>{t('logMealExt.carbsShort')}: {product.carbs}g</span>
-                        <span>{t('logMealExt.fatShort')}: {product.fat}g</span>
-                        <span className="text-gray-300">/100{product.unit === 'l' || product.unit === 'ml' ? 'ml' : 'g'}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className="text-sm text-indigo-600" style={{ fontWeight: 800 }}>
-                        {product.price.toFixed(2)} lei
-                      </span>
-                      {alreadyAdded ? (
-                        <div className="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center">
-                          <Check className="w-4 h-4 text-white" />
-                        </div>
-                      ) : (
-                        <div className="w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center">
-                          <Plus className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        {/* Meal plan import CTA */}
+        {mealPlanSuggestions.length > 0 && !searchQuery && (
+          <div className="px-3 sm:px-4 py-2">
+            {mealPlanAddedCount > 0 ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                <div className="text-green-700 text-sm font-bold">✓ {mealPlanAddedCount} termék hozzáadva!</div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowMealPlanImport(true)}
+                className="w-full bg-teal-50 border border-teal-200 rounded-xl p-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📋</span>
+                  <div>
+                    <div className="text-xs font-bold text-teal-700">Heti étrendből ({mealPlanSuggestions.length} termék)</div>
+                    <div className="text-2xs text-teal-600">Koppints a hozzáadáshoz</div>
+                  </div>
+                </div>
+              </button>
+            )}
+            {showMealPlanImport && (
+              <div className="mt-2 bg-white border border-gray-200 rounded-xl p-3">
+                <p className="text-sm text-gray-700 mb-3">{mealPlanSuggestions.length} termék hozzáadása a listához?</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowMealPlanImport(false)} className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg">Mégse</button>
+                  <button onClick={handleAutoPopulateFromMealPlan} className="flex-1 py-2 text-sm font-bold text-white bg-teal-600 rounded-lg">Hozzáadás</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Shopping List Items */}
+        {/* Shopping list items */}
         {totalItems > 0 && (
           <div className="px-3 sm:px-4 lg:px-6 py-3">
             <div className="flex items-center justify-between mb-3">
@@ -536,7 +425,7 @@ export function ShoppingList() {
                 <h3 className="text-sm text-gray-800 flex items-center gap-2" style={{ fontWeight: 800 }}>
                   <ShoppingBag className="w-4 h-4 text-indigo-500" />
                   {t('shopping.shoppingList')}{' '}
-                  ({selectedStore ? `${filteredShoppingItems.length}/${totalItems}` : totalItems})
+                  ({totalItems})
                 </h3>
                 <DSMCoachMark
                   id="shopping-swipe-delete"
@@ -548,19 +437,15 @@ export function ShoppingList() {
               </div>
               {checkedCount > 0 && (
                 <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full" style={{ fontWeight: 700 }}>
-                  {checkedCount}/{filteredShoppingItems.length} {t('shopping.done').toLowerCase()}
+                  {checkedCount}/{totalItems} {t('shopping.done').toLowerCase()}
                 </span>
               )}
             </div>
 
-            {filteredShoppingItems.length === 0 && selectedStore && (
-              <div className="text-center py-6">
-                <p className="text-sm text-gray-400">Nincs termék a listán ebből az üzletből.</p>
-              </div>
-            )}
-
             <div className="space-y-1.5">
-              {filteredShoppingItems.map((item) => (
+              {[...shoppingItems]
+                .sort((a, b) => Number(a.checked) - Number(b.checked))
+                .map((item) => (
                 <DSMSwipeAction
                   key={item.product.id}
                   onSwipeLeft={() => removeItem(item.product.id)}
@@ -569,11 +454,10 @@ export function ShoppingList() {
                   <div
                     className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
                       item.checked
-                        ? "bg-gray-50 border-gray-200"
+                        ? "bg-gray-50 border-gray-200 opacity-40"
                         : "bg-white border-gray-100 hover:border-indigo-200"
                     }`}
                   >
-                    {/* Checkbox */}
                     <button
                       onClick={() => toggleItemCheck(item.product.id)}
                       aria-label={item.checked ? t('shopping.uncheckItem') : t('shopping.checkItem')}
@@ -586,7 +470,6 @@ export function ShoppingList() {
                       {item.checked && <Check className="w-4 h-4 text-white" />}
                     </button>
 
-                    {/* Product info */}
                     <span className="text-xl flex-shrink-0">{item.product.image}</span>
                     <div className="flex-1 min-w-0">
                       <div
@@ -595,14 +478,15 @@ export function ShoppingList() {
                       >
                         {item.product.name}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xs text-gray-500">
-                          {item.product.store} · {item.product.price.toFixed(2)} lei
-                        </span>
+                      <div className="text-2xs text-gray-400">legjobb ár: {item.product.store}</div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className={`text-sm font-bold ${item.checked ? "text-gray-400 line-through" : "text-teal-600"}`}>
+                        {item.product.price.toFixed(2)} lei
                       </div>
                     </div>
 
-                    {/* Remove */}
                     <button
                       onClick={() => removeItem(item.product.id)}
                       aria-label={t('shopping.remove')}
@@ -617,8 +501,25 @@ export function ShoppingList() {
           </div>
         )}
 
+        {/* Smart Store Panel */}
+        {topRecommendation && uncheckedItems.length > 0 && (
+          <SmartStorePanel
+            topRec={topRecommendation}
+            twoStoreCombo={twoStoreCombo}
+            uncheckedCount={uncheckedItems.length}
+            onStopBy={() => {
+              recordStoreVisit(topRecommendation.store.name);
+              setStopByOpen(true);
+            }}
+            onOrder={() => {
+              recordStoreVisit(topRecommendation.store.name);
+              setOrderOpen(true);
+            }}
+          />
+        )}
+
         {/* Empty state */}
-        {totalItems === 0 && !searchQuery && !selectedCategory && (
+        {totalItems === 0 && !searchQuery && (
           <div className="text-center py-8 px-4">
             <div className="text-5xl mb-3">🛒</div>
             <h3 className="text-lg text-gray-900 mb-1" style={{ fontWeight: 700 }}>
@@ -629,226 +530,23 @@ export function ShoppingList() {
             </p>
           </div>
         )}
+
+        <div className="pb-24" />
       </div>
 
-      {/* Fixed AI Store Finder CTA - always visible above bottom nav */}
-      <div className="flex-shrink-0 px-3 sm:px-4 py-2.5 bg-white/95 backdrop-blur-lg border-t border-gray-100">
-        <button
-          onClick={handleFindStores}
-          className="w-full bg-primary text-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition-all active:scale-[0.98]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 text-left">
-              <div className="text-white/70 text-[9px] font-bold tracking-wider">{t('shopping.aiStoreFinder')}</div>
-              <h3 className="text-sm mb-0" style={{ fontWeight: 800 }}>
-                {t('shopping.findStores')}
-              </h3>
-              <p className="text-white/80 text-2xs">Marosvásárhely · {t('common.realStoresDelivery')}</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-white/80" />
-          </div>
-        </button>
-      </div>
-
-      {/* Store Finder Modal */}
-      {showStoreView && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={t('shopping.nearbyStores')}>
-          <div className="bg-white w-full max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="bg-primary px-5 py-5 rounded-t-3xl flex-shrink-0">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center">
-                    <Store className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl text-white" style={{ fontWeight: 800 }}>
-                      {t('shopping.nearbyStores')}
-                    </h2>
-                    <p className="text-white/80 text-xs">
-                      Marosvásárhely · {totalItems} {t('shopping.product')} {t('shopping.onList')}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowStoreView(false)}
-                  className="w-9 h-9 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-xl flex items-center justify-center transition-colors"
-                  aria-label={t('shopping.close')}
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            </div>
-
-            {/* Store List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {isLoadingStores ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4 animate-pulse">
-                    <Sparkles className="w-7 h-7 text-purple-500 animate-spin" />
-                  </div>
-                  <p className="text-gray-600" style={{ fontWeight: 600 }}>
-                    {t('shopping.analyzingStores')}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">{t('shopping.searchingStores')}</p>
-                </div>
-              ) : (
-                <>
-                  {/* Best match hint */}
-                  {storeMatches.length > 0 && (
-                    <div className="bg-primary/5 border-2 border-primary/20 rounded-xl p-3">
-                      <div className="flex items-center gap-2">
-                        <BadgeCheck className="w-5 h-5 text-blue-600" />
-                        <span className="text-sm text-blue-800" style={{ fontWeight: 700 }}>
-                          {t('shopping.bestChoice')}: {storeMatches[0].name}
-                        </span>
-                        <span className="text-xs text-blue-600 ml-auto">
-                          {storeMatches[0].matchCount} {t('shopping.product')}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Stores with matches */}
-                  {storeMatches.map((store, index) => (
-                    <div
-                      key={store.name}
-                      className={`border-2 rounded-2xl p-4 transition-all ${
-                        index === 0
-                          ? "border-blue-300 bg-primary/5"
-                          : "border-gray-200 hover:border-purple-300"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="text-3xl">{store.logo}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-gray-900" style={{ fontWeight: 700 }}>
-                              {store.name}
-                            </h3>
-                            {store.hasDelivery && (
-                              <span className="text-2xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                                <Truck className="w-3 h-3" />
-                                {t('shopping.delivery')}
-                              </span>
-                            )}
-                            {index === 0 && (
-                              <span className="text-2xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">
-                                #1
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 truncate">{store.address}</p>
-                          {store.hasDelivery && store.deliveryPartner && (
-                            <p className="text-2xs text-indigo-500 font-bold mt-0.5">
-                              via {store.deliveryPartner}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Stats row */}
-                      <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="bg-white/80 rounded-lg p-2 text-center border border-gray-100">
-                          <div className="text-xs text-gray-500">{t('shopping.products')}</div>
-                          <div className="text-sm text-indigo-600" style={{ fontWeight: 800 }}>
-                            {store.matchCount}/{totalItems}
-                          </div>
-                        </div>
-                        <div className="bg-white/80 rounded-lg p-2 text-center border border-gray-100">
-                          <div className="text-xs text-gray-500">{t('shopping.estimatedPrice')}</div>
-                          <div className="text-sm text-gray-900" style={{ fontWeight: 800 }}>
-                            {store.estimatedTotal.toFixed(0)} lei
-                          </div>
-                        </div>
-                        <div className="bg-white/80 rounded-lg p-2 text-center border border-gray-100">
-                          <div className="text-xs text-gray-500">{t('shopping.open')}</div>
-                          <div className="text-sm text-gray-900" style={{ fontWeight: 700 }}>
-                            {store.openHours.split(" - ")[1]}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Matched items preview */}
-                      {store.matchedItems.length > 0 && (
-                        <div className="flex items-center gap-1 mb-3 overflow-hidden">
-                          {store.matchedItems.slice(0, 6).map((item, i) => (
-                            <span key={i} className="text-lg flex-shrink-0">{item.product.image}</span>
-                          ))}
-                          {store.matchedItems.length > 6 && (
-                            <span className="text-xs text-gray-400 ml-1">
-                              +{store.matchedItems.length - 6}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openInGoogleMaps(store)}
-                          className="flex-1 bg-primary text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
-                          style={{ fontWeight: 700 }}
-                        >
-                          <Navigation className="w-4 h-4" />
-                          <span className="text-sm">{t('shopping.navigate')}</span>
-                        </button>
-                        {store.hasDelivery ? (
-                          <button
-                            onClick={() => {
-                              setShowStoreView(false);
-                              navigate(`/checkout?store=${encodeURIComponent(store.name)}`);
-                            }}
-                            className="flex-1 bg-primary text-white py-3 rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
-                            style={{ fontWeight: 700 }}
-                          >
-                            <Truck className="w-4 h-4" />
-                            <span className="text-sm">{t('shopping.order')}</span>
-                          </button>
-                        ) : (
-                          <div className="flex-1 bg-gray-100 text-gray-400 py-3 rounded-xl flex items-center justify-center gap-2 cursor-default">
-                            <Package className="w-4 h-4" />
-                            <span className="text-xs" style={{ fontWeight: 600 }}>{t('shopping.noDelivery')}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Delivery info */}
-                      {store.hasDelivery && store.deliveryFee !== undefined && (
-                        <div className="flex items-center gap-3 mt-2 text-2xs text-gray-500">
-                          <span>{t('shopping.deliveryFee')}: {store.deliveryFee} lei</span>
-                          {store.minOrder && <span>{t('shopping.minOrder')}: {store.minOrder} lei</span>}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Stores without matches */}
-                  {localStores
-                    .filter((s) => !storeMatches.find((m) => m.name === s.name))
-                    .map((store) => (
-                      <div key={store.name} className="border-2 border-gray-100 rounded-2xl p-4 opacity-60">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{store.logo}</span>
-                          <div className="flex-1">
-                            <div className="text-sm text-gray-600" style={{ fontWeight: 600 }}>
-                              {store.name}
-                            </div>
-                            <div className="text-xs text-gray-400">{store.address}</div>
-                          </div>
-                          <span className="text-xs text-gray-400">0 {t('shopping.product')}</span>
-                        </div>
-                      </div>
-                    ))}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Bottom sheets */}
+      <StoreStopBySheet
+        open={stopByOpen}
+        onClose={() => setStopByOpen(false)}
+        store={topRecommendation?.store ?? null}
+        allUncheckedItems={uncheckedItems}
+      />
+      <OrderDeliverySheet
+        open={orderOpen}
+        onClose={() => setOrderOpen(false)}
+        topRecommendation={topRecommendation}
+        twoStoreCombo={twoStoreCombo}
+      />
     </div>
   );
 }
