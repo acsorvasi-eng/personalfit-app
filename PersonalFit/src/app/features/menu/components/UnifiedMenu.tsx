@@ -1591,6 +1591,19 @@ export function UnifiedMenu() {
           </div>
         )}
       </AnimatePresence>
+
+      <DataUploadSheet
+        open={uploadSheetOpen}
+        onClose={() => setUploadSheetOpen(false)}
+        onComplete={() => appData.refresh()}
+      />
+      <GenerateMealPlanSheet
+        open={generateSheetOpen}
+        onClose={() => setGenerateSheetOpen(false)}
+        foods={[]}
+        dailyCalorieTarget={calorieTarget}
+        onSaved={() => { setGenerateSheetOpen(false); appData.refresh(); }}
+      />
     </div>
   );
 }
