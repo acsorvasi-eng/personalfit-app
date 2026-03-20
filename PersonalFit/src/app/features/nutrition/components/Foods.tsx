@@ -865,8 +865,8 @@ export function Foods() {
                   const inputs = chipsToSave.map((chip) => {
                     // Prefer category from the API lookup; fall back to local inference
                     const API_CAT_MAP: Record<string, FoodCategory> = {
-                      'Fehérje': 'Protein', 'Zsír': 'Fat', 'Szénhidrát': 'Carbs',
-                      'Tejtermék': 'Dairy', 'Zöldség': 'Vegetable', 'Gyümölcs': 'Fruit',
+                      'Fehérje': 'Feherje', 'Zsír': 'Egeszseges_zsir', 'Szénhidrát': 'Komplex_szenhidrat',
+                      'Tejtermék': 'Tejtermek', 'Zöldség': 'Zoldseg', 'Gyümölcs': 'Gyumolcs',
                     };
                     const cat: FoodCategory = chip.apiCategory
                       ? (API_CAT_MAP[chip.apiCategory] ?? semanticCategoryToFoodCategory(inferSemanticCategoryFromName(chip.name)))

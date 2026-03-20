@@ -17,6 +17,7 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../../../utils/currencyConverter";
 import { ProfileHeader } from "../../../components/ProfileHeader";
 import { DSMCard, DSMSectionTitle, DSMButton } from "../../../components/dsm";
+import { DSMBottomSheet } from "../../../components/dsm/ux-patterns";
 import { DSMProfileTabs } from "../../../components/dsm/ProfileTabs";
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 import { getTrialInfo, TRIAL_DAYS } from "../../../components/onboarding/SubscriptionScreen";
@@ -26,7 +27,6 @@ import { useAppData } from "../../../hooks/useAppData";
 import { performFullReset } from "../../../backend/services/ResetService";
 import { useStagingManager } from "../../../hooks/useStagingManager";
 import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
-import { SUPPORTED_LANGUAGES, LANGUAGE_META } from "../../../../i18n";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
 import { getUserProfile, saveUserProfile, getMealSettings } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
@@ -1159,16 +1159,6 @@ function SettingsCard({ sectionTitle, children }: { sectionTitle: string; childr
   );
 }
 
-function getLanguagesSettings(): { code: LanguageCode; name: string; flag: string }[] {
-  const meta = LANGUAGE_META;
-  return SUPPORTED_LANGUAGES.map((code) => ({
-    code,
-    name: meta[code]?.name ?? code,
-    flag: meta[code]?.flag ?? '',
-  }));
-}
-const LANGUAGES_SETTINGS = getLanguagesSettings();
-
 function SettingsTabContent(props: {
   appData: ReturnType<typeof useAppData>;
   staging: ReturnType<typeof useStagingManager>;
@@ -1201,11 +1191,44 @@ function SettingsTabContent(props: {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user, subscriptionActive } = useAuth();
-  const { language, setLanguage } = useLanguage();
   const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
   useEffect(() => { getTrialInfo().then(setTrial); }, []);
   const [mealCount, setMealCount] = useState(3);
   useEffect(() => { getMealSettings().then(s => setMealCount(s.mealCount || 3)); }, []);
+
+  const [sleepSheetOpen, setSleepSheetOpen] = useState(false);
+  const [wakeTime, setWakeTime] = useState("07:00");
+  const [selectedBedtime, setSelectedBedtime] = useState("");
+  const [selectedCycles, setSelectedCycles] = useState(6);
+  const [bedtimeOptions, setBedtimeOptions] = useState<ReturnType<typeof SleepService.getBedtimeOptions>>([]);
+  useEffect(() => {
+    getUserProfile().then((p) => {
+      if (p?.wakeTime) {
+        setWakeTime(p.wakeTime);
+        const options = SleepService.getBedtimeOptions(p.wakeTime);
+        setBedtimeOptions(options);
+        setSelectedBedtime(p.bedtime ?? options.find((o) => o.cycleCount === 6)?.bedtime ?? "");
+        setSelectedCycles(p.sleepCycles ?? 6);
+      } else {
+        setBedtimeOptions(SleepService.getBedtimeOptions("07:00"));
+      }
+    });
+  }, []);
+  const handleSleepWakeTime = async (time: string) => {
+    setWakeTime(time);
+    const options = SleepService.getBedtimeOptions(time);
+    setBedtimeOptions(options);
+    const preferred = options.find((o) => o.cycleCount === 6);
+    const newBedtime = preferred?.bedtime ?? selectedBedtime;
+    const newCycles = preferred?.cycleCount ?? selectedCycles;
+    if (preferred) { setSelectedBedtime(preferred.bedtime); setSelectedCycles(preferred.cycleCount); }
+    await SleepService.saveSleepSettings({ wakeTime: time, selectedBedtime: newBedtime, selectedCycles: newCycles });
+  };
+  const handleSleepBedtimeSelect = async (bedtime: string, cycles: number) => {
+    setSelectedBedtime(bedtime);
+    setSelectedCycles(cycles);
+    await SleepService.saveSleepSettings({ wakeTime, selectedBedtime: bedtime, selectedCycles: cycles });
+  };
 
   return (
     <div style={{ background: '#f9fafb', minHeight: '100%', paddingBottom: '1rem' }}>
@@ -1235,36 +1258,24 @@ function SettingsTabContent(props: {
         />
       </SettingsCard>
 
-      {/* Section 3: Language */}
-      <SettingsCard sectionTitle={t('profile.sectionLanguage')}>
-        <div style={{ padding: '0.75rem 1rem 1rem' }}>
-          <div style={{ fontSize: '1rem', fontWeight: 500, color: '#111827' }}>{t('profile.appLanguage')}</div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            {LANGUAGES_SETTINGS.map((lang) => {
-              const isActive = language === lang.code;
-              return (
-                <button
-                  key={lang.code}
-                  type="button"
-                  onClick={() => { setLanguage(lang.code); showToast(t('toast.languageChanged')); if (navigator.vibrate) navigator.vibrate(10); }}
-                  style={{
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: 999,
-                    border: isActive ? '1px solid #d1d5db' : 'none',
-                    background: isActive ? 'white' : '#f3f4f6',
-                    color: isActive ? '#111827' : '#6b7280',
-                    fontWeight: isActive ? 600 : 400,
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {lang.flag} {lang.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {/* Section 3: Sleep */}
+      <SettingsCard sectionTitle={t('profile.sectionSleep')}>
+        <SettingsRow
+          title={t('profile.sleepRowTitle')}
+          subtitle={wakeTime ? `${wakeTime}${selectedBedtime ? ` → ${selectedBedtime}` : ''}` : undefined}
+          rightText={t('profile.sleepRowLink')}
+          onClick={() => setSleepSheetOpen(true)}
+        />
       </SettingsCard>
+      <DSMBottomSheet open={sleepSheetOpen} onClose={() => setSleepSheetOpen(false)} title={t('profile.sectionSleep')}>
+        <SleepSetup
+          wakeTime={wakeTime}
+          bedtimeOptions={bedtimeOptions}
+          selectedBedtime={selectedBedtime}
+          onWakeTimeChange={handleSleepWakeTime}
+          onBedtimeSelect={handleSleepBedtimeSelect}
+        />
+      </DSMBottomSheet>
 
       {/* Section 4: Subscription */}
       <SettingsCard sectionTitle={t('profile.sectionSubscription')}>
