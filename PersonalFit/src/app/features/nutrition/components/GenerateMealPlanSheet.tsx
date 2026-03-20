@@ -319,8 +319,12 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       const responseBody = await resp.json().catch(() => null);
       if (!resp.ok) {
         const raw = responseBody?.error || responseBody?.message || `Server error ${resp.status}`;
-        // Detect Anthropic billing error and show a friendly message
-        const isBillingError = raw.includes('credit balance') || raw.includes('billing') || raw.includes('Plans & Billing');
+        // Detect Anthropic billing error: explicit flag from backend, or keywords in message
+        const isBillingError = responseBody?.billing === true
+          || raw.includes('credit balance')
+          || raw.includes('billing')
+          || raw.includes('Plans & Billing')
+          || raw.includes('billing_error');
         throw new Error(isBillingError
           ? 'Az Anthropic API kredit elfogyott. Töltsd fel a krediteket a console.anthropic.com > Billing oldalon, majd próbáld újra.'
           : raw);

@@ -327,6 +327,8 @@ Generáld le mind a ${clampedDays} napot:`;
   } catch (err: any) {
     const msg = err?.message ?? 'Internal server error';
     console.error('[generate-meal-plan] Fatal error:', msg);
-    return res.status(500).json({ error: msg });
+    // Surface billing errors with a specific flag so the frontend can show a friendly message
+    const isBilling = msg.includes('credit balance') || msg.includes('billing') || msg.includes('Plans & Billing') || msg.includes('billing_error') || err?.status === 400;
+    return res.status(500).json({ error: msg, billing: isBilling });
   }
 }
