@@ -460,7 +460,6 @@ export function ProfileSetupWizard() {
     t('wizard.meals.title'),
     t('wizard.sport.title'),
     t('wizard.sleep.title'),
-    t('wizard.summary.title'),
   ];
 
   const [step, setStep] = useState(0);
@@ -948,7 +947,6 @@ export function ProfileSetupWizard() {
             {step === 2 && <StepMeals mealCount={mealCount} setMealCount={setMealCount} mealModel={mealModel} setMealModel={setMealModel} />}
             {step === 3 && <StepSport activity={activity} setActivity={setActivity} sports={sports} addSport={addSport} removeSport={removeSport} updateSport={updateSport} toggleSportDay={toggleSportDay} showSportPicker={showSportPicker} setShowSportPicker={setShowSportPicker} weightKg={weight || 70} />}
             {step === 4 && <StepSleep wakeTime={wakeTime} setWakeTime={setWakeTime} selectedCycles={selectedCycles} setSelectedCycles={setSelectedCycles} bedtimeOptions={bedtimeOptions} />}
-            {step === 5 && <StepSummary dailyTarget={dailyTarget} waterLiters={waterLiters} bedtime={bedtime} sleepDuration={sleepDuration} selectedFoodsCount={selectedFoods.size} mealCount={mealCount} mealModel={mealModel} goal={goal} />}
             {step === LEGACY_FOODS_STEP && (
               <div>
                 <StepFoods

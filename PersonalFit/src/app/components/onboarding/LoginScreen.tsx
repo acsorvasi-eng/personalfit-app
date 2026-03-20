@@ -31,17 +31,17 @@ function GoogleIcon() {
   );
 }
 
-// ─── Firebase error → human-readable HU message ──────────────────
-function getAuthErrorMessage(code: string): string {
+// ─── Firebase error → translated message ─────────────────────────
+function getAuthErrorMessage(code: string, t: (k: string) => string): string {
   switch (code) {
     case 'auth/user-not-found':
-    case 'auth/invalid-credential': return 'Nem találtunk ilyen fiókot.';
-    case 'auth/wrong-password':     return 'Hibás jelszó.';
-    case 'auth/email-already-in-use': return 'Ez az email már foglalt — lépj be!';
-    case 'auth/weak-password':      return 'A jelszónak legalább 6 karakter kell.';
-    case 'auth/invalid-email':      return 'Érvénytelen email cím.';
-    case 'auth/too-many-requests':  return 'Túl sok próbálkozás. Várj egy kicsit.';
-    default:                        return 'Hiba történt. Próbáld újra.';
+    case 'auth/invalid-credential': return t('login.errInvalidCredentials');
+    case 'auth/wrong-password':     return t('login.errInvalidCredentials');
+    case 'auth/email-already-in-use': return t('login.errEmailInUse');
+    case 'auth/weak-password':      return t('login.errWeakPassword');
+    case 'auth/invalid-email':      return t('login.errInvalidEmail');
+    case 'auth/too-many-requests':  return t('login.errTooManyRequests');
+    default:                        return t('login.error');
   }
 }
 
@@ -119,7 +119,7 @@ export function LoginScreen() {
     } catch (err: any) {
       const code = err?.code ?? '';
       if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-        setError('Google bejelentkezés sikertelen. Próbáld újra.');
+        setError(t('login.googleError'));
       }
     } finally {
       setGoogleLoading(false);
@@ -130,7 +130,7 @@ export function LoginScreen() {
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || password.length < 6) {
-      setError('Add meg az emailt és legalább 6 karakteres jelszót.');
+      setError(t('login.emailValidationError'));
       return;
     }
     setIsSubmitting(true);
@@ -143,7 +143,7 @@ export function LoginScreen() {
       }
       onAuthSuccess();
     } catch (err: any) {
-      setError(getAuthErrorMessage(err?.code ?? ''));
+      setError(getAuthErrorMessage(err?.code ?? '', t));
     } finally {
       setIsSubmitting(false);
     }
@@ -255,19 +255,17 @@ export function LoginScreen() {
                   className="flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors -ml-1"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span className="text-sm">Vissza</span>
+                  <span className="text-sm">{t('login.back')}</span>
                 </button>
               )}
 
               {/* Heading */}
               <div>
                 <h1 className="text-2xl font-semibold text-foreground mb-1">
-                  {hasCompletedFullFlow ? 'Üdv vissza!' : `Üdv, ${name}!`}
+                  {hasCompletedFullFlow ? t('login.welcomeBack') : t('login.welcomeNew').replace('{name}', name)}
                 </h1>
                 <p className="text-gray-500 text-sm">
-                  {authMode === 'signup'
-                    ? 'Hozd létre a fiókodat — ingyenes, 30 másodperc.'
-                    : 'Lépj be a fiókodba.'}
+                  {authMode === 'signup' ? t('login.createAccountSubtitle') : t('login.signInSubtitle')}
                 </p>
               </div>
 
@@ -280,13 +278,13 @@ export function LoginScreen() {
                 {googleLoading
                   ? <Loader2 className="w-5 h-5 animate-spin" />
                   : <GoogleIcon />}
-                Folytatás Google-lel
+                {t('login.continueWithGoogle')}
               </button>
 
               {/* Divider */}
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400">vagy</span>
+                <span className="text-xs text-gray-400">{t('login.or')}</span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
 
@@ -310,7 +308,7 @@ export function LoginScreen() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => { setPassword(e.target.value); setError(null); }}
-                    placeholder="Jelszó (min. 6 karakter)"
+                    placeholder={t('login.passwordShort')}
                     autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
                     className="w-full h-12 pl-12 pr-12 rounded-2xl border-2 border-border bg-background text-foreground text-sm placeholder:text-gray-400 focus:outline-none focus:border-primary transition-colors"
                   />
@@ -334,7 +332,7 @@ export function LoginScreen() {
                   className="w-full h-14 rounded-2xl"
                 >
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {authMode === 'signup' ? 'Fiók létrehozása' : 'Belépés'}
+                  {authMode === 'signup' ? t('login.createAccountBtn') : t('login.signInBtn')}
                 </DSMButton>
               </form>
 
@@ -345,9 +343,7 @@ export function LoginScreen() {
                   onClick={() => { setAuthMode(m => m === 'signup' ? 'signin' : 'signup'); setError(null); }}
                   className="text-sm text-gray-500 hover:text-primary transition-colors"
                 >
-                  {authMode === 'signup'
-                    ? 'Van már fiókod? Lépj be →'
-                    : 'Nincs még fiókod? Regisztrálj →'}
+                  {authMode === 'signup' ? t('login.switchToSignIn') : t('login.switchToSignUp')}
                 </button>
               </div>
             </motion.div>
