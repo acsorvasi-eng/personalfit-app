@@ -1656,19 +1656,27 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-medium text-gray-700">{t('wizard.sport.sportsLabel')}</label>
-          <button
-            onClick={() => setShowSportPicker(true)}
-            className="flex items-center gap-1 text-xs text-primary font-medium"
-          >
-            <Plus className="w-3.5 h-3.5" /> {t('wizard.sport.addSport')}
-          </button>
+          {sports.length > 0 && (
+            <button
+              onClick={() => setShowSportPicker(true)}
+              className="flex items-center gap-1 text-xs text-primary font-medium touch-manipulation"
+            >
+              <Plus className="w-3.5 h-3.5" /> {t('wizard.sport.addSport')}
+            </button>
+          )}
         </div>
 
         {sports.length === 0 && (
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-400">{t('wizard.sport.noSports')}</p>
-            <p className="text-xs text-gray-300 mt-1">{t('wizard.sport.noSportsHint')}</p>
-          </div>
+          <button
+            onClick={() => setShowSportPicker(true)}
+            className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-6 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all touch-manipulation cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Plus className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-sm font-medium text-gray-500">{t('wizard.sport.addSport')}</span>
+            <span className="text-xs text-gray-300">{t('wizard.sport.noSportsHint')}</span>
+          </button>
         )}
 
         {sports.map(s => (
