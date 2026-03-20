@@ -8,6 +8,7 @@ import type { PlanFood } from "../../../hooks/usePlanData";
 import * as NutritionPlanSvc from "../../../backend/services/NutritionPlanService";
 import { toast } from "sonner";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { useAuth } from "../../../contexts/AuthContext";
 import { getUserProfile } from "../../../backend/services/UserProfileService";
 import { getSetting } from "../../../backend/services/SettingsService";
 import { getMET } from "../../../utils/metHelpers";
@@ -117,9 +118,43 @@ function newSport(): SportEntry {
   };
 }
 
+// ─── UsageBadge ───────────────────────────────────────────────
+function UsageBadge({
+  remaining, limitTotal, isAdmin, resetsAt, t,
+}: {
+  remaining: number | null;
+  limitTotal: number | null;
+  isAdmin: boolean;
+  resetsAt: string;
+  t: (k: string) => string;
+}) {
+  if (isAdmin || remaining === null || limitTotal === null) return null;
+  if (remaining === 0) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-[10px] px-[14px] py-[10px] mb-[10px] text-[0.82rem] text-red-600 text-center">
+        <div className="font-bold">{t('generate.limitReached')}</div>
+        {resetsAt && (
+          <div className="text-[0.78rem] mt-[3px] text-red-400">
+            {t('generate.limitResetsAt').replace('{date}', resetsAt)}
+          </div>
+        )}
+      </div>
+    );
+  }
+  const used = limitTotal - remaining;
+  return (
+    <div className="text-center text-[0.78rem] text-gray-400 mb-[10px]">
+      {t('generate.limitUsed')
+        .replace('{used}', String(used))
+        .replace('{limit}', String(limitTotal))}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────
 export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) {
   const { language, t } = useLanguage();
+  const { user } = useAuth();
   const [step, setStep] = useState<WizardStep>("welcome");
   const [personal, setPersonal] = useState<PersonalData>({
     gender: "male", age: "", heightCm: "", weightKg: "", goal: "maintain",
@@ -133,6 +168,10 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
   const [error, setError] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [burnPerDay, setBurnPerDay] = useState<Record<number, number>>({});
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [limitTotal, setLimitTotal] = useState<number | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [resetsAt, setResetsAt] = useState<string>('');
 
   // ── Auto-load saved profile when sheet opens ─────────────────
   useEffect(() => {
@@ -172,6 +211,19 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       }
     }).catch(() => {});
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    fetch(`/api/usage?userId=${encodeURIComponent(user.id)}`)
+      .then(r => r.json())
+      .then((data: { remaining: number | null; limit: number | null; isAdmin: boolean; resetsAt: string }) => {
+        setRemaining(data.remaining ?? null);
+        setLimitTotal(data.limit ?? null);
+        setIsAdminUser(data.isAdmin ?? false);
+        setResetsAt(data.resetsAt ?? '');
+      })
+      .catch(() => {});
+  }, [open, user?.id]);
 
   const bmr = calcBMR(personal);
   const tdee = calcTDEE(bmr, activity.level);
@@ -246,6 +298,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user?.id,
           ingredients: validFoods.map(f => ({
             name: f.name,
             calories_per_100g: f.calories ?? 100,
@@ -275,6 +328,10 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       const data = responseBody;
       setGeneratedPlan(data.nutritionPlan);
       setStats(data.stats);
+      if (data.remaining !== undefined) setRemaining(data.remaining);
+      if (data.limit !== undefined) setLimitTotal(data.limit);
+      if (data.isAdmin !== undefined) setIsAdminUser(data.isAdmin);
+      if (data.resetsAt) setResetsAt(data.resetsAt);
       setStep("preview");
     } catch (e: any) {
       setError(e.message || t('generatePlan.unknownError'));
@@ -316,6 +373,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       setStep("welcome"); setGeneratedPlan(null); setStats(null); setError(null); setBurnPerDay({});
       setPersonal({ gender: "male", age: "", heightCm: "", weightKg: "", goal: "maintain" });
       setActivity({ level: "moderate", sports: [] });
+      setRemaining(null); setLimitTotal(null); setIsAdminUser(false); setResetsAt('');
     }, 400);
   }
 
@@ -409,9 +467,14 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     </div>
                   </div>
 
+                  <UsageBadge remaining={remaining} limitTotal={limitTotal} isAdmin={isAdminUser} resetsAt={resetsAt} t={t} />
                   {profileLoaded && personalValid ? (
                     <>
-                      <button onClick={handleGenerate} className={`${btnPrimary} w-full mb-[10px]`}>
+                      <button
+                        onClick={handleGenerate}
+                        disabled={remaining === 0 && !isAdminUser}
+                        className={`${btnPrimary} w-full mb-[10px] ${remaining === 0 && !isAdminUser ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
                         {t('generatePlan.generateDirect')} <ArrowRight size={18} />
                       </button>
                       <button onClick={() => setStep("personal")} className="w-full py-[11px] rounded-[13px] border-[1.5px] border-border bg-gray-50 cursor-pointer text-[0.85rem] text-foreground/60 font-medium">
@@ -681,10 +744,14 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     </div>
                   </div>
 
+                  <UsageBadge remaining={remaining} limitTotal={limitTotal} isAdmin={isAdminUser} resetsAt={resetsAt} t={t} />
                   <div className="flex gap-2">
                     <button onClick={() => setStep("activity")} className={btnBack}><ArrowLeft size={17} color="#6b7280" /></button>
-                    <button onClick={handleGenerate} disabled={foods.length === 0}
-                      className={`${btnPrimary} flex-1 ${foods.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    <button
+                      onClick={handleGenerate}
+                      disabled={foods.length === 0 || (remaining === 0 && !isAdminUser)}
+                      className={`${btnPrimary} flex-1 ${foods.length === 0 || (remaining === 0 && !isAdminUser) ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
                       <Sparkles size={17} /> {t('generatePlan.generateButton')}
                     </button>
                   </div>
