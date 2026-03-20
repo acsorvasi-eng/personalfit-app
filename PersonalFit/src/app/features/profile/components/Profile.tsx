@@ -28,7 +28,7 @@ import { useStagingManager } from "../../../hooks/useStagingManager";
 import { useLanguage, LanguageCode } from "../../../contexts/LanguageContext";
 import { SUPPORTED_LANGUAGES, LANGUAGE_META } from "../../../../i18n";
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
-import { getUserProfile, saveUserProfile } from "../../../backend/services/UserProfileService";
+import { getUserProfile, saveUserProfile, getMealSettings } from "../../../backend/services/UserProfileService";
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 import { SleepSetup } from "../../sleep/components/SleepSetup";
 import { SleepService } from "../../../backend/services/SleepService";
@@ -1204,6 +1204,8 @@ function SettingsTabContent(props: {
   const { language, setLanguage } = useLanguage();
   const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
   useEffect(() => { getTrialInfo().then(setTrial); }, []);
+  const [mealCount, setMealCount] = useState(3);
+  useEffect(() => { getMealSettings().then(s => setMealCount(s.mealCount ?? 3)); }, []);
 
   return (
     <div style={{ background: '#f9fafb', minHeight: '100%', paddingBottom: '1rem' }}>
@@ -1220,6 +1222,16 @@ function SettingsTabContent(props: {
           subtitle={t('profile.optionalUpload')}
           rightText={t('profile.loadLink')}
           onClick={onBodyCompOpen}
+        />
+      </SettingsCard>
+
+      {/* Section 2: Meal Schedule */}
+      <SettingsCard sectionTitle={t('profile.sectionMealSchedule')}>
+        <SettingsRow
+          title={t('profile.mealScheduleTitle')}
+          subtitle={t('profile.mealScheduleSubtitle').replace('{n}', String(mealCount))}
+          rightText={t('profile.mealScheduleLink')}
+          onClick={() => navigate('/meal-intervals')}
         />
       </SettingsCard>
 
