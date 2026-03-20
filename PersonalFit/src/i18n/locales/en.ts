@@ -132,6 +132,12 @@ const en: LocalePartial = {
   'login.switchToSignUp': 'No account yet? Sign up →',
   'login.googleError': 'Google sign-in failed. Please try again.',
   'login.emailValidationError': 'Please enter your email and a password of at least 6 characters.',
+  'login.errInvalidCredentials': 'Wrong email or password. Check your details and try again.',
+  'login.errEmailInUse': 'This email is already registered. Sign in instead.',
+  'login.errWeakPassword': 'Password is too weak. Use at least 6 characters.',
+  'login.errInvalidEmail': 'That email address doesn’t look valid.',
+  'login.errTooManyRequests': 'Too many attempts. Wait a moment and try again.',
+  'login.error': 'Something went wrong. Please try again.',
 
   'upload.idle': 'Waiting...',
   'upload.reading_file': 'Reading file...',
@@ -148,6 +154,10 @@ const en: LocalePartial = {
   'upload.error': 'An error occurred',
 
   'splash.appSubtitle': 'Personalized nutrition you actually stick to.',
+
+  'generate.limitUsed': '{used} / {limit} generations used',
+  'generate.limitReached': 'You have reached your monthly limit.',
+  'generate.limitResetsAt': 'Next available: {date}',
 };
 
 export default en;

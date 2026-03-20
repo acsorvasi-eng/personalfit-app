@@ -132,6 +132,12 @@ const ro: LocalePartial = {
   'login.switchToSignUp': 'Nu ai cont? Înregistrează-te →',
   'login.googleError': 'Autentificare Google eșuată. Încearcă din nou.',
   'login.emailValidationError': 'Introdu emailul și o parolă de cel puțin 6 caractere.',
+  'login.errInvalidCredentials': 'Email sau parolă greșită. Verifică datele și încearcă din nou.',
+  'login.errEmailInUse': 'Acest email este deja înregistrat. Conectează-te în schimb.',
+  'login.errWeakPassword': 'Parola este prea slabă. Folosește cel puțin 6 caractere.',
+  'login.errInvalidEmail': 'Adresa de email nu pare validă.',
+  'login.errTooManyRequests': 'Prea multe încercări. Așteaptă puțin și încearcă din nou.',
+  'login.error': 'Ceva nu a mers bine. Încearcă din nou.',
 
   'upload.idle': 'Așteptare...',
   'upload.reading_file': 'Citire fișier...',
@@ -148,6 +154,10 @@ const ro: LocalePartial = {
   'upload.error': 'A apărut o eroare',
 
   'splash.appSubtitle': 'Dietă personalizată, pe care chiar o respecți.',
+
+  'generate.limitUsed': '{used} / {limit} generări utilizate',
+  'generate.limitReached': 'Ai atins limita lunară.',
+  'generate.limitResetsAt': 'Disponibil din: {date}',
 };
 
 export default ro;

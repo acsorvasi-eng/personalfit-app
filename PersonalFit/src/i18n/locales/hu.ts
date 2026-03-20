@@ -135,6 +135,12 @@ const hu = {
   'login.switchToSignUp': 'Nincs még fiókod? Regisztrálj →',
   'login.googleError': 'Google bejelentkezés sikertelen. Próbáld újra.',
   'login.emailValidationError': 'Add meg az emailt és legalább 6 karakteres jelszót.',
+  'login.errInvalidCredentials': 'Hibás email vagy jelszó. Ellenőrizd az adatokat, és próbáld újra.',
+  'login.errEmailInUse': 'Ez az email már regisztrálva van. Lépj be helyette.',
+  'login.errWeakPassword': 'A jelszó túl gyenge. Használj legalább 6 karaktert.',
+  'login.errInvalidEmail': 'Ez az email cím nem tűnik érvényesnek.',
+  'login.errTooManyRequests': 'Túl sok próbálkozás. Várj egy kicsit, majd próbáld újra.',
+  'login.error': 'Valami hiba történt. Próbáld újra.',
 
   'upload.idle': 'Várakozás...',
   'upload.reading_file': 'Fájl beolvasása...',
@@ -151,6 +157,10 @@ const hu = {
   'upload.error': 'Hiba történt',
 
   'splash.appSubtitle': 'Személyre szabott étrend, amit tényleg betartasz.',
+
+  'generate.limitUsed': '{used} / {limit} generálás felhasználva',
+  'generate.limitReached': 'Elérted a havi limitet.',
+  'generate.limitResetsAt': 'Következő lehetőség: {date}',
 } as const;
 
 export default hu;
