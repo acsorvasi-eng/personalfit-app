@@ -26,7 +26,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { saveUserProfile, getDefaultMealSettings, saveMealSettings } from '../../backend/services/UserProfileService';
+import {
+  saveUserProfile,
+  getDefaultMealSettings,
+  saveMealSettings,
+  getDefaultMealsForModel,
+  getDefaultMealsForCount,
+  type MealModel,
+} from '../../backend/services/UserProfileService';
 import { SleepService } from '../../backend/services/SleepService';
 import { createFoodsBatch } from '../../backend/services/FoodCatalogService';
 import { setSetting } from '../../backend/services/SettingsService';
@@ -671,7 +678,15 @@ export function ProfileSetupWizard() {
       // 1. Save profile
       const mealSettings = getDefaultMealSettings();
       mealSettings.mealCount = mealCount;
-      if (effectiveMealModel) mealSettings.mealModel = effectiveMealModel as any;
+
+      const VALID_MODELS: MealModel[] = ['3meals', '5meals', '2meals', 'if16_8', 'if18_6'];
+      const resolvedModel = (effectiveMealModel && VALID_MODELS.includes(effectiveMealModel as MealModel))
+        ? effectiveMealModel as MealModel
+        : undefined;
+      if (resolvedModel) mealSettings.mealModel = resolvedModel;
+      mealSettings.meals = resolvedModel
+        ? getDefaultMealsForModel(resolvedModel)
+        : getDefaultMealsForCount(mealCount);
 
       await saveUserProfile({
         name: user?.name ?? '',

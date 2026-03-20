@@ -1,5 +1,9 @@
 import { buildIngredientSelection, FoodStyle } from './buildIngredientSelection';
 import { SEED_FOODS, ALTERNATIVE_NAMES } from '../data/seedFoods';
+import {
+  getDefaultMealsForCount,
+  getDefaultMealsForModel,
+} from '../backend/services/UserProfileService';
 
 describe('buildIngredientSelection', () => {
   it('empty styles still returns at least 6 items (universal categories)', () => {
@@ -84,5 +88,49 @@ describe('buildIngredientSelection', () => {
     expect(result.has('Harcsa')).toBe(true);
     // Brokkoli is Zöldség (universal) — always included
     expect(result.has('Brokkoli')).toBe(true);
+  });
+});
+
+describe('meal window defaults', () => {
+  it('getDefaultMealsForCount returns correct count for each value', () => {
+    expect(getDefaultMealsForCount(1)).toHaveLength(1);
+    expect(getDefaultMealsForCount(2)).toHaveLength(2);
+    expect(getDefaultMealsForCount(3)).toHaveLength(3);
+    expect(getDefaultMealsForCount(4)).toHaveLength(4);
+    expect(getDefaultMealsForCount(5)).toHaveLength(5);
+  });
+
+  it('getDefaultMealsForModel returns windows with startTime and endTime', () => {
+    const meals = getDefaultMealsForModel('if16_8');
+    expect(meals).toHaveLength(1);
+    expect(meals[0].startTime).toBeDefined();
+    expect(meals[0].endTime).toBeDefined();
+  });
+
+  it('wizard meal settings helper: count=3 gives 3meals windows', () => {
+    const VALID_MODELS = ['3meals', '5meals', '2meals', 'if16_8', 'if18_6'];
+    const mealCount = 3;
+    const effectiveMealModel: string | undefined = undefined;
+    const resolvedModel = (effectiveMealModel && VALID_MODELS.includes(effectiveMealModel))
+      ? effectiveMealModel
+      : undefined;
+    const meals = resolvedModel
+      ? getDefaultMealsForModel(resolvedModel as any)
+      : getDefaultMealsForCount(mealCount);
+    expect(meals).toHaveLength(3);
+  });
+
+  it('wizard meal settings helper: IF 16:8 gives 1 eating window', () => {
+    const VALID_MODELS = ['3meals', '5meals', '2meals', 'if16_8', 'if18_6'];
+    const mealCount = 1;
+    const effectiveMealModel = 'if16_8';
+    const resolvedModel = (effectiveMealModel && VALID_MODELS.includes(effectiveMealModel))
+      ? effectiveMealModel
+      : undefined;
+    const meals = resolvedModel
+      ? getDefaultMealsForModel(resolvedModel as any)
+      : getDefaultMealsForCount(mealCount);
+    expect(meals).toHaveLength(1);
+    expect(meals[0].startTime).toBe('12:00');
   });
 });
