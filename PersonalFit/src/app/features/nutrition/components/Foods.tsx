@@ -51,6 +51,7 @@ import {
   updateFood,
   inferSemanticCategoryFromName,
   semanticCategoryToFoodCategory,
+  migrateFruitCategories,
 } from "../../../backend/services/FoodCatalogService";
 import { PageHeader } from "../../../components/PageHeader";
 import { TabFilter } from "../../../components/TabFilter";
@@ -91,6 +92,7 @@ const CATEGORY_I18N_MAP: Record<string, string> = {
   Huvelyes: "foods.catLegumes",
   Mag: "foods.catSeeds",
   Zoldseg: "foods.catVegetables",
+  Gyumolcs: "foods.catFruit",
   Tojas: "foods.catEgg",
 };
 
@@ -344,8 +346,7 @@ export function Foods() {
     );
   }, []);
 
-  // Egyszeri tisztítás: távolítsuk el a korábban betöltött, teljesen
-  // értelmetlen AI ételeket (korrupt nevek a PDF-ből).
+  // One-time cleanup: remove corrupted AI foods + reclassify fruits stored as vegetables.
   useEffect(() => {
     (async () => {
       try {
@@ -353,8 +354,9 @@ export function Foods() {
         if (removed > 0) {
           console.log(`[Foods] Törölt korrupt AI ételek száma: ${removed}`);
         }
+        await migrateFruitCategories();
       } catch (err) {
-        console.warn("[Foods] cleanupCorruptedAIFoods hiba:", err);
+        console.warn("[Foods] cleanup hiba:", err);
       }
     })();
   }, []);

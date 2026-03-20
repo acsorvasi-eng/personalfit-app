@@ -417,8 +417,7 @@ export function semanticCategoryToFoodCategory(cat: FoodSemanticCategory): FoodC
     case 'vegetable':
       return 'Zoldseg';
     case 'fruit':
-      // Külön "Gyümölcs" kategória nincs, ezért a zöldség alá soroljuk
-      return 'Zoldseg';
+      return 'Gyumolcs';
     case 'fat':
       return 'Egeszseges_zsir';
     case 'dairy':
@@ -846,6 +845,32 @@ OR
  *
  * Visszatér: hány rekordot törölt.
  */
+
+/**
+ * One-time migration: re-categorise foods that were saved as 'Zoldseg' but
+ * are actually fruits (based on Hungarian name heuristics).
+ * Safe to call multiple times — only touches foods with category === 'Zoldseg'.
+ */
+export async function migrateFruitCategories(): Promise<number> {
+  const db = await getDB();
+  const all = await db.getAll<FoodEntity>('foods');
+  let fixed = 0;
+  for (const food of all) {
+    if (food.category === 'Zoldseg') {
+      const semantic = inferSemanticCategoryFromName(food.name);
+      if (semantic === 'fruit') {
+        await db.put('foods', { ...food, category: 'Gyumolcs', updated_at: nowISO() });
+        notifyDBChange({ store: 'foods', action: 'put', key: food.id });
+        fixed++;
+      }
+    }
+  }
+  if (fixed > 0) {
+    console.log(`[FoodCatalog] migrateFruitCategories: fixed ${fixed} food(s)`);
+  }
+  return fixed;
+}
+
 export async function cleanupCorruptedAIFoods(): Promise<number> {
   const db = await getDB();
   const all = await db.getAll<FoodEntity>('foods');

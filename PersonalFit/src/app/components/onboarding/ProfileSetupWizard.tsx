@@ -68,14 +68,14 @@ type DisplayCategory = 'protein' | 'carb' | 'fat' | 'dairy' | 'vegetable' | 'fru
 
 const mapCategory = (cat: DisplayCategory): string => {
   const map: Record<DisplayCategory, string> = {
-    protein: 'protein',
-    carb: 'carbs',
-    fat: 'fat',
-    dairy: 'dairy',
-    vegetable: 'vegetables',
-    fruit: 'fruit',
+    protein: 'Feherje',
+    carb: 'Komplex_szenhidrat',
+    fat: 'Egeszseges_zsir',
+    dairy: 'Tejtermek',
+    vegetable: 'Zoldseg',
+    fruit: 'Gyumolcs',
   };
-  return map[cat] ?? 'other';
+  return map[cat] ?? 'Feherje';
 };
 
 interface SeedFood {

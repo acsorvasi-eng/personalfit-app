@@ -26,6 +26,7 @@ export const FOOD_CATEGORIES = [
   'Huvelyes',
   'Mag',
   'Zoldseg',
+  'Gyumolcs',
   'Tojas',
 ] as const;
 
@@ -40,6 +41,7 @@ export const FOOD_CATEGORY_LABELS: Record<FoodCategory, string> = {
   Huvelyes: 'Huvelyes',
   Mag: 'Mag',
   Zoldseg: 'Zoldseg',
+  Gyumolcs: 'Gyumolcs',
   Tojas: 'Tojas',
 };
 

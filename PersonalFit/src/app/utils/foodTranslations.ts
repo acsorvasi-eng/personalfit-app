@@ -8,7 +8,127 @@ function normalizeToken(token: string): string {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-// Word-level fordítási szótár – bővíthető később.
+// ─── Full food name lookup (HU → EN/RO) ───────────────────────────────────────
+// Built from SEED_FOODS multilingual data. Covers all ~100+ catalog foods.
+// Takes priority over word-level substitution below.
+
+const _RAW_FOOD_NAMES: Array<{ hu: string; en: string; ro: string }> = [
+  // Protein
+  { hu: 'Csirkemell',         en: 'Chicken breast',     ro: 'Piept de pui'       },
+  { hu: 'Csirkecomb',         en: 'Chicken thigh',      ro: 'Pulpă de pui'       },
+  { hu: 'Pulykamell',         en: 'Turkey breast',      ro: 'Piept de curcan'    },
+  { hu: 'Tojás',              en: 'Egg',                ro: 'Ou'                 },
+  { hu: 'Lazac',              en: 'Salmon',             ro: 'Somon'              },
+  { hu: 'Tonhal',             en: 'Tuna',               ro: 'Ton'                },
+  { hu: 'Makréla',            en: 'Mackerel',           ro: 'Macrou'             },
+  { hu: 'Tilápia',            en: 'Tilapia',            ro: 'Tilapia'            },
+  { hu: 'Garnélarák',         en: 'Shrimp',             ro: 'Creveți'            },
+  { hu: 'Sertéshús',          en: 'Pork',               ro: 'Carne de porc'      },
+  { hu: 'Marhahús',           en: 'Beef',               ro: 'Carne de vită'      },
+  { hu: 'Bárány',             en: 'Lamb',               ro: 'Miel'               },
+  { hu: 'Tofu',               en: 'Tofu',               ro: 'Tofu'               },
+  { hu: 'Tempeh',             en: 'Tempeh',             ro: 'Tempeh'             },
+  { hu: 'Lencse',             en: 'Lentils',            ro: 'Linte'              },
+  { hu: 'Csicseriborsó',      en: 'Chickpeas',          ro: 'Năut'               },
+  { hu: 'Fekete bab',         en: 'Black beans',        ro: 'Fasole neagră'      },
+  { hu: 'Fehér bab',          en: 'White beans',        ro: 'Fasole albă'        },
+  { hu: 'Tojásfehérje',       en: 'Egg white',          ro: 'Albuș de ou'        },
+  { hu: 'Szardínia',          en: 'Sardines',           ro: 'Sardine'            },
+  // Carbs
+  { hu: 'Zab',                en: 'Oats',               ro: 'Ovăz'               },
+  { hu: 'Rizs',               en: 'Rice',               ro: 'Orez'               },
+  { hu: 'Barna rizs',         en: 'Brown rice',         ro: 'Orez brun'          },
+  { hu: 'Teljes kiőrlésű kenyér', en: 'Whole grain bread', ro: 'Pâine integrală' },
+  { hu: 'Fehér kenyér',       en: 'White bread',        ro: 'Pâine albă'         },
+  { hu: 'Tészta',             en: 'Pasta',              ro: 'Paste'              },
+  { hu: 'Teljes kiőrlésű tészta', en: 'Whole grain pasta', ro: 'Paste integrale' },
+  { hu: 'Burgonya',           en: 'Potato',             ro: 'Cartofi'            },
+  { hu: 'Édesburgonya',       en: 'Sweet potato',       ro: 'Cartofi dulci'      },
+  { hu: 'Quinoa',             en: 'Quinoa',             ro: 'Quinoa'             },
+  { hu: 'Kukorica',           en: 'Corn',               ro: 'Porumb'             },
+  { hu: 'Hajdina',            en: 'Buckwheat',          ro: 'Hrișcă'             },
+  { hu: 'Árpa',               en: 'Barley',             ro: 'Orz'                },
+  { hu: 'Tortilla',           en: 'Tortilla',           ro: 'Tortilla'           },
+  { hu: 'Zabpehely',          en: 'Oatmeal',            ro: 'Fulgi de ovăz'      },
+  // Fat
+  { hu: 'Avokádó',            en: 'Avocado',            ro: 'Avocado'            },
+  { hu: 'Dió',                en: 'Walnut',             ro: 'Nuci'               },
+  { hu: 'Mandula',            en: 'Almond',             ro: 'Migdale'            },
+  { hu: 'Mogyoró',            en: 'Peanut',             ro: 'Arahide'            },
+  { hu: 'Kesudió',            en: 'Cashew',             ro: 'Caju'               },
+  { hu: 'Pekándió',           en: 'Pecan',              ro: 'Pecan'              },
+  { hu: 'Olívaolaj',          en: 'Olive oil',          ro: 'Ulei de măsline'    },
+  { hu: 'Kókuszolaj',         en: 'Coconut oil',        ro: 'Ulei de cocos'      },
+  { hu: 'Mogyoróvaj',         en: 'Peanut butter',      ro: 'Unt de arahide'     },
+  { hu: 'Chia mag',           en: 'Chia seeds',         ro: 'Semințe de chia'    },
+  { hu: 'Lenmag',             en: 'Flaxseed',           ro: 'Semințe de in'      },
+  { hu: 'Tök mag',            en: 'Pumpkin seeds',      ro: 'Semințe de dovleac' },
+  // Dairy
+  { hu: 'Görög joghurt',      en: 'Greek yogurt',       ro: 'Iaurt grecesc'      },
+  { hu: 'Joghurt',            en: 'Yogurt',             ro: 'Iaurt'              },
+  { hu: 'Túró',               en: 'Cottage cheese',     ro: 'Brânză de vaci'     },
+  { hu: 'Sajt',               en: 'Cheese',             ro: 'Brânză'             },
+  { hu: 'Mozzarella',         en: 'Mozzarella',         ro: 'Mozzarella'         },
+  { hu: 'Ricotta',            en: 'Ricotta',            ro: 'Ricotta'            },
+  { hu: 'Tej',                en: 'Milk',               ro: 'Lapte'              },
+  { hu: 'Kefir',              en: 'Kefir',              ro: 'Chefir'             },
+  { hu: 'Vaj',                en: 'Butter',             ro: 'Unt'                },
+  { hu: 'Tejföl',             en: 'Sour cream',         ro: 'Smântână'           },
+  // Vegetable
+  { hu: 'Brokkoli',           en: 'Broccoli',           ro: 'Broccoli'           },
+  { hu: 'Karfiol',            en: 'Cauliflower',        ro: 'Conopidă'           },
+  { hu: 'Spenót',             en: 'Spinach',            ro: 'Spanac'             },
+  { hu: 'Paradicsom',         en: 'Tomato',             ro: 'Roșie'              },
+  { hu: 'Paprika',            en: 'Bell pepper',        ro: 'Ardei'              },
+  { hu: 'Sárgarépa',          en: 'Carrot',             ro: 'Morcov'             },
+  { hu: 'Uborka',             en: 'Cucumber',           ro: 'Castraveți'         },
+  { hu: 'Fokhagyma',          en: 'Garlic',             ro: 'Usturoi'            },
+  { hu: 'Hagyma',             en: 'Onion',              ro: 'Ceapă'              },
+  { hu: 'Zöldborsó',          en: 'Green peas',         ro: 'Mazăre'             },
+  { hu: 'Zöldbab',            en: 'Green beans',        ro: 'Fasole verde'       },
+  { hu: 'Cukorborsó',         en: 'Sugar snap peas',    ro: 'Mazăre dulce'       },
+  { hu: 'Cékla',              en: 'Beetroot',           ro: 'Sfeclă roșie'       },
+  { hu: 'Kelkáposzta',        en: 'Kale',               ro: 'Kale'               },
+  { hu: 'Saláta',             en: 'Lettuce',            ro: 'Salată'             },
+  { hu: 'Padlizsán',          en: 'Eggplant',           ro: 'Vinete'             },
+  { hu: 'Cukkini',            en: 'Zucchini',           ro: 'Dovlecel'           },
+  { hu: 'Gomba',              en: 'Mushroom',           ro: 'Ciuperci'           },
+  { hu: 'Articsóka',          en: 'Artichoke',          ro: 'Anghinare'          },
+  { hu: 'Spárga',             en: 'Asparagus',          ro: 'Sparanghel'         },
+  // Fruit
+  { hu: 'Alma',               en: 'Apple',              ro: 'Măr'                },
+  { hu: 'Banán',              en: 'Banana',             ro: 'Banană'             },
+  { hu: 'Áfonya',             en: 'Blueberry',          ro: 'Afine'              },
+  { hu: 'Eper',               en: 'Strawberry',         ro: 'Căpșuni'            },
+  { hu: 'Narancs',            en: 'Orange',             ro: 'Portocală'          },
+  { hu: 'Kivi',               en: 'Kiwi',               ro: 'Kiwi'               },
+  { hu: 'Mangó',              en: 'Mango',              ro: 'Mango'              },
+  { hu: 'Görögdinnye',        en: 'Watermelon',         ro: 'Pepene verde'       },
+  { hu: 'Szőlő',              en: 'Grapes',             ro: 'Struguri'           },
+  { hu: 'Körte',              en: 'Pear',               ro: 'Pară'               },
+  { hu: 'Őszibarack',         en: 'Peach',              ro: 'Piersică'           },
+  { hu: 'Cseresznye',         en: 'Cherry',             ro: 'Cireșe'             },
+  { hu: 'Ananász',            en: 'Pineapple',          ro: 'Ananas'             },
+  { hu: 'Grapefruit',         en: 'Grapefruit',         ro: 'Grapefruit'         },
+  { hu: 'Citrom',             en: 'Lemon',              ro: 'Lămâie'             },
+  { hu: 'Málna',              en: 'Raspberry',          ro: 'Zmeură'             },
+  // Goat dairy alternatives
+  { hu: 'Kecske tej',         en: 'Goat milk',          ro: 'Lapte de capră'     },
+  { hu: 'Kecske joghurt',     en: 'Goat yogurt',        ro: 'Iaurt de capră'     },
+  { hu: 'Kecske sajt',        en: 'Goat cheese',        ro: 'Brânză de capră'    },
+  { hu: 'Kecske túró',        en: 'Goat cottage',       ro: 'Brânză proaspătă'   },
+  { hu: 'Kecske tejföl',      en: 'Goat sour cream',    ro: 'Smântână de capră'  },
+  { hu: 'Kecske kefir',       en: 'Goat kefir',         ro: 'Chefir de capră'    },
+  { hu: 'Kecske vaj',         en: 'Goat butter',        ro: 'Unt de capră'       },
+];
+
+/** Normalized HU name → {en, ro} — built at module load time */
+const FOOD_NAME_DICT: Record<string, { en: string; ro: string }> =
+  Object.fromEntries(_RAW_FOOD_NAMES.map(f => [normalizeToken(f.hu), { en: f.en, ro: f.ro }]));
+
+// ─── Word-level fallback ───────────────────────────────────────────────────────
+// Used when the full-name lookup doesn't match (e.g. AI-generated compound names).
+
 const WORD_MAP_EN: Record<string, string> = {
   'tojas': 'egg',
   'tojás': 'egg',
@@ -104,15 +224,16 @@ const WORD_MAP_RO: Record<string, string> = {
 export function translateFoodName(name: string, lang: LanguageCode): string {
   if (!name || lang === 'hu') return name;
 
+  // 1. Full-name dict lookup (SEED_FOODS based — handles all catalog foods)
+  const nameKey = normalizeToken(name);
+  const entry = FOOD_NAME_DICT[nameKey];
+  if (entry) return lang === 'en' ? entry.en : entry.ro;
+
+  // 2. Word-level substitution fallback (handles AI-generated compound names)
   const dict = lang === 'en' ? WORD_MAP_EN : WORD_MAP_RO;
-
-  // Szó + elválasztó alapú bontás, hogy a szóközök / vesszők megmaradjanak
   const parts = name.split(/(\s+|[,()+/-])/);
-
   const translated = parts.map((part) => {
-    // Ha ez csak whitespace vagy elválasztó, hagyjuk
     if (!part.trim() || /(\s+|[,()+/-])/.test(part)) return part;
-
     const key = normalizeToken(part);
     const mapped = dict[key];
     return mapped ?? part;
@@ -120,4 +241,3 @@ export function translateFoodName(name: string, lang: LanguageCode): string {
 
   return translated.join('');
 }
-
