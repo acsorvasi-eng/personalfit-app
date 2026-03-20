@@ -188,6 +188,19 @@ export function Profile() {
   const [isResetting, setIsResetting] = useState(false);
   const appData = useAppData();
 
+  // ─── Avatar card + Daily Goals card state ───────────────────
+  const [personalExpanded, setPersonalExpanded] = useState(false);
+  // Sleep state for Daily Goals card
+  const [sleepSheetOpen, setSleepSheetOpen] = useState(false);
+  const [wakeTime, setWakeTime] = useState("07:00");
+  const [selectedBedtime, setSelectedBedtime] = useState("");
+  const [selectedCycles, setSelectedCycles] = useState(6);
+  const [bedtimeOptions, setBedtimeOptions] = useState<ReturnType<typeof SleepService.getBedtimeOptions>>([]);
+  // Goals sheet state
+  const [calorieSheetOpen, setCalorieSheetOpen] = useState(false);
+  const [waterSheetOpen, setWaterSheetOpen] = useState(false);
+  const [sportSheetOpen, setSportSheetOpen] = useState(false);
+
   // ─── Staging Manager ────────────────────────────────────────────
   const staging = useStagingManager();
 
@@ -257,6 +270,37 @@ export function Profile() {
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false);
   const [tempAvatarImage, setTempAvatarImage] = useState("");
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── Sleep state loader for Daily Goals card ─────────────────
+  useEffect(() => {
+    getUserProfile().then((p) => {
+      if (p?.wakeTime) {
+        setWakeTime(p.wakeTime);
+        const options = SleepService.getBedtimeOptions(p.wakeTime);
+        setBedtimeOptions(options);
+        setSelectedBedtime(p.bedtime ?? options.find((o) => o.cycleCount === 6)?.bedtime ?? "");
+        setSelectedCycles(p.sleepCycles ?? 6);
+      } else {
+        setBedtimeOptions(SleepService.getBedtimeOptions("07:00"));
+      }
+    });
+  }, []);
+  const handleSleepWakeTime = async (time: string) => {
+    setWakeTime(time);
+    const options = SleepService.getBedtimeOptions(time);
+    setBedtimeOptions(options);
+    const preferred = options.find((o) => o.cycleCount === 6);
+    if (preferred) { setSelectedBedtime(preferred.bedtime); setSelectedCycles(preferred.cycleCount); }
+    await SleepService.saveSleepSettings({ wakeTime: time, selectedBedtime: preferred?.bedtime ?? selectedBedtime, selectedCycles: preferred?.cycleCount ?? selectedCycles });
+    showToast(t('toast.sleepSaved'));
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+  };
+  const handleSleepBedtimeSelect = async (bedtime: string, cycles: number) => {
+    setSelectedBedtime(bedtime); setSelectedCycles(cycles);
+    await SleepService.saveSleepSettings({ wakeTime, selectedBedtime: bedtime, selectedCycles: cycles });
+    showToast(t('toast.sleepSaved'));
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+  };
 
   // ─── Calculations ───
   const bmi = profile.bmi != null ? String(profile.bmi) : (profile.height > 0 ? (profile.weight / ((profile.height / 100) ** 2)).toFixed(1) : '0');
@@ -495,6 +539,17 @@ export function Profile() {
         }}
       />
 
+      {/* SLEEP BOTTOM SHEET */}
+      <DSMBottomSheet open={sleepSheetOpen} onClose={() => setSleepSheetOpen(false)} title={t('profile.sectionSleep')}>
+        <SleepSetup
+          wakeTime={wakeTime}
+          bedtimeOptions={bedtimeOptions}
+          selectedBedtime={selectedBedtime}
+          onWakeTimeChange={handleSleepWakeTime}
+          onBedtimeSelect={handleSleepBedtimeSelect}
+        />
+      </DSMBottomSheet>
+
       {/* HEADER */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-2">
         <h1 className="text-xl font-bold text-gray-900">{t('profile.title') || 'Profilom'}</h1>
@@ -510,20 +565,66 @@ export function Profile() {
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 space-y-3">
         {/* Me tab content — Personal data, Body metrics, Weight chart, Activity */}
-        {/* Tab 1 — Personal data */}
+        {/* Card 1: Avatar */}
         <DSMCard>
-          <DSMSectionTitle icon={User} iconColor="text-gray-500" title={t('profile.personalData')} className="mb-3" />
-          <div className="space-y-3">
-            <EditableFieldRow label={t('profile.birthDate')} value={profile.birthDate || ''} type="date" onSave={(v) => { setProfile((p) => ({ ...p, birthDate: v })); saveUserProfile({ birthDate: v || undefined }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
-            <div className="pt-2 pb-1">
-              <label className="text-2xs text-gray-500 block mb-1.5">{t('profile.gender')}</label>
-              <div className="flex flex-wrap gap-2">
-                {(['male', 'female', 'other'] as const).map((g) => (
-                  <button key={g} type="button" onClick={() => { setProfile((p) => ({ ...p, gender: g })); saveUserProfile({ gender: g }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.gender === g ? '#f3f4f6' : 'transparent', color: profile.gender === g ? '#111827' : '#6b7280', fontWeight: profile.gender === g ? 600 : 400, fontSize: '0.8125rem' }}>{t(`profile.gender${g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other'}`)}</button>
-                ))}
-              </div>
+          <div className="flex items-center gap-3">
+            {/* Avatar circle */}
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="w-14 h-14 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold"
+              style={{ background: profile.avatar ? undefined : 'linear-gradient(135deg, #2d8c6e, #4aab8a)' }}
+              aria-label={t('profile.editAvatar') || 'Avatar'}
+            >
+              {profile.avatar
+                ? <img src={profile.avatar} alt="avatar" className="w-14 h-14 rounded-full object-cover" />
+                : (profile.name?.[0] ?? '?').toUpperCase()
+              }
+            </button>
+
+            {/* Name + subtitle */}
+            <div className="flex-1 min-w-0">
+              <EditableFieldRow
+                label=""
+                value={profile.name}
+                type="text"
+                onSave={(name) => {
+                  setProfile((p) => ({ ...p, name }));
+                  saveUserProfile({ name }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); });
+                }}
+              />
+              <button
+                onClick={() => setPersonalExpanded((v) => !v)}
+                className="text-xs text-gray-400 mt-0.5 text-left hover:text-gray-600 transition-colors"
+              >
+                {[
+                  profile.age ? `${profile.age} ${t('profile.yearShort') || 'év'}` : null,
+                  profile.gender ? t(`profile.gender${profile.gender === 'male' ? 'Male' : profile.gender === 'female' ? 'Female' : 'Other'}`) : null,
+                  profile.height ? `${profile.height} cm` : null,
+                ].filter(Boolean).join(' · ') || t('profile.addPersonalData') || 'Személyes adatok'}
+                <span className="ml-1 text-gray-300">{personalExpanded ? '▲' : '▼'}</span>
+              </button>
             </div>
           </div>
+
+          {/* Expandable personal data fields */}
+          {personalExpanded && (
+            <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+              <EditableFieldRow label={t('profile.birthDate')} value={profile.birthDate || ''} type="date"
+                onSave={(v) => { setProfile((p) => ({ ...p, birthDate: v })); saveUserProfile({ birthDate: v || undefined }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} />
+              <div className="pt-1">
+                <label className="text-2xs text-gray-500 block mb-1.5">{t('profile.gender')}</label>
+                <div className="flex flex-wrap gap-2">
+                  {(['male', 'female', 'other'] as const).map((g) => (
+                    <button key={g} type="button"
+                      onClick={() => { setProfile((p) => ({ ...p, gender: g })); saveUserProfile({ gender: g }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }}
+                      style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.gender === g ? '#f3f4f6' : 'transparent', color: profile.gender === g ? '#111827' : '#6b7280', fontWeight: profile.gender === g ? 600 : 400, fontSize: '0.8125rem' }}>
+                      {t(`profile.gender${g === 'male' ? 'Male' : g === 'female' ? 'Female' : 'Other'}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </DSMCard>
 
         {/* Body metrics + BMI bar + GMON fields */}
@@ -786,6 +887,96 @@ export function Profile() {
             </div>
           )}
         </DSMCard>
+        {/* Calorie/Macro bottom sheet */}
+        <DSMBottomSheet open={calorieSheetOpen} onClose={() => setCalorieSheetOpen(false)} title={t('profile.calorieGoal') || 'Kalória cél'}>
+          <ProfileGoalsTab
+            profile={profile}
+            targetCalories={targetCalories}
+            dailyCalories={consumed}
+            onProfileUpdate={(partial) => {
+              setProfile((p) => ({ ...p, ...partial }));
+              saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
+            }}
+            t={t}
+          />
+        </DSMBottomSheet>
+
+        {/* Water bottom sheet */}
+        <DSMBottomSheet open={waterSheetOpen} onClose={() => setWaterSheetOpen(false)} title={t('profile.waterGoal') || 'Vízfogyasztás'}>
+          <ProfileGoalsTab
+            profile={profile}
+            targetCalories={targetCalories}
+            dailyCalories={consumed}
+            onProfileUpdate={(partial) => {
+              setProfile((p) => ({ ...p, ...partial }));
+              saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
+            }}
+            t={t}
+          />
+        </DSMBottomSheet>
+
+        {/* Sport / workout bottom sheet */}
+        <DSMBottomSheet open={sportSheetOpen} onClose={() => setSportSheetOpen(false)} title={t('profile.workoutGoal') || 'Heti edzés'}>
+          <ProfileGoalsTab
+            profile={profile}
+            targetCalories={targetCalories}
+            dailyCalories={consumed}
+            onProfileUpdate={(partial) => {
+              setProfile((p) => ({ ...p, ...partial }));
+              saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
+            }}
+            t={t}
+          />
+        </DSMBottomSheet>
+
+        {/* Card 4: Daily Goals */}
+        <DSMCard>
+          <div className="text-xs font-bold text-gray-400 tracking-wide uppercase mb-3">{t('profile.dailyGoals') || 'NAPI CÉLOK'}</div>
+          {[
+            {
+              icon: '🔥',
+              label: t('profile.calorieGoalShort') || 'Kalória',
+              value: `${profile.calorieTarget ?? targetCalories} kcal`,
+              onTap: () => setCalorieSheetOpen(true),
+            },
+            {
+              icon: '💧',
+              label: t('profile.waterGoalShort') || 'Víz',
+              value: `${((profile.waterGoalMl ?? Math.round((profile.weight || 70) * 35)) / 1000).toFixed(1)} L`,
+              onTap: () => setWaterSheetOpen(true),
+            },
+            {
+              icon: '🏃',
+              label: t('profile.workoutGoalShort') || 'Sport / hét',
+              value: `${profile.weeklyWorkoutGoal ?? 3}×`,
+              onTap: () => setSportSheetOpen(true),
+            },
+            {
+              icon: '🌙',
+              label: t('profile.sleepGoalShort') || 'Alvás',
+              value: wakeTime ? `${wakeTime} ${t('profile.wakeUpSuffix') || 'ébredés'}` : '—',
+              onTap: () => setSleepSheetOpen(true),
+            },
+          ].map((row, idx, arr) => (
+            <React.Fragment key={row.label}>
+              <button
+                onClick={row.onTap}
+                className="w-full flex items-center justify-between py-2.5 hover:bg-gray-50 transition-colors rounded-lg px-1"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                    style={{ background: idx === 0 ? '#fff8f0' : idx === 1 ? '#f0f8ff' : idx === 2 ? '#f0fff4' : '#f5f0ff' }}>
+                    {row.icon}
+                  </div>
+                  <span className="text-sm text-gray-700">{row.label}</span>
+                </div>
+                <span className="text-sm font-bold text-gray-900">{row.value}</span>
+              </button>
+              {idx < arr.length - 1 && <div className="h-px bg-gray-100 mx-1" />}
+            </React.Fragment>
+          ))}
+        </DSMCard>
+
         <div className="h-4" />
       </div>
     </div>
