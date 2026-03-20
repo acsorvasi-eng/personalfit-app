@@ -41,12 +41,12 @@ interface DSMBottomSheetProps {
 const SNAP_HEIGHTS = {
   peek: "35vh",
   half: "55vh",
-  full: "90vh",
+  full: "95vh",
 };
 
 export function DSMBottomSheet({
   open, onClose, title, subtitle, icon: Icon, children,
-  snapPoint = "half", showHandle = true, className = "",
+  snapPoint = "full", showHandle = true, className = "",
 }: DSMBottomSheetProps) {
   return (
     <AnimatePresence>
@@ -93,7 +93,7 @@ export function DSMBottomSheet({
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 hover:bg-gray-200 transition-colors"
+                  className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 hover:bg-gray-200 transition-colors touch-manipulation cursor-pointer"
                 >
                   <X className="w-4 h-4 text-gray-500" />
                 </button>

@@ -555,7 +555,7 @@ export function Workout() {
               <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
               <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
                 <div><h3 className="text-lg font-bold text-gray-900">{t('workout.collection')}</h3><p className="text-xs text-gray-500">{ALL_SPORTS.length} {t('workout.availableSports')}</p></div>
-                <button onClick={() => setShowCollection(false)} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center" aria-label={t('workout.close')}><X className="w-4 h-4 text-gray-600" /></button>
+                <button onClick={() => setShowCollection(false)} className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation cursor-pointer" aria-label={t('workout.close')}><X className="w-4 h-4 text-gray-600" /></button>
               </div>
               <div className="px-4 py-3 overflow-x-auto flex gap-2 border-b border-gray-50" style={{ scrollbarWidth: 'none' }}>
                 <button onClick={() => setCollectionFilter(null)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!collectionFilter ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t('workout.allFilter')}</button>

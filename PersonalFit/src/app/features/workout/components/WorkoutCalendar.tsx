@@ -482,7 +482,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
+                    className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation cursor-pointer"
                   >
                     <X className="w-4 h-4 text-gray-600" />
                   </button>

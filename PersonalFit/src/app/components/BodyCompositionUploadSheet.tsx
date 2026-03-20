@@ -161,7 +161,7 @@ export function BodyCompositionUploadSheet({ open, onClose, onComplete }: BodyCo
                 <button
                   onClick={handleClose}
                   disabled={upload.isProcessing}
-                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                  className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 disabled:opacity-30 transition-colors touch-manipulation cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>

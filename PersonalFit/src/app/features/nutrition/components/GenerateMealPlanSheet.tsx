@@ -406,7 +406,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               </div>
             </div>
             {step !== "generating" && step !== "saving" && (
-              <button onClick={handleClose} className="w-[34px] h-[34px] rounded-full border-none bg-gray-100 cursor-pointer flex items-center justify-center">
+              <button onClick={handleClose} className="w-11 h-11 rounded-full border-none bg-gray-100 cursor-pointer flex items-center justify-center touch-manipulation">
                 <X size={16} color="#6b7280" />
               </button>
             )}
