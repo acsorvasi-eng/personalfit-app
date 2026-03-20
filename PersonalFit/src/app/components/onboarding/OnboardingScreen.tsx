@@ -1,67 +1,139 @@
 /**
- * OnboardingScreen - 3-slide privacy-first introduction
- * Swipeable slides focusing on local-only, personal, and AI-powered benefits.
+ * OnboardingScreen — white slides with animated SVG illustrations
+ * 3 slides: (1) personalized health, (2) data privacy, (3) sport+sleep balance
+ * Swipe gesture + pagination dots + fixed CTA button position
  */
 
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Sparkles, ChevronRight, Brain, Apple } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { DSMButton } from '../dsm';
 
-interface Slide {
-  bgEmojis: { emoji: string; x: number; y: number; size: number; delay: number; dur: number; amp: number }[];
-  icon: React.ElementType;
-  badge: string;
-  title: string;
-  desc: string;
+// SVG path animation: draws on entry
+const DRAW_EASE = [0.4, 0, 0.2, 1] as const;
+const DRAW_DURATION = 1.5;
+
+function AnimatedPath({ d, stroke = '#0f172a', strokeWidth = 2, delay = 0 }: {
+  d: string; stroke?: string; strokeWidth?: number; delay?: number;
+}) {
+  return (
+    <motion.path
+      d={d}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+      initial={{ pathLength: 0, opacity: 0 }}
+      animate={{ pathLength: 1, opacity: 1 }}
+      transition={{ duration: DRAW_DURATION, delay, ease: DRAW_EASE }}
+    />
+  );
 }
 
-const getPrimaryColor = () =>
-  getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2563EB';
+function AnimatedCircle({ cx, cy, r, stroke = '#0f172a', strokeWidth = 2, delay = 0, strokeDasharray }: {
+  cx: number; cy: number; r: number; stroke?: string; strokeWidth?: number; delay?: number; strokeDasharray?: string;
+}) {
+  return (
+    <motion.circle
+      cx={cx} cy={cy} r={r}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      strokeDasharray={strokeDasharray}
+      fill="none"
+      initial={{ pathLength: 0, opacity: 0 }}
+      animate={{ pathLength: 1, opacity: 1 }}
+      transition={{ duration: DRAW_DURATION, delay, ease: DRAW_EASE }}
+    />
+  );
+}
 
-const SLIDE_TEMPLATES: Omit<Slide, 'badge' | 'title' | 'desc'>[] = [
-  {
-    icon: Lock,
-    bgEmojis: [
-      { emoji: '🔒', x: 10, y: 12, size: 28, delay: 0,   dur: 3.2, amp: 12 },
-      { emoji: '🛡️', x: 80, y: 18, size: 24, delay: 0.5, dur: 2.8, amp: 10 },
-      { emoji: '📱', x: 86, y: 64, size: 22, delay: 0.9, dur: 3.6, amp: 14 },
-      { emoji: '🔐', x:  7, y: 70, size: 20, delay: 1.3, dur: 2.6, amp:  8 },
-      { emoji: '✅', x: 20, y: 46, size: 18, delay: 0.6, dur: 4.0, amp: 16 },
-      { emoji: '💚', x: 74, y: 48, size: 20, delay: 1.1, dur: 3.0, amp: 11 },
-    ],
-  },
-  {
-    icon: Brain,
-    bgEmojis: [
-      { emoji: '🧠', x: 10, y: 12, size: 28, delay: 0,   dur: 3.0, amp: 12 },
-      { emoji: '🥗', x: 80, y: 16, size: 24, delay: 0.4, dur: 3.4, amp: 10 },
-      { emoji: '⚖️', x: 84, y: 64, size: 22, delay: 0.8, dur: 2.9, amp: 14 },
-      { emoji: '🎯', x:  6, y: 68, size: 24, delay: 1.2, dur: 3.6, amp:  9 },
-      { emoji: '💪', x: 22, y: 44, size: 20, delay: 0.5, dur: 2.7, amp: 13 },
-      { emoji: '✨', x: 76, y: 46, size: 18, delay: 1.0, dur: 3.2, amp: 11 },
-    ],
-  },
-  {
-    icon: Apple,
-    bgEmojis: [
-      { emoji: '🍎', x: 10, y: 13, size: 26, delay: 0,   dur: 3.4, amp: 12 },
-      { emoji: '🥦', x: 80, y: 15, size: 22, delay: 0.3, dur: 2.8, amp: 10 },
-      { emoji: '🫐', x: 85, y: 63, size: 24, delay: 0.7, dur: 3.2, amp: 14 },
-      { emoji: '🥑', x:  8, y: 65, size: 22, delay: 1.1, dur: 2.6, amp:  9 },
-      { emoji: '🍋', x: 22, y: 43, size: 20, delay: 0.5, dur: 4.0, amp: 16 },
-      { emoji: '🌽', x: 74, y: 46, size: 20, delay: 0.9, dur: 3.6, amp: 11 },
-    ],
-  },
-];
+function AnimatedRect({ x, y, width, height, rx, stroke = '#0f172a', strokeWidth = 2, delay = 0 }: {
+  x: number; y: number; width: number; height: number; rx: number;
+  stroke?: string; strokeWidth?: number; delay?: number;
+}) {
+  return (
+    <motion.rect
+      x={x} y={y} width={width} height={height} rx={rx}
+      stroke={stroke} strokeWidth={strokeWidth} fill="none"
+      initial={{ pathLength: 0, opacity: 0 }}
+      animate={{ pathLength: 1, opacity: 1 }}
+      transition={{ duration: DRAW_DURATION, delay, ease: DRAW_EASE }}
+    />
+  );
+}
+
+const TEAL = '#0d9488';
+
+// Slide 1: plate + fork + knife + heart (inside plate, clearly visible)
+function Slide1Illustration() {
+  return (
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+      <AnimatedCircle cx={60} cy={68} r={36} delay={0} />
+      <AnimatedCircle cx={60} cy={68} r={25} stroke="#0f172a" strokeWidth={1.5} strokeDasharray="5 4" delay={0.2} />
+      {/* fork left */}
+      <AnimatedPath d="M22 32 L22 50 M22 50 L22 60 M20 32 L20 41 C20 45 24 45 24 41 L24 32" delay={0.3} />
+      {/* knife right */}
+      <AnimatedPath d="M98 32 L98 60 M98 32 C98 32 102 38 102 46 C102 51 98 53 98 53" delay={0.3} />
+      {/* heart — lower inside plate */}
+      <AnimatedPath
+        d="M60 74 C60 74 50 67 50 61 C50 56.5 54.5 54 60 58.5 C65.5 54 70 56.5 70 61 C70 67 60 74 60 74 Z"
+        stroke={TEAL} strokeWidth={2.2} delay={0.65}
+      />
+    </svg>
+  );
+}
+
+// Slide 2: phone + shield + checkmark
+function Slide2Illustration() {
+  return (
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+      <AnimatedRect x={34} y={14} width={52} height={92} rx={8} delay={0} />
+      <AnimatedPath d="M46 22 L74 22" delay={0.2} />
+      <AnimatedCircle cx={60} cy={97} r={4} delay={0.2} />
+      {/* shield */}
+      <AnimatedPath
+        d="M60 32 C54 32 46 36 46 36 L46 52 C46 61 60 70 60 70 C60 70 74 61 74 52 L74 36 C74 36 66 32 60 32 Z"
+        stroke={TEAL} strokeWidth={2.2} delay={0.4}
+      />
+      {/* checkmark */}
+      <AnimatedPath d="M52 51 L57 57 L69 44" stroke={TEAL} strokeWidth={2.4} delay={0.85} />
+    </svg>
+  );
+}
+
+// Slide 3: balance scale — sun (sport) ↔ moon (sleep)
+function Slide3Illustration() {
+  return (
+    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+      {/* post */}
+      <AnimatedPath d="M60 22 L60 96" delay={0} />
+      <AnimatedPath d="M44 96 L76 96" delay={0.05} />
+      {/* arm */}
+      <AnimatedPath d="M26 42 L60 32 L94 42" delay={0.15} />
+      {/* left bowl */}
+      <AnimatedPath d="M26 42 L22 60 C22 65 32 68 32 68 C32 68 42 65 42 60 L38 42" delay={0.3} />
+      {/* sun inside left bowl */}
+      <AnimatedCircle cx={32} cy={55} r={7} stroke={TEAL} strokeWidth={2} delay={0.55} />
+      <AnimatedPath d="M32 45 L32 43 M32 67 L32 65 M22 55 L20 55 M44 55 L42 55 M25 48 L24 47 M40 63 L39 62 M25 62 L24 63 M40 47 L39 48" stroke={TEAL} strokeWidth={1.6} delay={0.7} />
+      {/* right bowl */}
+      <AnimatedPath d="M78 42 L82 60 C82 65 92 68 92 68 C92 68 102 65 102 60 L98 42" delay={0.3} />
+      {/* moon inside right bowl */}
+      <AnimatedPath
+        d="M90 48 C87 48 84 51 84 55 C84 60 87 63 91 63 C88 64 84 63 82 61 C79 58 79 52 82 49 C84 46 88 46 90 48 Z"
+        stroke={TEAL} strokeWidth={2} delay={0.55}
+      />
+    </svg>
+  );
+}
+
+const ILLUSTRATIONS = [Slide1Illustration, Slide2Illustration, Slide3Illustration];
 
 const cardVariants = {
-  initial: (dir: number) => ({ opacity: 0, x: dir * 80, scale: 0.93 }),
+  initial: (dir: number) => ({ opacity: 0, x: dir * 80, scale: 0.95 }),
   animate: { opacity: 1, x: 0, scale: 1, transition: { type: 'spring' as const, stiffness: 280, damping: 28 } },
-  exit: (dir: number) => ({ opacity: 0, x: dir * -80, scale: 0.95, transition: { duration: 0.2, ease: 'easeIn' as const } }),
+  exit: (dir: number) => ({ opacity: 0, x: dir * -80, scale: 0.97, transition: { duration: 0.2, ease: 'easeIn' as const } }),
 };
 
 export function OnboardingScreen() {
@@ -73,9 +145,9 @@ export function OnboardingScreen() {
   const touchStart = useRef(0);
 
   const slides = useMemo(() => [
-    { ...SLIDE_TEMPLATES[0], badge: t('onboarding.slide1.badge'), title: t('onboarding.slide1.title'), desc: t('onboarding.slide1.desc') },
-    { ...SLIDE_TEMPLATES[1], badge: t('onboarding.slide2.badge'), title: t('onboarding.slide2.title'), desc: t('onboarding.slide2.desc') },
-    { ...SLIDE_TEMPLATES[2], badge: t('onboarding.slide3.badge'), title: t('onboarding.slide3.title'), desc: t('onboarding.slide3.desc') },
+    { title: t('onboarding.slide1.title'), desc: t('onboarding.slide1.desc') },
+    { title: t('onboarding.slide2.title'), desc: t('onboarding.slide2.desc') },
+    { title: t('onboarding.slide3.title'), desc: t('onboarding.slide3.desc') },
   ], [t]);
 
   const goNext = useCallback(() => {
@@ -100,25 +172,24 @@ export function OnboardingScreen() {
     navigate('/login');
   }, [markOnboardingComplete, navigate]);
 
-  const slide = slides[current];
   const isLast = current === slides.length - 1;
-  const Icon = slide.icon;
+  const slide = slides[current];
+  const Illustration = ILLUSTRATIONS[current];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-2">
-        <span className="text-xs text-gray-400 font-medium tabular-nums">
-          {current + 1} / {slides.length}
-        </span>
+    <div className="min-h-screen bg-white flex flex-col overflow-hidden">
+
+      {/* Top bar: skip right-aligned */}
+      <div className="flex items-center justify-end px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-2 min-h-[48px]">
         {!isLast && (
-          <DSMButton variant="ghost" onClick={skip} className="text-sm px-2 py-1">
+          <button onClick={skip} type="button"
+            className="text-sm text-gray-400 font-medium cursor-pointer px-1 py-1">
             {t('onboarding.skip')}
-          </DSMButton>
+          </button>
         )}
       </div>
 
-      {/* Main swipeable area */}
+      {/* Swipeable content */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full"
         onTouchStart={e => { touchStart.current = e.touches[0].clientX; }}
@@ -137,101 +208,54 @@ export function OnboardingScreen() {
             exit="exit"
             className="w-full flex flex-col items-center text-center"
           >
-            {/* Visual card */}
-            <div className="w-full aspect-[4/3] rounded-3xl bg-gray-100 mb-8 overflow-hidden relative flex items-center justify-center shadow-xl">
-              {/* Floating emojis */}
-              {slide.bgEmojis.map((p, i) => (
-                <motion.span
-                  key={i}
-                  className="absolute select-none pointer-events-none leading-none"
-                  style={{ left: `${p.x}%`, top: `${p.y}%`, fontSize: p.size }}
-                  initial={{ opacity: 0, scale: 0.4 }}
-                  animate={{ opacity: 0.8, scale: 1, y: [0, -p.amp, 0] }}
-                  transition={{
-                    opacity: { delay: p.delay + 0.3, duration: 0.5 },
-                    scale:   { delay: p.delay + 0.3, duration: 0.45, type: 'spring', stiffness: 320, damping: 18 },
-                    y:       { delay: p.delay + 0.6, duration: p.dur, repeat: Infinity, ease: 'easeInOut' },
-                  }}
-                />
-              ))}
-
-              {/* Center icon */}
-              <div className="relative flex items-center justify-center">
-                <motion.div
-                  className="absolute w-24 h-24 rounded-2xl border-2 border-primary/20"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut' }}
-                />
-                <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center">
-                  <Icon className="w-10 h-10 text-primary" />
-                </div>
-              </div>
+            {/* SVG illustration */}
+            <div className="mb-8 flex items-center justify-center" style={{ minHeight: 120 }}>
+              <Illustration />
             </div>
 
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08, type: 'spring', stiffness: 400, damping: 32 }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 mb-3"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-gray-500" />
-              <span className="text-xs text-gray-600 font-medium">{slide.badge}</span>
-            </motion.div>
-
             {/* Title */}
-            <motion.h2
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.16, type: 'spring', stiffness: 400, damping: 32 }}
-              className="text-2xl font-semibold text-foreground mb-3"
-            >
+            <h2 className="text-2xl text-gray-900 mb-3 whitespace-pre-line" style={{ fontWeight: 800, lineHeight: 1.3 }}>
               {slide.title}
-            </motion.h2>
+            </h2>
 
             {/* Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.24, type: 'spring', stiffness: 400, damping: 32 }}
-              className="text-gray-500 leading-relaxed max-w-sm text-sm"
-            >
+            <p className="text-gray-500 leading-relaxed text-sm max-w-xs">
               {slide.desc}
-            </motion.p>
+            </p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Bottom nav */}
-      <div className="px-6 pb-10 pt-4 max-w-md mx-auto w-full">
-        {/* Dots */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+      {/* Bottom: pagination + CTA */}
+      <div className="px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full">
+
+        {/* Pagination dots — centered, above button */}
+        <div className="flex items-center justify-center gap-2 mb-5">
           {slides.map((_, i) => (
             <motion.button
               key={i}
               onClick={() => { setDirection(i > current ? 1 : -1); setCurrent(i); }}
-              animate={{ width: i === current ? 32 : 8, backgroundColor: i === current ? getPrimaryColor() : '#e5e7eb' }}
+              animate={{
+                width: i === current ? 28 : 8,
+                backgroundColor: i === current ? '#0d9488' : '#e2e8f0',
+              }}
               transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              className="h-2 rounded-full"
+              className="h-2 rounded-full cursor-pointer"
+              type="button"
+              aria-label={`Slide ${i + 1}`}
             />
           ))}
         </div>
 
-        {/* CTA button */}
-        <motion.div
-          key={`btn-${current}`}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.28, type: 'spring', stiffness: 400, damping: 30 }}
+        {/* CTA button — same position on every slide */}
+        <button
+          onClick={goNext}
+          type="button"
+          className="w-full h-14 rounded-2xl text-white font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
+          style={{ background: '#0d9488' }}
         >
-          <DSMButton onClick={goNext} variant="primary" className="w-full h-14 rounded-2xl">
-            {isLast ? (
-              <>{t('onboarding.start')} <Sparkles className="w-5 h-5" /></>
-            ) : (
-              <>{t('onboarding.next')} <ChevronRight className="w-5 h-5" /></>
-            )}
-          </DSMButton>
-        </motion.div>
+          {isLast ? t('onboarding.start') : t('onboarding.next')} →
+        </button>
       </div>
     </div>
   );
