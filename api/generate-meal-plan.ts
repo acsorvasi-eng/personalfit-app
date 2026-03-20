@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
 import * as admin from 'firebase-admin';
+import { FREE_MONTHLY_LIMIT, ADMIN_EMAILS, currentMonthStr, nextMonthFirstDay } from './_shared/limits';
 
 // ─── Firebase Admin (server-side Firestore) ───────────────────────
 // Requires FIREBASE_ADMIN_KEY env var (base64-encoded service account JSON)
@@ -19,53 +20,75 @@ function getAdminApp(): admin.app.App | null {
   }
 }
 
-const FREE_DAILY_LIMIT = 5;
-function todayStr() { return new Date().toISOString().slice(0, 10); }
-
-async function checkAndIncrementUsage(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+async function checkAndIncrementUsage(userId: string): Promise<{
+  allowed: boolean;
+  remaining: number | null;
+  limit: number | null;
+  isAdmin: boolean;
+  resetsAt: string;
+}> {
+  const resetsAt = nextMonthFirstDay();
   const app = getAdminApp();
-  if (!app) return { allowed: true, remaining: FREE_DAILY_LIMIT }; // fail open — no admin config
+  if (!app) return { allowed: true, remaining: FREE_MONTHLY_LIMIT, limit: FREE_MONTHLY_LIMIT, isAdmin: false, resetsAt };
 
   try {
     const db = admin.firestore(app);
     const ref = db.collection('users').doc(userId);
     const snap = await ref.get();
 
-    if (!snap.exists) return { allowed: true, remaining: FREE_DAILY_LIMIT };
+    if (!snap.exists) return { allowed: true, remaining: FREE_MONTHLY_LIMIT, limit: FREE_MONTHLY_LIMIT, isAdmin: false, resetsAt };
 
     const data = snap.data()!;
-    if (data.plan === 'pro') {
-      await ref.update({ 'usage.totalGenerations': admin.firestore.FieldValue.increment(1), updatedAt: new Date().toISOString() });
-      return { allowed: true, remaining: 999 };
-    }
 
-    const today = todayStr();
-    const count = data.usage?.lastResetDate !== today ? 0 : (data.usage?.generationsToday ?? 0);
-
-    if (count >= FREE_DAILY_LIMIT) {
-      return { allowed: false, remaining: 0 };
-    }
-
-    // Increment — reset daily counter if new day
-    if (data.usage?.lastResetDate !== today) {
+    // Admin bypass — email read from Firestore, never from request body
+    const email: string = data.email ?? '';
+    if (ADMIN_EMAILS.includes(email)) {
       await ref.update({
-        'usage.generationsToday': 1,
-        'usage.lastResetDate': today,
         'usage.totalGenerations': admin.firestore.FieldValue.increment(1),
+        updatedAt: new Date().toISOString(),
+      });
+      return { allowed: true, remaining: null, limit: null, isAdmin: true, resetsAt };
+    }
+
+    // Pro plan — unlimited
+    if (data.plan === 'pro') {
+      await ref.update({
+        'usage.totalGenerations': admin.firestore.FieldValue.increment(1),
+        updatedAt: new Date().toISOString(),
+      });
+      return { allowed: true, remaining: null, limit: null, isAdmin: false, resetsAt };
+    }
+
+    const thisMonth = currentMonthStr();
+    const isNewMonth = data.usage?.lastResetMonth !== thisMonth;
+    const count: number = isNewMonth ? 0 : (data.usage?.generationsThisMonth ?? 0);
+
+    if (count >= FREE_MONTHLY_LIMIT) {
+      return { allowed: false, remaining: 0, limit: FREE_MONTHLY_LIMIT, isAdmin: false, resetsAt };
+    }
+
+    // Increment — reset monthly counter if new month, delete legacy daily fields
+    if (isNewMonth) {
+      await ref.update({
+        'usage.generationsThisMonth': 1,
+        'usage.lastResetMonth': thisMonth,
+        'usage.totalGenerations': admin.firestore.FieldValue.increment(1),
+        'usage.generationsToday': admin.firestore.FieldValue.delete(),
+        'usage.lastResetDate': admin.firestore.FieldValue.delete(),
         updatedAt: new Date().toISOString(),
       });
     } else {
       await ref.update({
-        'usage.generationsToday': admin.firestore.FieldValue.increment(1),
+        'usage.generationsThisMonth': admin.firestore.FieldValue.increment(1),
         'usage.totalGenerations': admin.firestore.FieldValue.increment(1),
         updatedAt: new Date().toISOString(),
       });
     }
 
-    return { allowed: true, remaining: FREE_DAILY_LIMIT - count - 1 };
+    return { allowed: true, remaining: FREE_MONTHLY_LIMIT - count - 1, limit: FREE_MONTHLY_LIMIT, isAdmin: false, resetsAt };
   } catch (e) {
     console.warn('[generate-meal-plan] Usage check failed, failing open:', e);
-    return { allowed: true, remaining: FREE_DAILY_LIMIT };
+    return { allowed: true, remaining: FREE_MONTHLY_LIMIT, limit: FREE_MONTHLY_LIMIT, isAdmin: false, resetsAt };
   }
 }
 
@@ -332,13 +355,16 @@ export default async function handler(req: any, res: any) {
   }
 
   // ── Rate limit check ───────────────────────────────────────────
+  let usageResult: Awaited<ReturnType<typeof checkAndIncrementUsage>> | null = null;
   if (userId) {
-    const usage = await checkAndIncrementUsage(userId);
-    if (!usage.allowed) {
+    usageResult = await checkAndIncrementUsage(userId);
+    if (!usageResult.allowed) {
       return res.status(429).json({
-        error: 'daily_limit_reached',
-        message: 'Napi generálási limit elérve. Próbáld holnap, vagy válts Pro-ra.',
+        error: 'monthly_limit_reached',
+        message: 'Havi generálási limit elérve.',
         remaining: 0,
+        limit: FREE_MONTHLY_LIMIT,
+        resetsAt: usageResult.resetsAt,
       });
     }
   }
@@ -515,7 +541,13 @@ Generálj ${clampedDays} napot (day 1..${clampedDays}), minden naphoz más étel
     // Write to cache (non-blocking)
     writeCache(cacheKey, responsePayload).catch(() => {});
 
-    return res.status(200).json(responsePayload);
+    return res.status(200).json({
+      ...responsePayload,
+      remaining: usageResult?.remaining ?? null,
+      limit: usageResult?.limit ?? null,
+      isAdmin: usageResult?.isAdmin ?? false,
+      resetsAt: usageResult?.resetsAt ?? nextMonthFirstDay(),
+    });
   } catch (err: any) {
     console.error('[generate-meal-plan] Error:', err.message);
     return res.status(500).json({ error: err.message });
