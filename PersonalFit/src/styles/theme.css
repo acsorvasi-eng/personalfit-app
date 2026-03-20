@@ -44,9 +44,9 @@
   /* ============================================
      BRAND COLORS
      ============================================ */
-  --primary:            #2563EB;
-  --primary-hover:      #1D4ED8;
-  --primary-light:      #EFF6FF;
+  --primary:            #0d9488;
+  --primary-hover:      #0f766e;
+  --primary-light:      #f0fdfa;
   --primary-foreground: #ffffff;
 
   /* ============================================
@@ -69,15 +69,15 @@
   --popover:            #FFFFFF;
   --popover-foreground: #0F172A;
 
-  --secondary:            #EFF6FF;
-  --secondary-hover:      #DBEAFE;
-  --secondary-foreground: #1D4ED8;
+  --secondary:            #f0fdfa;
+  --secondary-hover:      #ccfbf1;
+  --secondary-foreground: #0f766e;
 
   --muted:            #F8FAFC;
   --muted-foreground: #475569;
 
-  --accent:            #2563EB;
-  --accent-hover:      #1D4ED8;
+  --accent:            #0d9488;
+  --accent-hover:      #0f766e;
   --accent-foreground: #ffffff;
 
   --destructive:            #EF4444;
@@ -87,7 +87,7 @@
   --input:            #E2E8F0;
   --input-background: #F8FAFC;
   --switch-background: #CBD5E1;
-  --ring: #2563EB;
+  --ring: #0d9488;
 
   /* ============================================
      LEGACY COLOR TOKENS (compatibility)
@@ -129,7 +129,7 @@
   /* ============================================
      CHART COLORS
      ============================================ */
-  --chart-1: #2563EB;
+  --chart-1: #0d9488;
   --chart-2: #10B981;
   --chart-3: #14b8a6;
   --chart-4: #3b82f6;
@@ -173,18 +173,18 @@
   --shadow-2xl:   0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
 
-  --shadow-primary:    0 10px 15px -3px rgba(37, 99, 235, 0.2), 0 4px 6px -4px rgba(37, 99, 235, 0.1);
-  --shadow-primary-lg: 0 20px 25px -5px rgba(37, 99, 235, 0.3), 0 8px 10px -6px rgba(37, 99, 235, 0.2);
+  --shadow-primary:    0 10px 15px -3px rgba(13, 148, 136, 0.2), 0 4px 6px -4px rgba(13, 148, 136, 0.1);
+  --shadow-primary-lg: 0 20px 25px -5px rgba(13, 148, 136, 0.3), 0 8px 10px -6px rgba(13, 148, 136, 0.2);
   --shadow-green:      0 10px 15px -3px rgba(34, 197, 94, 0.2), 0 4px 6px -4px rgba(34, 197, 94, 0.1);
   --shadow-green-lg:   0 20px 25px -5px rgba(34, 197, 94, 0.3), 0 8px 10px -6px rgba(34, 197, 94, 0.2);
 
   /* ============================================
      BRAND
      ============================================ */
-  --brand-gradient-primary: linear-gradient(135deg, #2563EB, #10B981);
-  --brand-gradient-header:  linear-gradient(135deg, #2563EB, #1D4ED8);
+  --brand-gradient-primary: linear-gradient(135deg, #0d9488, #14b8a6);
+  --brand-gradient-header:  linear-gradient(135deg, #0d9488, #0f766e);
   --brand-gradient-premium: linear-gradient(135deg, #f59e0b, #ea580c);
-  --brand-gradient-cta:     linear-gradient(90deg, #2563EB, #1D4ED8);
+  --brand-gradient-cta:     linear-gradient(90deg, #0d9488, #0f766e);
 
   --card-border-radius: var(--radius-xl);
   --card-shadow:  0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -193,7 +193,7 @@
   --hover-overlay:     rgba(0, 0, 0, 0.04);
   --active-scale:      0.98;
   --focus-ring-width:  2px;
-  --focus-ring-color:  rgba(37, 99, 235, 0.3);
+  --focus-ring-color:  rgba(13, 148, 136, 0.3);
   --focus-ring-offset: 2px;
 
   /* ============================================
@@ -227,12 +227,12 @@
   /* Sidebar */
   --sidebar:                   #F8FAFC;
   --sidebar-foreground:        #0F172A;
-  --sidebar-primary:           #2563EB;
+  --sidebar-primary:           #0d9488;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent:            #F1F5F9;
   --sidebar-accent-foreground: #475569;
   --sidebar-border:            #E2E8F0;
-  --sidebar-ring:              #2563EB;
+  --sidebar-ring:              #0d9488;
 }
 
 /* Water button pulse — prominent CTA */
