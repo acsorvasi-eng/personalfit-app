@@ -941,17 +941,28 @@ export function UnifiedMenu() {
 
   const mc = mealSettings?.mealCount ?? 3;
   const ms = mealSettings?.meals ?? [];
-  const breakfastTimeStr = ms[0] ? `${ms[0].startTime} - ${ms[0].endTime}` : "06:00 - 08:00";
-  const lunchTimeStr = mc === 1 ? "–" : (mc === 3 && ms[1]) || (mc === 5 && ms[2])
-    ? `${(mc === 3 ? ms[1] : ms[2])!.startTime} - ${(mc === 3 ? ms[1] : ms[2])!.endTime}` : "12:30 - 13:30";
-  const dinnerTimeStr = mc === 1 ? "–" : (mc === 2 && ms[1]) ? `${ms[1].startTime} - ${ms[1].endTime}` : (mc >= 3 && (mc === 3 ? ms[2] : ms[4]))
-    ? `${(mc === 3 ? ms[2] : ms[4])!.startTime} - ${(mc === 3 ? ms[2] : ms[4])!.endTime}` : "17:30 - 18:30";
 
-  const mealSlots = [
-    { type: 'breakfast' as const, title: t("menu.breakfast"), time: breakfastTimeStr, icon: "🌅", meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed },
-    { type: 'lunch' as const, title: t("menu.lunch"), time: lunchTimeStr, icon: "☀️", meals: dayMeals?.lunch || [], selected: selectedLunch, alternatives: lunchAlternatives, primary: dayMeals?.lunch[0], consumed: lunchConsumed, canEdit: canEditLunch, canCheck: status.canCheckLunch, isPassed: status.lunchPassed },
-    { type: 'dinner' as const, title: t("menu.dinner"), time: dinnerTimeStr, icon: "🌙", meals: dayMeals?.dinner || [], selected: selectedDinner, alternatives: dinnerAlternatives, primary: dayMeals?.dinner[0], consumed: dinnerConsumed, canEdit: canEditDinner, canCheck: status.canCheckDinner, isPassed: status.dinnerPassed },
+  // Build meal slot list dynamically from settings.
+  // First meal → breakfast plan data, last → dinner plan data.
+  // For 3+ meals: the middle meal (floor(count/2)) → lunch plan data.
+  // All others → snack info rows (time only, no plan meal data).
+  const lunchIdx = mc >= 3 ? Math.floor(mc / 2) : -1;
+  const rawSlots = ms.length > 0 ? ms : [
+    { name: t("menu.breakfast"), startTime: '06:00', endTime: '08:00' },
+    { name: t("menu.lunch"),     startTime: '12:30', endTime: '13:30' },
+    { name: t("menu.dinner"),    startTime: '17:30', endTime: '18:30' },
   ];
+  const mealSlots = rawSlots.map((m, i) => {
+    const isFirst = i === 0;
+    const isLast  = i === rawSlots.length - 1;
+    const isLunch = i === lunchIdx && !isFirst && !isLast;
+    const timeStr = `${m.startTime} - ${m.endTime}`;
+    const icon    = isFirst ? '🌅' : isLast ? '🌙' : '☀️';
+    if (isFirst) return { type: 'breakfast' as const, title: m.name, time: timeStr, icon, meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast?.[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed, isSnack: false };
+    if (isLast)  return { type: 'dinner'    as const, title: m.name, time: timeStr, icon, meals: dayMeals?.dinner    || [], selected: selectedDinner,    alternatives: dinnerAlternatives,    primary: dayMeals?.dinner?.[0],    consumed: dinnerConsumed,    canEdit: canEditDinner,    canCheck: status.canCheckDinner,    isPassed: status.dinnerPassed,    isSnack: false };
+    if (isLunch) return { type: 'lunch'     as const, title: m.name, time: timeStr, icon, meals: dayMeals?.lunch     || [], selected: selectedLunch,     alternatives: lunchAlternatives,     primary: dayMeals?.lunch?.[0],     consumed: lunchConsumed,     canEdit: canEditLunch,     canCheck: status.canCheckLunch,     isPassed: status.lunchPassed,     isSnack: false };
+    return { type: `snack_${i}` as any, title: m.name, time: timeStr, icon, meals: [], selected: undefined, alternatives: [], primary: undefined, consumed: false, canEdit: false, canCheck: false, isPassed: false, isSnack: true };
+  });
 
   const loggedSlotMap = { breakfast: 'after-breakfast' as const, lunch: 'after-lunch' as const, dinner: 'after-dinner' as const };
 
@@ -1093,21 +1104,18 @@ export function UnifiedMenu() {
             </motion.div>
 
             <div className="space-y-3 opacity-40 pointer-events-none">
-              <EmptyMealCard
-                title={t("menu.breakfast")}
-                time="06:00 - 08:00"
-                icon="🌅"
-              />
-              <EmptyMealCard
-                title={t("menu.lunch")}
-                time="12:30 - 13:30"
-                icon="☀️"
-              />
-              <EmptyMealCard
-                title={t("menu.dinner")}
-                time="17:30 - 18:30"
-                icon="🌙"
-              />
+              {(mealSettings?.meals?.length ? mealSettings.meals : [
+                { name: t("menu.breakfast"), startTime: '06:00', endTime: '08:00' },
+                { name: t("menu.lunch"),     startTime: '12:30', endTime: '13:30' },
+                { name: t("menu.dinner"),    startTime: '17:30', endTime: '18:30' },
+              ]).map((meal, i, arr) => (
+                <EmptyMealCard
+                  key={i}
+                  title={meal.name}
+                  time={`${meal.startTime} - ${meal.endTime}`}
+                  icon={i === 0 ? '🌅' : i === arr.length - 1 ? '🌙' : '☀️'}
+                />
+              ))}
             </div>
 
             <div className="h-4" />
@@ -1471,6 +1479,28 @@ export function UnifiedMenu() {
               {mealSlots.map((slot, slotIdx) => {
                 const isFocusMeal = status.isToday && status.isInEatingWindow && status.currentMeal === slot.type;
                 const isConsumedToday = status.isToday && slot.consumed;
+
+                // Snack slots: time-only info row (no plan meal data expected)
+                if (slot.isSnack) {
+                  return (
+                    <motion.div
+                      key={slot.type}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 * slotIdx, duration: 0.3 }}
+                    >
+                      <div className="rounded-3xl border border-dashed border-slate-200 bg-white/60 px-4 py-3 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-2xl bg-amber-50 flex items-center justify-center text-lg shrink-0">
+                          <span>{slot.icon}</span>
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-semibold text-slate-800 truncate">{slot.title}</span>
+                          <span className="text-[11px] text-slate-400">{slot.time}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                }
 
                 // Placeholder for missing dinner on days without a planned vacsora
                 if (slot.type === 'dinner' && (!slot.primary && slot.meals.length === 0)) {
