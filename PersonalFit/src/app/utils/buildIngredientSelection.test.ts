@@ -4,6 +4,7 @@ import {
   getDefaultMealsForCount,
   getDefaultMealsForModel,
 } from '../backend/services/UserProfileService';
+import { getMET } from './metHelpers';
 
 describe('buildIngredientSelection', () => {
   it('empty styles still returns at least 6 items (universal categories)', () => {
@@ -132,5 +133,19 @@ describe('meal window defaults', () => {
       : getDefaultMealsForCount(mealCount);
     expect(meals).toHaveLength(1);
     expect(meals[0].startTime).toBe('12:00');
+  });
+});
+
+describe('getMET with English sport IDs', () => {
+  it('returns correct MET for English IDs', () => {
+    expect(getMET('running')).toBeGreaterThan(5);
+    expect(getMET('gym')).toBeGreaterThan(4);
+    expect(getMET('yoga')).toBeLessThan(4);
+    expect(getMET('swimming')).toBeGreaterThan(5);
+    expect(getMET('cycling')).toBeGreaterThan(5);
+  });
+
+  it('returns default 6 for unknown sport', () => {
+    expect(getMET('unknownsport123')).toBe(6);
   });
 });
