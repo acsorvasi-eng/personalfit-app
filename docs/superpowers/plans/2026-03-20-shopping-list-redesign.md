@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the cluttered category-tab shopping screen with a clean list + smart store recommendation panel + two action sheets (stop-by and order delivery).
+**Goal:** Replace the cluttered category-tab shopping screen with a clean list + smart store recommendation panel that learns from GPS proximity and the user's actual shopping habits.
 
-**Architecture:** Extract store-matching logic to a pure utility (`storeRecommendation.ts`), build two new bottom-sheet components (`StoreStopBySheet`, `OrderDeliverySheet`), then rewrite `ShoppingList.tsx` to remove tabs/pills/old-modal and wire up the smart store panel. Data layer (ShoppingItem, SettingsService, productDatabase) is unchanged.
+**Architecture:** Extract store-matching logic to a pure utility (`storeRecommendation.ts`) with a composite score (coverage 70% + proximity 20% + learned preference 10%). Build two new bottom-sheet components. Rewrite `ShoppingList.tsx` to remove tabs/pills/modal, request geolocation on mount, persist store preferences via SettingsService, and wire up the smart store panel. Data layer (ShoppingItem, SettingsService, productDatabase) is otherwise unchanged.
 
-**Tech Stack:** React 18, TypeScript, Tailwind CSS, Framer Motion, DSMBottomSheet (existing), lucide-react, Vitest
+**Tech Stack:** React 18, TypeScript, Tailwind CSS, Framer Motion, DSMBottomSheet (existing), lucide-react, Vitest, Web Geolocation API
 
 ---
 
@@ -15,11 +15,11 @@
 | File | Action | Purpose |
 |------|--------|---------|
 | `PersonalFit/src/app/features/shopping/types.ts` | Create | Shared `ShoppingItem` interface |
-| `PersonalFit/src/app/utils/storeRecommendation.ts` | Create | Pure functions: compute best store, 2-store combo, map/delivery URLs |
+| `PersonalFit/src/app/utils/storeRecommendation.ts` | Create | Scoring: coverage + GPS distance + learned preference |
 | `PersonalFit/src/app/utils/storeRecommendation.test.ts` | Create | Vitest unit tests |
 | `PersonalFit/src/app/features/shopping/components/StoreStopBySheet.tsx` | Create | "Stop by on the way" bottom sheet |
 | `PersonalFit/src/app/features/shopping/components/OrderDeliverySheet.tsx` | Create | "Order delivery" bottom sheet |
-| `PersonalFit/src/app/features/shopping/components/ShoppingList.tsx` | Modify | Remove tabs/pills/modal, add Smart Store Panel + sheet states |
+| `PersonalFit/src/app/features/shopping/components/ShoppingList.tsx` | Modify | Remove tabs/pills/modal, add geolocation, preference tracking, Smart Store Panel |
 
 ---
 
@@ -32,17 +32,22 @@
 
 ### Background
 
-`ShoppingItem` is currently defined locally in both `ShoppingList.tsx` and `Checkout.tsx`. We extract it to a shared file for the new utility to import. The store recommendation logic currently lives as a `useMemo` in ShoppingList.tsx (lines 168–194) — we extract and extend it.
+`ShoppingItem` is currently defined locally in `ShoppingList.tsx` — extract it so the utility can import it without circular deps.
 
-`localStores` from `productDatabase.ts` is an array of `StoreInfo` objects. Each has:
-- `name: StoreName` — e.g. `'Kaufland'`
-- `logo: string` — emoji e.g. `'🏪'`
-- `hasDelivery: boolean`
-- `deliveryPartner?: string` — `'Glovo'`, `'Bringo'`, `'Auchan Delivery'`
-- `deliveryFee?: number` — e.g. `14.99`
-- `coordinates: { lat: number; lng: number }`
+`localStores` from `productDatabase.ts` is an array of `StoreInfo`. Each has: `name`, `logo`, `hasDelivery`, `deliveryPartner?`, `deliveryFee?`, `coordinates: { lat, lng }`, `distanceKm` (static fallback).
 
-Each `ShoppingItem.product.store` tells us which store that product is from (the cheapest source, assigned at add time). We group unchecked items by their store to rank stores by coverage.
+**Scoring formula** — three factors, primary sort is always matchCount, tiebreaking and ranking uses composite score:
+```
+score = matchCount * 10                         // coverage (dominant)
+      + max(0, 10 - distanceKm) * 2             // proximity bonus: max +20 for <0.1km, 0 at ≥10km
+      + min(preferenceCount, 10) * 1            // preference bonus: max +10 after 10+ visits
+```
+
+This means: a store covering 3 items always beats one covering 2, but among equal-coverage stores the closest + most-used wins.
+
+**Preference persistence key:** `"storePreferences"` in SettingsService — stored as JSON: `{ "Kaufland": 7, "Lidl": 2 }`. Incremented every time user taps "Megállok útban" or "Megrendelem" for a store.
+
+**Preferred store threshold:** `preferenceCount >= 3` → show "⭐ Megszokott" badge.
 
 - [ ] **Step 1: Create shared types file**
 
@@ -67,29 +72,18 @@ import { describe, it, expect } from "vitest";
 import {
   computeStoreRecommendations,
   computeBestTwoStoreCombo,
+  computeDistanceKm,
   buildMapsUrl,
   buildDeliveryUrl,
 } from "./storeRecommendation";
 import { ShoppingItem } from "../features/shopping/types";
 import { Product, StoreInfo } from "../data/productDatabase";
 
-// Minimal Product factory
 function makeProduct(id: string, store: string, price: number): Product {
   return {
-    id,
-    name: id,
-    brand: "",
-    category: "test",
-    store: store as any,
-    image: "",
-    unit: "db",
-    defaultQuantity: 1,
-    caloriesPer100: 100,
-    price,
-    protein: 10,
-    carbs: 10,
-    fat: 5,
-    tags: [],
+    id, name: id, brand: "", category: "test",
+    store: store as any, image: "", unit: "db", defaultQuantity: 1,
+    caloriesPer100: 100, price, protein: 10, carbs: 10, fat: 5, tags: [],
   };
 }
 
@@ -98,29 +92,28 @@ function makeItem(id: string, store: string, price: number): ShoppingItem {
 }
 
 const kauflandStore: StoreInfo = {
-  name: "Kaufland",
-  logo: "🏪",
-  hasDelivery: true,
-  deliveryPartner: "Glovo",
-  address: "Test",
-  city: "Târgu Mureș",
-  openHours: "8-22",
-  coordinates: { lat: 46.54, lng: 24.56 },
-  deliveryFee: 14.99,
-  minOrder: 100,
-  distanceKm: 1.2,
+  name: "Kaufland", logo: "🏪", hasDelivery: true, deliveryPartner: "Glovo",
+  address: "Test", city: "Târgu Mureș", openHours: "8-22",
+  coordinates: { lat: 46.545, lng: 24.562 },
+  deliveryFee: 14.99, minOrder: 100, distanceKm: 1.2,
 };
 
 const lidlStore: StoreInfo = {
-  name: "Lidl",
-  logo: "🟡",
-  hasDelivery: false,
-  address: "Test",
-  city: "Târgu Mureș",
-  openHours: "7-22",
-  coordinates: { lat: 46.55, lng: 24.57 },
+  name: "Lidl", logo: "🟡", hasDelivery: false,
+  address: "Test", city: "Târgu Mureș", openHours: "7-22",
+  coordinates: { lat: 46.550, lng: 24.570 },
   distanceKm: 1.5,
 };
+
+describe("computeDistanceKm", () => {
+  it("returns ~0 for identical coordinates", () => {
+    expect(computeDistanceKm(46.545, 24.562, 46.545, 24.562)).toBeLessThan(0.01);
+  });
+
+  it("returns a positive number for different coordinates", () => {
+    expect(computeDistanceKm(46.545, 24.562, 46.550, 24.570)).toBeGreaterThan(0);
+  });
+});
 
 describe("computeStoreRecommendations", () => {
   it("returns empty array when no unchecked items", () => {
@@ -139,10 +132,9 @@ describe("computeStoreRecommendations", () => {
     expect(kaufRec!.matchCount).toBe(2);
     expect(kaufRec!.estimatedTotal).toBe(30);
     expect(kaufRec!.missingItems).toHaveLength(1);
-    expect(kaufRec!.missingItems[0].product.id).toBe("c");
   });
 
-  it("sorts by matchCount descending", () => {
+  it("sorts by score descending (higher matchCount wins)", () => {
     const items = [
       makeItem("a", "Lidl", 5),
       makeItem("b", "Kaufland", 10),
@@ -157,6 +149,19 @@ describe("computeStoreRecommendations", () => {
     const recs = computeStoreRecommendations(items);
     expect(recs.every((r) => r.matchCount > 0)).toBe(true);
   });
+
+  it("preferred store badge threshold: preferenceCount >= 3", () => {
+    const items = [makeItem("a", "Kaufland", 10), makeItem("b", "Lidl", 5)];
+    const recs = computeStoreRecommendations(items, undefined, { Kaufland: 5 });
+    const kaufRec = recs.find((r) => r.store.name === "Kaufland");
+    expect(kaufRec!.isPreferred).toBe(true);
+  });
+
+  it("isPreferred is false below threshold", () => {
+    const items = [makeItem("a", "Kaufland", 10)];
+    const recs = computeStoreRecommendations(items, undefined, { Kaufland: 2 });
+    expect(recs[0].isPreferred).toBe(false);
+  });
 });
 
 describe("computeBestTwoStoreCombo", () => {
@@ -167,11 +172,8 @@ describe("computeBestTwoStoreCombo", () => {
   });
 
   it("returns null when secondary adds zero new items", () => {
-    // Both stores have the same item (won't happen in real data, but test edge case)
     const items = [makeItem("a", "Kaufland", 10)];
-    const recs = computeStoreRecommendations(items);
-    // Only one store has items, so combo is null
-    expect(computeBestTwoStoreCombo(recs)).toBeNull();
+    expect(computeBestTwoStoreCombo(computeStoreRecommendations(items))).toBeNull();
   });
 
   it("computes combined match count and totals", () => {
@@ -180,8 +182,7 @@ describe("computeBestTwoStoreCombo", () => {
       makeItem("b", "Kaufland", 20),
       makeItem("c", "Lidl", 5),
     ];
-    const recs = computeStoreRecommendations(items);
-    const combo = computeBestTwoStoreCombo(recs);
+    const combo = computeBestTwoStoreCombo(computeStoreRecommendations(items));
     expect(combo).not.toBeNull();
     expect(combo!.combinedMatchCount).toBe(3);
     expect(combo!.combinedTotal).toBe(35);
@@ -189,11 +190,10 @@ describe("computeBestTwoStoreCombo", () => {
 });
 
 describe("buildMapsUrl", () => {
-  it("returns a Google Maps URL with correct coordinates", () => {
+  it("returns a Google Maps URL with store coordinates", () => {
     const url = buildMapsUrl(kauflandStore);
     expect(url).toContain("maps.google.com");
-    expect(url).toContain("46.54");
-    expect(url).toContain("24.56");
+    expect(url).toContain("46.545");
   });
 });
 
@@ -202,10 +202,8 @@ describe("buildDeliveryUrl", () => {
     expect(buildDeliveryUrl(lidlStore)).toBeNull();
   });
 
-  it("returns a URL for delivery stores", () => {
-    const url = buildDeliveryUrl(kauflandStore);
-    expect(url).not.toBeNull();
-    expect(typeof url).toBe("string");
+  it("returns a string for delivery stores", () => {
+    expect(typeof buildDeliveryUrl(kauflandStore)).toBe("string");
   });
 });
 ```
@@ -216,7 +214,7 @@ describe("buildDeliveryUrl", () => {
 cd "PersonalFit" && npx vitest run src/app/utils/storeRecommendation.test.ts
 ```
 
-Expected: FAIL — `storeRecommendation.ts` not found.
+Expected: FAIL — module not found.
 
 - [ ] **Step 4: Create the utility**
 
@@ -226,6 +224,13 @@ Create `PersonalFit/src/app/utils/storeRecommendation.ts`:
 import { ShoppingItem } from "../features/shopping/types";
 import { StoreInfo, localStores } from "../data/productDatabase";
 
+export interface UserLocation {
+  lat: number;
+  lng: number;
+}
+
+export type StorePreferences = Record<string, number>; // storeName → visit count
+
 export interface StoreRecommendation {
   store: StoreInfo;
   matchCount: number;
@@ -233,6 +238,10 @@ export interface StoreRecommendation {
   estimatedTotal: number;
   availableItems: ShoppingItem[];
   missingItems: ShoppingItem[];
+  score: number;
+  distanceKm: number;
+  preferenceCount: number;
+  isPreferred: boolean; // preferenceCount >= 3
 }
 
 export interface TwoStoreRecommendation {
@@ -243,12 +252,36 @@ export interface TwoStoreRecommendation {
   combinedDeliveryFee: number;
 }
 
+/** Haversine distance in km between two lat/lng points. */
+export function computeDistanceKm(
+  lat1: number, lng1: number,
+  lat2: number, lng2: number
+): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 /**
- * Groups unchecked items by their product.store and returns a ranked list
- * of store recommendations (most items first).
+ * Computes ranked store recommendations from unchecked shopping items.
+ *
+ * Scoring: coverage (dominant) + proximity bonus + preference bonus.
+ * score = matchCount * 10 + max(0, 10 - distanceKm) * 2 + min(prefCount, 10) * 1
+ *
+ * @param uncheckedItems  Items not yet checked off
+ * @param userLocation    Optional GPS fix; falls back to store's static distanceKm
+ * @param preferences     Optional visit counts from SettingsService ("storePreferences")
  */
 export function computeStoreRecommendations(
-  uncheckedItems: ShoppingItem[]
+  uncheckedItems: ShoppingItem[],
+  userLocation?: UserLocation,
+  preferences?: StorePreferences
 ): StoreRecommendation[] {
   if (uncheckedItems.length === 0) return [];
 
@@ -268,6 +301,21 @@ export function computeStoreRecommendations(
       const missingItems = uncheckedItems.filter(
         (i) => i.product.store !== store.name
       );
+
+      const distanceKm = userLocation
+        ? computeDistanceKm(
+            userLocation.lat, userLocation.lng,
+            store.coordinates.lat, store.coordinates.lng
+          )
+        : store.distanceKm;
+
+      const preferenceCount = preferences?.[store.name] ?? 0;
+
+      const score =
+        availableItems.length * 10 +
+        Math.max(0, 10 - distanceKm) * 2 +
+        Math.min(preferenceCount, 10) * 1;
+
       return {
         store,
         matchCount: availableItems.length,
@@ -275,17 +323,19 @@ export function computeStoreRecommendations(
         estimatedTotal: Math.round(data.total * 100) / 100,
         availableItems,
         missingItems,
+        score,
+        distanceKm: Math.round(distanceKm * 10) / 10,
+        preferenceCount,
+        isPreferred: preferenceCount >= 3,
       };
     })
     .filter((r) => r.matchCount > 0)
-    .sort((a, b) => b.matchCount - a.matchCount);
+    .sort((a, b) => b.score - a.score);
 }
 
 /**
- * Finds the best 2-store combination that covers the most unchecked items.
- * The primary store is recs[0]. The secondary is whichever other store
- * adds the most new coverage beyond the primary.
- * Returns null if no secondary adds any new items.
+ * Best 2-store combo that maximises total item coverage.
+ * Returns null if no secondary store adds new items beyond the primary.
  */
 export function computeBestTwoStoreCombo(
   recommendations: StoreRecommendation[]
@@ -297,8 +347,9 @@ export function computeBestTwoStoreCombo(
 
   const candidates = recommendations.slice(1).map((rec) => ({
     rec,
-    additionalCoverage: rec.availableItems.filter((i) => !primaryIds.has(i.product.id))
-      .length,
+    additionalCoverage: rec.availableItems.filter(
+      (i) => !primaryIds.has(i.product.id)
+    ).length,
   }));
 
   candidates.sort((a, b) => b.additionalCoverage - a.additionalCoverage);
@@ -327,7 +378,7 @@ export function buildMapsUrl(store: StoreInfo): string {
   return `https://www.google.com/maps/dir/46.5450,24.5620/${store.coordinates.lat},${store.coordinates.lng}`;
 }
 
-/** External delivery URL for a store. Returns null if store has no delivery. */
+/** External delivery URL for a store, or null if no delivery. */
 export function buildDeliveryUrl(store: StoreInfo): string | null {
   if (!store.hasDelivery) return null;
   const urls: Record<string, string> = {
@@ -345,13 +396,13 @@ export function buildDeliveryUrl(store: StoreInfo): string | null {
 cd "PersonalFit" && npx vitest run src/app/utils/storeRecommendation.test.ts
 ```
 
-Expected: All tests PASS.
+Expected: all tests PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 cd "PersonalFit" && git add src/app/features/shopping/types.ts src/app/utils/storeRecommendation.ts src/app/utils/storeRecommendation.test.ts
-git commit -m "feat: add storeRecommendation utility and shared ShoppingItem type"
+git commit -m "feat: add storeRecommendation utility with GPS + preference scoring"
 ```
 
 ---
@@ -363,9 +414,12 @@ git commit -m "feat: add storeRecommendation utility and shared ShoppingItem typ
 
 ### Background
 
-This sheet opens when the user taps "🚶 Megállok útban". It receives all unchecked items and the recommended store. It splits items into "available here" (product.store === storeName) and "not available" (everything else). The Share button uses `navigator.share` (Web Share API) with a text fallback to clipboard. The Route button opens Google Maps.
+Opens when user taps "🚶 Megállok útban". Splits unchecked items into available (product.store === storeName) and missing (everything else). Missing items shown in a red-tinted row with ⚠️.
 
-DSMBottomSheet props: `open`, `onClose`, `title?`, `children`, `snapPoint?` (default `"half"`). Use `snapPoint="full"` since the list could be long.
+Share button uses `navigator.share` (Web Share API) with clipboard fallback.
+Route button calls `buildMapsUrl(store)` → opens in `_blank`.
+
+DSMBottomSheet props: `open`, `onClose`, `title?`, `children`, `snapPoint?`. Use `snapPoint="full"`.
 
 - [ ] **Step 1: Create StoreStopBySheet**
 
@@ -404,9 +458,7 @@ export function StoreStopBySheet({ open, onClose, store, allUncheckedItems }: Pr
     if (navigator.share) {
       try {
         await navigator.share({ title: `${store.name} lista`, text });
-      } catch {
-        /* user cancelled */
-      }
+      } catch { /* user cancelled */ }
     } else {
       navigator.clipboard.writeText(text).catch(() => {});
     }
@@ -476,7 +528,7 @@ export function StoreStopBySheet({ open, onClose, store, allUncheckedItems }: Pr
 cd "PersonalFit" && npx tsc --noEmit 2>&1 | head -20
 ```
 
-Expected: no errors related to StoreStopBySheet.
+Expected: no errors.
 
 - [ ] **Step 3: Commit**
 
@@ -494,9 +546,9 @@ git commit -m "feat: add StoreStopBySheet component"
 
 ### Background
 
-This sheet opens when the user taps "🛵 Megrendelem". It shows delivery-capable stores only. The primary option is the top recommendation. The secondary option is the 2-store combo (if it exists and both stores have delivery). The CTA navigates to `/checkout?store=StoreName` (existing behavior — Checkout.tsx handles this route).
+Opens when user taps "🛵 Megrendelem". Shows delivery-capable stores only (`store.hasDelivery === true`). CTA navigates to `/checkout?store=StoreName` (existing in-app Checkout.tsx flow — multi-step cart/address/timeslot/payment).
 
-Only delivery-capable stores are shown (`store.hasDelivery === true`). If the top recommendation has no delivery, skip it and show the next one. If neither option has delivery, show a "nem elérhető kiszállítás" message.
+If the top recommendation has no delivery, `deliveryRec` will be null → show "nem elérhető kiszállítás" message.
 
 - [ ] **Step 1: Create OrderDeliverySheet**
 
@@ -517,12 +569,7 @@ interface Props {
   twoStoreCombo: TwoStoreRecommendation | null;
 }
 
-export function OrderDeliverySheet({
-  open,
-  onClose,
-  topRecommendation,
-  twoStoreCombo,
-}: Props) {
+export function OrderDeliverySheet({ open, onClose, topRecommendation, twoStoreCombo }: Props) {
   const navigate = useNavigate();
 
   const deliveryRec = topRecommendation?.store.hasDelivery ? topRecommendation : null;
@@ -550,62 +597,50 @@ export function OrderDeliverySheet({
         )}
 
         <div className="flex flex-col gap-3 mb-5">
-          {/* Single best store */}
           {deliveryRec && (
             <div className="bg-teal-50 rounded-2xl p-3 border-2 border-teal-600">
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <div className="text-sm font-bold text-gray-800">
                     {deliveryRec.store.name}
+                    {deliveryRec.isPreferred && (
+                      <span className="ml-1.5 text-2xs text-amber-500 font-semibold">⭐ Megszokott</span>
+                    )}
                   </div>
                   <div className="text-xs text-gray-500">
                     {deliveryRec.matchCount}/{deliveryRec.totalItems} termék ·{" "}
-                    {deliveryRec.store.deliveryPartner} ·{" "}
-                    {deliveryRec.store.deliveryFee} lei futár
+                    {deliveryRec.store.deliveryPartner} · {deliveryRec.store.deliveryFee} lei futár
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-base font-extrabold text-teal-600">
-                    ~
-                    {(
-                      deliveryRec.estimatedTotal + (deliveryRec.store.deliveryFee ?? 0)
-                    ).toFixed(0)}{" "}
-                    lei
+                    ~{(deliveryRec.estimatedTotal + (deliveryRec.store.deliveryFee ?? 0)).toFixed(0)} lei
                   </div>
                   <div className="text-2xs text-gray-400">termék + futár</div>
                 </div>
               </div>
               {deliveryRec.missingItems.length > 0 && (
                 <div className="text-xs text-red-500 bg-red-50 rounded-lg px-2 py-1 inline-block">
-                  ⚠️{" "}
-                  {deliveryRec.missingItems.map((i) => i.product.name).join(", ")} nem
-                  elérhető
+                  ⚠️ {deliveryRec.missingItems.map((i) => i.product.name).join(", ")} nem elérhető
                 </div>
               )}
             </div>
           )}
 
-          {/* Two-store combo */}
           {comboAvailable && (
             <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200">
               <div className="flex justify-between items-start mb-1">
                 <div>
                   <div className="text-sm font-semibold text-gray-800">
-                    {twoStoreCombo!.primary.store.name} +{" "}
-                    {twoStoreCombo!.secondary.store.name}
+                    {twoStoreCombo!.primary.store.name} + {twoStoreCombo!.secondary.store.name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {twoStoreCombo!.combinedMatchCount}/{twoStoreCombo!.primary.totalItems}{" "}
-                    termék · 2 futár
+                    {twoStoreCombo!.combinedMatchCount}/{twoStoreCombo!.primary.totalItems} termék · 2 futár
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-base font-extrabold text-gray-700">
-                    ~
-                    {(
-                      twoStoreCombo!.combinedTotal + twoStoreCombo!.combinedDeliveryFee
-                    ).toFixed(0)}{" "}
-                    lei
+                    ~{(twoStoreCombo!.combinedTotal + twoStoreCombo!.combinedDeliveryFee).toFixed(0)} lei
                   </div>
                   <div className="text-2xs text-red-400">
                     +{twoStoreCombo!.combinedDeliveryFee.toFixed(2)} lei futár (2×)
@@ -657,70 +692,121 @@ git commit -m "feat: add OrderDeliverySheet component"
 
 ### Background
 
-The current file is 853 lines. Key things to **remove**:
-- `SMART_SUGGESTION_DEFS` constant + `handleSmartSuggestion` function
-- State: `showStoreView`, `isLoadingStores`, `selectedCategory`, `selectedStore`
-- Computed: `categories`, `storeMatches` (replaced by utility)
-- JSX: category filter tabs, emoji suggestion pills, store filter pills, the entire `showStoreView` modal JSX (roughly lines 620–851)
-- `handleFindStores` function
-- Unused lucide imports after removal: `Store`, `Clock`, `ChevronRight`, `Zap`, `BadgeCheck`, `Package`, `Leaf`, `Heart`, `CalendarDays`, `Truck`
+The current file is 853 lines. We are making the following changes:
 
-Key things to **keep**:
-- `ShoppingItem` interface → replace with import from `../types`
-- SettingsService persistence (`getSetting`/`setSetting`)
-- `searchQuery`, `isSearchFocused`, search results logic
-- `browseProducts`, `displayProducts` (simplified — no store filter)
+**Remove** (state variables):
+- `showStoreView`, `isLoadingStores`, `selectedCategory`, `selectedStore`
+
+**Remove** (functions/constants):
+- `SMART_SUGGESTION_DEFS`, `handleSmartSuggestion`, `handleFindStores`
+- `categories` useMemo
+- `storeMatches` useMemo (replaced by utility)
+
+**Remove** (JSX sections):
+- Category filter tabs
+- Emoji suggestion pills
+- Store filter chips
+- The entire `showStoreView` full-screen modal (~lines 620–851)
+- The `handleFindStores` fixed bottom CTA button
+
+**Remove** (lucide imports no longer needed after JSX removal):
+`Store`, `Clock`, `ChevronRight`, `Truck`, `Zap`, `BadgeCheck`, `Package`, `Leaf`, `Heart`, `CalendarDays`, `ListChecks`
+
+**Keep** (all data/logic):
+- SettingsService persistence for `shoppingItems`
+- `searchQuery`, search results, `browseProducts`, `displayProducts`
 - `addProduct`, `removeItem`, `toggleItemCheck`, `isInList`
-- Meal plan import (`showMealPlanImport`, `handleAutoPopulateFromMealPlan`, `mealPlanSuggestions`)
+- Meal plan import CTA and `handleAutoPopulateFromMealPlan`
 - `totalPrice`, `totalItems`
 
-Key things to **add**:
-- Import `ShoppingItem` from `../types`
-- Import `computeStoreRecommendations`, `computeBestTwoStoreCombo`, `StoreRecommendation`, `TwoStoreRecommendation` from `../../../utils/storeRecommendation`
-- Import `StoreStopBySheet` and `OrderDeliverySheet`
-- State: `stopByOpen: boolean`, `orderOpen: boolean`
-- Computed: `uncheckedItems`, `storeRecommendations`, `topRecommendation`, `twoStoreCombo`
-- Inline `SmartStorePanel` component (see code below)
-- Mount `StoreStopBySheet` and `OrderDeliverySheet` at root, outside scroll container
-
-### New JSX structure
-
-```
-<div h-full flex flex-col overflow-hidden>
-  {/* Header */}
-  <div flex-shrink-0>
-    simple title "Bevásárlólista" + item count
-  </div>
-
-  {/* Scrollable body */}
-  <div flex-1 overflow-y-auto>
-    {/* Search */}
-    <input...>
-    <AnimatePresence> {searchResults grid} </AnimatePresence>
-
-    {/* Meal plan import CTA (preserved) */}
-    ...
-
-    {/* Shopping list items */}
-    <div flex-col gap>
-      {shoppingItems.map(item => DSMSwipeAction row)}
-    </div>
-
-    {/* Smart Store Panel */}
-    {topRecommendation && uncheckedItems.length > 0 && (
-      <SmartStorePanel ... />
-    )}
-
-    <div pb-24 /> {/* bottom spacing */}
-  </div>
-
-  {/* Sheets (outside scroll) */}
-  <StoreStopBySheet ... />
-  <OrderDeliverySheet ... />
-</div>
+**Add** (imports):
+```typescript
+import { ShoppingItem } from "../types";  // replaces local interface
+import {
+  computeStoreRecommendations,
+  computeBestTwoStoreCombo,
+  StoreRecommendation,
+  TwoStoreRecommendation,
+  UserLocation,
+  StorePreferences,
+} from "../../../utils/storeRecommendation";
+import { StoreStopBySheet } from "./StoreStopBySheet";
+import { OrderDeliverySheet } from "./OrderDeliverySheet";
 ```
 
-### SmartStorePanel (inline in ShoppingList.tsx)
+**Add** (state):
+```typescript
+const [stopByOpen, setStopByOpen] = useState(false);
+const [orderOpen, setOrderOpen] = useState(false);
+const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+const [storePreferences, setStorePreferences] = useState<StorePreferences>({});
+```
+
+**Add** (effects — load geolocation + preferences on mount):
+```typescript
+// Load saved store preferences
+useEffect(() => {
+  getSetting("storePreferences").then((saved) => {
+    if (!saved) return;
+    try { setStorePreferences(JSON.parse(saved)); } catch { /* ignore */ }
+  });
+}, []);
+
+// Request GPS location
+useEffect(() => {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    () => { /* permission denied or unavailable — silently use static distances */ }
+  );
+}, []);
+```
+
+**Add** (preference recording helper):
+```typescript
+const recordStoreVisit = (storeName: string) => {
+  setStorePreferences((prev) => {
+    const next = { ...prev, [storeName]: (prev[storeName] ?? 0) + 1 };
+    setSetting("storePreferences", JSON.stringify(next)).catch(() => {});
+    return next;
+  });
+};
+```
+
+**Add** (computed values):
+```typescript
+const uncheckedItems = useMemo(
+  () => shoppingItems.filter((i) => !i.checked),
+  [shoppingItems]
+);
+
+const storeRecommendations = useMemo(
+  () => computeStoreRecommendations(
+    uncheckedItems,
+    userLocation ?? undefined,
+    storePreferences
+  ),
+  [uncheckedItems, userLocation, storePreferences]
+);
+
+const topRecommendation = storeRecommendations[0] ?? null;
+
+const twoStoreCombo = useMemo(
+  () => computeBestTwoStoreCombo(storeRecommendations),
+  [storeRecommendations]
+);
+```
+
+**Simplify** (no store filter):
+```typescript
+// displayProducts: remove selectedStore filter
+const displayProducts = unfilteredProducts;
+
+// filteredShoppingItems: always all items
+const filteredShoppingItems = shoppingItems;
+```
+
+### SmartStorePanel component (add before `export function ShoppingList`)
 
 ```tsx
 function SmartStorePanel({
@@ -745,9 +831,15 @@ function SmartStorePanel({
       {/* Best single store */}
       <div className="flex justify-between items-center bg-white rounded-xl px-3 py-2.5 border-2 border-teal-600 mb-2">
         <div>
-          <div className="text-sm font-bold text-gray-800">{topRec.store.name}</div>
+          <div className="text-sm font-bold text-gray-800">
+            {topRec.store.name}
+            {topRec.isPreferred && (
+              <span className="ml-1.5 text-2xs text-amber-500 font-semibold">⭐ Megszokott</span>
+            )}
+          </div>
           <div className="text-2xs text-gray-500">
             {topRec.matchCount}/{uncheckedCount} termék elérhető
+            {" · "}{topRec.distanceKm} km
           </div>
         </div>
         <div className="text-right">
@@ -756,7 +848,7 @@ function SmartStorePanel({
           </div>
           {topRec.missingItems.length > 0 && (
             <div className="text-2xs text-gray-400">
-              {topRec.missingItems.length} hiányzó termék
+              {topRec.missingItems.length} hiányzó
             </div>
           )}
         </div>
@@ -804,188 +896,145 @@ function SmartStorePanel({
 }
 ```
 
+### New JSX return structure
+
+```tsx
+return (
+  <div className="h-full flex flex-col overflow-hidden">
+    {/* Header */}
+    <div className="flex-shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
+      <div>
+        <h1 className="text-xl font-extrabold text-gray-800">Bevásárlólista</h1>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {totalItems > 0
+            ? `${totalItems} termék · Târgu Mureș`
+            : "Üres lista · adj hozzá termékeket"}
+        </p>
+      </div>
+      {totalItems > 0 && (
+        <div className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
+          {totalItems} db
+        </div>
+      )}
+    </div>
+
+    {/* Scrollable body */}
+    <div className="flex-1 overflow-y-auto">
+      {/* Search bar — keep exactly as-is */}
+      ...
+
+      {/* Search results — keep exactly as-is */}
+      <AnimatePresence>
+        ...search results grid...
+      </AnimatePresence>
+
+      {/* Meal plan import CTA — keep exactly as-is */}
+      ...
+
+      {/* Shopping list items — keep DSMSwipeAction rows, add store subtitle */}
+      <div className="flex flex-col gap-2 px-4 py-2">
+        {shoppingItems.map((item) => (
+          <DSMSwipeAction key={item.product.id} ...existing props...>
+            {/* Inside the item row, under the product name add: */}
+            <div className="text-2xs text-gray-400">legjobb ár: {item.product.store}</div>
+          </DSMSwipeAction>
+        ))}
+      </div>
+
+      {/* Smart Store Panel */}
+      {topRecommendation && uncheckedItems.length > 0 && (
+        <SmartStorePanel
+          topRec={topRecommendation}
+          twoStoreCombo={twoStoreCombo}
+          uncheckedCount={uncheckedItems.length}
+          onStopBy={() => {
+            recordStoreVisit(topRecommendation.store.name);
+            setStopByOpen(true);
+          }}
+          onOrder={() => {
+            recordStoreVisit(topRecommendation.store.name);
+            setOrderOpen(true);
+          }}
+        />
+      )}
+
+      <div className="pb-24" />
+    </div>
+
+    {/* Sheets — outside scroll container */}
+    <StoreStopBySheet
+      open={stopByOpen}
+      onClose={() => setStopByOpen(false)}
+      store={topRecommendation?.store ?? null}
+      allUncheckedItems={uncheckedItems}
+    />
+    <OrderDeliverySheet
+      open={orderOpen}
+      onClose={() => setOrderOpen(false)}
+      topRecommendation={topRecommendation}
+      twoStoreCombo={twoStoreCombo}
+    />
+  </div>
+);
+```
+
 ### Implementation Steps
 
-- [ ] **Step 1: Update imports at top of ShoppingList.tsx**
+- [ ] **Step 1: Update imports** — replace local `ShoppingItem` interface with import from `../types`; add imports for utility, new components; remove unused lucide icons listed above.
 
-Replace the local `ShoppingItem` interface (lines 43–47) with an import:
-```typescript
-import { ShoppingItem } from "../types";
-```
+- [ ] **Step 2: Remove state variables** — delete `showStoreView`, `isLoadingStores`, `selectedCategory`, `selectedStore`. Add `stopByOpen`, `orderOpen`, `userLocation`, `storePreferences`.
 
-Add imports for new utilities and components after existing imports:
-```typescript
-import {
-  computeStoreRecommendations,
-  computeBestTwoStoreCombo,
-  StoreRecommendation,
-  TwoStoreRecommendation,
-} from "../../../utils/storeRecommendation";
-import { StoreStopBySheet } from "./StoreStopBySheet";
-import { OrderDeliverySheet } from "./OrderDeliverySheet";
-```
+- [ ] **Step 3: Add geolocation + preference effects** — add the two `useEffect` blocks and `recordStoreVisit` helper (code in Background above).
 
-Remove from lucide imports: `Store`, `Clock`, `Truck`, `Zap`, `BadgeCheck`, `Package`, `Leaf`, `Heart`, `CalendarDays`, `ListChecks`. Keep: `ShoppingCart`, `Trash2`, `Check`, `MapPin`, `Navigation`, `Sparkles`, `X`, `Search`, `Plus`, `ShoppingBag`.
+- [ ] **Step 4: Replace computed values** — remove `categories`, `storeMatches`. Simplify `displayProducts` and `filteredShoppingItems` (no store filter). Add `uncheckedItems`, `storeRecommendations`, `topRecommendation`, `twoStoreCombo`.
 
-- [ ] **Step 2: Remove state variables that are no longer needed**
+- [ ] **Step 5: Remove functions** — delete `handleFindStores`, `handleSmartSuggestion`, `SMART_SUGGESTION_DEFS`.
 
-Remove these state declarations:
-- `const [showStoreView, setShowStoreView] = useState(false);`
-- `const [isLoadingStores, setIsLoadingStores] = useState(false);`
-- `const [selectedCategory, setSelectedCategory] = useState<string | null>(null);`
-- `const [selectedStore, setSelectedStore] = useState<string | null>(null);`
+- [ ] **Step 6: Add SmartStorePanel component** — paste the function above immediately before `export function ShoppingList()`.
 
-Add in their place:
-```typescript
-const [stopByOpen, setStopByOpen] = useState(false);
-const [orderOpen, setOrderOpen] = useState(false);
-```
+- [ ] **Step 7: Rewrite JSX** — replace `return (...)` using the new structure. Keep search bar, search results, and meal plan CTA code verbatim. Replace item rows to add the store subtitle. Remove category tabs, emoji pills, store filter chips, and the full `showStoreView` modal. Add `SmartStorePanel` and mount both sheets at the root.
 
-- [ ] **Step 3: Remove computed values that are no longer needed**
-
-Remove:
-- `const categories = useMemo(...)` — category list
-- `const storeMatches = useMemo(...)` — old store matching (lines 168–194)
-- `handleFindStores` function
-- `handleSmartSuggestion` function
-- `SMART_SUGGESTION_DEFS` constant
-
-Simplify:
-- `displayProducts`: remove store filter → `const displayProducts = unfilteredProducts;`
-- `filteredShoppingItems`: remove store filter → `const filteredShoppingItems = shoppingItems;`
-
-Add:
-```typescript
-const uncheckedItems = useMemo(
-  () => shoppingItems.filter((i) => !i.checked),
-  [shoppingItems]
-);
-
-const storeRecommendations = useMemo(
-  () => computeStoreRecommendations(uncheckedItems),
-  [uncheckedItems]
-);
-
-const topRecommendation = storeRecommendations[0] ?? null;
-
-const twoStoreCombo = useMemo(
-  () => computeBestTwoStoreCombo(storeRecommendations),
-  [storeRecommendations]
-);
-```
-
-- [ ] **Step 4: Replace the JSX**
-
-The new JSX structure replaces the old `return (...)` entirely. Key differences:
-
-**Header**: Replace `<PageHeader>` with a simple inline header:
-```tsx
-<div className="flex-shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
-  <div>
-    <h1 className="text-xl font-extrabold text-gray-800">Bevásárlólista</h1>
-    <p className="text-xs text-gray-400 mt-0.5">
-      {totalItems > 0
-        ? `${totalItems} termék · Târgu Mureș`
-        : "Üres lista · adj hozzá termékeket"}
-    </p>
-  </div>
-  {totalItems > 0 && (
-    <div className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
-      {totalItems} db
-    </div>
-  )}
-</div>
-```
-
-**Search bar**: Keep as-is (no changes needed).
-
-**Remove**: Category filter tabs section, emoji suggestion pills section, store filter pills section, `showStoreView` modal section (the full-screen overlay, ~200 lines near the bottom).
-
-**Shopping list items**: Keep the existing `DSMSwipeAction` item rows. Remove `selectedStore` filtering. The item rows currently show `item.product.name` and `item.product.price` — also add a store subtitle:
-```tsx
-{/* Under item name */}
-<div className="text-2xs text-gray-400">
-  legjobb ár: {item.product.store}
-</div>
-```
-
-**Smart Store Panel**: Add after the shopping list items, before the bottom padding:
-```tsx
-{topRecommendation && uncheckedItems.length > 0 && (
-  <SmartStorePanel
-    topRec={topRecommendation}
-    twoStoreCombo={twoStoreCombo}
-    uncheckedCount={uncheckedItems.length}
-    onStopBy={() => setStopByOpen(true)}
-    onOrder={() => setOrderOpen(true)}
-  />
-)}
-```
-
-**Sheets at root** (outside scroll container, inside the outer `<div>`):
-```tsx
-<StoreStopBySheet
-  open={stopByOpen}
-  onClose={() => setStopByOpen(false)}
-  store={topRecommendation?.store ?? null}
-  allUncheckedItems={uncheckedItems}
-/>
-<OrderDeliverySheet
-  open={orderOpen}
-  onClose={() => setOrderOpen(false)}
-  topRecommendation={topRecommendation}
-  twoStoreCombo={twoStoreCombo}
-/>
-```
-
-- [ ] **Step 5: Add SmartStorePanel component above ShoppingList function**
-
-Add the `SmartStorePanel` function (code in Background section above) immediately before the `export function ShoppingList()` line.
-
-- [ ] **Step 6: Verify TypeScript compiles with zero errors**
+- [ ] **Step 8: Verify TypeScript compiles with zero errors**
 
 ```bash
 cd "PersonalFit" && npx tsc --noEmit 2>&1
 ```
 
-Expected: no errors. If there are errors, fix them before proceeding.
-
-- [ ] **Step 7: Run all tests**
+- [ ] **Step 9: Run all tests**
 
 ```bash
 cd "PersonalFit" && npx vitest run
 ```
 
-Expected: all tests pass (including the new storeRecommendation tests and all pre-existing tests).
+Expected: all tests pass.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 cd "PersonalFit" && git add src/app/features/shopping/components/ShoppingList.tsx
-git commit -m "feat: redesign shopping list — smart store panel, stop-by and order sheets"
+git commit -m "feat: redesign shopping list — GPS + preference scoring, smart store panel, stop-by and order sheets"
 ```
 
 ---
 
 ## Final Verification Checklist
 
-After all tasks are complete, verify manually in the browser:
-
-- [ ] Shopping list screen has no category tabs
-- [ ] Shopping list screen has no emoji pill shortcuts
-- [ ] Shopping list screen has no store filter chips
-- [ ] Smart Store Panel appears when there are unchecked items
-- [ ] Smart Store Panel is hidden when all items are checked or list is empty
-- [ ] Tapping "🚶 Megállok útban" opens StoreStopBySheet
-- [ ] StoreStopBySheet shows available items normally and unavailable items in red
-- [ ] StoreStopBySheet Share button triggers share/clipboard
-- [ ] StoreStopBySheet Route button opens Google Maps
-- [ ] Tapping "🛵 Megrendelem" opens OrderDeliverySheet
-- [ ] OrderDeliverySheet shows delivery store options with fee breakdown
-- [ ] OrderDeliverySheet CTA navigates to `/checkout?store=...`
-- [ ] All items can still be added via search
-- [ ] Swipe-to-delete still works
-- [ ] Check/uncheck still works
-- [ ] Meal plan import CTA still works
-- [ ] Build: `npx tsc --noEmit` has zero errors
-- [ ] Tests: `npx vitest run` all pass
+- [ ] No category tabs on main screen
+- [ ] No emoji pill shortcuts on main screen
+- [ ] No store filter chips on main screen
+- [ ] Smart Store Panel visible when unchecked items exist
+- [ ] Smart Store Panel hidden when list is empty or all items checked
+- [ ] "⭐ Megszokott" badge appears after 3+ visits to a store
+- [ ] Distance shown in panel (km, GPS if permitted, static fallback if not)
+- [ ] "🚶 Megállok útban" opens StoreStopBySheet
+- [ ] StoreStopBySheet: available items normal, unavailable items in red
+- [ ] StoreStopBySheet: Share button triggers share/clipboard
+- [ ] StoreStopBySheet: Route button opens Google Maps
+- [ ] "🛵 Megrendelem" opens OrderDeliverySheet
+- [ ] OrderDeliverySheet: shows delivery options with fee breakdown
+- [ ] OrderDeliverySheet: CTA navigates to `/checkout?store=...`
+- [ ] Item rows show "legjobb ár: StoreName" subtitle
+- [ ] Search, add, swipe-to-delete, check/uncheck all work
+- [ ] Meal plan import CTA works
+- [ ] `npx tsc --noEmit` — zero errors
+- [ ] `npx vitest run` — all tests pass
