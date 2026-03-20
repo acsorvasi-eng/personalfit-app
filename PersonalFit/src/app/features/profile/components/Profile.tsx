@@ -1205,7 +1205,7 @@ function SettingsTabContent(props: {
   const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
   useEffect(() => { getTrialInfo().then(setTrial); }, []);
   const [mealCount, setMealCount] = useState(3);
-  useEffect(() => { getMealSettings().then(s => setMealCount(s.mealCount ?? 3)); }, []);
+  useEffect(() => { getMealSettings().then(s => setMealCount(s.mealCount || 3)); }, []);
 
   return (
     <div style={{ background: '#f9fafb', minHeight: '100%', paddingBottom: '1rem' }}>
