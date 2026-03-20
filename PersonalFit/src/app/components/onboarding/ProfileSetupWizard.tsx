@@ -64,21 +64,23 @@ interface SportEntry {
 // Predefined food catalog for onboarding picker
 // ─────────────────────────────────────────────────────────────────
 
-type DisplayCategory = 'Fehérje' | 'Szénhidrát' | 'Zsír' | 'Tejtermék' | 'Zöldség' | 'Gyümölcs';
+type DisplayCategory = 'protein' | 'carb' | 'fat' | 'dairy' | 'vegetable' | 'fruit';
 
-function mapCategory(cat: DisplayCategory): string {
-  switch (cat) {
-    case 'Fehérje': return 'Feherje';
-    case 'Szénhidrát': return 'Komplex_szenhidrat';
-    case 'Zsír': return 'Egeszseges_zsir';
-    case 'Tejtermék': return 'Tejtermek';
-    case 'Zöldség': return 'Zoldseg';
-    case 'Gyümölcs': return 'Zoldseg'; // no fruit category, map to veggie
-  }
-}
+const mapCategory = (cat: DisplayCategory): string => {
+  const map: Record<DisplayCategory, string> = {
+    protein: 'protein',
+    carb: 'carbs',
+    fat: 'fat',
+    dairy: 'dairy',
+    vegetable: 'vegetables',
+    fruit: 'fruit',
+  };
+  return map[cat] ?? 'other';
+};
 
 interface SeedFood {
-  name: string;
+  id: string;
+  names: { hu: string; en: string; ro: string };
   category: DisplayCategory;
   calories_per_100g: number;
   protein_per_100g: number;
@@ -86,7 +88,7 @@ interface SeedFood {
   fat_per_100g: number;
   vegetarian: boolean;
   emoji: string;
-  allergens?: string[];
+  allergens?: string[]; // allergen IDs: 'lactose', 'gluten', 'egg', 'fish', 'nuts', 'soy', 'shellfish'
 }
 
 interface ProductResult {
@@ -105,115 +107,115 @@ const STORE_LABELS: Record<string, string> = {
 };
 
 function guessCategory(protein: number, carbs: number, fat: number): DisplayCategory {
-  if (protein >= 12) return 'Fehérje';
-  if (fat >= 15) return 'Zsír';
-  if (carbs >= 20) return 'Szénhidrát';
-  return 'Fehérje';
+  if (protein >= 12) return 'protein';
+  if (fat >= 15) return 'fat';
+  if (carbs >= 20) return 'carb';
+  return 'protein';
 }
 
 const SEED_FOODS: SeedFood[] = [
-  // ── Fehérje ──────────────────────────────────────────────────
-  { name: 'Csirkemell', category: 'Fehérje', calories_per_100g: 165, protein_per_100g: 31, carbs_per_100g: 0, fat_per_100g: 3.6, vegetarian: false, emoji: '🍗' },
-  { name: 'Csirkecomb', category: 'Fehérje', calories_per_100g: 215, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 12, vegetarian: false, emoji: '🍗' },
-  { name: 'Pulykamell', category: 'Fehérje', calories_per_100g: 135, protein_per_100g: 30, carbs_per_100g: 0, fat_per_100g: 1.5, vegetarian: false, emoji: '🦃' },
-  { name: 'Tojás', category: 'Fehérje', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11, vegetarian: true, emoji: '🥚', allergens: ['tojás'] },
-  { name: 'Lazac', category: 'Fehérje', calories_per_100g: 208, protein_per_100g: 20, carbs_per_100g: 0, fat_per_100g: 13, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
-  { name: 'Tonhal', category: 'Fehérje', calories_per_100g: 116, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 1, vegetarian: false, emoji: '🐠', allergens: ['hal'] },
-  { name: 'Makréla', category: 'Fehérje', calories_per_100g: 205, protein_per_100g: 19, carbs_per_100g: 0, fat_per_100g: 14, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
-  { name: 'Tilápia', category: 'Fehérje', calories_per_100g: 96, protein_per_100g: 20, carbs_per_100g: 0, fat_per_100g: 2, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
-  { name: 'Garnélarák', category: 'Fehérje', calories_per_100g: 99, protein_per_100g: 24, carbs_per_100g: 0.2, fat_per_100g: 0.3, vegetarian: false, emoji: '🦐', allergens: ['rákféle'] },
-  { name: 'Sertéshús', category: 'Fehérje', calories_per_100g: 242, protein_per_100g: 27, carbs_per_100g: 0, fat_per_100g: 14, vegetarian: false, emoji: '🥩' },
-  { name: 'Marhahús', category: 'Fehérje', calories_per_100g: 250, protein_per_100g: 26, carbs_per_100g: 0, fat_per_100g: 15, vegetarian: false, emoji: '🥩' },
-  { name: 'Bárány', category: 'Fehérje', calories_per_100g: 294, protein_per_100g: 25, carbs_per_100g: 0, fat_per_100g: 21, vegetarian: false, emoji: '🥩' },
-  { name: 'Tofu', category: 'Fehérje', calories_per_100g: 76, protein_per_100g: 8, carbs_per_100g: 1.9, fat_per_100g: 4.8, vegetarian: true, emoji: '🫘', allergens: ['szója'] },
-  { name: 'Tempeh', category: 'Fehérje', calories_per_100g: 193, protein_per_100g: 19, carbs_per_100g: 9, fat_per_100g: 11, vegetarian: true, emoji: '🫘', allergens: ['szója'] },
-  { name: 'Lencse', category: 'Fehérje', calories_per_100g: 116, protein_per_100g: 9, carbs_per_100g: 20, fat_per_100g: 0.4, vegetarian: true, emoji: '🫘' },
-  { name: 'Csicseriborsó', category: 'Fehérje', calories_per_100g: 164, protein_per_100g: 9, carbs_per_100g: 27, fat_per_100g: 2.6, vegetarian: true, emoji: '🫘' },
-  { name: 'Fekete bab', category: 'Fehérje', calories_per_100g: 132, protein_per_100g: 8.9, carbs_per_100g: 24, fat_per_100g: 0.5, vegetarian: true, emoji: '🫘' },
-  { name: 'Fehér bab', category: 'Fehérje', calories_per_100g: 127, protein_per_100g: 8.7, carbs_per_100g: 22, fat_per_100g: 0.5, vegetarian: true, emoji: '🫘' },
-  { name: 'Tojásfehérje', category: 'Fehérje', calories_per_100g: 52, protein_per_100g: 11, carbs_per_100g: 0.7, fat_per_100g: 0.2, vegetarian: true, emoji: '🥚', allergens: ['tojás'] },
-  { name: 'Szardínia', category: 'Fehérje', calories_per_100g: 208, protein_per_100g: 25, carbs_per_100g: 0, fat_per_100g: 11, vegetarian: false, emoji: '🐟', allergens: ['hal'] },
-  // ── Szénhidrát ───────────────────────────────────────────────
-  { name: 'Zab', category: 'Szénhidrát', calories_per_100g: 389, protein_per_100g: 17, carbs_per_100g: 66, fat_per_100g: 7, vegetarian: true, emoji: '🌾', allergens: ['glutén'] },
-  { name: 'Rizs', category: 'Szénhidrát', calories_per_100g: 130, protein_per_100g: 2.7, carbs_per_100g: 28, fat_per_100g: 0.3, vegetarian: true, emoji: '🍚' },
-  { name: 'Barna rizs', category: 'Szénhidrát', calories_per_100g: 111, protein_per_100g: 2.6, carbs_per_100g: 23, fat_per_100g: 0.9, vegetarian: true, emoji: '🍚' },
-  { name: 'Teljes kiőrlésű kenyér', category: 'Szénhidrát', calories_per_100g: 247, protein_per_100g: 13, carbs_per_100g: 41, fat_per_100g: 4, vegetarian: true, emoji: '🍞', allergens: ['glutén'] },
-  { name: 'Fehér kenyér', category: 'Szénhidrát', calories_per_100g: 265, protein_per_100g: 9, carbs_per_100g: 49, fat_per_100g: 3.2, vegetarian: true, emoji: '🍞', allergens: ['glutén'] },
-  { name: 'Tészta', category: 'Szénhidrát', calories_per_100g: 157, protein_per_100g: 5.8, carbs_per_100g: 31, fat_per_100g: 0.9, vegetarian: true, emoji: '🍝', allergens: ['glutén'] },
-  { name: 'Teljes kiőrlésű tészta', category: 'Szénhidrát', calories_per_100g: 148, protein_per_100g: 6.3, carbs_per_100g: 29, fat_per_100g: 0.8, vegetarian: true, emoji: '🍝', allergens: ['glutén'] },
-  { name: 'Burgonya', category: 'Szénhidrát', calories_per_100g: 77, protein_per_100g: 2, carbs_per_100g: 17, fat_per_100g: 0.1, vegetarian: true, emoji: '🥔' },
-  { name: 'Édesburgonya', category: 'Szénhidrát', calories_per_100g: 86, protein_per_100g: 1.6, carbs_per_100g: 20, fat_per_100g: 0.1, vegetarian: true, emoji: '🍠' },
-  { name: 'Quinoa', category: 'Szénhidrát', calories_per_100g: 120, protein_per_100g: 4.4, carbs_per_100g: 21, fat_per_100g: 1.9, vegetarian: true, emoji: '🌾' },
-  { name: 'Kukorica', category: 'Szénhidrát', calories_per_100g: 96, protein_per_100g: 3.4, carbs_per_100g: 21, fat_per_100g: 1.5, vegetarian: true, emoji: '🌽' },
-  { name: 'Hajdina', category: 'Szénhidrát', calories_per_100g: 92, protein_per_100g: 3.4, carbs_per_100g: 20, fat_per_100g: 0.6, vegetarian: true, emoji: '🌾' },
-  { name: 'Árpa', category: 'Szénhidrát', calories_per_100g: 123, protein_per_100g: 2.3, carbs_per_100g: 28, fat_per_100g: 0.4, vegetarian: true, emoji: '🌾', allergens: ['glutén'] },
-  { name: 'Tortilla', category: 'Szénhidrát', calories_per_100g: 218, protein_per_100g: 6, carbs_per_100g: 36, fat_per_100g: 5.5, vegetarian: true, emoji: '🫓', allergens: ['glutén'] },
-  { name: 'Zabpehely', category: 'Szénhidrát', calories_per_100g: 379, protein_per_100g: 13, carbs_per_100g: 68, fat_per_100g: 6.5, vegetarian: true, emoji: '🌾', allergens: ['glutén'] },
-  // ── Zsír ─────────────────────────────────────────────────────
-  { name: 'Avokádó', category: 'Zsír', calories_per_100g: 160, protein_per_100g: 2, carbs_per_100g: 9, fat_per_100g: 15, vegetarian: true, emoji: '🥑' },
-  { name: 'Dió', category: 'Zsír', calories_per_100g: 654, protein_per_100g: 15, carbs_per_100g: 14, fat_per_100g: 65, vegetarian: true, emoji: '🌰', allergens: ['diófélék'] },
-  { name: 'Mandula', category: 'Zsír', calories_per_100g: 579, protein_per_100g: 21, carbs_per_100g: 22, fat_per_100g: 50, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
-  { name: 'Mogyoró', category: 'Zsír', calories_per_100g: 567, protein_per_100g: 26, carbs_per_100g: 16, fat_per_100g: 49, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
-  { name: 'Kesudió', category: 'Zsír', calories_per_100g: 553, protein_per_100g: 18, carbs_per_100g: 30, fat_per_100g: 44, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
-  { name: 'Pekándió', category: 'Zsír', calories_per_100g: 691, protein_per_100g: 9, carbs_per_100g: 14, fat_per_100g: 72, vegetarian: true, emoji: '🌰', allergens: ['diófélék'] },
-  { name: 'Olívaolaj', category: 'Zsír', calories_per_100g: 884, protein_per_100g: 0, carbs_per_100g: 0, fat_per_100g: 100, vegetarian: true, emoji: '🫒' },
-  { name: 'Kókuszolaj', category: 'Zsír', calories_per_100g: 862, protein_per_100g: 0, carbs_per_100g: 0, fat_per_100g: 100, vegetarian: true, emoji: '🥥' },
-  { name: 'Mogyoróvaj', category: 'Zsír', calories_per_100g: 588, protein_per_100g: 25, carbs_per_100g: 20, fat_per_100g: 50, vegetarian: true, emoji: '🥜', allergens: ['diófélék'] },
-  { name: 'Chia mag', category: 'Zsír', calories_per_100g: 486, protein_per_100g: 17, carbs_per_100g: 42, fat_per_100g: 31, vegetarian: true, emoji: '🌱' },
-  { name: 'Lenmag', category: 'Zsír', calories_per_100g: 534, protein_per_100g: 18, carbs_per_100g: 29, fat_per_100g: 42, vegetarian: true, emoji: '🌱' },
-  { name: 'Tök mag', category: 'Zsír', calories_per_100g: 559, protein_per_100g: 30, carbs_per_100g: 11, fat_per_100g: 49, vegetarian: true, emoji: '🌱' },
-  // ── Tejtermék ────────────────────────────────────────────────
-  { name: 'Görög joghurt', category: 'Tejtermék', calories_per_100g: 59, protein_per_100g: 10, carbs_per_100g: 3.6, fat_per_100g: 0.4, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
-  { name: 'Joghurt', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.5, carbs_per_100g: 4.7, fat_per_100g: 3.3, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
-  { name: 'Túró', category: 'Tejtermék', calories_per_100g: 98, protein_per_100g: 11, carbs_per_100g: 3.4, fat_per_100g: 4.3, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
-  { name: 'Sajt', category: 'Tejtermék', calories_per_100g: 402, protein_per_100g: 25, carbs_per_100g: 1.3, fat_per_100g: 33, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
-  { name: 'Mozzarella', category: 'Tejtermék', calories_per_100g: 280, protein_per_100g: 28, carbs_per_100g: 2.2, fat_per_100g: 17, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
-  { name: 'Ricotta', category: 'Tejtermék', calories_per_100g: 174, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 13, vegetarian: true, emoji: '🧀', allergens: ['laktóz'] },
-  { name: 'Tej', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.2, carbs_per_100g: 4.8, fat_per_100g: 3.3, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
-  { name: 'Kefir', category: 'Tejtermék', calories_per_100g: 61, protein_per_100g: 3.3, carbs_per_100g: 4.7, fat_per_100g: 3.5, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
-  { name: 'Vaj', category: 'Tejtermék', calories_per_100g: 717, protein_per_100g: 0.9, carbs_per_100g: 0.1, fat_per_100g: 81, vegetarian: true, emoji: '🧈', allergens: ['laktóz'] },
-  { name: 'Tejföl', category: 'Tejtermék', calories_per_100g: 193, protein_per_100g: 2.4, carbs_per_100g: 3.4, fat_per_100g: 20, vegetarian: true, emoji: '🥛', allergens: ['laktóz'] },
-  // ── Zöldség ──────────────────────────────────────────────────
-  { name: 'Brokkoli', category: 'Zöldség', calories_per_100g: 34, protein_per_100g: 2.8, carbs_per_100g: 7, fat_per_100g: 0.4, vegetarian: true, emoji: '🥦' },
-  { name: 'Karfiol', category: 'Zöldség', calories_per_100g: 25, protein_per_100g: 1.9, carbs_per_100g: 5, fat_per_100g: 0.3, vegetarian: true, emoji: '🥦' },
-  { name: 'Spenót', category: 'Zöldség', calories_per_100g: 23, protein_per_100g: 2.9, carbs_per_100g: 3.6, fat_per_100g: 0.4, vegetarian: true, emoji: '🌿' },
-  { name: 'Paradicsom', category: 'Zöldség', calories_per_100g: 18, protein_per_100g: 0.9, carbs_per_100g: 3.9, fat_per_100g: 0.2, vegetarian: true, emoji: '🍅' },
-  { name: 'Paprika', category: 'Zöldség', calories_per_100g: 31, protein_per_100g: 1, carbs_per_100g: 6, fat_per_100g: 0.3, vegetarian: true, emoji: '🫑' },
-  { name: 'Sárgarépa', category: 'Zöldség', calories_per_100g: 41, protein_per_100g: 0.9, carbs_per_100g: 10, fat_per_100g: 0.2, vegetarian: true, emoji: '🥕' },
-  { name: 'Uborka', category: 'Zöldség', calories_per_100g: 16, protein_per_100g: 0.7, carbs_per_100g: 3.6, fat_per_100g: 0.1, vegetarian: true, emoji: '🥒' },
-  { name: 'Fokhagyma', category: 'Zöldség', calories_per_100g: 149, protein_per_100g: 6.4, carbs_per_100g: 33, fat_per_100g: 0.5, vegetarian: true, emoji: '🧄' },
-  { name: 'Hagyma', category: 'Zöldség', calories_per_100g: 40, protein_per_100g: 1.1, carbs_per_100g: 9.3, fat_per_100g: 0.1, vegetarian: true, emoji: '🧅' },
-  { name: 'Zöldborsó', category: 'Zöldség', calories_per_100g: 81, protein_per_100g: 5.4, carbs_per_100g: 14, fat_per_100g: 0.4, vegetarian: true, emoji: '🫛' },
-  { name: 'Zöldbab', category: 'Zöldség', calories_per_100g: 31, protein_per_100g: 1.8, carbs_per_100g: 7, fat_per_100g: 0.1, vegetarian: true, emoji: '🫘' },
-  { name: 'Cukorborsó', category: 'Zöldség', calories_per_100g: 42, protein_per_100g: 2.8, carbs_per_100g: 7.6, fat_per_100g: 0.2, vegetarian: true, emoji: '🫛' },
-  { name: 'Cékla', category: 'Zöldség', calories_per_100g: 43, protein_per_100g: 1.6, carbs_per_100g: 10, fat_per_100g: 0.2, vegetarian: true, emoji: '🫚' },
-  { name: 'Kelkáposzta', category: 'Zöldség', calories_per_100g: 49, protein_per_100g: 4.3, carbs_per_100g: 9, fat_per_100g: 0.9, vegetarian: true, emoji: '🥬' },
-  { name: 'Saláta', category: 'Zöldség', calories_per_100g: 15, protein_per_100g: 1.4, carbs_per_100g: 2.9, fat_per_100g: 0.2, vegetarian: true, emoji: '🥬' },
-  { name: 'Padlizsán', category: 'Zöldség', calories_per_100g: 25, protein_per_100g: 1, carbs_per_100g: 6, fat_per_100g: 0.2, vegetarian: true, emoji: '🍆' },
-  { name: 'Cukkini', category: 'Zöldség', calories_per_100g: 17, protein_per_100g: 1.2, carbs_per_100g: 3.1, fat_per_100g: 0.3, vegetarian: true, emoji: '🥒' },
-  { name: 'Gomba', category: 'Zöldség', calories_per_100g: 22, protein_per_100g: 3.1, carbs_per_100g: 3.3, fat_per_100g: 0.3, vegetarian: true, emoji: '🍄' },
-  { name: 'Articsóka', category: 'Zöldség', calories_per_100g: 47, protein_per_100g: 3.3, carbs_per_100g: 11, fat_per_100g: 0.2, vegetarian: true, emoji: '🌿' },
-  { name: 'Spárga', category: 'Zöldség', calories_per_100g: 20, protein_per_100g: 2.2, carbs_per_100g: 3.9, fat_per_100g: 0.1, vegetarian: true, emoji: '🌿' },
-  // ── Gyümölcs ─────────────────────────────────────────────────
-  { name: 'Alma', category: 'Gyümölcs', calories_per_100g: 52, protein_per_100g: 0.3, carbs_per_100g: 14, fat_per_100g: 0.2, vegetarian: true, emoji: '🍎' },
-  { name: 'Banán', category: 'Gyümölcs', calories_per_100g: 89, protein_per_100g: 1.1, carbs_per_100g: 23, fat_per_100g: 0.3, vegetarian: true, emoji: '🍌' },
-  { name: 'Áfonya', category: 'Gyümölcs', calories_per_100g: 57, protein_per_100g: 0.7, carbs_per_100g: 14, fat_per_100g: 0.3, vegetarian: true, emoji: '🫐' },
-  { name: 'Eper', category: 'Gyümölcs', calories_per_100g: 32, protein_per_100g: 0.7, carbs_per_100g: 7.7, fat_per_100g: 0.3, vegetarian: true, emoji: '🍓' },
-  { name: 'Narancs', category: 'Gyümölcs', calories_per_100g: 47, protein_per_100g: 0.9, carbs_per_100g: 12, fat_per_100g: 0.1, vegetarian: true, emoji: '🍊' },
-  { name: 'Kivi', category: 'Gyümölcs', calories_per_100g: 61, protein_per_100g: 1.1, carbs_per_100g: 15, fat_per_100g: 0.5, vegetarian: true, emoji: '🥝' },
-  { name: 'Mangó', category: 'Gyümölcs', calories_per_100g: 60, protein_per_100g: 0.8, carbs_per_100g: 15, fat_per_100g: 0.4, vegetarian: true, emoji: '🥭' },
-  { name: 'Görögdinnye', category: 'Gyümölcs', calories_per_100g: 30, protein_per_100g: 0.6, carbs_per_100g: 7.6, fat_per_100g: 0.2, vegetarian: true, emoji: '🍉' },
-  { name: 'Szőlő', category: 'Gyümölcs', calories_per_100g: 67, protein_per_100g: 0.6, carbs_per_100g: 17, fat_per_100g: 0.4, vegetarian: true, emoji: '🍇' },
-  { name: 'Körte', category: 'Gyümölcs', calories_per_100g: 57, protein_per_100g: 0.4, carbs_per_100g: 15, fat_per_100g: 0.1, vegetarian: true, emoji: '🍐' },
-  { name: 'Őszibarack', category: 'Gyümölcs', calories_per_100g: 39, protein_per_100g: 0.9, carbs_per_100g: 10, fat_per_100g: 0.3, vegetarian: true, emoji: '🍑' },
-  { name: 'Cseresznye', category: 'Gyümölcs', calories_per_100g: 63, protein_per_100g: 1.1, carbs_per_100g: 16, fat_per_100g: 0.2, vegetarian: true, emoji: '🍒' },
-  { name: 'Ananász', category: 'Gyümölcs', calories_per_100g: 50, protein_per_100g: 0.5, carbs_per_100g: 13, fat_per_100g: 0.1, vegetarian: true, emoji: '🍍' },
-  { name: 'Grapefruit', category: 'Gyümölcs', calories_per_100g: 42, protein_per_100g: 0.8, carbs_per_100g: 11, fat_per_100g: 0.1, vegetarian: true, emoji: '🍊' },
-  { name: 'Citrom', category: 'Gyümölcs', calories_per_100g: 29, protein_per_100g: 1.1, carbs_per_100g: 9, fat_per_100g: 0.3, vegetarian: true, emoji: '🍋' },
-  { name: 'Málna', category: 'Gyümölcs', calories_per_100g: 52, protein_per_100g: 1.2, carbs_per_100g: 12, fat_per_100g: 0.7, vegetarian: true, emoji: '🫐' },
+  // ── Protein ──────────────────────────────────────────────────
+  { id: 'chicken_breast',  category: 'protein', emoji: '🍗', vegetarian: false, calories_per_100g: 165, protein_per_100g: 31,   carbs_per_100g: 0,    fat_per_100g: 3.6, names: { hu: 'Csirkemell',     en: 'Chicken breast',  ro: 'Piept de pui'    } },
+  { id: 'chicken_thigh',   category: 'protein', emoji: '🍗', vegetarian: false, calories_per_100g: 215, protein_per_100g: 26,   carbs_per_100g: 0,    fat_per_100g: 12,  names: { hu: 'Csirkecomb',     en: 'Chicken thigh',   ro: 'Pulpă de pui'    } },
+  { id: 'turkey_breast',   category: 'protein', emoji: '🦃', vegetarian: false, calories_per_100g: 135, protein_per_100g: 30,   carbs_per_100g: 0,    fat_per_100g: 1.5, names: { hu: 'Pulykamell',     en: 'Turkey breast',   ro: 'Piept de curcan' } },
+  { id: 'egg',             category: 'protein', emoji: '🥚', vegetarian: true,  calories_per_100g: 155, protein_per_100g: 13,   carbs_per_100g: 1.1,  fat_per_100g: 11,  names: { hu: 'Tojás',          en: 'Egg',             ro: 'Ou'              }, allergens: ['egg']      },
+  { id: 'salmon',          category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 208, protein_per_100g: 20,   carbs_per_100g: 0,    fat_per_100g: 13,  names: { hu: 'Lazac',          en: 'Salmon',          ro: 'Somon'           }, allergens: ['fish']     },
+  { id: 'tuna',            category: 'protein', emoji: '🐠', vegetarian: false, calories_per_100g: 116, protein_per_100g: 26,   carbs_per_100g: 0,    fat_per_100g: 1,   names: { hu: 'Tonhal',         en: 'Tuna',            ro: 'Ton'             }, allergens: ['fish']     },
+  { id: 'mackerel',        category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 205, protein_per_100g: 19,   carbs_per_100g: 0,    fat_per_100g: 14,  names: { hu: 'Makréla',        en: 'Mackerel',        ro: 'Macrou'          }, allergens: ['fish']     },
+  { id: 'tilapia',         category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 96,  protein_per_100g: 20,   carbs_per_100g: 0,    fat_per_100g: 2,   names: { hu: 'Tilápia',        en: 'Tilapia',         ro: 'Tilapia'         }, allergens: ['fish']     },
+  { id: 'shrimp',          category: 'protein', emoji: '🦐', vegetarian: false, calories_per_100g: 99,  protein_per_100g: 24,   carbs_per_100g: 0.2,  fat_per_100g: 0.3, names: { hu: 'Garnélarák',     en: 'Shrimp',          ro: 'Creveți'         }, allergens: ['shellfish']},
+  { id: 'pork',            category: 'protein', emoji: '🥩', vegetarian: false, calories_per_100g: 242, protein_per_100g: 27,   carbs_per_100g: 0,    fat_per_100g: 14,  names: { hu: 'Sertéshús',      en: 'Pork',            ro: 'Carne de porc'   } },
+  { id: 'beef',            category: 'protein', emoji: '🥩', vegetarian: false, calories_per_100g: 250, protein_per_100g: 26,   carbs_per_100g: 0,    fat_per_100g: 15,  names: { hu: 'Marhahús',       en: 'Beef',            ro: 'Carne de vită'   } },
+  { id: 'lamb',            category: 'protein', emoji: '🥩', vegetarian: false, calories_per_100g: 294, protein_per_100g: 25,   carbs_per_100g: 0,    fat_per_100g: 21,  names: { hu: 'Bárány',         en: 'Lamb',            ro: 'Miel'            } },
+  { id: 'tofu',            category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 76,  protein_per_100g: 8,    carbs_per_100g: 1.9,  fat_per_100g: 4.8, names: { hu: 'Tofu',           en: 'Tofu',            ro: 'Tofu'            }, allergens: ['soy']      },
+  { id: 'tempeh',          category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 193, protein_per_100g: 19,   carbs_per_100g: 9,    fat_per_100g: 11,  names: { hu: 'Tempeh',         en: 'Tempeh',          ro: 'Tempeh'          }, allergens: ['soy']      },
+  { id: 'lentils',         category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 116, protein_per_100g: 9,    carbs_per_100g: 20,   fat_per_100g: 0.4, names: { hu: 'Lencse',         en: 'Lentils',         ro: 'Linte'           } },
+  { id: 'chickpeas',       category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 164, protein_per_100g: 9,    carbs_per_100g: 27,   fat_per_100g: 2.6, names: { hu: 'Csicseriborsó',  en: 'Chickpeas',       ro: 'Năut'            } },
+  { id: 'black_beans',     category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 132, protein_per_100g: 8.9,  carbs_per_100g: 24,   fat_per_100g: 0.5, names: { hu: 'Fekete bab',     en: 'Black beans',     ro: 'Fasole neagră'   } },
+  { id: 'white_beans',     category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 127, protein_per_100g: 8.7,  carbs_per_100g: 22,   fat_per_100g: 0.5, names: { hu: 'Fehér bab',      en: 'White beans',     ro: 'Fasole albă'     } },
+  { id: 'egg_white',       category: 'protein', emoji: '🥚', vegetarian: true,  calories_per_100g: 52,  protein_per_100g: 11,   carbs_per_100g: 0.7,  fat_per_100g: 0.2, names: { hu: 'Tojásfehérje',  en: 'Egg white',       ro: 'Albuș de ou'     }, allergens: ['egg']      },
+  { id: 'sardines',        category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 208, protein_per_100g: 25,   carbs_per_100g: 0,    fat_per_100g: 11,  names: { hu: 'Szardínia',      en: 'Sardines',        ro: 'Sardine'         }, allergens: ['fish']     },
+  // ── Carbs ─────────────────────────────────────────────────────
+  { id: 'oats',            category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 389, protein_per_100g: 17,   carbs_per_100g: 66,   fat_per_100g: 7,   names: { hu: 'Zab',                    en: 'Oats',                  ro: 'Ovăz'              }, allergens: ['gluten'] },
+  { id: 'rice',            category: 'carb',    emoji: '🍚', vegetarian: true,  calories_per_100g: 130, protein_per_100g: 2.7,  carbs_per_100g: 28,   fat_per_100g: 0.3, names: { hu: 'Rizs',                   en: 'Rice',                  ro: 'Orez'              } },
+  { id: 'brown_rice',      category: 'carb',    emoji: '🍚', vegetarian: true,  calories_per_100g: 111, protein_per_100g: 2.6,  carbs_per_100g: 23,   fat_per_100g: 0.9, names: { hu: 'Barna rizs',             en: 'Brown rice',            ro: 'Orez brun'         } },
+  { id: 'whole_grain_bread',category: 'carb',   emoji: '🍞', vegetarian: true,  calories_per_100g: 247, protein_per_100g: 13,   carbs_per_100g: 41,   fat_per_100g: 4,   names: { hu: 'Teljes kiőrlésű kenyér', en: 'Whole grain bread',     ro: 'Pâine integrală'   }, allergens: ['gluten'] },
+  { id: 'white_bread',     category: 'carb',    emoji: '🍞', vegetarian: true,  calories_per_100g: 265, protein_per_100g: 9,    carbs_per_100g: 49,   fat_per_100g: 3.2, names: { hu: 'Fehér kenyér',           en: 'White bread',           ro: 'Pâine albă'        }, allergens: ['gluten'] },
+  { id: 'pasta',           category: 'carb',    emoji: '🍝', vegetarian: true,  calories_per_100g: 157, protein_per_100g: 5.8,  carbs_per_100g: 31,   fat_per_100g: 0.9, names: { hu: 'Tészta',                 en: 'Pasta',                 ro: 'Paste'             }, allergens: ['gluten'] },
+  { id: 'whole_grain_pasta',category: 'carb',   emoji: '🍝', vegetarian: true,  calories_per_100g: 148, protein_per_100g: 6.3,  carbs_per_100g: 29,   fat_per_100g: 0.8, names: { hu: 'Teljes kiőrlésű tészta', en: 'Whole grain pasta',     ro: 'Paste integrale'   }, allergens: ['gluten'] },
+  { id: 'potato',          category: 'carb',    emoji: '🥔', vegetarian: true,  calories_per_100g: 77,  protein_per_100g: 2,    carbs_per_100g: 17,   fat_per_100g: 0.1, names: { hu: 'Burgonya',               en: 'Potato',                ro: 'Cartofi'           } },
+  { id: 'sweet_potato',    category: 'carb',    emoji: '🍠', vegetarian: true,  calories_per_100g: 86,  protein_per_100g: 1.6,  carbs_per_100g: 20,   fat_per_100g: 0.1, names: { hu: 'Édesburgonya',           en: 'Sweet potato',          ro: 'Cartofi dulci'     } },
+  { id: 'quinoa',          category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 120, protein_per_100g: 4.4,  carbs_per_100g: 21,   fat_per_100g: 1.9, names: { hu: 'Quinoa',                 en: 'Quinoa',                ro: 'Quinoa'            } },
+  { id: 'corn',            category: 'carb',    emoji: '🌽', vegetarian: true,  calories_per_100g: 96,  protein_per_100g: 3.4,  carbs_per_100g: 21,   fat_per_100g: 1.5, names: { hu: 'Kukorica',               en: 'Corn',                  ro: 'Porumb'            } },
+  { id: 'buckwheat',       category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 92,  protein_per_100g: 3.4,  carbs_per_100g: 20,   fat_per_100g: 0.6, names: { hu: 'Hajdina',                en: 'Buckwheat',             ro: 'Hrișcă'            } },
+  { id: 'barley',          category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 123, protein_per_100g: 2.3,  carbs_per_100g: 28,   fat_per_100g: 0.4, names: { hu: 'Árpa',                   en: 'Barley',                ro: 'Orz'               }, allergens: ['gluten'] },
+  { id: 'tortilla',        category: 'carb',    emoji: '🫓', vegetarian: true,  calories_per_100g: 218, protein_per_100g: 6,    carbs_per_100g: 36,   fat_per_100g: 5.5, names: { hu: 'Tortilla',               en: 'Tortilla',              ro: 'Tortilla'          }, allergens: ['gluten'] },
+  { id: 'oatmeal',         category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 379, protein_per_100g: 13,   carbs_per_100g: 68,   fat_per_100g: 6.5, names: { hu: 'Zabpehely',              en: 'Oatmeal',               ro: 'Fulgi de ovăz'     }, allergens: ['gluten'] },
+  // ── Fat ───────────────────────────────────────────────────────
+  { id: 'avocado',         category: 'fat',     emoji: '🥑', vegetarian: true,  calories_per_100g: 160, protein_per_100g: 2,    carbs_per_100g: 9,    fat_per_100g: 15,  names: { hu: 'Avokádó',     en: 'Avocado',         ro: 'Avocado'             } },
+  { id: 'walnut',          category: 'fat',     emoji: '🌰', vegetarian: true,  calories_per_100g: 654, protein_per_100g: 15,   carbs_per_100g: 14,   fat_per_100g: 65,  names: { hu: 'Dió',         en: 'Walnut',          ro: 'Nuci'                }, allergens: ['nuts'] },
+  { id: 'almond',          category: 'fat',     emoji: '🥜', vegetarian: true,  calories_per_100g: 579, protein_per_100g: 21,   carbs_per_100g: 22,   fat_per_100g: 50,  names: { hu: 'Mandula',     en: 'Almond',          ro: 'Migdale'             }, allergens: ['nuts'] },
+  { id: 'peanut',          category: 'fat',     emoji: '🥜', vegetarian: true,  calories_per_100g: 567, protein_per_100g: 26,   carbs_per_100g: 16,   fat_per_100g: 49,  names: { hu: 'Mogyoró',     en: 'Peanut',          ro: 'Arahide'             }, allergens: ['nuts'] },
+  { id: 'cashew',          category: 'fat',     emoji: '🥜', vegetarian: true,  calories_per_100g: 553, protein_per_100g: 18,   carbs_per_100g: 30,   fat_per_100g: 44,  names: { hu: 'Kesudió',     en: 'Cashew',          ro: 'Caju'                }, allergens: ['nuts'] },
+  { id: 'pecan',           category: 'fat',     emoji: '🌰', vegetarian: true,  calories_per_100g: 691, protein_per_100g: 9,    carbs_per_100g: 14,   fat_per_100g: 72,  names: { hu: 'Pekándió',    en: 'Pecan',           ro: 'Pecan'               }, allergens: ['nuts'] },
+  { id: 'olive_oil',       category: 'fat',     emoji: '🫒', vegetarian: true,  calories_per_100g: 884, protein_per_100g: 0,    carbs_per_100g: 0,    fat_per_100g: 100, names: { hu: 'Olívaolaj',   en: 'Olive oil',       ro: 'Ulei de măsline'     } },
+  { id: 'coconut_oil',     category: 'fat',     emoji: '🥥', vegetarian: true,  calories_per_100g: 862, protein_per_100g: 0,    carbs_per_100g: 0,    fat_per_100g: 100, names: { hu: 'Kókuszolaj',  en: 'Coconut oil',     ro: 'Ulei de cocos'       } },
+  { id: 'peanut_butter',   category: 'fat',     emoji: '🥜', vegetarian: true,  calories_per_100g: 588, protein_per_100g: 25,   carbs_per_100g: 20,   fat_per_100g: 50,  names: { hu: 'Mogyoróvaj', en: 'Peanut butter',   ro: 'Unt de arahide'      }, allergens: ['nuts'] },
+  { id: 'chia_seeds',      category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 486, protein_per_100g: 17,   carbs_per_100g: 42,   fat_per_100g: 31,  names: { hu: 'Chia mag',    en: 'Chia seeds',      ro: 'Semințe de chia'     } },
+  { id: 'flaxseed',        category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 534, protein_per_100g: 18,   carbs_per_100g: 29,   fat_per_100g: 42,  names: { hu: 'Lenmag',      en: 'Flaxseed',        ro: 'Semințe de in'       } },
+  { id: 'pumpkin_seeds',   category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 559, protein_per_100g: 30,   carbs_per_100g: 11,   fat_per_100g: 49,  names: { hu: 'Tök mag',     en: 'Pumpkin seeds',   ro: 'Semințe de dovleac'  } },
+  // ── Dairy ─────────────────────────────────────────────────────
+  { id: 'greek_yogurt',    category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 59,  protein_per_100g: 10,   carbs_per_100g: 3.6,  fat_per_100g: 0.4, names: { hu: 'Görög joghurt', en: 'Greek yogurt',   ro: 'Iaurt grecesc' }, allergens: ['lactose'] },
+  { id: 'yogurt',          category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 61,  protein_per_100g: 3.5,  carbs_per_100g: 4.7,  fat_per_100g: 3.3, names: { hu: 'Joghurt',      en: 'Yogurt',         ro: 'Iaurt'         }, allergens: ['lactose'] },
+  { id: 'cottage_cheese',  category: 'dairy',   emoji: '🧀', vegetarian: true,  calories_per_100g: 98,  protein_per_100g: 11,   carbs_per_100g: 3.4,  fat_per_100g: 4.3, names: { hu: 'Túró',         en: 'Cottage cheese', ro: 'Brânză de vaci'}, allergens: ['lactose'] },
+  { id: 'cheese',          category: 'dairy',   emoji: '🧀', vegetarian: true,  calories_per_100g: 402, protein_per_100g: 25,   carbs_per_100g: 1.3,  fat_per_100g: 33,  names: { hu: 'Sajt',         en: 'Cheese',         ro: 'Brânză'        }, allergens: ['lactose'] },
+  { id: 'mozzarella',      category: 'dairy',   emoji: '🧀', vegetarian: true,  calories_per_100g: 280, protein_per_100g: 28,   carbs_per_100g: 2.2,  fat_per_100g: 17,  names: { hu: 'Mozzarella',   en: 'Mozzarella',     ro: 'Mozzarella'    }, allergens: ['lactose'] },
+  { id: 'ricotta',         category: 'dairy',   emoji: '🧀', vegetarian: true,  calories_per_100g: 174, protein_per_100g: 11,   carbs_per_100g: 3,    fat_per_100g: 13,  names: { hu: 'Ricotta',      en: 'Ricotta',        ro: 'Ricotta'       }, allergens: ['lactose'] },
+  { id: 'milk',            category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 61,  protein_per_100g: 3.2,  carbs_per_100g: 4.8,  fat_per_100g: 3.3, names: { hu: 'Tej',          en: 'Milk',           ro: 'Lapte'         }, allergens: ['lactose'] },
+  { id: 'kefir',           category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 61,  protein_per_100g: 3.3,  carbs_per_100g: 4.7,  fat_per_100g: 3.5, names: { hu: 'Kefir',        en: 'Kefir',          ro: 'Chefir'        }, allergens: ['lactose'] },
+  { id: 'butter',          category: 'dairy',   emoji: '🧈', vegetarian: true,  calories_per_100g: 717, protein_per_100g: 0.9,  carbs_per_100g: 0.1,  fat_per_100g: 81,  names: { hu: 'Vaj',          en: 'Butter',         ro: 'Unt'           }, allergens: ['lactose'] },
+  { id: 'sour_cream',      category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 193, protein_per_100g: 2.4,  carbs_per_100g: 3.4,  fat_per_100g: 20,  names: { hu: 'Tejföl',       en: 'Sour cream',     ro: 'Smântână'      }, allergens: ['lactose'] },
+  // ── Vegetable ─────────────────────────────────────────────────
+  { id: 'broccoli',        category: 'vegetable', emoji: '🥦', vegetarian: true, calories_per_100g: 34,  protein_per_100g: 2.8,  carbs_per_100g: 7,    fat_per_100g: 0.4, names: { hu: 'Brokkoli',    en: 'Broccoli',         ro: 'Broccoli'       } },
+  { id: 'cauliflower',     category: 'vegetable', emoji: '🥦', vegetarian: true, calories_per_100g: 25,  protein_per_100g: 1.9,  carbs_per_100g: 5,    fat_per_100g: 0.3, names: { hu: 'Karfiol',     en: 'Cauliflower',      ro: 'Conopidă'       } },
+  { id: 'spinach',         category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 23,  protein_per_100g: 2.9,  carbs_per_100g: 3.6,  fat_per_100g: 0.4, names: { hu: 'Spenót',      en: 'Spinach',          ro: 'Spanac'         } },
+  { id: 'tomato',          category: 'vegetable', emoji: '🍅', vegetarian: true, calories_per_100g: 18,  protein_per_100g: 0.9,  carbs_per_100g: 3.9,  fat_per_100g: 0.2, names: { hu: 'Paradicsom',  en: 'Tomato',           ro: 'Roșie'          } },
+  { id: 'bell_pepper',     category: 'vegetable', emoji: '🫑', vegetarian: true, calories_per_100g: 31,  protein_per_100g: 1,    carbs_per_100g: 6,    fat_per_100g: 0.3, names: { hu: 'Paprika',     en: 'Bell pepper',      ro: 'Ardei'          } },
+  { id: 'carrot',          category: 'vegetable', emoji: '🥕', vegetarian: true, calories_per_100g: 41,  protein_per_100g: 0.9,  carbs_per_100g: 10,   fat_per_100g: 0.2, names: { hu: 'Sárgarépa',   en: 'Carrot',           ro: 'Morcov'         } },
+  { id: 'cucumber',        category: 'vegetable', emoji: '🥒', vegetarian: true, calories_per_100g: 16,  protein_per_100g: 0.7,  carbs_per_100g: 3.6,  fat_per_100g: 0.1, names: { hu: 'Uborka',      en: 'Cucumber',         ro: 'Castraveți'     } },
+  { id: 'garlic',          category: 'vegetable', emoji: '🧄', vegetarian: true, calories_per_100g: 149, protein_per_100g: 6.4,  carbs_per_100g: 33,   fat_per_100g: 0.5, names: { hu: 'Fokhagyma',   en: 'Garlic',           ro: 'Usturoi'        } },
+  { id: 'onion',           category: 'vegetable', emoji: '🧅', vegetarian: true, calories_per_100g: 40,  protein_per_100g: 1.1,  carbs_per_100g: 9.3,  fat_per_100g: 0.1, names: { hu: 'Hagyma',      en: 'Onion',            ro: 'Ceapă'          } },
+  { id: 'green_peas',      category: 'vegetable', emoji: '🫛', vegetarian: true, calories_per_100g: 81,  protein_per_100g: 5.4,  carbs_per_100g: 14,   fat_per_100g: 0.4, names: { hu: 'Zöldborsó',   en: 'Green peas',       ro: 'Mazăre'         } },
+  { id: 'green_beans',     category: 'vegetable', emoji: '🫘', vegetarian: true, calories_per_100g: 31,  protein_per_100g: 1.8,  carbs_per_100g: 7,    fat_per_100g: 0.1, names: { hu: 'Zöldbab',     en: 'Green beans',      ro: 'Fasole verde'   } },
+  { id: 'snap_peas',       category: 'vegetable', emoji: '🫛', vegetarian: true, calories_per_100g: 42,  protein_per_100g: 2.8,  carbs_per_100g: 7.6,  fat_per_100g: 0.2, names: { hu: 'Cukorborsó',  en: 'Sugar snap peas',  ro: 'Mazăre dulce'   } },
+  { id: 'beetroot',        category: 'vegetable', emoji: '🫚', vegetarian: true, calories_per_100g: 43,  protein_per_100g: 1.6,  carbs_per_100g: 10,   fat_per_100g: 0.2, names: { hu: 'Cékla',       en: 'Beetroot',         ro: 'Sfeclă roșie'   } },
+  { id: 'kale',            category: 'vegetable', emoji: '🥬', vegetarian: true, calories_per_100g: 49,  protein_per_100g: 4.3,  carbs_per_100g: 9,    fat_per_100g: 0.9, names: { hu: 'Kelkáposzta', en: 'Kale',             ro: 'Kale'           } },
+  { id: 'lettuce',         category: 'vegetable', emoji: '🥬', vegetarian: true, calories_per_100g: 15,  protein_per_100g: 1.4,  carbs_per_100g: 2.9,  fat_per_100g: 0.2, names: { hu: 'Saláta',      en: 'Lettuce',          ro: 'Salată'         } },
+  { id: 'eggplant',        category: 'vegetable', emoji: '🍆', vegetarian: true, calories_per_100g: 25,  protein_per_100g: 1,    carbs_per_100g: 6,    fat_per_100g: 0.2, names: { hu: 'Padlizsán',   en: 'Eggplant',         ro: 'Vinete'         } },
+  { id: 'zucchini',        category: 'vegetable', emoji: '🥒', vegetarian: true, calories_per_100g: 17,  protein_per_100g: 1.2,  carbs_per_100g: 3.1,  fat_per_100g: 0.3, names: { hu: 'Cukkini',     en: 'Zucchini',         ro: 'Dovlecel'       } },
+  { id: 'mushroom',        category: 'vegetable', emoji: '🍄', vegetarian: true, calories_per_100g: 22,  protein_per_100g: 3.1,  carbs_per_100g: 3.3,  fat_per_100g: 0.3, names: { hu: 'Gomba',       en: 'Mushroom',         ro: 'Ciuperci'       } },
+  { id: 'artichoke',       category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 47,  protein_per_100g: 3.3,  carbs_per_100g: 11,   fat_per_100g: 0.2, names: { hu: 'Articsóka',   en: 'Artichoke',        ro: 'Anghinare'      } },
+  { id: 'asparagus',       category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 20,  protein_per_100g: 2.2,  carbs_per_100g: 3.9,  fat_per_100g: 0.1, names: { hu: 'Spárga',      en: 'Asparagus',        ro: 'Sparanghel'     } },
+  // ── Fruit ─────────────────────────────────────────────────────
+  { id: 'apple',           category: 'fruit',   emoji: '🍎', vegetarian: true, calories_per_100g: 52,  protein_per_100g: 0.3,  carbs_per_100g: 14,   fat_per_100g: 0.2, names: { hu: 'Alma',         en: 'Apple',       ro: 'Măr'          } },
+  { id: 'banana',          category: 'fruit',   emoji: '🍌', vegetarian: true, calories_per_100g: 89,  protein_per_100g: 1.1,  carbs_per_100g: 23,   fat_per_100g: 0.3, names: { hu: 'Banán',        en: 'Banana',      ro: 'Banană'       } },
+  { id: 'blueberry',       category: 'fruit',   emoji: '🫐', vegetarian: true, calories_per_100g: 57,  protein_per_100g: 0.7,  carbs_per_100g: 14,   fat_per_100g: 0.3, names: { hu: 'Áfonya',       en: 'Blueberry',   ro: 'Afine'        } },
+  { id: 'strawberry',      category: 'fruit',   emoji: '🍓', vegetarian: true, calories_per_100g: 32,  protein_per_100g: 0.7,  carbs_per_100g: 7.7,  fat_per_100g: 0.3, names: { hu: 'Eper',         en: 'Strawberry',  ro: 'Căpșuni'      } },
+  { id: 'orange',          category: 'fruit',   emoji: '🍊', vegetarian: true, calories_per_100g: 47,  protein_per_100g: 0.9,  carbs_per_100g: 12,   fat_per_100g: 0.1, names: { hu: 'Narancs',      en: 'Orange',      ro: 'Portocală'    } },
+  { id: 'kiwi',            category: 'fruit',   emoji: '🥝', vegetarian: true, calories_per_100g: 61,  protein_per_100g: 1.1,  carbs_per_100g: 15,   fat_per_100g: 0.5, names: { hu: 'Kivi',         en: 'Kiwi',        ro: 'Kiwi'         } },
+  { id: 'mango',           category: 'fruit',   emoji: '🥭', vegetarian: true, calories_per_100g: 60,  protein_per_100g: 0.8,  carbs_per_100g: 15,   fat_per_100g: 0.4, names: { hu: 'Mangó',        en: 'Mango',       ro: 'Mango'        } },
+  { id: 'watermelon',      category: 'fruit',   emoji: '🍉', vegetarian: true, calories_per_100g: 30,  protein_per_100g: 0.6,  carbs_per_100g: 7.6,  fat_per_100g: 0.2, names: { hu: 'Görögdinnye',  en: 'Watermelon',  ro: 'Pepene verde' } },
+  { id: 'grapes',          category: 'fruit',   emoji: '🍇', vegetarian: true, calories_per_100g: 67,  protein_per_100g: 0.6,  carbs_per_100g: 17,   fat_per_100g: 0.4, names: { hu: 'Szőlő',        en: 'Grapes',      ro: 'Struguri'     } },
+  { id: 'pear',            category: 'fruit',   emoji: '🍐', vegetarian: true, calories_per_100g: 57,  protein_per_100g: 0.4,  carbs_per_100g: 15,   fat_per_100g: 0.1, names: { hu: 'Körte',        en: 'Pear',        ro: 'Pară'         } },
+  { id: 'peach',           category: 'fruit',   emoji: '🍑', vegetarian: true, calories_per_100g: 39,  protein_per_100g: 0.9,  carbs_per_100g: 10,   fat_per_100g: 0.3, names: { hu: 'Őszibarack',   en: 'Peach',       ro: 'Piersică'     } },
+  { id: 'cherry',          category: 'fruit',   emoji: '🍒', vegetarian: true, calories_per_100g: 63,  protein_per_100g: 1.1,  carbs_per_100g: 16,   fat_per_100g: 0.2, names: { hu: 'Cseresznye',   en: 'Cherry',      ro: 'Cireșe'       } },
+  { id: 'pineapple',       category: 'fruit',   emoji: '🍍', vegetarian: true, calories_per_100g: 50,  protein_per_100g: 0.5,  carbs_per_100g: 13,   fat_per_100g: 0.1, names: { hu: 'Ananász',      en: 'Pineapple',   ro: 'Ananas'       } },
+  { id: 'grapefruit',      category: 'fruit',   emoji: '🍊', vegetarian: true, calories_per_100g: 42,  protein_per_100g: 0.8,  carbs_per_100g: 11,   fat_per_100g: 0.1, names: { hu: 'Grapefruit',   en: 'Grapefruit',  ro: 'Grapefruit'   } },
+  { id: 'lemon',           category: 'fruit',   emoji: '🍋', vegetarian: true, calories_per_100g: 29,  protein_per_100g: 1.1,  carbs_per_100g: 9,    fat_per_100g: 0.3, names: { hu: 'Citrom',       en: 'Lemon',       ro: 'Lămâie'       } },
+  { id: 'raspberry',       category: 'fruit',   emoji: '🫐', vegetarian: true, calories_per_100g: 52,  protein_per_100g: 1.2,  carbs_per_100g: 12,   fat_per_100g: 0.7, names: { hu: 'Málna',        en: 'Raspberry',   ro: 'Zmeură'       } },
 ];
 
-const FOOD_CATEGORY_TABS = ['Minden', 'Fehérje', 'Szénhidrát', 'Zsír', 'Tejtermék', 'Zöldség', 'Gyümölcs'] as const;
+const FOOD_CATEGORY_TABS = ['all', 'protein', 'carb', 'fat', 'dairy', 'vegetable', 'fruit'] as const;
 type FoodTabType = typeof FOOD_CATEGORY_TABS[number];
 
 // ─────────────────────────────────────────────────────────────────
@@ -223,63 +225,63 @@ type FoodTabType = typeof FOOD_CATEGORY_TABS[number];
 
 const CURATED_ALTERNATIVES: Record<string, SeedFood[]> = {
   kecske: [
-    { name: 'Kecske tej', category: 'Tejtermék', calories_per_100g: 69, protein_per_100g: 3.6, carbs_per_100g: 4.4, fat_per_100g: 4.2, vegetarian: true, emoji: '🥛' },
-    { name: 'Kecske joghurt', category: 'Tejtermék', calories_per_100g: 59, protein_per_100g: 3.8, carbs_per_100g: 4.1, fat_per_100g: 3.5, vegetarian: true, emoji: '🥛' },
-    { name: 'Kecske sajt', category: 'Tejtermék', calories_per_100g: 364, protein_per_100g: 22, carbs_per_100g: 2, fat_per_100g: 30, vegetarian: true, emoji: '🧀' },
-    { name: 'Kecske túró', category: 'Tejtermék', calories_per_100g: 105, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 5.5, vegetarian: true, emoji: '🧀' },
-    { name: 'Kecske tejföl', category: 'Tejtermék', calories_per_100g: 198, protein_per_100g: 2.7, carbs_per_100g: 3.2, fat_per_100g: 20, vegetarian: true, emoji: '🥛' },
-    { name: 'Kecske kefir', category: 'Tejtermék', calories_per_100g: 65, protein_per_100g: 3.5, carbs_per_100g: 4.3, fat_per_100g: 3.8, vegetarian: true, emoji: '🥛' },
-    { name: 'Kecske vaj', category: 'Tejtermék', calories_per_100g: 717, protein_per_100g: 0.9, carbs_per_100g: 0.1, fat_per_100g: 81, vegetarian: true, emoji: '🧈' },
+    { id: 'goat_milk',       category: 'dairy', calories_per_100g: 69,  protein_per_100g: 3.6, carbs_per_100g: 4.4, fat_per_100g: 4.2, vegetarian: true, emoji: '🥛', names: { hu: 'Kecske tej',    en: 'Goat milk',        ro: 'Lapte de capră'    } },
+    { id: 'goat_yogurt',     category: 'dairy', calories_per_100g: 59,  protein_per_100g: 3.8, carbs_per_100g: 4.1, fat_per_100g: 3.5, vegetarian: true, emoji: '🥛', names: { hu: 'Kecske joghurt', en: 'Goat yogurt',      ro: 'Iaurt de capră'    } },
+    { id: 'goat_cheese',     category: 'dairy', calories_per_100g: 364, protein_per_100g: 22,  carbs_per_100g: 2,   fat_per_100g: 30,  vegetarian: true, emoji: '🧀', names: { hu: 'Kecske sajt',   en: 'Goat cheese',      ro: 'Brânză de capră'   } },
+    { id: 'goat_cottage',    category: 'dairy', calories_per_100g: 105, protein_per_100g: 11,  carbs_per_100g: 3,   fat_per_100g: 5.5, vegetarian: true, emoji: '🧀', names: { hu: 'Kecske túró',   en: 'Goat cottage',     ro: 'Brânză proaspătă'  } },
+    { id: 'goat_sour_cream', category: 'dairy', calories_per_100g: 198, protein_per_100g: 2.7, carbs_per_100g: 3.2, fat_per_100g: 20,  vegetarian: true, emoji: '🥛', names: { hu: 'Kecske tejföl', en: 'Goat sour cream',  ro: 'Smântână de capră' } },
+    { id: 'goat_kefir',      category: 'dairy', calories_per_100g: 65,  protein_per_100g: 3.5, carbs_per_100g: 4.3, fat_per_100g: 3.8, vegetarian: true, emoji: '🥛', names: { hu: 'Kecske kefir',  en: 'Goat kefir',       ro: 'Chefir de capră'   } },
+    { id: 'goat_butter',     category: 'dairy', calories_per_100g: 717, protein_per_100g: 0.9, carbs_per_100g: 0.1, fat_per_100g: 81,  vegetarian: true, emoji: '🧈', names: { hu: 'Kecske vaj',    en: 'Goat butter',      ro: 'Unt de capră'      } },
   ],
   juh: [
-    { name: 'Juh tej', category: 'Tejtermék', calories_per_100g: 108, protein_per_100g: 5.4, carbs_per_100g: 5.1, fat_per_100g: 7, vegetarian: true, emoji: '🥛' },
-    { name: 'Juh joghurt', category: 'Tejtermék', calories_per_100g: 103, protein_per_100g: 5.5, carbs_per_100g: 5.1, fat_per_100g: 6.5, vegetarian: true, emoji: '🥛' },
-    { name: 'Telemea (juh sajt)', category: 'Tejtermék', calories_per_100g: 300, protein_per_100g: 18, carbs_per_100g: 2, fat_per_100g: 25, vegetarian: true, emoji: '🧀' },
-    { name: 'Urdă (juh túró)', category: 'Tejtermék', calories_per_100g: 150, protein_per_100g: 12, carbs_per_100g: 3, fat_per_100g: 10, vegetarian: true, emoji: '🧀' },
-    { name: 'Juh tejföl', category: 'Tejtermék', calories_per_100g: 202, protein_per_100g: 3.2, carbs_per_100g: 4, fat_per_100g: 20, vegetarian: true, emoji: '🥛' },
-    { name: 'Juh kefir', category: 'Tejtermék', calories_per_100g: 103, protein_per_100g: 5.2, carbs_per_100g: 4.8, fat_per_100g: 6.2, vegetarian: true, emoji: '🥛' },
-    { name: 'Juh vaj', category: 'Tejtermék', calories_per_100g: 740, protein_per_100g: 1, carbs_per_100g: 0.1, fat_per_100g: 83, vegetarian: true, emoji: '🧈' },
-    { name: 'Brânză de burduf', category: 'Tejtermék', calories_per_100g: 330, protein_per_100g: 20, carbs_per_100g: 2, fat_per_100g: 28, vegetarian: true, emoji: '🧀' },
+    { id: 'sheep_milk',      category: 'dairy', calories_per_100g: 108, protein_per_100g: 5.4, carbs_per_100g: 5.1, fat_per_100g: 7,   vegetarian: true, emoji: '🥛', names: { hu: 'Juh tej',            en: 'Sheep milk',    ro: 'Lapte de oaie'   } },
+    { id: 'sheep_yogurt',    category: 'dairy', calories_per_100g: 103, protein_per_100g: 5.5, carbs_per_100g: 5.1, fat_per_100g: 6.5, vegetarian: true, emoji: '🥛', names: { hu: 'Juh joghurt',        en: 'Sheep yogurt',  ro: 'Iaurt de oaie'   } },
+    { id: 'telemea',         category: 'dairy', calories_per_100g: 300, protein_per_100g: 18,  carbs_per_100g: 2,   fat_per_100g: 25,  vegetarian: true, emoji: '🧀', names: { hu: 'Telemea (juh sajt)', en: 'Telemea cheese', ro: 'Telemea'         } },
+    { id: 'urda',            category: 'dairy', calories_per_100g: 150, protein_per_100g: 12,  carbs_per_100g: 3,   fat_per_100g: 10,  vegetarian: true, emoji: '🧀', names: { hu: 'Urdă (juh túró)',   en: 'Urdă cheese',   ro: 'Urdă'            } },
+    { id: 'sheep_sour_cream',category: 'dairy', calories_per_100g: 202, protein_per_100g: 3.2, carbs_per_100g: 4,   fat_per_100g: 20,  vegetarian: true, emoji: '🥛', names: { hu: 'Juh tejföl',        en: 'Sheep sour cream', ro: 'Smântână de oaie'} },
+    { id: 'sheep_kefir',     category: 'dairy', calories_per_100g: 103, protein_per_100g: 5.2, carbs_per_100g: 4.8, fat_per_100g: 6.2, vegetarian: true, emoji: '🥛', names: { hu: 'Juh kefir',         en: 'Sheep kefir',   ro: 'Chefir de oaie'  } },
+    { id: 'sheep_butter',    category: 'dairy', calories_per_100g: 740, protein_per_100g: 1,   carbs_per_100g: 0.1, fat_per_100g: 83,  vegetarian: true, emoji: '🧈', names: { hu: 'Juh vaj',           en: 'Sheep butter',  ro: 'Unt de oaie'     } },
+    { id: 'branza_burduf',   category: 'dairy', calories_per_100g: 330, protein_per_100g: 20,  carbs_per_100g: 2,   fat_per_100g: 28,  vegetarian: true, emoji: '🧀', names: { hu: 'Brânză de burduf',  en: 'Brânză de burduf', ro: 'Brânză de burduf'} },
   ],
   bivaly: [
-    { name: 'Bivaly mozzarella', category: 'Tejtermék', calories_per_100g: 253, protein_per_100g: 19, carbs_per_100g: 2, fat_per_100g: 19, vegetarian: true, emoji: '🧀' },
-    { name: 'Bivaly tej', category: 'Tejtermék', calories_per_100g: 117, protein_per_100g: 4.5, carbs_per_100g: 5, fat_per_100g: 8, vegetarian: true, emoji: '🥛' },
-    { name: 'Bivaly joghurt', category: 'Tejtermék', calories_per_100g: 125, protein_per_100g: 5, carbs_per_100g: 5, fat_per_100g: 9, vegetarian: true, emoji: '🥛' },
-    { name: 'Bivaly túró', category: 'Tejtermék', calories_per_100g: 140, protein_per_100g: 11, carbs_per_100g: 3, fat_per_100g: 9, vegetarian: true, emoji: '🧀' },
-    { name: 'Bivaly kefir', category: 'Tejtermék', calories_per_100g: 117, protein_per_100g: 4.8, carbs_per_100g: 4.9, fat_per_100g: 7.5, vegetarian: true, emoji: '🥛' },
+    { id: 'buffalo_mozzarella', category: 'dairy', calories_per_100g: 253, protein_per_100g: 19,  carbs_per_100g: 2,   fat_per_100g: 19,  vegetarian: true, emoji: '🧀', names: { hu: 'Bivaly mozzarella', en: 'Buffalo mozzarella', ro: 'Mozzarella de bivoliță' } },
+    { id: 'buffalo_milk',       category: 'dairy', calories_per_100g: 117, protein_per_100g: 4.5, carbs_per_100g: 5,   fat_per_100g: 8,   vegetarian: true, emoji: '🥛', names: { hu: 'Bivaly tej',        en: 'Buffalo milk',       ro: 'Lapte de bivoliță'     } },
+    { id: 'buffalo_yogurt',     category: 'dairy', calories_per_100g: 125, protein_per_100g: 5,   carbs_per_100g: 5,   fat_per_100g: 9,   vegetarian: true, emoji: '🥛', names: { hu: 'Bivaly joghurt',    en: 'Buffalo yogurt',     ro: 'Iaurt de bivoliță'     } },
+    { id: 'buffalo_cottage',    category: 'dairy', calories_per_100g: 140, protein_per_100g: 11,  carbs_per_100g: 3,   fat_per_100g: 9,   vegetarian: true, emoji: '🧀', names: { hu: 'Bivaly túró',       en: 'Buffalo cottage',    ro: 'Brânză proaspătă bivol'} },
+    { id: 'buffalo_kefir',      category: 'dairy', calories_per_100g: 117, protein_per_100g: 4.8, carbs_per_100g: 4.9, fat_per_100g: 7.5, vegetarian: true, emoji: '🥛', names: { hu: 'Bivaly kefir',      en: 'Buffalo kefir',      ro: 'Chefir de bivoliță'    } },
   ],
   'mandula tej': [
-    { name: 'Mandula tej (natúr)', category: 'Tejtermék', calories_per_100g: 24, protein_per_100g: 0.9, carbs_per_100g: 3.1, fat_per_100g: 1.1, vegetarian: true, emoji: '🥛' },
-    { name: 'Mandula joghurt', category: 'Tejtermék', calories_per_100g: 56, protein_per_100g: 1.2, carbs_per_100g: 7, fat_per_100g: 2.5, vegetarian: true, emoji: '🥛' },
+    { id: 'almond_milk',    category: 'dairy', calories_per_100g: 24,  protein_per_100g: 0.9, carbs_per_100g: 3.1, fat_per_100g: 1.1, vegetarian: true, emoji: '🥛', names: { hu: 'Mandula tej (natúr)', en: 'Almond milk',    ro: 'Lapte de migdale'   } },
+    { id: 'almond_yogurt',  category: 'dairy', calories_per_100g: 56,  protein_per_100g: 1.2, carbs_per_100g: 7,   fat_per_100g: 2.5, vegetarian: true, emoji: '🥛', names: { hu: 'Mandula joghurt',    en: 'Almond yogurt',  ro: 'Iaurt de migdale'   } },
   ],
   mandula: [
-    { name: 'Mandula tej (natúr)', category: 'Tejtermék', calories_per_100g: 24, protein_per_100g: 0.9, carbs_per_100g: 3.1, fat_per_100g: 1.1, vegetarian: true, emoji: '🥛' },
-    { name: 'Mandula joghurt', category: 'Tejtermék', calories_per_100g: 56, protein_per_100g: 1.2, carbs_per_100g: 7, fat_per_100g: 2.5, vegetarian: true, emoji: '🥛' },
-    { name: 'Mandula tejszín', category: 'Zsír', calories_per_100g: 180, protein_per_100g: 1.5, carbs_per_100g: 4, fat_per_100g: 18, vegetarian: true, emoji: '🥛' },
+    { id: 'almond_milk',    category: 'dairy', calories_per_100g: 24,  protein_per_100g: 0.9, carbs_per_100g: 3.1, fat_per_100g: 1.1, vegetarian: true, emoji: '🥛', names: { hu: 'Mandula tej (natúr)', en: 'Almond milk',    ro: 'Lapte de migdale'   } },
+    { id: 'almond_yogurt',  category: 'dairy', calories_per_100g: 56,  protein_per_100g: 1.2, carbs_per_100g: 7,   fat_per_100g: 2.5, vegetarian: true, emoji: '🥛', names: { hu: 'Mandula joghurt',    en: 'Almond yogurt',  ro: 'Iaurt de migdale'   } },
+    { id: 'almond_cream',   category: 'fat',   calories_per_100g: 180, protein_per_100g: 1.5, carbs_per_100g: 4,   fat_per_100g: 18,  vegetarian: true, emoji: '🥛', names: { hu: 'Mandula tejszín',    en: 'Almond cream',   ro: 'Frișcă de migdale'  } },
   ],
   'zab tej': [
-    { name: 'Zab tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 1, carbs_per_100g: 6.6, fat_per_100g: 1.5, vegetarian: true, emoji: '🥛' },
+    { id: 'oat_milk',       category: 'dairy', calories_per_100g: 47,  protein_per_100g: 1,   carbs_per_100g: 6.6, fat_per_100g: 1.5, vegetarian: true, emoji: '🥛', names: { hu: 'Zab tej', en: 'Oat milk', ro: 'Lapte de ovăz' } },
   ],
   zab: [
-    { name: 'Zab tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 1, carbs_per_100g: 6.6, fat_per_100g: 1.5, vegetarian: true, emoji: '🥛' },
+    { id: 'oat_milk',       category: 'dairy', calories_per_100g: 47,  protein_per_100g: 1,   carbs_per_100g: 6.6, fat_per_100g: 1.5, vegetarian: true, emoji: '🥛', names: { hu: 'Zab tej', en: 'Oat milk', ro: 'Lapte de ovăz' } },
   ],
   'kókusz tej': [
-    { name: 'Kókusz tej', category: 'Zsír', calories_per_100g: 197, protein_per_100g: 2, carbs_per_100g: 2.8, fat_per_100g: 21, vegetarian: true, emoji: '🥥' },
+    { id: 'coconut_milk',   category: 'fat',   calories_per_100g: 197, protein_per_100g: 2,   carbs_per_100g: 2.8, fat_per_100g: 21,  vegetarian: true, emoji: '🥥', names: { hu: 'Kókusz tej', en: 'Coconut milk', ro: 'Lapte de cocos' } },
   ],
   kókusz: [
-    { name: 'Kókusz tej', category: 'Zsír', calories_per_100g: 197, protein_per_100g: 2, carbs_per_100g: 2.8, fat_per_100g: 21, vegetarian: true, emoji: '🥥' },
-    { name: 'Kókusz joghurt', category: 'Tejtermék', calories_per_100g: 88, protein_per_100g: 0.7, carbs_per_100g: 7, fat_per_100g: 6.2, vegetarian: true, emoji: '🥛' },
-    { name: 'Kókusz tejszín', category: 'Zsír', calories_per_100g: 330, protein_per_100g: 3.5, carbs_per_100g: 6, fat_per_100g: 34, vegetarian: true, emoji: '🥥' },
+    { id: 'coconut_milk',    category: 'fat',   calories_per_100g: 197, protein_per_100g: 2,   carbs_per_100g: 2.8, fat_per_100g: 21,  vegetarian: true, emoji: '🥥', names: { hu: 'Kókusz tej',     en: 'Coconut milk',   ro: 'Lapte de cocos'    } },
+    { id: 'coconut_yogurt',  category: 'dairy', calories_per_100g: 88,  protein_per_100g: 0.7, carbs_per_100g: 7,   fat_per_100g: 6.2, vegetarian: true, emoji: '🥛', names: { hu: 'Kókusz joghurt', en: 'Coconut yogurt', ro: 'Iaurt de cocos'    } },
+    { id: 'coconut_cream',   category: 'fat',   calories_per_100g: 330, protein_per_100g: 3.5, carbs_per_100g: 6,   fat_per_100g: 34,  vegetarian: true, emoji: '🥥', names: { hu: 'Kókusz tejszín', en: 'Coconut cream',  ro: 'Frișcă de cocos'   } },
   ],
   'rizs tej': [
-    { name: 'Rizs tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 0.3, carbs_per_100g: 9.2, fat_per_100g: 1, vegetarian: true, emoji: '🥛' },
+    { id: 'rice_milk',      category: 'dairy', calories_per_100g: 47,  protein_per_100g: 0.3, carbs_per_100g: 9.2, fat_per_100g: 1,   vegetarian: true, emoji: '🥛', names: { hu: 'Rizs tej', en: 'Rice milk', ro: 'Lapte de orez' } },
   ],
   rizs: [
-    { name: 'Rizs tej', category: 'Tejtermék', calories_per_100g: 47, protein_per_100g: 0.3, carbs_per_100g: 9.2, fat_per_100g: 1, vegetarian: true, emoji: '🥛' },
+    { id: 'rice_milk',      category: 'dairy', calories_per_100g: 47,  protein_per_100g: 0.3, carbs_per_100g: 9.2, fat_per_100g: 1,   vegetarian: true, emoji: '🥛', names: { hu: 'Rizs tej', en: 'Rice milk', ro: 'Lapte de orez' } },
   ],
   'szója tej': [
-    { name: 'Szója tej', category: 'Tejtermék', calories_per_100g: 33, protein_per_100g: 2.9, carbs_per_100g: 1.7, fat_per_100g: 1.8, vegetarian: true, emoji: '🥛' },
-    { name: 'Szója joghurt', category: 'Tejtermék', calories_per_100g: 65, protein_per_100g: 3.8, carbs_per_100g: 5.4, fat_per_100g: 2, vegetarian: true, emoji: '🥛' },
+    { id: 'soy_milk',       category: 'dairy', calories_per_100g: 33,  protein_per_100g: 2.9, carbs_per_100g: 1.7, fat_per_100g: 1.8, vegetarian: true, emoji: '🥛', names: { hu: 'Szója tej',     en: 'Soy milk',    ro: 'Lapte de soia'  } },
+    { id: 'soy_yogurt',     category: 'dairy', calories_per_100g: 65,  protein_per_100g: 3.8, carbs_per_100g: 5.4, fat_per_100g: 2,   vegetarian: true, emoji: '🥛', names: { hu: 'Szója joghurt', en: 'Soy yogurt',  ro: 'Iaurt de soia'  } },
   ],
 };
 
@@ -478,7 +480,7 @@ export function ProfileSetupWizard() {
 
   // Step 2: Foods
   const [dietType, setDietType] = useState<DietType>('omnivore');
-  const [foodTab, setFoodTab] = useState<FoodTabType>('Minden');
+  const [foodTab, setFoodTab] = useState<FoodTabType>('all');
   const [foodSearch, setFoodSearch] = useState('');
   const [extraFoods, setExtraFoods] = useState<SeedFood[]>([]);
   const [lookupStatus, setLookupStatus] = useState<'idle' | 'loading' | 'results' | 'not_found'>('idle');
@@ -502,11 +504,11 @@ export function ProfileSetupWizard() {
 
   // ── Food toggle ──────────────────────────────────────────────
 
-  const toggleFood = (name: string) => {
+  const toggleFood = (id: string) => {
     setSelectedFoods(prev => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -521,7 +523,7 @@ export function ProfileSetupWizard() {
   };
 
   const processAlternatives = useCallback((keys: Set<string>) => {
-    const knownNames = new Set([...SEED_FOODS.map(f => f.name), ...extraFoods.map(f => f.name)]);
+    const knownIds = new Set([...SEED_FOODS.map(f => f.id), ...extraFoods.map(f => f.id)]);
     const newFoods: SeedFood[] = [];
 
     keys.forEach(key => {
@@ -533,9 +535,9 @@ export function ProfileSetupWizard() {
       // Lowercase key = look up in CURATED_ALTERNATIVES
       const curated = CURATED_ALTERNATIVES[key] ?? [];
       curated.forEach(food => {
-        if (!knownNames.has(food.name)) {
+        if (!knownIds.has(food.id)) {
           newFoods.push(food);
-          knownNames.add(food.name);
+          knownIds.add(food.id);
         }
       });
     });
@@ -587,10 +589,11 @@ export function ProfileSetupWizard() {
 
   const visibleFoods = allFoods.filter(f => {
     if (selectedStyles.includes('plant') && selectedStyles.length === 1 && !f.vegetarian) return false;
-    if (foodTab !== 'Minden' && f.category !== foodTab) return false;
+    if (foodTab !== 'all' && f.category !== foodTab) return false;
     if (foodSearch) {
       const q = foodSearch.toLowerCase();
-      if (!f.name.toLowerCase().includes(q)) return false;
+      const nameMatch = Object.values(f.names).some(n => n.toLowerCase().includes(q));
+      if (!nameMatch) return false;
     }
     if (activeAllergens.size > 0 && f.allergens) {
       if (f.allergens.some(a => activeAllergens.has(a))) return false;
@@ -601,7 +604,7 @@ export function ProfileSetupWizard() {
   const selectAllVisible = () => {
     setSelectedFoods(prev => {
       const next = new Set(prev);
-      visibleFoods.forEach(f => next.add(f.name));
+      visibleFoods.forEach(f => next.add(f.id));
       return next;
     });
   };
@@ -662,8 +665,10 @@ export function ProfileSetupWizard() {
   }, []);
 
   const addLookupResult = useCallback((result: ProductResult) => {
+    const foodId = `lookup_${Date.now()}`;
     const newFood: SeedFood = {
-      name: result.name,
+      id: foodId,
+      names: { hu: result.name, en: result.name, ro: result.name },
       category: guessCategory(result.protein, result.carbs, result.fat),
       calories_per_100g: result.calories,
       protein_per_100g: result.protein,
@@ -673,7 +678,7 @@ export function ProfileSetupWizard() {
       emoji: '🛒',
     };
     setExtraFoods(prev => [...prev, newFood]);
-    setSelectedFoods(prev => new Set([...prev, newFood.name]));
+    setSelectedFoods(prev => new Set([...prev, newFood.id]));
     setFoodSearch('');
     setLookupResults([]);
     setLookupStatus('idle');
@@ -761,9 +766,9 @@ export function ProfileSetupWizard() {
           );
       const allKnownFoods = [...SEED_FOODS, ...extraFoods];
       const foodsToSave: CreateFoodInput[] = allKnownFoods
-        .filter(f => effectiveSelectedFoods.has(f.name))
+        .filter(f => effectiveSelectedFoods.has(f.id))
         .map(f => ({
-          name: f.name,
+          name: f.names.en,
           description: '',
           category: mapCategory(f.category) as any,
           calories_per_100g: f.calories_per_100g,
@@ -779,9 +784,9 @@ export function ProfileSetupWizard() {
       // 3. Generate meal plan (non-blocking — failure is OK)
       try {
         const ingredients = allKnownFoods
-          .filter(f => effectiveSelectedFoods.has(f.name))
+          .filter(f => effectiveSelectedFoods.has(f.id))
           .map(f => ({
-            name: f.name,
+            name: f.names.en,
             calories_per_100g: f.calories_per_100g,
             protein_per_100g: f.protein_per_100g,
             carbs_per_100g: f.carbs_per_100g,
@@ -1355,7 +1360,7 @@ function StepCriteria({
 function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, selectAllVisible, deselectAll }: {
   foodTab: FoodTabType; setFoodTab: (v: FoodTabType) => void;
   foodSearch: string; setFoodSearch: (v: string) => void;
-  selectedFoods: Set<string>; toggleFood: (name: string) => void;
+  selectedFoods: Set<string>; toggleFood: (id: string) => void;
   visibleFoods: SeedFood[];
   lookupStatus: 'idle' | 'loading' | 'results' | 'not_found';
   lookupResults: ProductResult[];
@@ -1364,15 +1369,15 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
   selectAllVisible: () => void;
   deselectAll: () => void;
 }) {
-  const { t } = useLanguage();
-  const CAT_LABELS: Record<typeof FOOD_CATEGORY_TABS[number], string> = {
-    'Minden': t('wizard.foods.catAll'),
-    'Fehérje': t('wizard.foods.catProtein'),
-    'Szénhidrát': t('wizard.foods.catCarb'),
-    'Zsír': t('wizard.foods.catFat'),
-    'Tejtermék': t('wizard.foods.catDairy'),
-    'Zöldség': t('wizard.foods.catVeg'),
-    'Gyümölcs': t('wizard.foods.catFruit'),
+  const { t, language } = useLanguage();
+  const CAT_LABELS: Record<FoodTabType, string> = {
+    'all':       t('wizard.foods.catAll'),
+    'protein':   t('wizard.foods.catProtein'),
+    'carb':      t('wizard.foods.catCarb'),
+    'fat':       t('wizard.foods.catFat'),
+    'dairy':     t('wizard.foods.catDairy'),
+    'vegetable': t('wizard.foods.catVeg'),
+    'fruit':     t('wizard.foods.catFruit'),
   };
   return (
     <div className="space-y-4 pt-2">
@@ -1485,11 +1490,11 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
           <p className="col-span-2 text-center text-sm text-gray-400 py-6">{t('wizard.foods.noResults')}</p>
         )}
         {visibleFoods.map(food => {
-          const selected = selectedFoods.has(food.name);
+          const selected = selectedFoods.has(food.id);
           return (
             <button
-              key={food.name}
-              onClick={() => toggleFood(food.name)}
+              key={food.id}
+              onClick={() => toggleFood(food.id)}
               className={`flex items-center gap-2.5 px-3 py-2.5 rounded-2xl border-2 text-left transition-all ${
                 selected
                   ? 'border-primary bg-primary/5'
@@ -1499,7 +1504,7 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
               <span className="text-2xl shrink-0">{food.emoji}</span>
               <div className="min-w-0 flex-1">
                 <p className={`text-xs font-medium truncate ${selected ? 'text-primary' : 'text-gray-700'}`}>
-                  {food.name}
+                  {food.names[language]}
                 </p>
                 <p className="text-2xs text-gray-400">{food.calories_per_100g} kcal/100g</p>
               </div>
