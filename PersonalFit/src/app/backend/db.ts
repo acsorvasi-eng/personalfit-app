@@ -35,7 +35,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const DB_NAME = 'NutriPlanDB';
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 // ═══════════════════════════════════════════════════════════════
 // STORE SCHEMAS — defines indexes for each object store
