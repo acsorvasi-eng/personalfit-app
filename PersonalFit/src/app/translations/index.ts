@@ -542,6 +542,9 @@ export const translations = {
       bmiObese: 'Elhízás',
       bodyMetrics: 'Testméretek',
       bmr: 'Alapanyagcsere',
+      visceralFat: 'Zsigeri zsír',
+      boneMass: 'Csonttömeg',
+      waterPercent: 'Testfolyadék %',
       gmonBadge: 'GMON',
     },
 
@@ -2080,6 +2083,9 @@ export const translations = {
       bmiObese: 'Obese',
       bodyMetrics: 'Body metrics',
       bmr: 'BMR',
+      visceralFat: 'Visceral Fat',
+      boneMass: 'Bone Mass',
+      waterPercent: 'Body Water %',
       gmonBadge: 'GMON',
     },
 
@@ -3544,6 +3550,9 @@ export const translations = {
       bmiObese: 'Obezitate',
       bodyMetrics: 'Mărimi corporale',
       bmr: 'Rata metabolică bazală',
+      visceralFat: 'Grăsime viscerală',
+      boneMass: 'Masă osoasă',
+      waterPercent: 'Apă corporală %',
       gmonBadge: 'GMON',
     },
 
