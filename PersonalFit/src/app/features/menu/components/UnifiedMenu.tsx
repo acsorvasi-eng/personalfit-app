@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { usePlanData, type MealOption } from "../../../hooks/usePlanData";
-import { ChevronDown, Check, Clock, ChevronRight, ChevronLeft, UtensilsCrossed, Utensils, Trash2, Dumbbell, Moon, Waves, X, Flame, Zap, ArrowRightLeft, Sparkles } from "lucide-react";
+import { ChevronDown, Check, Clock, ChevronRight, ChevronLeft, UtensilsCrossed, Utensils, Trash2, Dumbbell, Moon, Waves, X, Flame, Zap, ArrowRightLeft, Sparkles, Settings } from "lucide-react";
 import { PageHeader } from "../../../components/PageHeader";
 // DSMCoachMark removed — hints no longer used on this screen
 import { DSMQuickLogSheet } from "../../../components/dsm/QuickLogSheet";
@@ -9,7 +9,6 @@ import { useLanguage, getLocaleDayNarrow, getLocaleMonth, getLocale } from "../.
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 // getMealAlternatives removed — all data comes from uploaded plans only
 import { motion, AnimatePresence } from "framer-motion";
-import { FuturisticDashboard } from "../../../components/FuturisticDashboard";
 import { WaterButton } from "../../../components/dsm";
 import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
@@ -977,7 +976,15 @@ export function UnifiedMenu() {
             icon={UtensilsCrossed}
             title={t("menu.title")}
             subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
-            action={<FuturisticDashboard />}
+            action={
+              <button
+                onClick={() => navigate('/profile', { state: { tab: 'settings' } })}
+                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/25 active:bg-white/30 transition-colors"
+                aria-label="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            }
             stats={[
               {
                 label: t("menu.restDay"),
@@ -1162,7 +1169,15 @@ export function UnifiedMenu() {
           icon={UtensilsCrossed}
           title={t("menu.title")}
           subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
-          action={<FuturisticDashboard />}
+          action={
+              <button
+                onClick={() => navigate('/profile', { state: { tab: 'settings' } })}
+                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/25 active:bg-white/30 transition-colors"
+                aria-label="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            }
           stats={[
             {
               label: calorieRemaining < 0

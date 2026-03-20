@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { AvatarEditor } from "../../../components/AvatarEditor";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../../../utils/currencyConverter";
@@ -81,6 +81,7 @@ interface WeightGoal {
 // ─── Main Component ─────────────────────────────────────────────────
 export function Profile() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, user } = useAuth();
   const { consumed } = useCalorieTracker();
   const { t } = useLanguage();
@@ -483,7 +484,6 @@ export function Profile() {
           workoutCalories={workoutCalories}
           avatar={profile.avatar}
           subtitle={`${t('profile.appVersion')} 0.0.1`}
-          onNavigateBodyVision={() => navigate('/body-vision')}
           onNameSave={(name) => {
             const updated = { ...profile, name };
             setProfile(updated);
@@ -513,7 +513,7 @@ export function Profile() {
             { id: "goals", label: t('profile.tabGoals') },
             { id: "settings", label: t('profile.tabSettings') },
           ]}
-          defaultTab="me"
+          defaultTab={(location.state as any)?.tab ?? "me"}
           variant="pill"
           ariaLabel={t('ui.profileSections')}
         >

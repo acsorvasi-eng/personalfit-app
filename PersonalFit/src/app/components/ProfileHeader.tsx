@@ -24,7 +24,6 @@ interface ProfileHeaderProps {
   avatar?: string;
   /** Subtitle below title (e.g. member since / app version) */
   subtitle?: string;
-  onNavigateBodyVision: () => void;
   onNameSave?: (name: string) => void;
   onAgeSave?: (age: number) => void;
   onAvatarClick?: () => void;
@@ -38,7 +37,6 @@ export function ProfileHeader({
   workoutCalories,
   avatar,
   subtitle,
-  onNavigateBodyVision,
   onNameSave,
   onAgeSave,
   onAvatarClick,
@@ -110,12 +108,6 @@ export function ProfileHeader({
           label: `${consumed} / ${adjustedAllowance} kcal`,
           value: consumed,
           suffix: "kcal",
-        },
-        {
-          label: "3D Test Vízió",
-          value: "AI",
-          isAction: true,
-          onClick: onNavigateBodyVision,
         },
       ]}
     />
