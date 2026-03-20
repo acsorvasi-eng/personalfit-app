@@ -550,6 +550,48 @@ export function Profile() {
         />
       </DSMBottomSheet>
 
+      {/* CALORIE BOTTOM SHEET */}
+      <DSMBottomSheet open={calorieSheetOpen} onClose={() => setCalorieSheetOpen(false)} title={t('profile.calorieGoal') || 'Kalória cél'}>
+        <ProfileGoalsTab
+          profile={profile}
+          targetCalories={targetCalories}
+          dailyCalories={consumed}
+          onProfileUpdate={(partial) => {
+            setProfile((p) => ({ ...p, ...partial }));
+            saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
+          }}
+          t={t}
+        />
+      </DSMBottomSheet>
+
+      {/* WATER BOTTOM SHEET */}
+      <DSMBottomSheet open={waterSheetOpen} onClose={() => setWaterSheetOpen(false)} title={t('profile.waterGoal') || 'Vízfogyasztás'}>
+        <ProfileGoalsTab
+          profile={profile}
+          targetCalories={targetCalories}
+          dailyCalories={consumed}
+          onProfileUpdate={(partial) => {
+            setProfile((p) => ({ ...p, ...partial }));
+            saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
+          }}
+          t={t}
+        />
+      </DSMBottomSheet>
+
+      {/* SPORT BOTTOM SHEET */}
+      <DSMBottomSheet open={sportSheetOpen} onClose={() => setSportSheetOpen(false)} title={t('profile.workoutGoal') || 'Heti edzés'}>
+        <ProfileGoalsTab
+          profile={profile}
+          targetCalories={targetCalories}
+          dailyCalories={consumed}
+          onProfileUpdate={(partial) => {
+            setProfile((p) => ({ ...p, ...partial }));
+            saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
+          }}
+          t={t}
+        />
+      </DSMBottomSheet>
+
       {/* HEADER */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-2">
         <h1 className="text-xl font-bold text-gray-900">{t('profile.title') || 'Profilom'}</h1>
@@ -887,47 +929,6 @@ export function Profile() {
             </div>
           )}
         </DSMCard>
-        {/* Calorie/Macro bottom sheet */}
-        <DSMBottomSheet open={calorieSheetOpen} onClose={() => setCalorieSheetOpen(false)} title={t('profile.calorieGoal') || 'Kalória cél'}>
-          <ProfileGoalsTab
-            profile={profile}
-            targetCalories={targetCalories}
-            dailyCalories={consumed}
-            onProfileUpdate={(partial) => {
-              setProfile((p) => ({ ...p, ...partial }));
-              saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
-            }}
-            t={t}
-          />
-        </DSMBottomSheet>
-
-        {/* Water bottom sheet */}
-        <DSMBottomSheet open={waterSheetOpen} onClose={() => setWaterSheetOpen(false)} title={t('profile.waterGoal') || 'Vízfogyasztás'}>
-          <ProfileGoalsTab
-            profile={profile}
-            targetCalories={targetCalories}
-            dailyCalories={consumed}
-            onProfileUpdate={(partial) => {
-              setProfile((p) => ({ ...p, ...partial }));
-              saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
-            }}
-            t={t}
-          />
-        </DSMBottomSheet>
-
-        {/* Sport / workout bottom sheet */}
-        <DSMBottomSheet open={sportSheetOpen} onClose={() => setSportSheetOpen(false)} title={t('profile.workoutGoal') || 'Heti edzés'}>
-          <ProfileGoalsTab
-            profile={profile}
-            targetCalories={targetCalories}
-            dailyCalories={consumed}
-            onProfileUpdate={(partial) => {
-              setProfile((p) => ({ ...p, ...partial }));
-              saveUserProfile(partial).then(() => { window.dispatchEvent(new Event('profileUpdated')); });
-            }}
-            t={t}
-          />
-        </DSMBottomSheet>
 
         {/* Card 4: Daily Goals */}
         <DSMCard>
