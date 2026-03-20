@@ -1,71 +1,77 @@
 /**
- * SplashScreen - Frictionless entry point
- * ========================================
- * UX Goal: Get the user INTO the app as fast as possible.
- *
- * Design decisions (2026 UX audit):
- *   - Language selector → small globe circle in top-right corner (non-blocking)
- *   - Auto-detect browser language (zero-tap for most users)
- *   - Hero CTA button → bottom-pinned, matching OnboardingScreen layout
- *   - Uses Button component from ui/button for DSM consistency
- *   - Reduced animation time: 600ms vs previous 1200ms
- *   - Single clear action: one big button → enter app
+ * SplashScreen — premium dark teal entry point
+ * Logo: fork + leaf SVG · Language: single chip, tap to expand · CTA: solid teal
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UtensilsCrossed, ArrowRight, Sparkles, Check, X, Globe } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useLanguage, LanguageCode } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPPORTED_LANGUAGES, LANGUAGE_META } from '../../i18n';
-import { Button } from './ui/button';
 
-const GREETINGS: Record<string, string> = { hu: 'Kezdjük!', en: "Let's go!", ro: 'Să începem!' };
 const languages = SUPPORTED_LANGUAGES.map((code) => ({
   code,
   name: LANGUAGE_META[code]?.name ?? code,
   flag: LANGUAGE_META[code]?.flag ?? '',
-  greeting: GREETINGS[code] ?? "Let's go!",
 }));
+
+function ForkLeafLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      {/* fork */}
+      <path
+        d="M9 5 L9 13 M9 13 L9 22 M7 5 L7 10 C7 12.5 11 12.5 11 10 L11 5"
+        stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+      />
+      {/* leaf */}
+      <path
+        d="M15 22 C15 22 15 14 20.5 10 C23 8 26 8 26 8 C26 8 26 11 23.5 13.5 C19 18 15 22 15 22 Z"
+        stroke="white" strokeWidth="1.8" strokeLinejoin="round"
+      />
+      <path d="M15 22 L20.5 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export function SplashScreen() {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { markSplashSeen } = useAuth();
-  const [selectedLanguage, setSelectedLanguageState] = useState<LanguageCode>(language);
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageCode>(language);
   const [ready, setReady] = useState(false);
-  const [langPickerOpen, setLangPickerOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-detect browser language + fast reveal
+  // Auto-detect browser language
   useEffect(() => {
     const browserLang = navigator.language.split('-')[0];
     const matched = languages.find(l => l.code === browserLang);
     if (matched) {
-      setSelectedLanguageState(matched.code as LanguageCode);
+      setSelectedLanguage(matched.code as LanguageCode);
       setLanguage(matched.code as LanguageCode);
     }
-    const timer = setTimeout(() => setReady(true), 600);
+    const timer = setTimeout(() => setReady(true), 400);
     return () => clearTimeout(timer);
   }, []);
 
   // Close picker on outside click
   useEffect(() => {
-    if (!langPickerOpen) return;
+    if (!langOpen) return;
     const handler = (e: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setLangPickerOpen(false);
+        setLangOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [langPickerOpen]);
+  }, [langOpen]);
 
   const handleLanguageChange = (code: LanguageCode) => {
-    setSelectedLanguageState(code);
+    setSelectedLanguage(code);
     setLanguage(code);
-    setLangPickerOpen(false);
+    setLangOpen(false);
     if (navigator.vibrate) navigator.vibrate(10);
   };
 
@@ -76,20 +82,13 @@ export function SplashScreen() {
     navigate('/onboarding');
   };
 
+  // Dev bypass: double-click logo to skip auth in development
   const handleSecretLogoBypass = async () => {
-    // Dev-only hidden shortcut: double-click logo to bypass login
     if (!(import.meta.env.DEV || window.location.hostname === 'localhost')) return;
-
     const devUser = {
-      id: 'dev_bypass_user',
-      email: 'dev@sixth-halt.local',
-      name: 'Dev Bypass',
-      avatar: '',
-      provider: 'demo',
-      createdAt: new Date().toISOString(),
-      isFirstLogin: false,
+      id: 'dev_bypass_user', email: 'dev@sixth-halt.local', name: 'Dev Bypass',
+      avatar: '', provider: 'demo', createdAt: new Date().toISOString(), isFirstLogin: false,
     };
-
     try {
       const { setSetting } = await import('../backend/services/SettingsService');
       await Promise.all([
@@ -100,87 +99,74 @@ export function SplashScreen() {
         setSetting('hasPlanSetup', 'true'),
         setSetting('hasCompletedFullFlow', 'true'),
       ]);
-    } catch {
-      return;
-    }
+    } catch { return; }
     window.location.href = '/';
   };
 
   const selectedLang = languages.find(l => l.code === selectedLanguage) || languages[0];
 
   return (
-    <div className="min-h-screen bg-primary flex flex-col overflow-hidden">
-      {/* ── Ambient Background ── */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-16 left-8 w-72 h-72 bg-white opacity-[0.07] rounded-full blur-3xl" />
-        <div className="absolute bottom-24 right-4 w-80 h-80 bg-yellow-300 opacity-[0.08] rounded-full blur-3xl" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-56 h-56 bg-cyan-200 opacity-[0.06] rounded-full blur-3xl" />
+    <div className="min-h-screen flex flex-col overflow-hidden relative" style={{ background: '#0c1f1e' }}>
+
+      {/* Ambient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute rounded-full blur-3xl"
+          style={{ width: 280, height: 280, background: '#14b8a6', top: -80, right: -60, opacity: 0.12 }} />
+        <div className="absolute rounded-full blur-3xl"
+          style={{ width: 200, height: 200, background: '#134e4a', bottom: -40, left: -50, opacity: 0.5 }} />
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-           TOP BAR — Language globe (small, non-blocking)
-         ═══════════════════════════════════════════════════════════ */}
+      {/* Top bar — language chip only */}
       <div className="relative z-20 flex items-center justify-end px-5 pt-[max(1rem,env(safe-area-inset-top))]">
         <div ref={pickerRef} className="relative">
           <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setLangPickerOpen(!langPickerOpen)}
-            className="flex items-center gap-2 h-11 px-3.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-colors hover:bg-white/30 cursor-pointer select-none"
-            aria-label={t('splash.chooseLanguage') || 'Nyelv választás'}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setLangOpen(!langOpen)}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-full cursor-pointer select-none"
+            style={{ background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.35)', color: 'rgba(20,184,166,0.9)' }}
             type="button"
+            aria-label={t('splash.chooseLanguage') || 'Nyelv választás'}
           >
-            <span className="text-lg leading-none pointer-events-none">{selectedLang.flag}</span>
-            <span className="text-sm text-white pointer-events-none" style={{ fontWeight: 600 }}>{selectedLang.name}</span>
-            <Globe className="w-4 h-4 text-white/70 pointer-events-none" />
+            <span className="text-sm leading-none pointer-events-none">{selectedLang.flag}</span>
+            <span className="text-xs font-bold pointer-events-none tracking-wide">{selectedLang.code.toUpperCase()}</span>
+            <span className="text-xs opacity-60 pointer-events-none">▾</span>
           </motion.button>
 
-          {/* Language Picker Popover */}
           <AnimatePresence>
-            {langPickerOpen && (
+            {langOpen && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: -8 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: -8 }}
                 transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="absolute top-full right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl overflow-hidden z-50 border border-gray-100"
+                className="absolute top-full right-0 mt-2 w-52 rounded-2xl shadow-2xl overflow-hidden z-50"
+                style={{ background: 'white', border: '1px solid #e2e8f0' }}
               >
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-gray-400" />
-                    <span className="text-xs text-gray-500" style={{ fontWeight: 600 }}>{t('splash.language')}</span>
-                  </div>
-                  <button
-                    onClick={() => setLangPickerOpen(false)}
-                    className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer"
-                    type="button"
-                  >
-                    <X className="w-3.5 h-3.5 text-gray-500" />
+                <div className="flex items-center justify-between px-4 py-3"
+                  style={{ borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                  <span className="text-xs font-semibold text-gray-500">{t('splash.language') || 'Nyelv'}</span>
+                  <button onClick={() => setLangOpen(false)} type="button"
+                    className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer">
+                    <X className="w-3 h-3 text-gray-500" />
                   </button>
                 </div>
-                {/* Language Options */}
                 <div className="py-1.5">
                   {languages.map((lang) => {
                     const isActive = selectedLanguage === lang.code;
                     return (
-                      <button
-                        key={lang.code}
-                        onClick={() => handleLanguageChange(lang.code as LanguageCode)}
+                      <button key={lang.code} onClick={() => handleLanguageChange(lang.code as LanguageCode)}
                         type="button"
-                        className={`w-full flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${
-                          isActive ? 'bg-blue-50' : 'hover:bg-gray-50 active:bg-gray-100'
-                        }`}
-                      >
-                        <span className="text-xl leading-none pointer-events-none">{lang.flag}</span>
-                        <span
-                          className={`text-sm flex-1 text-left pointer-events-none ${isActive ? 'text-blue-700' : 'text-gray-700'}`}
-                          style={{ fontWeight: isActive ? 700 : 500 }}
-                        >
+                        className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer"
+                        style={{ background: isActive ? '#f0fdfa' : 'transparent' }}>
+                        <span className="text-lg leading-none">{lang.flag}</span>
+                        <span className="text-sm flex-1 text-left"
+                          style={{ fontWeight: isActive ? 700 : 500, color: isActive ? '#0d9488' : '#374151' }}>
                           {lang.name}
                         </span>
                         {isActive && (
-                          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center pointer-events-none">
-                            <Check className="w-3.5 h-3.5 text-white" />
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ background: '#0d9488' }}>
+                            <Check className="w-3 h-3 text-white" />
                           </div>
                         )}
                       </button>
@@ -193,82 +179,48 @@ export function SplashScreen() {
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-           CENTER — Logo + Title (vertically centered in remaining space)
-         ═══════════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-        <div className="max-w-md w-full">
-          {/* Logo — entrance animation */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center justify-center mb-8"
-          >
-            <div
-              className="relative"
-              onDoubleClick={handleSecretLogoBypass}
-            >
-              <div className="w-28 h-28 bg-white rounded-3xl shadow-2xl flex items-center justify-center transform rotate-6">
-                <UtensilsCrossed className="w-16 h-16 text-blue-500" />
-              </div>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 15 }}
-                className="absolute -top-2 -right-2 w-9 h-9 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg"
-              >
-                <Sparkles className="w-5 h-5 text-white" />
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Title Block */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl sm:text-5xl text-white mb-3 drop-shadow-lg" style={{ fontWeight: 800 }}>
-              {t('splash.appTitle') || 'Meal Plan'}
-            </h1>
-            <p className="text-white/80 text-base sm:text-lg px-4 leading-relaxed">
-              {t('splash.appSubtitle') || '4 hetes személyre szabott étrend'}
-            </p>
-          </motion.div>
+      {/* Center — logo + brand + tagline */}
+      <motion.div
+        className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Logo mark */}
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+          style={{ background: '#0d9488', boxShadow: '0 4px 20px rgba(13,148,136,0.4)' }}
+          onDoubleClick={handleSecretLogoBypass}
+        >
+          <ForkLeafLogo />
         </div>
-      </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-           BOTTOM — CTA Button (pinned to bottom, matching OnboardingScreen)
-           Same layout: px-6 pb-10 pt-4 max-w-md mx-auto w-full
-         ═══════════════════════════════════════════════════════════ */}
+        {/* Brand name */}
+        <h1 className="text-3xl text-white mb-3" style={{ fontWeight: 800, letterSpacing: '-0.01em' }}>
+          PersonalFit
+        </h1>
+
+        {/* Tagline */}
+        <p className="text-base leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          {t('splash.appSubtitle') || 'Személyre szabott étrend, amit tényleg betartasz.'}
+        </p>
+      </motion.div>
+
+      {/* Bottom — CTA */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={ready ? { opacity: 1, y: 0 } : {}}
         transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full"
       >
-        {/* CTA — uses Button component from ui/button (same as OnboardingScreen) */}
-        <Button
+        <button
           onClick={handleContinue}
-          className="w-full h-14 rounded-2xl bg-white hover:bg-white/95 text-blue-600 border-0 shadow-lg gap-2.5 transition-all active:scale-[0.98]"
-          style={{ fontWeight: 700 }}
+          className="w-full h-14 rounded-2xl text-white font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
+          style={{ background: '#0d9488', boxShadow: '0 4px 20px rgba(13,148,136,0.35)' }}
+          type="button"
         >
-          <span>{selectedLang.greeting}</span>
-          <ArrowRight className="w-5 h-5" />
-        </Button>
-
-        {/* Subtle trust text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={ready ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="text-center text-white/60 text-xs mt-4"
-        >
-          {t('splash.motivational') || 'Az első lépés az egészség felé'}
-        </motion.p>
+          {t('onboarding.start') || 'Kezdjük el'}
+        </button>
       </motion.div>
     </div>
   );
