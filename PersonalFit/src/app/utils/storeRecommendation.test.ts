@@ -7,12 +7,13 @@ import {
   buildDeliveryUrl,
 } from "./storeRecommendation";
 import { ShoppingItem } from "../features/shopping/types";
+import type { StoreName } from "../data/productDatabase";
 import { Product, StoreInfo } from "../data/productDatabase";
 
 function makeProduct(id: string, store: string, price: number): Product {
   return {
     id, name: id, brand: "", category: "test",
-    store: store as any, image: "", unit: "db", defaultQuantity: 1,
+    store: store as StoreName, image: "", unit: "db", defaultQuantity: 1,
     caloriesPer100: 100, price, protein: 10, carbs: 10, fat: 5, tags: [],
   };
 }
@@ -122,7 +123,7 @@ describe("computeBestTwoStoreCombo", () => {
 describe("buildMapsUrl", () => {
   it("returns a Google Maps URL with store coordinates", () => {
     const url = buildMapsUrl(kauflandStore);
-    expect(url).toContain("maps.google.com");
+    expect(url).toContain("www.google.com/maps");
     expect(url).toContain("46.545");
   });
 });

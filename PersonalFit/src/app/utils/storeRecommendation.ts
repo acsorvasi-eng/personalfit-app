@@ -152,7 +152,7 @@ export function computeBestTwoStoreCombo(
 
 /** Google Maps routing URL from Târgu Mureș center to a store. */
 export function buildMapsUrl(store: StoreInfo): string {
-  return `https://maps.google.com/maps/dir/46.5450,24.5620/${store.coordinates.lat},${store.coordinates.lng}`;
+  return `https://www.google.com/maps/dir/46.5450,24.5620/${store.coordinates.lat},${store.coordinates.lng}`;
 }
 
 /** External delivery URL for a store, or null if no delivery. */
