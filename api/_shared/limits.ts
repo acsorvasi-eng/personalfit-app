@@ -7,7 +7,7 @@ export const FREE_MONTHLY_LIMIT = 13;
 // Add the developer/admin email(s) here. Email is read from Firestore server-side,
 // so client-side spoofing is not possible.
 export const ADMIN_EMAILS: string[] = [
-  'attila.csorvasi@gmail.com',  // ← replace with actual admin email if different
+  'acsorvasi@gmail.com',
 ];
 
 /** Returns current month as "YYYY-MM" string (UTC). */
