@@ -245,14 +245,7 @@ export function PipelineDiagnostics() {
   }, [isVisible, isExpanded, runDiagnostics]);
 
   if (!isVisible) {
-    // Invisible activation zone — DEV only so it doesn't block production UI
-    if (!import.meta.env.DEV) return null;
-    return (
-      <div
-        className="fixed top-0 right-0 w-12 h-12 z-[9999]"
-        onClick={handleCornerTap}
-      />
-    );
+    return null;
   }
 
   const passCount = checks.filter(c => c.status === 'pass').length;
