@@ -911,11 +911,12 @@ export function DSMNotification({
 // --- DSMSubPageHeader ---
 interface DSMSubPageHeaderProps {
   title: string;
+  subtitle?: string;
   onBack?: () => void;
   rightActions?: React.ReactNode;
 }
 
-export function DSMSubPageHeader({ title, onBack, rightActions }: DSMSubPageHeaderProps) {
+export function DSMSubPageHeader({ title, subtitle, onBack, rightActions }: DSMSubPageHeaderProps) {
   return (
     <header className="sticky top-0 z-40 w-full bg-background border-b border-border">
       <div className="h-14 flex items-center gap-3 px-4">
@@ -927,7 +928,10 @@ export function DSMSubPageHeader({ title, onBack, rightActions }: DSMSubPageHead
             <ChevronLeft size={20} />
           </button>
         )}
-        <h2 className="flex-1 text-h2 font-heading font-semibold text-gray-900 truncate">{title}</h2>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-h2 font-heading font-semibold text-gray-900 truncate">{title}</h2>
+          {subtitle && <p className="text-xs text-gray-500 truncate">{subtitle}</p>}
+        </div>
         {rightActions && <div className="flex items-center gap-2">{rightActions}</div>}
       </div>
     </header>

@@ -1221,6 +1221,7 @@ function ProfileGoalsTab({
 /** Theme toggle card */
 function ThemeToggleCard() {
   const { t } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
     <DSMCard>

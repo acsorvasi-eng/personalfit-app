@@ -1556,7 +1556,7 @@ export function UnifiedMenu() {
                   return (
                     <motion.div key={slot.type}>
                       <ConsumedMealCompact title={slot.title} icon={slot.icon} time={slot.time} meal={slot.selected} />
-                      {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type]).map(meal => (
+                      {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type as keyof typeof loggedSlotMap]).map(meal => (
                         <LoggedMealAsCard key={meal.id} meal={meal} onRemove={() => removeLoggedMeal(meal.id)} />
                       ))}
                     </motion.div>
@@ -1591,7 +1591,7 @@ export function UnifiedMenu() {
                       />
                       {/* Water: shown ONLY as floating during meal time; never on dinner card to avoid duplicate */}
                     </div>
-                    {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type]).map(meal => (
+                    {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type as keyof typeof loggedSlotMap]).map(meal => (
                       <LoggedMealAsCard key={meal.id} meal={meal} onRemove={() => removeLoggedMeal(meal.id)} />
                     ))}
                   </motion.div>
