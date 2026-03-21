@@ -62,6 +62,8 @@ const en: LocalePartial = {
   'menu.nextMeal': 'Next meal',
   'menu.longPressHint': 'Long press: meal settings',
   'menu.percentRemaining': '{n}% remaining',
+  'menu.remaining': 'Remaining kcal',
+  'profile.tabSettings': 'Settings',
 
   'card.toBedtime': 'Until bedtime',
   'card.goodMorning': 'Good morning!',

@@ -65,6 +65,8 @@ const hu = {
   'menu.nextMeal': 'Következő étkezés',
   'menu.longPressHint': 'Hosszan nyomva: étkezési beállítások',
   'menu.percentRemaining': '{n}% hátra',
+  'menu.remaining': 'Maradék kcal',
+  'profile.tabSettings': 'Beállítások',
 
   'card.toBedtime': 'Lefekvésig',
   'card.goodMorning': 'Jó reggelt!',

@@ -62,6 +62,8 @@ const ro: LocalePartial = {
   'menu.nextMeal': 'Masa următoare',
   'menu.longPressHint': 'Apăsare lungă: setări mese',
   'menu.percentRemaining': '{n}% rămas',
+  'menu.remaining': 'Calorii rămase',
+  'profile.tabSettings': 'Setări',
 
   'card.toBedtime': 'Până la culcare',
   'card.goodMorning': 'Bună dimineața!',
