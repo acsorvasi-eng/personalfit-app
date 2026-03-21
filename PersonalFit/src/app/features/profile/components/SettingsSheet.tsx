@@ -308,22 +308,22 @@ export default function SettingsSheet(props: SettingsSheetProps) {
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'spring', stiffness: 380, damping: 38 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
           style={{
             position: 'fixed', inset: 0, zIndex: 200,
             background: '#f9fafb', overflowY: 'auto', overflowX: 'hidden',
           }}
         >
-          {/* X close button */}
+          {/* X close button — sits inside the status bar safe area */}
           <button
             type="button"
             onClick={onClose}
             style={{
               position: 'fixed',
-              top: 'calc(48px + 0.75rem)',
+              top: 'calc(env(safe-area-inset-top, 44px) + 0.5rem)',
               right: '1rem',
               width: '2rem', height: '2rem',
               borderRadius: '50%',
@@ -337,7 +337,7 @@ export default function SettingsSheet(props: SettingsSheetProps) {
             <X size={18} color="#374151" />
           </button>
 
-          <div style={{ paddingTop: 'calc(48px + 3.5rem)', paddingBottom: '2rem' }}>
+          <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 44px) + 3rem)', paddingBottom: '2rem' }}>
 
         {/* Section 1: My Plan */}
         <SettingsCard sectionTitle={t('profile.sectionPlan')}>
