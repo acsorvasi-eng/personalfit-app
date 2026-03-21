@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Eye, EyeOff, ChevronDown, X } from "lucide-react";
 import { SUPPORTED_LANGUAGES, LANGUAGE_META } from "../../../../i18n";
-import { DSMBottomSheet } from "../../../components/dsm/ux-patterns";
+import { DSMBottomSheet } from "../../../components/dsm/ux-patterns"; // used for nested SleepSetup sheet
 import { SleepSetup } from "../../sleep/components/SleepSetup";
 import { SleepService } from "../../../backend/services/SleepService";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -305,8 +305,39 @@ export default function SettingsSheet(props: SettingsSheetProps) {
   };
 
   return (
-    <DSMBottomSheet open={open} onClose={onClose} title={t('profile.tabSettings')}>
-      <div style={{ background: '#f9fafb', minHeight: '100%', paddingBottom: '1rem' }}>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '100%' }}
+          transition={{ type: 'spring', stiffness: 380, damping: 38 }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: '#f9fafb', overflowY: 'auto', overflowX: 'hidden',
+          }}
+        >
+          {/* X close button */}
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              position: 'fixed',
+              top: 'calc(48px + 0.75rem)',
+              right: '1rem',
+              width: '2rem', height: '2rem',
+              borderRadius: '50%',
+              background: 'rgba(0,0,0,0.08)',
+              border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', zIndex: 201,
+            }}
+            aria-label="Close"
+          >
+            <X size={18} color="#374151" />
+          </button>
+
+          <div style={{ paddingTop: 'calc(48px + 3.5rem)', paddingBottom: '2rem' }}>
 
         {/* Section 1: My Plan */}
         <SettingsCard sectionTitle={t('profile.sectionPlan')}>
@@ -521,7 +552,9 @@ export default function SettingsSheet(props: SettingsSheetProps) {
           )}
         </AnimatePresence>
 
-      </div>
-    </DSMBottomSheet>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
