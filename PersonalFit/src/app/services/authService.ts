@@ -129,10 +129,15 @@ export async function registerWithEmail(
       await updateProfile(fbUser, { displayName });
     }
 
-    // Send verification email from Firebase so the user gets
-    // a real email in their inbox confirming the registration.
+    // Send verification email — 5s timeout so a slow Firebase email
+    // service never blocks the registration flow.
     try {
-      await sendEmailVerification(fbUser);
+      await Promise.race([
+        sendEmailVerification(fbUser),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error('verification-timeout')), 5000)
+        ),
+      ]);
     } catch (verifyErr) {
       console.warn('[Auth] Failed to send verification email:', verifyErr);
     }
