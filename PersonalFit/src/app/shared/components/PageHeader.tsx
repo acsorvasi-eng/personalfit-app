@@ -1,6 +1,7 @@
 /**
  * PageHeader — Universal header for every page (Design System Rule 1).
- * Full width, gradient, sticky, 48px top padding, optional X close (top right), stats, action.
+ * Full width, gradient, sticky, safe-area-aware top padding, optional X close (top right), stats, action.
+ * Top padding = env(safe-area-inset-top) + 0.5rem — fits perfectly under iOS & Android status bars.
  * Navigation rule: subpages use onClose only (X button); never use back arrows (←).
  */
 
@@ -9,7 +10,7 @@ import { X } from "lucide-react";
 
 export interface PageHeaderStatItem {
   label: string;
-  value: string | number;
+  value: ReactNode;
   suffix?: string;
   onClick?: () => void;
   isAction?: boolean;
@@ -52,7 +53,7 @@ export function PageHeader({
         zIndex: 50,
         background: "linear-gradient(135deg, #0f766e 0%, #0d9488 60%, #14b8a6 100%)",
         color: "white",
-        paddingTop: "48px",
+        paddingTop: "calc(env(safe-area-inset-top, 20px) + 0.5rem)",
         paddingBottom: "1.25rem",
         paddingLeft: "1rem",
         paddingRight: "1rem",
@@ -64,7 +65,7 @@ export function PageHeader({
           onClick={onClose}
           style={{
             position: "absolute",
-            top: "48px",
+            top: "calc(env(safe-area-inset-top, 20px) + 0.5rem)",
             right: "1rem",
             width: "2rem",
             height: "2rem",
@@ -84,7 +85,7 @@ export function PageHeader({
         </button>
       )}
       {rightElement != null && (
-        <div style={{ position: "absolute", top: "48px", right: onClose ? "3.5rem" : "1rem" }}>
+        <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 20px) + 0.5rem)", right: onClose ? "3.5rem" : "1rem" }}>
           {rightElement}
         </div>
       )}
