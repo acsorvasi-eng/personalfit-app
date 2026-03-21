@@ -42,7 +42,7 @@ import { usePlanFoods, type PlanFood } from "../../../hooks/usePlanData";
 import { useAppData } from "../../../hooks/useAppData";
 import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
-import { useLanguage, type LanguageCode } from "../../../contexts/LanguageContext";
+import { useLanguage, LOCALE_MAP, type LanguageCode } from "../../../contexts/LanguageContext";
 import { foodDatabase, type Food } from "../../../data/mealData";
 import { useFavoriteFoods } from "../../../hooks/useFavoriteFoods";
 import {
@@ -683,7 +683,7 @@ export function Foods() {
                 console.log("[AddFood][Voice] Initializing SpeechRecognition");
                 const rec = new SR();
                 recognitionRef.current = rec;
-                rec.lang = "hu-HU";
+                rec.lang = LOCALE_MAP[language] ?? "hu-HU";
                 rec.continuous = true;
                 rec.interimResults = true;
                 rec.onresult = (event: any) => {
@@ -705,7 +705,7 @@ export function Foods() {
                       const phrase = res[0].transcript || "";
                       console.log("[AddFood][Voice] Final result phrase:", phrase);
                       phrase
-                        .split(/[,;\n\s]+/)
+                        .split(/[,;\n]+/)
                         .map((t: string) => t.trim())
                         .filter(Boolean)
                         .forEach((token: string) => {
@@ -735,7 +735,7 @@ export function Foods() {
               className={`flex items-center justify-center w-16 h-16 rounded-full border-4 ${
                 isListening
                   ? "border-red-400 bg-red-500/90 animate-pulse"
-                  : "border-blue-300 bg-blue-500/90"
+                  : "border-teal-300 bg-[#0d9488]"
               } shadow-lg text-white`}
             >
               <Mic className="w-7 h-7" />
@@ -781,7 +781,7 @@ export function Foods() {
                     )}
                   </div>
                   {isPending && !chip.lookupFailed && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse flex-shrink-0" />
                   )}
                   {isPending && chip.lookupFailed && (
                     <span className="text-amber-500 text-xs flex-shrink-0" title="Nem sikerült betölteni">⚠</span>
@@ -824,7 +824,7 @@ export function Foods() {
           <div className="space-y-2 mt-3">
             {lookupLoading && (
               <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="w-3 h-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin flex-shrink-0" />
+                <span className="w-3 h-3 rounded-full border-2 border-teal-500 border-t-transparent animate-spin flex-shrink-0" />
                 Azonosítás folyamatban...
               </div>
             )}
@@ -835,7 +835,7 @@ export function Foods() {
                   <button
                     type="button"
                     onClick={retryLookup}
-                    className="text-xs text-indigo-600 font-semibold underline underline-offset-2 whitespace-nowrap"
+                    className="text-xs text-teal-700 font-semibold underline underline-offset-2 whitespace-nowrap"
                   >
                     Újra
                   </button>
