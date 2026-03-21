@@ -10,6 +10,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { DSMSwipeAction, DSMCoachMark } from "../../../components/dsm/ux-patterns";
+import { PageHeader } from "../../../components/PageHeader";
 import {
   Product,
   productDatabase,
@@ -293,20 +294,31 @@ export function ShoppingList() {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-2 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-extrabold text-gray-800">Bevásárlólista</h1>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {totalItems > 0
-              ? `${totalItems} termék · Târgu Mureș`
-              : "Üres lista · adj hozzá termékeket"}
-          </p>
-        </div>
-        {totalItems > 0 && (
-          <div className="text-xs font-bold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
-            {totalItems} db
-          </div>
-        )}
+      <div className="flex-shrink-0">
+        <PageHeader
+          title={t('nav.shopping') || 'Bevásárlólista'}
+          subtitle={
+            totalItems === 0
+              ? t('shopping.emptyHint') || 'Adj hozzá termékeket az étrendedből'
+              : `${totalItems - checkedCount} termék vár · ${checkedCount} kész`
+          }
+          stats={totalItems > 0 ? [
+            {
+              label: t('shopping.total') || 'Összes',
+              value: totalItems,
+              suffix: 'db',
+            },
+            {
+              label: t('shopping.done') || 'Kész',
+              value: `${checkedCount}/${totalItems}`,
+            },
+            {
+              label: t('shopping.price') || 'Becsült ár',
+              value: `~${Math.round(totalPrice)}`,
+              suffix: 'lei',
+            },
+          ] : []}
+        />
       </div>
 
       {/* Scrollable body */}

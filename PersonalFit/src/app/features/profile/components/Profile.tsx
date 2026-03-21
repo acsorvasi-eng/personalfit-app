@@ -596,16 +596,34 @@ export function Profile() {
       {/* HEADER */}
       <PageHeader
         title={t('profile.title') || 'Profilom'}
-        rightElement={
+        subtitle={profile.name ? `${t('common.hello') || 'Üdv'}, ${profile.name}!` : undefined}
+        action={
           <button
             onClick={() => setSettingsOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
-            style={{ background: 'rgba(255,255,255,0.2)' }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white transition-colors"
+            style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.25)' }}
             aria-label={t('profile.tabSettings')}
           >
-            <Settings className="w-5 h-5 text-white" />
+            <Settings className="w-4 h-4" />
           </button>
         }
+        stats={[
+          {
+            label: t('profile.weight') || 'Súly',
+            value: profile.weight > 0 ? profile.weight : '–',
+            suffix: profile.weight > 0 ? 'kg' : undefined,
+          },
+          {
+            label: t('menu.today') || 'Ma evett',
+            value: consumed,
+            suffix: 'kcal',
+          },
+          {
+            label: t('profile.calorieGoal') || 'Cél',
+            value: targetCalories,
+            suffix: 'kcal',
+          },
+        ]}
       />
 
       {/* SCROLLABLE CONTENT */}
