@@ -235,14 +235,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * based on what steps the user has completed.
    * Returning users (who have completed the full flow before)
    * skip the splash screen automatically.
+   *
+   * IMPORTANT: For authenticated users, we never return /splash or /onboarding.
+   * Those are pre-auth screens guarded by OnboardingGuard which redirects
+   * authenticated users back to /, creating an infinite replaceState loop.
    */
   const getNextRoute = useCallback((): string => {
-    // Splash/onboarding run once before any auth — keep them first
-    if (!hasSeenSplash) return '/splash';
-    if (!onboardingCompleted) return '/onboarding';
-    // Auth is always required — a logged-out user must re-authenticate
-    // even if they previously completed the full flow
-    if (!user) return '/login';
+    // Unauthenticated flow: splash → onboarding → login
+    if (!user) {
+      if (!hasSeenSplash) return '/splash';
+      if (!onboardingCompleted) return '/onboarding';
+      return '/login';
+    }
     // Authenticated: send to home if setup is done, else wizard
     if (hasCompletedFullFlow && hasPlanSetup) return '/';
     if (!termsAccepted) return '/terms';

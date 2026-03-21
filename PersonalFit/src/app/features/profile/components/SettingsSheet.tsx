@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import { SUPPORTED_LANGUAGES, LANGUAGE_META } from "../../../../i18n";
 import { DSMBottomSheet } from "../../../components/dsm/ux-patterns";
 import { SleepSetup } from "../../sleep/components/SleepSetup";
 import { SleepService } from "../../../backend/services/SleepService";
@@ -258,9 +259,10 @@ export default function SettingsSheet(props: SettingsSheetProps) {
     onLogout,
   } = props;
 
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const [langOpen, setLangOpen] = useState(false);
   const { user, subscriptionActive } = useAuth();
   const [trial, setTrial] = useState({ daysUsed: 0, daysRemaining: TRIAL_DAYS, isExpired: false, startDate: '' });
   useEffect(() => { getTrialInfo().then(setTrial); }, []);
@@ -380,6 +382,65 @@ export default function SettingsSheet(props: SettingsSheetProps) {
               </button>
             }
           />
+        </SettingsCard>
+
+        {/* Section 5b: Language */}
+        <SettingsCard sectionTitle={t('profile.sectionLanguage') || 'Nyelv'}>
+          <div
+            role="button"
+            onClick={() => setLangOpen(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '1rem', cursor: 'pointer', background: 'white',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: '1.25rem' }}>{LANGUAGE_META[language]?.flag ?? '🌐'}</span>
+              <span style={{ fontSize: '1rem', fontWeight: 500, color: '#111827' }}>
+                {LANGUAGE_META[language]?.name ?? language.toUpperCase()}
+              </span>
+            </div>
+            <ChevronDown
+              style={{ width: 18, height: 18, color: '#9ca3af', transition: 'transform 0.2s', transform: langOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            />
+          </div>
+          <AnimatePresence initial={false}>
+            {langOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: 'hidden' }}
+              >
+                {SUPPORTED_LANGUAGES.map((code) => {
+                  const meta = LANGUAGE_META[code];
+                  const isActive = language === code;
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => { setLanguage(code as LanguageCode); setLangOpen(false); }}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '0.75rem 1rem', borderTop: '1px solid #f3f4f6',
+                        background: isActive ? '#f0fdfa' : 'transparent',
+                        cursor: 'pointer', border: 'none',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.25rem' }}>{meta?.flag ?? '🌐'}</span>
+                      <span style={{ flex: 1, textAlign: 'left', fontSize: '0.9rem', fontWeight: isActive ? 700 : 400, color: isActive ? '#0d9488' : '#374151' }}>
+                        {meta?.name ?? code.toUpperCase()}
+                      </span>
+                      {isActive && (
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#0d9488', display: 'inline-block' }} />
+                      )}
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </SettingsCard>
 
         {/* Section 6: Other */}

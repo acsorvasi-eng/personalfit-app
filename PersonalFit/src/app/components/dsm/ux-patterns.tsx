@@ -77,9 +77,9 @@ export function DSMBottomSheet({
               </div>
             )}
 
-            {/* Header */}
+            {/* Header — sticky so content scrolls beneath it and X button is never obscured */}
             {(title || subtitle) && (
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white">
                 <div className="flex items-center gap-3 min-w-0">
                   {Icon && (
                     <div className="w-9 h-9 bg-[var(--primary-light)] rounded-xl flex items-center justify-center flex-shrink-0">
