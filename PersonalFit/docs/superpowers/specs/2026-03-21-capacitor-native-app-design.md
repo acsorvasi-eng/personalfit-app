@@ -39,7 +39,9 @@ android/app/src/main/assets/public/  ← Android WebView content
 
 Vercel deployment and native app builds share **the same source code**. The only difference is:
 - Vercel: `vite build` → deploys to CDN
-- Native: `vite build && npx cap sync` → bundled into app binary
+- Native: `vite build --mode native && npx cap sync` → bundled into app binary
+
+Note: `vite.config.ts` has a dev server `proxy` block (routes `/api/*` → `localhost:3001`). This only applies during `vite dev` — it has no effect on `vite build` output and does not conflict with the `VITE_API_BASE` native strategy.
 
 ---
 
@@ -48,7 +50,7 @@ Vercel deployment and native app builds share **the same source code**. The only
 ### Problem
 The native WebView serves files from `capacitor://localhost`, not from `vercel.app`. Relative paths like `/api/lookup-foods` resolve to `capacitor://localhost/api/lookup-foods` — which 404s.
 
-### Solution: `VITE_API_BASE` env var
+### Solution: `VITE_API_BASE` via Vite build mode
 
 New file: `src/lib/api.ts`
 ```ts
@@ -59,12 +61,11 @@ New file: `src/lib/api.ts`
 export const apiBase = (import.meta.env.VITE_API_BASE as string) ?? '';
 ```
 
-Environment files:
-- `.env` (web/Vercel): no `VITE_API_BASE` → defaults to `''`
-- `.env.native` (native builds): `VITE_API_BASE=https://personalfit-app.vercel.app`
+Vite mode files (Vite loads `.env.[mode]` when `vite build --mode [mode]`):
+- `.env` (default web build): no `VITE_API_BASE` → defaults to `''`
+- `.env.native` (native build, `vite build --mode native`): `VITE_API_BASE=https://personalfit-app.vercel.app`
 
-Native build command: `VITE_ENV_FILE=.env.native vite build && npx cap sync`
-Or simpler: set in `package.json` script via `--mode native` + `vite.config.ts` mode support.
+**Important:** `.env.native` is loaded by Vite only when `--mode native` is passed. Do NOT rely on it being auto-loaded — it must be referenced in the build script explicitly.
 
 Usage in code:
 ```ts
@@ -72,7 +73,34 @@ import { apiBase } from '@/lib/api';
 fetch(`${apiBase}/api/lookup-foods`, { ... })
 ```
 
-Currently only `Foods.tsx` makes API calls — this is the only file that needs updating.
+**10 files make `/api/` calls — all need `apiBase` applied:**
+
+```
+src/app/features/nutrition/components/Foods.tsx              → /api/lookup-foods
+src/app/features/nutrition/components/GenerateMealPlanSheet.tsx → /api/generate-meal-plan, /api/usage
+src/app/features/menu/components/MealNamer.tsx               → /api/meal-name
+src/app/backend/services/FoodCatalogService.ts               → /api/split-food-name
+src/app/backend/services/LLMParserService.ts                 → /api/parse-document
+src/app/hooks/useDataUpload.ts                               → /api/parse-document
+src/app/hooks/useBodyCompositionUpload.ts                    → /api/parse-gmon
+src/app/components/body-vision/AIProgressImage.tsx           → /api/generate-body-visual
+src/app/components/onboarding/ProfileSetupWizard.tsx         → /api/generate-meal-plan
+src/app/components/onboarding/ProfileSetupWizardLegacy.tsx   → /api/generate-meal-plan
+```
+
+**Pattern replacement** (same in every file):
+```ts
+// Before:
+const response = await fetch("/api/lookup-foods", {
+const response = await fetch(`/api/usage?userId=${...}`,
+
+// After:
+import { apiBase } from '@/lib/api';
+const response = await fetch(`${apiBase}/api/lookup-foods`, {
+const response = await fetch(`${apiBase}/api/usage?userId=${...}`,
+```
+
+Before implementing, run `grep -r '"\/api\/' src/ --include="*.ts" --include="*.tsx"` and `grep -r '`/api/' src/ --include="*.ts" --include="*.tsx"` to catch any new call sites added since this spec was written.
 
 ---
 
@@ -88,11 +116,16 @@ const config: CapacitorConfig = {
   appName: 'PersonalFit',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',  // avoid mixed-content issues
+    // REQUIRED for IndexedDB and secure-context APIs on Android.
+    // Without this, Android WebView uses http://localhost which blocks
+    // storage APIs in newer Android versions.
+    androidScheme: 'https',
   },
   plugins: {
     StatusBar: {
-      style: 'Dark',                // white icons on status bar
+      // 'Light' = white icons/text on dark background (teal).
+      // 'Dark' = black icons — wrong for our teal header.
+      style: 'Light',
       backgroundColor: '#0f766e',  // matches PageHeader gradient start
     },
     SplashScreen: {
@@ -103,7 +136,9 @@ const config: CapacitorConfig = {
       showSpinner: false,
     },
     Keyboard: {
-      resize: 'body',   // pushes content up when keyboard appears
+      // 'native' is safer than 'body' for viewport-fit:cover layouts.
+      // 'body' can cause jank with safe-area-inset handling.
+      resize: 'native',
       style: 'dark',
     },
   },
@@ -127,7 +162,8 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
 if (Capacitor.isNativePlatform()) {
-  StatusBar.setStyle({ style: Style.Dark });
+  // Style.Light = white icons on dark/teal background
+  StatusBar.setStyle({ style: Style.Light });
   StatusBar.setBackgroundColor({ color: '#0f766e' });
 }
 ```
@@ -172,12 +208,51 @@ export async function hapticFeedback(style: 'light' | 'medium' | 'heavy' = 'ligh
 }
 ```
 
-Existing `navigator.vibrate()` calls are replaced with `hapticFeedback()`.
+### Haptics Migration Scope
+
+All `navigator.vibrate()` call sites must be replaced with `hapticFeedback()`. There are **21 files** containing vibrate calls:
+
+```
+src/app/features/nutrition/components/Foods.tsx
+src/app/features/profile/components/SettingsSheet.tsx
+src/app/features/profile/components/Profile.tsx
+src/app/features/shopping/components/ShoppingList.tsx
+src/app/components/SplashScreen.tsx
+src/app/features/menu/components/UnifiedMenu.tsx
+src/app/components/dsm/index.tsx
+src/app/components/DataUploadSheet.tsx
+src/app/components/BodyCompositionUploadSheet.tsx
+src/app/features/workout/components/WorkoutCalendar.tsx
+src/app/features/workout/components/Workout.tsx
+src/app/components/ProfileHeader.tsx
+src/app/components/ManualMealInput.tsx
+src/app/features/menu/components/MealIntervalEditor.tsx
+src/app/features/menu/components/MealDetail.tsx
+src/app/components/onboarding/PlanSetupScreen.tsx
+src/app/components/dsm/QuickLogSheet.tsx
+src/app/hooks/useStagingManager.ts
+src/app/hooks/useBodyCompositionUpload.ts
+src/app/components/body-vision/BodyVisionThumbnailCard.tsx
+src/app/components/FuturisticDashboard.tsx
+```
+
+**Pattern replacement** (same in every file):
+```ts
+// Before:
+navigator.vibrate(10);           // or any duration
+navigator.vibrate?.([100]);      // with optional chaining
+
+// After:
+import { hapticFeedback } from '@/lib/haptics';
+hapticFeedback('light');         // or 'medium'/'heavy' for stronger feedback
+```
+
+All existing call sites use short single-pulse vibration (feedback-on-tap). Replace all with `hapticFeedback('light')` — no need to differentiate by duration.
 
 ### 5. `@capacitor/keyboard`
 Prevents input fields from being hidden behind the soft keyboard.
 
-Configured via `capacitor.config.ts` (`resize: 'body'`). No extra code needed.
+Configured via `capacitor.config.ts` (`resize: 'native'`). No extra code needed.
 
 ---
 
@@ -185,20 +260,33 @@ Configured via `capacitor.config.ts` (`resize: 'body'`). No extra code needed.
 
 New scripts in `package.json`:
 ```json
-"cap:sync":     "npx cap sync",
-"cap:build":    "vite build && npx cap sync",
-"cap:ios":      "npm run cap:build && npx cap open ios",
-"cap:android":  "npm run cap:build && npx cap open android",
-"cap:build:native": "cross-env VITE_API_BASE=https://personalfit-app.vercel.app vite build && npx cap sync"
+"cap:build":         "vite build && npx cap sync",
+"cap:build:native":  "vite build --mode native && npx cap sync",
+"cap:ios":           "npm run cap:build:native && npx cap open ios",
+"cap:android":       "npm run cap:build:native && npx cap open android"
 ```
 
-`cross-env` needed for Windows compatibility (already common in Node projects).
+- `cap:build` — web-compatible build + sync (no API base override, uses relative paths)
+- `cap:build:native` — native build with `--mode native` → loads `.env.native` → sets `VITE_API_BASE`
+- `cap:ios` / `cap:android` — full native build + opens IDE
+
+> **Warning:** Do not use `cap:build` for deploying to a device — it produces a build without `VITE_API_BASE`, causing all `/api/` calls to 404 silently in the native WebView. Always use `cap:build:native` (or the `cap:ios` / `cap:android` scripts) when building for a physical device or simulator.
 
 ---
 
 ## iOS Platform Setup
 
 ### `Info.plist` additions (inside `ios/App/App/Info.plist`)
+
+Note: `NSMicrophoneUsageDescription` is required because the app uses the Web Speech API
+(`SpeechRecognition`) in three components for voice-based food entry:
+- `Foods.tsx` — voice food search
+- `LogMeal.tsx` — voice meal logging
+- `FuturisticDashboard.tsx` — voice commands
+
+Apple will reject the app if a mic permission string is present without a demonstrable use
+case — all three provide justified, user-initiated voice input flows.
+
 ```xml
 <key>NSMicrophoneUsageDescription</key>
 <string>Hangos ételbevitelhez szükséges a mikrofon hozzáférés.</string>
@@ -252,14 +340,23 @@ The `ios/` and `android/` source directories **are** committed (native project s
 
 | File | Type | Change |
 |------|------|--------|
-| `package.json` | modified | +5 Capacitor packages, +5 scripts, +`cross-env` |
+| `package.json` | modified | +5 Capacitor packages (deps) + @capacitor/cli (devDep) + 4 scripts |
 | `capacitor.config.ts` | **new** | Full Capacitor config |
-| `vite.config.ts` | modified | Explicit `build.outDir: 'dist'` |
 | `src/lib/api.ts` | **new** | `apiBase` export |
 | `src/lib/haptics.ts` | **new** | Haptic feedback wrapper |
-| `src/main.tsx` | modified | Capacitor plugin init (StatusBar, App, Keyboard) |
-| `src/app/features/nutrition/components/Foods.tsx` | modified | Use `apiBase` |
-| `.env.native` | **new** | `VITE_API_BASE=https://personalfit-app.vercel.app` |
+| `src/main.tsx` | modified | Capacitor plugin init (StatusBar, App) |
+| `src/app/features/nutrition/components/Foods.tsx` | modified | Use `apiBase` for `/api/lookup-foods` |
+| `src/app/features/nutrition/components/GenerateMealPlanSheet.tsx` | modified | Use `apiBase` |
+| `src/app/features/menu/components/MealNamer.tsx` | modified | Use `apiBase` |
+| `src/app/backend/services/FoodCatalogService.ts` | modified | Use `apiBase` |
+| `src/app/backend/services/LLMParserService.ts` | modified | Use `apiBase` |
+| `src/app/hooks/useDataUpload.ts` | modified | Use `apiBase` |
+| `src/app/hooks/useBodyCompositionUpload.ts` | modified | Use `apiBase` |
+| `src/app/components/body-vision/AIProgressImage.tsx` | modified | Use `apiBase` |
+| `src/app/components/onboarding/ProfileSetupWizard.tsx` | modified | Use `apiBase` |
+| `src/app/components/onboarding/ProfileSetupWizardLegacy.tsx` | modified | Use `apiBase` |
+| *(21 vibrate files — see Haptics Migration Scope)* | modified | Replace `navigator.vibrate()` with `hapticFeedback()` |
+| `.env.native` | **new** | `VITE_API_BASE=https://personalfit-app.vercel.app` (loaded via `vite build --mode native`) |
 | `.gitignore` | modified | Native build artifact exclusions |
 | `ios/` | **new** | Generated by `npx cap add ios` |
 | `android/` | **new** | Generated by `npx cap add android` |
@@ -288,8 +385,7 @@ The `ios/` and `android/` source directories **are** committed (native project s
 "@capacitor/haptics": "^7.0.0",
 "@capacitor/keyboard": "^7.0.0",
 "@capacitor/status-bar": "^7.0.0",
-"@capacitor/splash-screen": "^7.0.0",
-"cross-env": "^7.0.3"
+"@capacitor/splash-screen": "^7.0.0"
 ```
 ```json
 "devDependencies": {
