@@ -10,6 +10,7 @@ import { Check, X } from 'lucide-react';
 import { useLanguage, LanguageCode } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPPORTED_LANGUAGES, LANGUAGE_META } from '../../i18n';
+import { useThemeColor } from '../hooks/useThemeColor';
 
 const languages = SUPPORTED_LANGUAGES.map((code) => ({
   code,
@@ -36,6 +37,7 @@ function ForkLeafLogo() {
 }
 
 export function SplashScreen() {
+  useThemeColor('#0c1f1e'); // dark teal — matches splash background
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { markSplashSeen } = useAuth();
