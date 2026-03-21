@@ -16,6 +16,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../../../utils/currencyConverter";
 import { DSMCard, DSMSectionTitle, DSMButton } from "../../../components/dsm";
+import { PageHeader } from "../../../components/PageHeader";
 import { DSMBottomSheet } from "../../../components/dsm/ux-patterns";
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 import { getTrialInfo, TRIAL_DAYS } from "../../../components/onboarding/SubscriptionScreen";
@@ -593,16 +594,19 @@ export function Profile() {
       </DSMBottomSheet>
 
       {/* HEADER */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold text-gray-900">{t('profile.title') || 'Profilom'}</h1>
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
-          aria-label={t('profile.tabSettings')}
-        >
-          <Settings className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
+      <PageHeader
+        title={t('profile.title') || 'Profilom'}
+        rightElement={
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
+            style={{ background: 'rgba(255,255,255,0.2)' }}
+            aria-label={t('profile.tabSettings')}
+          >
+            <Settings className="w-5 h-5 text-white" />
+          </button>
+        }
+      />
 
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 space-y-3">
