@@ -943,7 +943,7 @@ export function useDataUpload() {
             throw new Error('Nem sikerült a PDF-et base64 formátumba olvasni (quick mód)');
           }
 
-          const resp = await fetch('/api/parse-document', {
+          const resp = await fetch(`${apiBase}/api/parse-document`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
