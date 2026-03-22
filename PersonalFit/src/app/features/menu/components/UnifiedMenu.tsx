@@ -22,6 +22,13 @@ import { SleepService } from "../../../backend/services/SleepService";
 import { WaterService } from "../../../backend/services/WaterService";
 import { SNACKS, type SnackItem } from "../../../../i18n/snacks";
 import type { LanguageCode } from "../../../contexts/LanguageContext";
+import { ChefMessage } from "../../../components/ChefMessage";
+import {
+  runDaily,
+  recordChefDecision,
+} from "../../../backend/services/ChefService";
+import { getRegionContext } from "../../../backend/services/ChefContextService";
+import type { ChefPendingMessage } from "../../../../lib/chef-types";
 
 interface LoggedMeal {
   id: string;
@@ -333,6 +340,7 @@ export function UnifiedMenu() {
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
   const [generateSheetOpen, setGenerateSheetOpen] = useState(false);
   const [workoutScheduleMap, setWorkoutScheduleMap] = useState<WorkoutScheduleMap>({});
+  const [chefMessage, setChefMessage] = useState<ChefPendingMessage | null>(null);
 
   useEffect(() => {
     loadWorkoutSchedule().then(setWorkoutScheduleMap);
@@ -429,6 +437,42 @@ export function UnifiedMenu() {
     window.addEventListener('aiPanelStateChange', handler);
     return () => window.removeEventListener('aiPanelStateChange', handler);
   }, []);
+
+  // Run Chef daily check on mount (once per calendar day, guarded inside runDaily)
+  useEffect(() => {
+    const runChef = async () => {
+      try {
+        // Collect recent meal names from loaded plan days
+        const recentMealNames: string[] = [];
+        for (const week of (planData ?? [])) {
+          for (const day of (week.days ?? [])) {
+            const allMeals = [...(day.breakfast ?? []), ...(day.lunch ?? []), ...(day.dinner ?? []), ...(day.snack ?? [])];
+            for (const meal of allMeals) {
+              if (meal.name) recentMealNames.push(meal.name);
+            }
+          }
+          if (recentMealNames.length >= 21) break;
+        }
+
+        const profile = await getUserProfile().catch(() => null);
+        const regionCtx = await getRegionContext(language).catch(() => null);
+        const pending = await runDaily({
+          recentMealNames: recentMealNames.slice(0, 21),
+          userName: profile?.name ?? '',
+          language: language ?? 'hu',
+          region: regionCtx?.region ?? null,
+          cultureWeights: regionCtx?.cultureWeights ?? {},
+        });
+
+        if (pending) setChefMessage(pending);
+      } catch {
+        // Chef errors are never user-visible
+      }
+    };
+
+    runChef();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally no deps — run only on mount
 
   const [mealSettings, setMealSettings] = useState<MealSettings | null>(null);
   useEffect(() => {
@@ -1230,6 +1274,26 @@ export function UnifiedMenu() {
             transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="px-3 sm:px-4 lg:px-6 py-3 space-y-3"
           >
+            {/* Chef message — appears at top of menu, dismissible */}
+            {chefMessage && (
+              <ChefMessage
+                pending={chefMessage}
+                onAccept={async () => {
+                  if (chefMessage.proposal) {
+                    await recordChefDecision(chefMessage.proposal.replacement, 'accept').catch(() => {});
+                  }
+                  setChefMessage(null);
+                }}
+                onReject={async () => {
+                  if (chefMessage.proposal) {
+                    await recordChefDecision(chefMessage.proposal.replacement, 'reject').catch(() => {});
+                  }
+                  setChefMessage(null);
+                }}
+                onDismiss={() => setChefMessage(null)}
+              />
+            )}
+
             {/* ── 1. Sports Day Badge — Full-width, blended into background ── */}
             <motion.div
               initial={{ opacity: 0, y: -6 }}
