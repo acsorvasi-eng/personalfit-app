@@ -339,6 +339,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
         nutritionPlan: data.nutritionPlan,
         language,
         userName: user?.name ?? '',
+        userProfile: userProfile ?? undefined,
         onProgress: () => setGeneratingPhase('chef'),
         onDone: () => setGeneratingPhase('plan'),
       });
