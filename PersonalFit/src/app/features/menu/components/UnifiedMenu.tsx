@@ -1265,6 +1265,27 @@ export function UnifiedMenu() {
         aria-live="polite"
         aria-atomic="false"
       >
+        {/* Chef message — persists across day swipes, dismissible */}
+        {chefMessage && (
+          <div className="px-3 sm:px-4 lg:px-6 pt-3">
+            <ChefMessage
+              pending={chefMessage}
+              onAccept={async () => {
+                if (chefMessage.proposal) {
+                  await recordChefDecision(chefMessage.proposal.replacement, 'accept').catch(() => {});
+                }
+                setChefMessage(null);
+              }}
+              onReject={async () => {
+                if (chefMessage.proposal) {
+                  await recordChefDecision(chefMessage.proposal.replacement, 'reject').catch(() => {});
+                }
+                setChefMessage(null);
+              }}
+              onDismiss={() => setChefMessage(null)}
+            />
+          </div>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={dayKey}
@@ -1274,25 +1295,6 @@ export function UnifiedMenu() {
             transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="px-3 sm:px-4 lg:px-6 py-3 space-y-3"
           >
-            {/* Chef message — appears at top of menu, dismissible */}
-            {chefMessage && (
-              <ChefMessage
-                pending={chefMessage}
-                onAccept={async () => {
-                  if (chefMessage.proposal) {
-                    await recordChefDecision(chefMessage.proposal.replacement, 'accept').catch(() => {});
-                  }
-                  setChefMessage(null);
-                }}
-                onReject={async () => {
-                  if (chefMessage.proposal) {
-                    await recordChefDecision(chefMessage.proposal.replacement, 'reject').catch(() => {});
-                  }
-                  setChefMessage(null);
-                }}
-                onDismiss={() => setChefMessage(null)}
-              />
-            )}
 
             {/* ── 1. Sports Day Badge — Full-width, blended into background ── */}
             <motion.div
