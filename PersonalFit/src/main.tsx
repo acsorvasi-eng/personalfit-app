@@ -20,21 +20,19 @@ import { App as CapacitorApp } from "@capacitor/app";
 // This keeps the cleanup logic in TypeScript and avoids wiring any UI.
 (window as any).cleanupCorruptedAIFoods = cleanupCorruptedAIFoods;
 
-// Initialize Capacitor plugins on native platforms
-if (Capacitor.isNativePlatform()) {
-  // Style.Light = white icons on dark/teal background
-  StatusBar.setStyle({ style: Style.Light });
-  StatusBar.setBackgroundColor({ color: "#0f766e" });
-  CapacitorApp.addListener("backButton", ({ canGoBack }) => {
-    if (canGoBack) {
-      window.history.back();
-    } else {
-      CapacitorApp.exitApp();
-    }
-  });
-}
-
 async function initApp() {
+  if (Capacitor.isNativePlatform()) {
+    // Style.Light = white icons on dark/teal background — await so first paint matches config (avoids flicker).
+    await StatusBar.setStyle({ style: Style.Light });
+    await StatusBar.setBackgroundColor({ color: "#0f766e" });
+    CapacitorApp.addListener("backButton", ({ canGoBack }) => {
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        CapacitorApp.exitApp();
+      }
+    });
+  }
   try {
     const db = getDatabase();
     await seedSystemFoods(db);
