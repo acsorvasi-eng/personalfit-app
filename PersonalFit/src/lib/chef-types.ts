@@ -10,8 +10,10 @@ export type ChefMealIngredient = {
   estimated_fat_per_100g: number;
 };
 
+export type ChefMealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
 export type ChefMeal = {
-  meal_type: string;          // 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  meal_type: ChefMealType;
   name: string;               // e.g., "Csirkepaprikás galuskával"
   total_calories: number;
   ingredients: ChefMealIngredient[];
@@ -23,6 +25,8 @@ export type ChefDay = {
   day_label: string;
   is_training_day: boolean;
   meals: ChefMeal[];
+  weekday_index?: number;           // 0=Mon … 6=Sun
+  daily_calorie_target?: number;    // base + burn bonus for this day
 };
 
 export type ChefMealPlan = {
@@ -47,7 +51,7 @@ export type ChefUserProfile = {
 
 export type ChefChange = {
   day: number;
-  meal: string;               // meal_type
+  meal: ChefMealType;
   original: string;           // original dish name
   replacement: string;        // replacement dish name
   reason: string;             // human-readable, in user's language
