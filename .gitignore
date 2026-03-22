@@ -31,3 +31,10 @@ npm-debug.log*
 *.zip
 .vercel
 .env*.local
+
+# Capacitor native build artifacts
+PersonalFit/ios/App/Pods/
+PersonalFit/ios/App/App.xcworkspace/
+PersonalFit/android/.gradle/
+PersonalFit/android/app/build/
+PersonalFit/android/build/
