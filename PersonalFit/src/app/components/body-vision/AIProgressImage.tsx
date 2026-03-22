@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { apiBase } from '@/lib/api';
 
 export interface AIProgressImageProps {
   currentWeight: number;
@@ -35,7 +36,7 @@ export function AIProgressImage({
     setGenerating(true);
     setError(false);
     try {
-      const res = await fetch("/api/generate-body-visual", {
+      const res = await fetch(`${apiBase}/api/generate-body-visual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

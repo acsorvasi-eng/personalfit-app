@@ -4,6 +4,7 @@
  * ====================================================================
  */
 
+import { apiBase } from '@/lib/api';
 import type {
   AIParsedNutritionPlan,
   AIParsedDay,
@@ -94,7 +95,7 @@ async function callClaudeAPI(text: string): Promise<string> {
   const isProduction = import.meta.env.PROD;
 
   if (isProduction) {
-    const response = await fetch('/api/parse-document', {
+    const response = await fetch(`${apiBase}/api/parse-document`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: text.substring(0, 50000) }),

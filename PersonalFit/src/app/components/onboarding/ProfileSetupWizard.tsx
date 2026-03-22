@@ -6,6 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { apiBase } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
@@ -822,7 +823,7 @@ export function ProfileSetupWizard() {
         const timeoutId = setTimeout(() => abortCtrl.abort(), 90_000); // 90s max
         let resp: Response;
         try {
-          resp = await fetch('/api/generate-meal-plan', {
+          resp = await fetch(`${apiBase}/api/generate-meal-plan`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: abortCtrl.signal,

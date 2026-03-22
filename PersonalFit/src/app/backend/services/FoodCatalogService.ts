@@ -15,6 +15,7 @@
 import { getDB, generateId, nowISO, notifyDBChange } from '../db';
 import type { FoodEntity, FoodCategory, FoodSource } from '../models';
 import { isCleanFoodName } from './AIParserService';
+import { apiBase } from '@/lib/api';
 
 // ═══════════════════════════════════════════════════════════════
 // QUERY
@@ -765,7 +766,7 @@ async function splitFoodNameWithLLM(name: string): Promise<SplitResult | null> {
 
   try {
     if (isProduction) {
-      const response = await fetch('/api/split-food-name', {
+      const response = await fetch(`${apiBase}/api/split-food-name`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),

@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { saveUserProfile, getDefaultMealSettings, saveMealSettings } from '../../backend/services/UserProfileService';
+import { apiBase } from '@/lib/api';
 import { SleepService } from '../../backend/services/SleepService';
 import { createFoodsBatch } from '../../backend/services/FoodCatalogService';
 import { setSetting } from '../../backend/services/SettingsService';
@@ -736,7 +737,7 @@ export function ProfileSetupWizardLegacy() {
         const timeoutId = setTimeout(() => abortCtrl.abort(), 90_000); // 90s max
         let resp: Response;
         try {
-          resp = await fetch('/api/generate-meal-plan', {
+          resp = await fetch(`${apiBase}/api/generate-meal-plan`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: abortCtrl.signal,

@@ -31,6 +31,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { apiBase } from '@/lib/api';
 import * as AIParser from '../backend/services/AIParserService';
 import { extractTextFromPDF } from '../backend/services/AIParserService';
 import type { AIParsedDocument, AIParsedUserProfile } from '../backend/services/AIParserService';
@@ -294,7 +295,7 @@ export function useDataUpload() {
 
           if (base64) {
             try {
-              const resp = await fetch('/api/parse-document', {
+              const resp = await fetch(`${apiBase}/api/parse-document`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

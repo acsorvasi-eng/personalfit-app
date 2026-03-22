@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { apiBase } from '@/lib/api';
 import { AnimatePresence, motion } from "framer-motion";
 import { X, MapPin, Sparkles, RefreshCw } from "lucide-react";
 import { useLanguage, type LanguageCode } from "../../../contexts/LanguageContext";
@@ -87,7 +88,7 @@ export function MealNamer({
 
     setLoading(true);
     try {
-      const resp = await fetch("/api/meal-name", {
+      const resp = await fetch(`${apiBase}/api/meal-name`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

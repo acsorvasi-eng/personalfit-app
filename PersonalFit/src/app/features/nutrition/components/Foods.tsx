@@ -25,6 +25,7 @@ declare var webkitSpeechRecognition: any;
 declare var SpeechRecognitionEvent: any;
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { apiBase } from '@/lib/api';
 import {
   Search,
   X,
@@ -216,7 +217,7 @@ export function Foods() {
     repairDoneRef.current = true;
     const names = zeroFoods.map(f => f.name);
     console.log("[AutoRepair] Fixing 0-kcal foods:", names);
-    fetch("/api/lookup-foods", {
+    fetch(`${apiBase}/api/lookup-foods`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ foods: names }),
@@ -277,7 +278,7 @@ export function Foods() {
     const names = pendingSnapshot.map(c => c.raw);
     console.log("[AddFood] Nutrition lookup for:", names);
 
-    fetch("/api/lookup-foods", {
+    fetch(`${apiBase}/api/lookup-foods`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ foods: names }),
