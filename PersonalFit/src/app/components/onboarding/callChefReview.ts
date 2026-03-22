@@ -48,10 +48,9 @@ export async function callChefReview(params: CallChefReviewParams): Promise<Reco
       }),
     });
 
-    onDone?.();
-
     if (!resp.ok) {
       console.warn('[callChefReview] API error', resp.status);
+      onDone?.();
       return nutritionPlan;
     }
 
@@ -74,6 +73,7 @@ export async function callChefReview(params: CallChefReviewParams): Promise<Reco
     }
 
     console.log(`[callChefReview] Applied ${changes.length} improvements`);
+    onDone?.();
     return improvedPlan;
 
   } catch (err) {

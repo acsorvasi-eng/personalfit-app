@@ -253,6 +253,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
     setBurnPerDay({});
     setStep("generating");
     setError(null);
+    setGeneratingPhase('plan');
     try {
       // Load profile for personalization — fall back gracefully on IDB failure
       let userProfile: Record<string, unknown> | undefined;

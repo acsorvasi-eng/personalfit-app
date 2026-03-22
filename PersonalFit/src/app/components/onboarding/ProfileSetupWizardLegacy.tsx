@@ -769,6 +769,7 @@ export function ProfileSetupWizardLegacy() {
               nutritionPlan: data.nutritionPlan,
               language,
               userName: user?.name ?? '',
+              userProfile: userProfilePayload,
             });
 
             const { importFromAIParse, activatePlan } = await import('../../backend/services/NutritionPlanService');
