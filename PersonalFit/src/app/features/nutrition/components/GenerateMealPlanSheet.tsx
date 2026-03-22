@@ -13,6 +13,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { getUserProfile } from "../../../backend/services/UserProfileService";
 import { getSetting } from "../../../backend/services/SettingsService";
 import { getMET } from "../../../utils/metHelpers";
+import { callChefReview } from '../../../components/onboarding/callChefReview';
 
 // ─── Types ────────────────────────────────────────────────────
 type WizardStep = "welcome" | "personal" | "activity" | "calc" | "generating" | "preview" | "saving" | "done";
@@ -173,6 +174,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
   const [limitTotal, setLimitTotal] = useState<number | null>(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [resetsAt, setResetsAt] = useState<string>('');
+  const [generatingPhase, setGeneratingPhase] = useState<'plan' | 'chef'>('plan');
 
   // ── Auto-load saved profile when sheet opens ─────────────────
   useEffect(() => {
@@ -331,7 +333,17 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           : raw);
       }
       const data = responseBody;
-      setGeneratedPlan(data.nutritionPlan);
+
+      // ── Chef review (silent improvement layer) ──────────────────────────────
+      const improvedPlan = await callChefReview({
+        nutritionPlan: data.nutritionPlan,
+        language,
+        userName: user?.name ?? '',
+        onProgress: () => setGeneratingPhase('chef'),
+        onDone: () => setGeneratingPhase('plan'),
+      });
+
+      setGeneratedPlan(improvedPlan);
       setStats(data.stats);
       if (data.remaining !== undefined) setRemaining(data.remaining);
       if (data.limit !== undefined) setLimitTotal(data.limit);
@@ -766,7 +778,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               {/* ══ GENERATING ══ */}
               {step === "generating" && (
                 <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <LoaderAnimation t={t} />
+                  <LoaderAnimation t={generatingPhase === 'chef' ? (key: string) => key === 'generatePlan.loaderText' ? 'A Chef átnézi az étlapodat...' : t(key) : t} />
                 </motion.div>
               )}
 

@@ -35,6 +35,7 @@ import type { CreateFoodInput } from '../../backend/services/FoodCatalogService'
 import { DSMButton } from '../dsm';
 import { canGenerate, incrementUsage } from '../../services/userFirestoreService';
 import { getMET } from '../../utils/metHelpers';
+import { callChefReview } from './callChefReview';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -762,9 +763,17 @@ export function ProfileSetupWizardLegacy() {
           console.log('[ProfileSetup] API response keys:', Object.keys(data));
           if (data.nutritionPlan) {
             console.log('[ProfileSetup] Importing nutrition plan...');
+
+            // Chef review — improves plan for seasonality/locality before saving
+            const improvedPlan = await callChefReview({
+              nutritionPlan: data.nutritionPlan,
+              language,
+              userName: user?.name ?? '',
+            });
+
             const { importFromAIParse, activatePlan } = await import('../../backend/services/NutritionPlanService');
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
-            const plan = await importFromAIParse(data.nutritionPlan, label);
+            const plan = await importFromAIParse(improvedPlan as any, label);
             await activatePlan(plan.id);
             console.log('[ProfileSetup] Nutrition plan imported and activated OK, id:', plan.id);
           } else {

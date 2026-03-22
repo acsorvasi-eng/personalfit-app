@@ -44,6 +44,7 @@ import { canGenerate, incrementUsage } from '../../services/userFirestoreService
 import { getMET } from '../../utils/metHelpers';
 import { FoodStyle, buildIngredientSelection } from '../../utils/buildIngredientSelection';
 import { StepFoodStyle } from './StepFoodStyle';
+import { callChefReview } from './callChefReview';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -848,9 +849,17 @@ export function ProfileSetupWizard() {
           console.log('[ProfileSetup] API response keys:', Object.keys(data));
           if (data.nutritionPlan) {
             console.log('[ProfileSetup] Importing nutrition plan...');
+
+            // Chef review — improves plan for seasonality/locality before saving
+            const improvedPlan = await callChefReview({
+              nutritionPlan: data.nutritionPlan,
+              language,
+              userName: user?.name ?? '',
+            });
+
             const { importFromAIParse, activatePlan } = await import('../../backend/services/NutritionPlanService');
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
-            const plan = await importFromAIParse(data.nutritionPlan, label);
+            const plan = await importFromAIParse(improvedPlan as any, label);
             await activatePlan(plan.id);
             console.log('[ProfileSetup] Nutrition plan imported and activated OK, id:', plan.id);
           } else {
