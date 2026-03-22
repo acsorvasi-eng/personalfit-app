@@ -35,7 +35,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const DB_NAME = 'NutriPlanDB';
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 // ═══════════════════════════════════════════════════════════════
 // STORE SCHEMAS — defines indexes for each object store
@@ -163,6 +163,28 @@ const STORE_SCHEMAS: Record<string, StoreSchema> = {
   settings: {
     keyPath: 'id',
     indexes: [],
+  },
+  /** Chef agent: silent swap and change audit log */
+  chef_log: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'by-date', keyPath: 'date' },
+    ],
+  },
+  /** Chef agent: user accept/reject decisions per dish (prevent re-suggesting) */
+  chef_decisions: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'by-dish', keyPath: 'dish_name' },
+      { name: 'by-date', keyPath: 'date' },
+    ],
+  },
+  /** Chef agent: suggestions queued while offline, processed on next online open */
+  chef_queue: {
+    keyPath: 'id',
+    indexes: [
+      { name: 'by-queued-at', keyPath: 'queued_at' },
+    ],
   },
 };
 
