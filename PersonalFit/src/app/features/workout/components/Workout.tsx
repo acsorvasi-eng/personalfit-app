@@ -1,3 +1,4 @@
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Trophy, Clock, Flame, X, Sparkles, Search, TrendingUp, Activity, Check, Plus, SlidersHorizontal, ArrowLeft, Trash2 } from 'lucide-react';
 import { PageHeader } from '../../../components/PageHeader';
@@ -313,7 +314,7 @@ export function Workout() {
     allData[today] = currentDayData;
     await setSetting('workoutTracking', JSON.stringify(allData));
     setDailyWorkout(currentDayData); setShowDurationModal(false); setSelectedSport(null); setDuration('');
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
   };
 
   const handleDeleteEntry = async (index: number) => {

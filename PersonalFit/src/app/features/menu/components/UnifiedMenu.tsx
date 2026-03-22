@@ -1,3 +1,4 @@
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { usePlanData, type MealOption } from "../../../hooks/usePlanData";
@@ -414,7 +415,7 @@ export function UnifiedMenu() {
     setConsumedSnacks(prev => {
       const updated = { ...prev, [snackId]: !prev[snackId] };
       void setSetting(`snacks_${todayDateStr}`, JSON.stringify(updated));
-      if (navigator.vibrate) navigator.vibrate(updated[snackId] ? [10, 20] : 8);
+      hapticFeedback('light');
       return updated;
     });
   }, [todayDateStr]);
@@ -796,12 +797,12 @@ export function UnifiedMenu() {
         dinner: "17:30 - 18:30",
       };
       setWindowFeedback(t("mealDetail.mealWindowMsg").replace('{time}', windowMap[mealType] || ""));
-      if (navigator.vibrate) navigator.vibrate(30);
+      hapticFeedback('light');
       setTimeout(() => setWindowFeedback(null), 3000);
       return;
     }
     
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
     setCheckedMeals(prev => {
       const newSet = new Set(prev);
       if (newSet.has(mealId)) newSet.delete(mealId); else newSet.add(mealId);
@@ -1721,7 +1722,7 @@ function RestTimerCard({
         clearTimeout(borderTimerRef.current);
         borderTimerRef.current = null;
       }
-      if (navigator.vibrate) navigator.vibrate(30);
+      hapticFeedback('light');
       setConfirmOpen(true);
       setBorderHighlight(false);
     }, 500);
@@ -2006,12 +2007,12 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
 
   const handleCardTap = useCallback(() => {
     setExpanded(prev => !prev);
-    if (navigator.vibrate) navigator.vibrate(10);
+    hapticFeedback('light');
   }, []);
 
   const handleAlternativeSelect = useCallback((mealId: string) => {
     onSelect(mealId);
-    if (navigator.vibrate) navigator.vibrate(10);
+    hapticFeedback('light');
     setSwapOpen(false);
   }, [onSelect]);
 

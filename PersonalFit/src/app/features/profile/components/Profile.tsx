@@ -1,3 +1,4 @@
+import { hapticFeedback } from '@/lib/haptics';
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -177,7 +178,7 @@ export function Profile() {
     });
 
     // Haptic feedback — meal check pattern
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
   }, [weightHistory, weightGoal.startDate, profile]);
 
   // ─── Data Upload ────────────────────────────────────────────────
@@ -910,7 +911,7 @@ export function Profile() {
                   setWeightGoal(newGoal);
                   setSetting('weightGoal', JSON.stringify(newGoal)).catch(() => {});
                   setIsGoalEditing(false);
-                  if (navigator.vibrate) navigator.vibrate(10);
+                  hapticFeedback('light');
                 }}
                 className="mt-2.5 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs transition-colors"
                 style={{ fontWeight: 600 }}
@@ -1306,7 +1307,7 @@ function LanguageSelectorCard() {
               onClick={() => {
                 setLanguage(lang.code);
                 showToast(t('toast.languageChanged'));
-                if (navigator.vibrate) navigator.vibrate(10);
+                hapticFeedback('light');
               }}
               className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all cursor-pointer ${
                 isActive
@@ -1492,7 +1493,7 @@ function InlineEditStat({ label, value, unit, type = "text", prominent, onSave }
     const trimmed = draft.trim();
     if (trimmed && trimmed !== String(value)) {
       onSave(trimmed);
-      if (navigator.vibrate) navigator.vibrate(10);
+      hapticFeedback('light');
     }
     setEditing(false);
   };
@@ -1580,7 +1581,7 @@ function MetabolicAgeTile({ realAge, metabolicAge, onSave }: {
     const trimmed = draft.trim();
     if (trimmed && trimmed !== String(metabolicAge)) {
       onSave(trimmed);
-      if (navigator.vibrate) navigator.vibrate(10);
+      hapticFeedback('light');
     }
     setEditing(false);
   };

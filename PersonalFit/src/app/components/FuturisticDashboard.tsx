@@ -14,6 +14,7 @@
  * ====================================================================
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Mic, MicOff, X, Sparkles } from "lucide-react";
@@ -652,8 +653,8 @@ function suggestFood(ctx: AIContext, lastSuggestedRef: React.MutableRefObject<st
 }
 
 // ─── Haptic helpers ────────────────────────────────────────────────
-function hapticOpen() { try { navigator.vibrate?.([15, 30, 50]); } catch {} }
-function hapticProcess() { try { navigator.vibrate?.(10); } catch {} }
+function hapticOpen() { hapticFeedback('light'); }
+function hapticProcess() { hapticFeedback('light'); }
 
 // ─── VoiceOrb ──────────────────────────────────────────────────────
 const NUM_BARS = 28;

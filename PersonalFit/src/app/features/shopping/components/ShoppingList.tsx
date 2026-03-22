@@ -1,3 +1,4 @@
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -283,7 +284,7 @@ export function ShoppingList() {
 
     if (newItems.length > 0) {
       updateShoppingItems(prev => [...prev, ...newItems]);
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
     }
     setMealPlanAddedCount(addedCount);
     setShowMealPlanImport(false);

@@ -24,6 +24,7 @@ declare var SpeechRecognition: any;
 declare var webkitSpeechRecognition: any;
 declare var SpeechRecognitionEvent: any;
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { apiBase } from '@/lib/api';
 import {
@@ -598,11 +599,11 @@ export function Foods() {
                     language={language as LanguageCode}
                     showCategoryLabel={activeTab === "Osszes"}
                   onToggleFavorite={() => {
-                    if (navigator.vibrate) navigator.vibrate([10, 20]);
+                    hapticFeedback('light');
                     toggleFavorite(food.id);
                   }}
                   onTap={() => {
-                    if (navigator.vibrate) navigator.vibrate(10);
+                    hapticFeedback('light');
                     setSelectedFood(food);
                   }}
                 />
@@ -621,7 +622,7 @@ export function Foods() {
             t={t}
             isFavorite={isFavorite(selectedFood.id)}
             onToggleFavorite={() => {
-              if (navigator.vibrate) navigator.vibrate([10, 20]);
+              hapticFeedback('light');
               toggleFavorite(selectedFood.id);
             }}
             onClose={() => setSelectedFood(null)}

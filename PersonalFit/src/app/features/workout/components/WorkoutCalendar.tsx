@@ -15,6 +15,7 @@
  * ====================================================================
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -267,7 +268,7 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
   return (
     <motion.button
       onClick={() => {
-        if (navigator.vibrate) navigator.vibrate(10);
+        hapticFeedback('light');
         onOpenCalendar();
       }}
       initial={{ opacity: 0, y: 10 }}
@@ -377,7 +378,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
   };
 
   const handleDayTap = (date: Date) => {
-    if (navigator.vibrate) navigator.vibrate(10);
+    hapticFeedback('light');
     setSelectedDate(dateToKey(date));
     setShowSportPicker(false);
     setSelectedSport(null);
@@ -393,7 +394,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
     if (!selectedDate || !selectedSport) return;
     const dur = parseInt(durationInput) || undefined;
     addWorkout(selectedDate, selectedSport, dur);
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
     setSelectedSport(null);
     setDurationInput('');
     setShowSportPicker(false);
@@ -402,7 +403,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
   const handleQuickAdd = (sport: SportItem) => {
     if (!selectedDate) return;
     addWorkout(selectedDate, sport);
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
   };
 
   const selectedDayPlan = selectedDate ? getDay(selectedDate) : [];

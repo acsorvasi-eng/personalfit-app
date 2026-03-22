@@ -3,6 +3,7 @@
  * Logo: fork + leaf SVG · Language: single chip, tap to expand · CTA: solid teal
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -74,13 +75,13 @@ export function SplashScreen() {
     setSelectedLanguage(code);
     setLanguage(code);
     setLangOpen(false);
-    if (navigator.vibrate) navigator.vibrate(10);
+    hapticFeedback('light');
   };
 
   const handleContinue = () => {
     setLanguage(selectedLanguage);
     markSplashSeen();
-    if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
+    hapticFeedback('light');
     navigate('/onboarding');
   };
 

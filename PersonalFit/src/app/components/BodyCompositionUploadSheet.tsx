@@ -9,6 +9,7 @@
  * Entry point: Profile → Settings → Upload Section → Optional
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -58,14 +59,14 @@ export function BodyCompositionUploadSheet({ open, onClose, onComplete }: BodyCo
   const handleFileSelect = useCallback(async (file: File) => {
     setSelectedFile(file);
     setMode('processing');
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
     await upload.uploadFile(file);
   }, [upload]);
 
   const handleTextSubmit = useCallback(async () => {
     if (!textInput.trim()) return;
     setMode('processing');
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
     await upload.processText(textInput);
   }, [textInput, upload]);
 

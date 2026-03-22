@@ -16,6 +16,7 @@
  * ====================================================================
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -463,7 +464,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
     return {
       onTouchStart: () => {
         timer = setTimeout(() => {
-          if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
+          hapticFeedback('light');
           onReset();
         }, 600);
       },
@@ -471,7 +472,7 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
       onTouchCancel: () => { if (timer) clearTimeout(timer); },
       onMouseDown: () => {
         timer = setTimeout(() => {
-          if (navigator.vibrate) navigator.vibrate([15, 30, 50]);
+          hapticFeedback('light');
           onReset();
         }, 600);
       },

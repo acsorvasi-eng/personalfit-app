@@ -11,6 +11,7 @@
  *   - DataUploadSheet opens inline (PDF)
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +42,7 @@ export function PlanSetupScreen() {
 
   const handleContinue = useCallback(() => {
     if (!selected) return;
-    if (navigator.vibrate) navigator.vibrate(10);
+    hapticFeedback('light');
     setSetting('planSetupChoice', selected).catch(() => {});
     setHasPlanSetup(true);
 
@@ -91,7 +92,7 @@ export function PlanSetupScreen() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
-          onClick={() => { setSelected('pdf'); if (navigator.vibrate) navigator.vibrate(10); }}
+          onClick={() => { setSelected('pdf'); hapticFeedback('light'); }}
           onMouseEnter={() => setHoveredCard('pdf')}
           onMouseLeave={() => setHoveredCard(null)}
           className={`w-full text-left rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
@@ -153,7 +154,7 @@ export function PlanSetupScreen() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          onClick={() => { setSelected('manual'); if (navigator.vibrate) navigator.vibrate(10); }}
+          onClick={() => { setSelected('manual'); hapticFeedback('light'); }}
           onMouseEnter={() => setHoveredCard('manual')}
           onMouseLeave={() => setHoveredCard(null)}
           className={`w-full text-left rounded-2xl border-2 transition-all duration-200 overflow-hidden ${

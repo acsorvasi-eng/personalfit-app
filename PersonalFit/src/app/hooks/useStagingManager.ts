@@ -16,6 +16,7 @@
  *   - active:  Data published and live in the app
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting, removeSetting } from '../backend/services/SettingsService';
 
@@ -170,7 +171,7 @@ export function useStagingManager() {
     setIsPublishing(true);
     try {
       // Haptic feedback
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
 
       // Small delay for animation
       await new Promise(r => setTimeout(r, 800));

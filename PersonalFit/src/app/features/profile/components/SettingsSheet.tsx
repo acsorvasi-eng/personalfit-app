@@ -1,6 +1,7 @@
 // PersonalFit/src/app/features/profile/components/SettingsSheet.tsx
 // Settings content extracted from Profile.tsx — opened via gear icon in header.
 
+import { hapticFeedback } from '@/lib/haptics';
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ChevronDown, X } from "lucide-react";
@@ -110,7 +111,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
     setIsSubmitting(true); setError(null); setSuccess(null);
     try {
       await changeEmail(newEmail.trim(), emailCurrentPw);
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
       setSuccess(t('profile.account.emailChanged'));
       resetForm();
       setTimeout(() => setSuccess(null), 3000);
@@ -127,7 +128,7 @@ function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
     setIsSubmitting(true); setError(null); setSuccess(null);
     try {
       await changePassword(currentPw, newPw);
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
       setSuccess(t('profile.account.passwordChanged'));
       resetForm();
       setTimeout(() => setSuccess(null), 3000);

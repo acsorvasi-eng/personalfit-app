@@ -17,6 +17,7 @@
  *   - Finish → creates NutritionPlan in IndexedDB
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -203,7 +204,7 @@ export function ManualMealInput() {
     setAddQuantity('100');
     setSearchQuery('');
     setShowSearch(false);
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
   }, [addingItem, addQuantity, activeSlot, dayData, currentDay, saveDay]);
 
   // Remove food item
@@ -213,7 +214,7 @@ export function ManualMealInput() {
       [activeSlot]: dayData[activeSlot].filter(i => i.id !== itemId),
     };
     saveDay(currentDay, updated);
-    if (navigator.vibrate) navigator.vibrate(10);
+    hapticFeedback('light');
   }, [dayData, activeSlot, currentDay, saveDay]);
 
   // Toggle training day
@@ -686,7 +687,7 @@ export function ManualMealInput() {
                             key={`${food.name}-${i}`}
                             onClick={() => {
                               setAddingItem(food);
-                              if (navigator.vibrate) navigator.vibrate(10);
+                              hapticFeedback('light');
                             }}
                             className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
                           >

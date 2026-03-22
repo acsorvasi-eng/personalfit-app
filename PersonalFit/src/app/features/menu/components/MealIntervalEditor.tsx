@@ -4,6 +4,7 @@
  * UI: 8px grid, max 2 snacks selectable.
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { Check } from "lucide-react";
@@ -210,7 +211,7 @@ export function MealIntervalEditor() {
       });
       await saveMealSettings(payload);
       window.dispatchEvent(new Event("mealSettingsUpdated"));
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
       showToast(t("toast.mealSettingsSaved"));
       navigate(-1);
     } finally {

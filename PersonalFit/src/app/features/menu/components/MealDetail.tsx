@@ -17,6 +17,7 @@
  *   - Back navigation
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import {
@@ -366,7 +367,7 @@ export function MealDetail() {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: idx * 0.03, duration: 0.2 }}
                       onClick={() => {
-                        if (navigator.vibrate) navigator.vibrate(10);
+                        hapticFeedback('light');
                         setSelectedAlternative(alt);
                         // Scroll to top
                         contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });

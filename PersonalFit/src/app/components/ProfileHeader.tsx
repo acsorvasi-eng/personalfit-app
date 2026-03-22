@@ -10,6 +10,7 @@
  * - Inline-editable age (tap to edit)
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import React, { useState, useRef, useEffect } from "react";
 import { User, Camera } from "lucide-react";
 import { PageHeader } from "./PageHeader";
@@ -152,7 +153,7 @@ function InlineEditableText({
     const trimmed = draft.trim();
     if (trimmed && trimmed !== (rawValue ?? value)) {
       onSave(suffix ? trimmed : trimmed);
-      if (navigator.vibrate) navigator.vibrate(10);
+      hapticFeedback('light');
     }
     setEditing(false);
   };

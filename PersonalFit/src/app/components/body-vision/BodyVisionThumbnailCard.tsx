@@ -4,6 +4,7 @@
  * long-press overlay for swap/delete actions.
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useRef } from "react";
 import { Camera, RotateCw, AlertTriangle, X } from "lucide-react";
 import { DSMBadge } from "../dsm";
@@ -35,7 +36,7 @@ export function BodyVisionThumbnailCard({
   const startPress = () => {
     if (!hasImage) return;
     longPressTimer.current = setTimeout(() => {
-      if (navigator.vibrate) navigator.vibrate([...DSM_TOKENS.haptics.longPress]);
+      hapticFeedback('light');
       onLongPressStart();
     }, 400);
   };

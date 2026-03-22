@@ -13,6 +13,7 @@
  * ====================================================================
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Search, Plus, Check, Sparkles, ChefHat, Package, AlertCircle } from "lucide-react";
@@ -158,7 +159,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
         quantity: qty,
       });
 
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
       setIsLogging(false);
       setLogSuccess(true);
       setTimeout(() => onClose(), 1200);

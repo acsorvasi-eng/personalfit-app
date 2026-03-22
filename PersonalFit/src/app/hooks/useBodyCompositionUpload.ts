@@ -20,6 +20,7 @@
  *   8. Create version control record
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { apiBase } from '@/lib/api';
@@ -326,7 +327,7 @@ export function useBodyCompositionUpload() {
         result: null,
       });
 
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
 
       const isGmon = file.name.toLowerCase().includes('gmon') ||
                      file.name.toLowerCase().includes('global_monitoring');
@@ -514,7 +515,7 @@ export function useBodyCompositionUpload() {
         result: null,
       });
 
-      if (navigator.vibrate) navigator.vibrate([10, 20]);
+      hapticFeedback('light');
 
       // v2: Parse real data from text
       const parsed = parseBodyComposition(text);

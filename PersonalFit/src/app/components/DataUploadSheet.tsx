@@ -19,6 +19,7 @@
  *   - Clean processing gate UX
  */
 
+import { hapticFeedback } from '@/lib/haptics';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -94,7 +95,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     setShowImportProgress(true);
 
     // Haptic feedback
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
 
     if (strategy === 'foodsOnly' && 'uploadFileFoodsOnly' in upload) {
       // Gyors mód: csak étellista
@@ -141,7 +142,7 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
     if (!textInput.trim()) return;
     setMode('processing');
 
-    if (navigator.vibrate) navigator.vibrate([10, 20]);
+    hapticFeedback('light');
 
     if (strategy === 'foodsOnly' && 'processTextFoodsOnly' in upload) {
       // Gyors mód: csak étellista
