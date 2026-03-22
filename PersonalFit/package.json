@@ -9,10 +9,22 @@
     "dev:ui": "vite",
     "dev:api": "cd .. && vercel dev --listen 3001",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cap:build": "vite build && npx cap sync",
+    "cap:build:native": "vite build --mode native && npx cap sync",
+    "cap:ios": "npm run cap:build:native && npx cap open ios",
+    "cap:android": "npm run cap:build:native && npx cap open android"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/haptics": "^8.0.1",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/keyboard": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@google/generative-ai": "^0.24.1",
@@ -77,6 +89,7 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.2.0",
     "@tailwindcss/vite": "4.1.12",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
