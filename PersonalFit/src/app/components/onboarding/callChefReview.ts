@@ -78,6 +78,7 @@ export async function callChefReview(params: CallChefReviewParams): Promise<Reco
 
   } catch (err) {
     console.warn('[callChefReview] Failed (non-fatal):', err);
+    params.onDone?.();
     return params.nutritionPlan;
   }
 }

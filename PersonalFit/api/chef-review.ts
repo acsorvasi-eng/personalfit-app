@@ -63,6 +63,7 @@ export default async function handler(req: any, res: any) {
   try {
     const {
       mealPlan,
+      userProfile = {},
       region = '',
       season = 'winter',
       month = 1,
@@ -104,10 +105,16 @@ export default async function handler(req: any, res: any) {
 
     const seasonData = SEASONAL[season] ?? SEASONAL.winter;
 
+    const allergyInfo = userProfile.allergies ? `Allergiák/intoleranciák: ${userProfile.allergies}` : '';
+    const dietInfo = userProfile.dietaryPreferences ? `Étrendi preferenciák: ${userProfile.dietaryPreferences}` : '';
+    const dislikedInfo = Array.isArray(userProfile.dislikedFoods) && userProfile.dislikedFoods.length
+      ? `Nem kedvelt ételek: ${(userProfile.dislikedFoods as string[]).join(', ')}` : '';
+    const userConstraints = [allergyInfo, dietInfo, dislikedInfo].filter(Boolean).join('\n');
+
     const prompt = `Te "A Séf" vagy — egy ${region || 'erdélyi'} konyhában jártas kulináris szakértő.
 Konyhakultúra arány: ${cultureParts}
 Felhasználó: ${userName || 'ismeretlen'}
-Évszak: ${season}, hónap: ${month}. Régió: ${region || 'Erdély, Románia'}
+Évszak: ${season}, hónap: ${month}. Régió: ${region || 'Erdély, Románia'}${userConstraints ? `\n\nFELHASZNÁLÓ KORLÁTAI (KÖTELEZŐ BETARTANI):\n${userConstraints}` : ''}
 
 SZEZONÁLIS ÚTMUTATÓ (${season}):
 Most kapható helyi piacon: ${seasonData.available.join(', ')}
