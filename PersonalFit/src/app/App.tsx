@@ -75,6 +75,14 @@ function GlobalErrorCatcher({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
+      // "Script error." with source :0:0 is a WebKit/Capacitor native bridge mask —
+      // it means an error occurred in JS evaluated by native code (evaluateJavaScript).
+      // We cannot get the real error text; logging it and ignoring prevents the app
+      // from being taken down by uninformative Capacitor bridge noise.
+      if (event.message === 'Script error.' && !event.filename) {
+        console.warn('[GlobalErrorCatcher] Ignoring masked Script error. from native bridge');
+        return;
+      }
       queueMicrotask(() => {
         setUncaughtError(`[window.onerror] ${event.message}\n\nSource: ${event.filename}:${event.lineno}:${event.colno}\n\nStack:\n${event.error?.stack || "(no stack)"}`);
       });

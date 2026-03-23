@@ -10,6 +10,32 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PersonalFit" />
+    <!-- iOS 26 / Framer Motion WAAPI compatibility patch
+         Framer Motion 12 calls element.animate() (Web Animations API). On iOS 26 beta
+         WebKit this can throw, producing "Script error." via window.onerror and a blank screen.
+         We wrap element.animate() to catch any error and return a safe no-op Animation object. -->
+    <script>
+    (function(){
+      if(typeof Element==='undefined')return;
+      var orig=Element.prototype.animate;
+      if(typeof orig!=='function')return;
+      Element.prototype.animate=function(keyframes,options){
+        try{
+          var a=orig.call(this,keyframes,options);
+          if(a&&a.finished&&typeof a.finished.catch==='function')
+            a.finished=a.finished.catch(function(e){console.warn('[WAAPI.finished]',e);});
+          return a;
+        }catch(e){
+          console.warn('[WAAPI.animate threw]',e);
+          return{finished:Promise.resolve(),cancel:function(){},finish:function(){},
+                 pause:function(){},play:function(){},currentTime:null,
+                 playState:'finished',pending:false,playbackRate:1,
+                 ready:Promise.resolve(),replaceState:'persisted',
+                 startTime:null,updatePlaybackRate:function(){}};
+        }
+      };
+    })();
+    </script>
   </head>
 
   <body>

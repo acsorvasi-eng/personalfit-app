@@ -185,7 +185,7 @@ export function SplashScreen() {
       {/* Center — logo + brand + tagline */}
       <motion.div
         className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 text-center"
-        initial={{ opacity: 0, y: 20 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
@@ -211,8 +211,8 @@ export function SplashScreen() {
 
       {/* Bottom — CTA */}
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={ready ? { opacity: 1, y: 0 } : {}}
+        initial={false}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full"
       >

@@ -28,6 +28,16 @@ interface RecognizedFood {
   estimatedWeight: string;
 }
 
+interface AIFoodAnalysis {
+  name: string;
+  confidence: number;
+  estimatedGrams: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 type SearchResultType = 'product' | 'recipe' | 'mixed';
 
 export function LogMeal() {
@@ -43,6 +53,7 @@ export function LogMeal() {
   const [quantityInput, setQuantityInput] = useState("");
   const [servingsInput, setServingsInput] = useState("1");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<string>('g');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -62,8 +73,13 @@ export function LogMeal() {
     carbs: number;
     fat: number;
   } | null>(null);
-  const [recognizedFood, setRecognizedFood] = useState<RecognizedFood | null>(null);
   const [isRecognizing, setIsRecognizing] = useState(false);
+  const [photoResult, setPhotoResult] = useState<AIFoodAnalysis | null>(null);
+  const [photoNotRecognized, setPhotoNotRecognized] = useState(false);
+  const [photoGuess, setPhotoGuess] = useState<string | null>(null);
+  const [photoCustomName, setPhotoCustomName] = useState('');
+  const [isVoiceAIAnalyzing, setIsVoiceAIAnalyzing] = useState(false);
+  const [voiceAIResult, setVoiceAIResult] = useState<AIFoodAnalysis | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [recognitionError, setRecognitionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -202,13 +218,37 @@ export function LogMeal() {
     setSetting('totalConsumedCalories', totalCalories.toString()).catch(() => {});
   }, [loggedMeals, today]);
 
+  // Unit-aware nutrition calculator
+  const calculateNutritionWithUnit = (product: Product, quantity: number, unit: string) => {
+    if (unit === 'adag') {
+      return calculateNutrition(product, quantity * product.defaultQuantity);
+    }
+    let baseGrams: number;
+    switch (unit) {
+      case 'g':   baseGrams = quantity; break;
+      case 'dkg': baseGrams = quantity * 10; break;
+      case 'kg':  baseGrams = quantity * 1000; break;
+      case 'ml':  baseGrams = quantity; break;
+      case 'l':   baseGrams = quantity * 1000; break;
+      case 'db':  baseGrams = quantity * 60; break;
+      default:    baseGrams = quantity;
+    }
+    const multiplier = baseGrams / 100;
+    return {
+      calories: Math.round(product.caloriesPer100 * multiplier),
+      protein: Math.round(product.protein * multiplier * 10) / 10,
+      carbs:   Math.round(product.carbs   * multiplier * 10) / 10,
+      fat:     Math.round(product.fat     * multiplier * 10) / 10,
+    };
+  };
+
   // Auto-calculate calories for product
   const calculatedProductNutrition = useMemo(() => {
     if (!selectedProduct || !quantityInput) return null;
     const qty = parseFloat(quantityInput);
     if (isNaN(qty) || qty <= 0) return null;
-    return calculateNutrition(selectedProduct, qty);
-  }, [selectedProduct, quantityInput]);
+    return calculateNutritionWithUnit(selectedProduct, qty, selectedUnit);
+  }, [selectedProduct, quantityInput, selectedUnit]);
 
   // Auto-calculate calories for recipe
   const calculatedRecipeNutrition = useMemo(() => {
@@ -223,6 +263,7 @@ export function LogMeal() {
     setSelectedRecipe(null);
     setMealInput(product.name);
     setQuantityInput(product.defaultQuantity.toString());
+    setSelectedUnit(product.unit === 'kg' ? 'kg' : product.unit === 'l' ? 'l' : product.unit === 'ml' ? 'ml' : product.unit === 'db' ? 'db' : 'g');
     setShowDropdown(false);
   };
 
@@ -291,6 +332,7 @@ export function LogMeal() {
     setServingsInput("1");
     setSelectedProduct(null);
     setSelectedRecipe(null);
+    setSelectedUnit('g');
     setSelectedSmartFood(null);
     setSelectedCookingMethod(null);
     setSmartPortionInput("");
@@ -321,28 +363,72 @@ export function LogMeal() {
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   }, [loggedMeals]);
 
-  // Simulate AI image recognition
-  const recognizeFood = async (imageFile: File): Promise<RecognizedFood | null> => {
+  // Shared Claude API helper for food analysis
+  const callClaudeForFood = async (
+    prompt: string,
+    imageData?: { base64: string; mediaType: string }
+  ): Promise<AIFoodAnalysis | null> => {
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    if (!apiKey) return null;
+    const content: any[] = [];
+    if (imageData) {
+      content.push({ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.base64 } });
+    }
+    content.push({ type: 'text', text: prompt });
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 200, messages: [{ role: 'user', content }] }),
+      });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      const text: string = data.content[0].text.trim();
+      const match = text.match(/\{[\s\S]*?\}/);
+      return match ? JSON.parse(match[0]) : null;
+    } catch { return null; }
+  };
+
+  // AI image recognition using Claude Vision
+  const recognizeFood = async (imageFile: File): Promise<void> => {
     setIsRecognizing(true);
     setRecognitionError(null);
-    
+    setPhotoResult(null);
+    setPhotoNotRecognized(false);
+    setPhotoGuess(null);
+    setPhotoCustomName('');
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
-      const mockRecognitions: RecognizedFood[] = [
-        { name: "Csirkemell sütve", confidence: 0.92, estimatedWeight: "150g" },
-        { name: "Rizs főve", confidence: 0.88, estimatedWeight: "200g" },
-        { name: "Brokkoli párolt", confidence: 0.85, estimatedWeight: "100g" },
-      ];
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
 
-      const result = mockRecognitions[Math.floor(Math.random() * mockRecognitions.length)];
-      setRecognizedFood(result);
-      setMealInput(result.name);
-      return result;
+      const prompt = `Azonosítsd az ételt a képen. Válaszolj KIZÁRÓLAG érvényes JSON-nal, semmi más szöveget ne írj:
+{"name":"étel neve magyarul","confidence":0.85,"estimatedGrams":200,"calories":320,"protein":25,"carbs":30,"fat":8}
+- confidence: 0.0–1.0 (mennyire biztos vagy az azonosításban)
+- estimatedGrams: becsült tipikus adag grammban
+- calories/protein/carbs/fat: az adott adagra számított értékek
+- Ha nem étel látható: {"name":"","confidence":0,"estimatedGrams":0,"calories":0,"protein":0,"carbs":0,"fat":0}`;
 
-    } catch (error) {
+      const result = await callClaudeForFood(prompt, { base64, mediaType: imageFile.type || 'image/jpeg' });
+
+      if (!result || !result.name || result.confidence < 0.55) {
+        setPhotoGuess(result?.name || null);
+        setPhotoNotRecognized(true);
+      } else {
+        setPhotoResult(result);
+        setMealInput(result.name);
+      }
+    } catch {
       setRecognitionError(t("logMealExt.errorRecognize"));
-      return null;
     } finally {
       setIsRecognizing(false);
     }
@@ -358,6 +444,49 @@ export function LogMeal() {
     }
 
     await recognizeFood(file);
+  };
+
+  // Add a meal from AI photo or voice analysis result
+  const addAIAnalysisMeal = (analysis: AIFoodAnalysis) => {
+    const newMeal: LoggedMeal = {
+      id: Date.now().toString(),
+      name: analysis.name,
+      type: 'recipe',
+      quantity: 1,
+      calories: analysis.calories,
+      protein: analysis.protein,
+      carbs: analysis.carbs,
+      fat: analysis.fat,
+      timestamp: Date.now(),
+      image: '🍽️',
+    };
+    setLoggedMeals(prev => [...prev, newMeal]);
+    setPhotoResult(null);
+    setPhotoNotRecognized(false);
+    setPhotoGuess(null);
+    setPhotoCustomName('');
+    setVoiceAIResult(null);
+    setVoiceTranscript(null);
+    resetForm();
+    showSuccessAndNavigate(analysis.name, analysis.calories, analysis.protein, analysis.carbs, analysis.fat);
+  };
+
+  // Analyze voice transcript with Claude when local DB has no match
+  const analyzeVoiceWithClaude = async (transcript: string) => {
+    setIsVoiceAIAnalyzing(true);
+    const prompt = `A felhasználó azt mondta, hogy ezt ette: "${transcript}"
+Azonosítsd az ételt és becsüld meg a tápértékét. Válaszolj KIZÁRÓLAG érvényes JSON-nal:
+{"name":"étel neve magyarul","confidence":0.8,"estimatedGrams":200,"calories":350,"protein":20,"carbs":40,"fat":10}
+- estimatedGrams: tipikus adag mérete grammban
+- calories/protein/carbs/fat: az adott adagra számított értékek (egész számok)`;
+    try {
+      const result = await callClaudeForFood(prompt);
+      if (result && result.name && result.calories > 0) {
+        setVoiceAIResult(result);
+      }
+    } catch { /* ignore */ } finally {
+      setIsVoiceAIAnalyzing(false);
+    }
   };
 
   // Voice recognition - enhanced with smart matching
@@ -454,11 +583,12 @@ export function LogMeal() {
         setVoiceMatches(null);
       }
     } else {
-      // No matches, just put the text in the input and show dropdown
-      setShowDropdown(true);
+      // No local matches — try Claude AI analysis
       setVoiceMatches(null);
+      setShowDropdown(false);
+      analyzeVoiceWithClaude(transcript);
     }
-    
+
     setIsVoiceProcessing(false);
   }, []);
 
@@ -1101,6 +1231,150 @@ export function LogMeal() {
               <p className="text-sm text-red-700">{recognitionError}</p>
             </div>
           )}
+
+          {/* Photo: high-confidence result */}
+          {photoResult && (
+            <div className="bg-white border-2 rounded-2xl p-4 space-y-3" style={{ borderColor: '#0d9488' }}>
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5" style={{ color: '#0d9488' }} />
+                <span className="font-bold text-sm" style={{ color: '#0d9488' }}>Felismert étel</span>
+              </div>
+              <div className="font-black text-lg text-foreground">{photoResult.name}</div>
+              <div className="grid grid-cols-4 gap-2 text-center bg-gray-50 rounded-xl p-3">
+                <div><div className="text-xl font-black" style={{ color: '#0d9488' }}>{photoResult.calories}</div><div className="text-xs text-gray-500">kcal</div></div>
+                <div><div className="text-xl font-black text-blue-600">{photoResult.protein}g</div><div className="text-xs text-gray-500">fehérje</div></div>
+                <div><div className="text-xl font-black text-orange-500">{photoResult.carbs}g</div><div className="text-xs text-gray-500">szénhidrát</div></div>
+                <div><div className="text-xl font-black text-yellow-500">{photoResult.fat}g</div><div className="text-xs text-gray-500">zsír</div></div>
+              </div>
+              <div className="text-xs text-gray-400 text-center">~{photoResult.estimatedGrams}g becsült adag</div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => addAIAnalysisMeal(photoResult)}
+                  className="flex-1 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                  style={{ background: '#0d9488' }}
+                >
+                  <Plus className="w-4 h-4" /> Hozzáadom
+                </button>
+                <button
+                  onClick={() => { setPhotoResult(null); setMealInput(''); }}
+                  className="px-4 py-3 rounded-xl font-bold bg-gray-100 text-gray-600"
+                >
+                  Mégsem
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Photo: low-confidence / not recognized */}
+          {photoNotRecognized && (
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-500" />
+                <span className="font-bold text-sm text-amber-800">Bocsi, nem ismertem fel az ételt.</span>
+              </div>
+              {photoGuess && (
+                <div>
+                  <p className="text-sm text-amber-700 mb-3">Ez egy <strong>{photoGuess}</strong> lenne?</p>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      onClick={async () => {
+                        setPhotoNotRecognized(false);
+                        setIsRecognizing(true);
+                        const prompt = `Adj tápértéket erre az ételre: "${photoGuess}". Válaszolj CSAK JSON-nal:
+{"name":"${photoGuess}","confidence":1,"estimatedGrams":200,"calories":350,"protein":20,"carbs":40,"fat":10}`;
+                        const result = await callClaudeForFood(prompt);
+                        setIsRecognizing(false);
+                        if (result) { setPhotoResult(result); setMealInput(result.name); }
+                        else setRecognitionError('Nem sikerült a tápértéket meghatározni.');
+                      }}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-white"
+                      style={{ background: '#0d9488' }}
+                    >
+                      Igen
+                    </button>
+                    <button
+                      onClick={() => setPhotoGuess(null)}
+                      className="flex-1 py-2.5 rounded-xl font-bold bg-gray-200 text-gray-700"
+                    >
+                      Nem
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!photoGuess && (
+                <div className="space-y-2">
+                  <p className="text-sm text-amber-700">Írd be az étel nevét:</p>
+                  <input
+                    type="text"
+                    value={photoCustomName}
+                    onChange={e => setPhotoCustomName(e.target.value)}
+                    placeholder="pl. Erdélyi éttermi leves"
+                    className="w-full px-4 py-3 border-2 border-amber-300 rounded-xl focus:border-amber-500 bg-white text-foreground"
+                  />
+                  <button
+                    disabled={!photoCustomName.trim() || isRecognizing}
+                    onClick={async () => {
+                      if (!photoCustomName.trim()) return;
+                      setIsRecognizing(true);
+                      setPhotoNotRecognized(false);
+                      const prompt = `Adj tápértéket erre az ételre: "${photoCustomName.trim()}". Válaszolj CSAK JSON-nal:
+{"name":"${photoCustomName.trim()}","confidence":1,"estimatedGrams":200,"calories":350,"protein":20,"carbs":40,"fat":10}`;
+                      const result = await callClaudeForFood(prompt);
+                      setIsRecognizing(false);
+                      if (result) { setPhotoResult(result); setMealInput(result.name); }
+                      else setRecognitionError('Nem sikerült a tápértéket meghatározni.');
+                    }}
+                    className="w-full py-3 rounded-xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{ background: '#0d9488' }}
+                  >
+                    {isRecognizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    Elemzés
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Voice: Claude AI analyzing indicator */}
+          {isVoiceAIAnalyzing && (
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-center gap-3">
+              <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+              <p className="text-sm text-purple-700 font-medium">Claude elemzi az ételt…</p>
+            </div>
+          )}
+
+          {/* Voice: Claude AI result */}
+          {voiceAIResult && !isVoiceAIAnalyzing && (
+            <div className="bg-white border-2 rounded-2xl p-4 space-y-3" style={{ borderColor: '#7c3aed' }}>
+              <div className="flex items-center gap-2">
+                <Mic className="w-5 h-5 text-purple-600" />
+                <span className="font-bold text-sm text-purple-700">AI azonosította</span>
+              </div>
+              <div className="font-black text-lg text-foreground">{voiceAIResult.name}</div>
+              <div className="grid grid-cols-4 gap-2 text-center bg-gray-50 rounded-xl p-3">
+                <div><div className="text-xl font-black text-purple-600">{voiceAIResult.calories}</div><div className="text-xs text-gray-500">kcal</div></div>
+                <div><div className="text-xl font-black text-blue-600">{voiceAIResult.protein}g</div><div className="text-xs text-gray-500">fehérje</div></div>
+                <div><div className="text-xl font-black text-orange-500">{voiceAIResult.carbs}g</div><div className="text-xs text-gray-500">szénhidrát</div></div>
+                <div><div className="text-xl font-black text-yellow-500">{voiceAIResult.fat}g</div><div className="text-xs text-gray-500">zsír</div></div>
+              </div>
+              <div className="text-xs text-gray-400 text-center">~{voiceAIResult.estimatedGrams}g becsült adag</div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => addAIAnalysisMeal(voiceAIResult)}
+                  className="flex-1 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                  style={{ background: '#7c3aed' }}
+                >
+                  <Plus className="w-4 h-4" /> Hozzáadom
+                </button>
+                <button
+                  onClick={() => { setVoiceAIResult(null); setVoiceTranscript(null); }}
+                  className="px-4 py-3 rounded-xl font-bold bg-gray-100 text-gray-600"
+                >
+                  Mégsem
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* AI Recognition Breakdown Panel - shows when compound food is recognized */}
@@ -1544,11 +1818,6 @@ export function LogMeal() {
                 <div className="flex-1">
                   <div className="font-bold text-foreground">{selectedProduct.name}</div>
                   <div className="text-sm text-gray-600">{selectedProduct.brand}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full font-bold">
-                      {selectedProduct.store}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1556,8 +1825,33 @@ export function LogMeal() {
             {/* Quantity Input */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">
-                {t("logMealExt.quantity")} ({selectedProduct.unit})
+                {t("logMealExt.quantity")}
               </label>
+              {/* Unit selector chips */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {[
+                  { key: 'g',    label: 'gramm' },
+                  { key: 'dkg',  label: 'deka' },
+                  { key: 'kg',   label: 'kg' },
+                  { key: 'ml',   label: 'ml' },
+                  { key: 'l',    label: 'liter' },
+                  { key: 'db',   label: 'db' },
+                  { key: 'adag', label: 'adag' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSelectedUnit(key)}
+                    className="px-3 py-1 rounded-full text-sm font-bold transition-all"
+                    style={selectedUnit === key
+                      ? { background: '#0d9488', color: '#fff' }
+                      : { background: '#f1f5f9', color: '#475569' }
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <input
                 type="number"
                 value={quantityInput}

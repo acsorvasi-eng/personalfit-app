@@ -10,6 +10,16 @@ export default defineConfig({
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    // Remove crossorigin attributes from the built HTML — Capacitor's WKWebView
+    // treats crossorigin="" module scripts as cross-origin, which masks real JS
+    // errors as "Script error. Source: :0:0" instead of showing the actual error.
+    {
+      name: 'remove-crossorigin',
+      apply: 'build',
+      transformIndexHtml(html) {
+        return html.replace(/\s+crossorigin(?:="[^"]*")?/g, '');
+      },
+    },
   ],
   resolve: {
     alias: {
