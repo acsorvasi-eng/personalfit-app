@@ -176,6 +176,28 @@ const en: LocalePartial = {
   'generate.limitUsed': '{used} / {limit} generations used',
   'generate.limitReached': 'You have reached your monthly limit.',
   'generate.limitResetsAt': 'Next available: {date}',
+
+  'recipe.chefWorking': 'Chef is working...',
+  'recipe.cookAtHome': 'Cook at home',
+  'recipe.findRestaurant': 'Find at restaurant',
+  'recipe.ingredients': 'Ingredients',
+  'recipe.preparation': 'Preparation',
+  'recipe.macros': 'Macros',
+  'recipe.chefTip': 'Chef tip',
+  'recipe.mealPrepExpand': 'How to meal prep this',
+  'recipe.noMenuFound': 'No daily menus found near you today',
+  'recipe.estimatedLabel': 'Estimated',
+  'recipe.accurateLabel': 'Accurate',
+  'recipe.aiEstimateDisclaimer': 'AI estimate based on local cuisine',
+  'recipe.matchScore': 'match',
+  'recipe.premiumRequired': 'Activate your subscription for recipes',
+  'recipe.minutesSuffix': 'min',
+  'recipe.difficultyEasy': 'Easy',
+  'recipe.difficultyMedium': 'Medium',
+  'recipe.difficultyHard': 'Hard',
+  'recipe.retry': 'Try again',
+  'recipe.errorMessage': 'Could not load recipe.',
+  'recipe.openRecipe': '🍳 Recipe',
 };
 
 export default en;

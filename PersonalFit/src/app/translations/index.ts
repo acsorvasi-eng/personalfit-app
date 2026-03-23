@@ -203,6 +203,10 @@ export const translations = {
       ofTarget: '-ból/-ből',
       // ─── Add food dialog keys ───
       addFoodLabel: 'Étel hozzáadása',
+      addFoodDesc: 'Írd be vagy mondd be az ételek nevét (pl. pisztráng, dió, jégsaláta...). A rendszer lekéri a valós tápértékeket 100g-ra.',
+      unknownFood: 'nem ismert élelmiszer',
+      identifying: 'Azonosítás folyamatban...',
+      retry: 'Újra',
       aiDietLabel: 'AI étrend',
       voiceNotSupported: 'A böngésződ nem támogatja a hangfelismerést.',
       voiceRecording: 'Felvétel folyamatban...',
@@ -211,6 +215,7 @@ export const translations = {
       foodAdded: '{n} étel hozzáadva',
       foodAddedToast: '{n} étel hozzáadva ✓',
       foodSaveFailed: 'Nem sikerült elmenteni az ételeket.',
+      lookupFailed: 'Nem sikerült betölteni a tápértékeket. Próbáld újra.',
       addButton: 'Hozzáadás',
     },
 
@@ -1550,6 +1555,30 @@ export const translations = {
       profileSummaryTitle: 'Profilod be van állítva',
       generateDirect: 'Generáld a havi étrendet',
       editProfile: 'Profil adatok módosítása'
+    },
+
+    recipe: {
+      chefWorking: 'Chef dolgozik...',
+      cookAtHome: 'Főzöm otthon',
+      findRestaurant: 'Étteremben keresem',
+      ingredients: 'Összetevők',
+      preparation: 'Elkészítés',
+      macros: 'Makrók',
+      chefTip: 'Chef tanács',
+      mealPrepExpand: 'Hogyan készítsd el előre',
+      noMenuFound: 'Nem találtunk ma napi menüt a közeledben',
+      estimatedLabel: 'Becsült',
+      accurateLabel: 'Pontos',
+      aiEstimateDisclaimer: 'AI becslés a helyi konyha alapján',
+      matchScore: 'egyezés',
+      premiumRequired: 'Aktiváld az előfizetésed a receptekért',
+      minutesSuffix: 'perc',
+      difficultyEasy: 'Könnyű',
+      difficultyMedium: 'Közepes',
+      difficultyHard: 'Nehéz',
+      retry: 'Újra',
+      errorMessage: 'Nem sikerült betölteni a receptet.',
+      openRecipe: '🍳 Recept',
     }
   },
 
@@ -1750,6 +1779,10 @@ export const translations = {
       ofTarget: 'of',
       // ─── Add food dialog keys ───
       addFoodLabel: 'Add food',
+      addFoodDesc: 'Type or say the food names (e.g. trout, walnut, iceberg lettuce...). The system will fetch the real nutritional values per 100g.',
+      unknownFood: 'unknown food',
+      identifying: 'Identifying...',
+      retry: 'Retry',
       aiDietLabel: 'AI diet',
       voiceNotSupported: 'Your browser does not support speech recognition.',
       voiceRecording: 'Recording in progress...',
@@ -1758,6 +1791,7 @@ export const translations = {
       foodAdded: '{n} food(s) added',
       foodAddedToast: '{n} food(s) added ✓',
       foodSaveFailed: 'Could not save foods.',
+      lookupFailed: 'Could not load nutritional data. Please try again.',
       addButton: 'Add',
     },
 
@@ -3017,6 +3051,30 @@ export const translations = {
       profileSummaryTitle: 'Your profile is set up',
       generateDirect: 'Generate monthly meal plan',
       editProfile: 'Edit profile data'
+    },
+
+    recipe: {
+      chefWorking: 'Chef is working...',
+      cookAtHome: 'Cook at home',
+      findRestaurant: 'Find at restaurant',
+      ingredients: 'Ingredients',
+      preparation: 'Preparation',
+      macros: 'Macros',
+      chefTip: 'Chef tip',
+      mealPrepExpand: 'How to meal prep this',
+      noMenuFound: 'No daily menus found near you today',
+      estimatedLabel: 'Estimated',
+      accurateLabel: 'Accurate',
+      aiEstimateDisclaimer: 'AI estimate based on local cuisine',
+      matchScore: 'match',
+      premiumRequired: 'Activate your subscription for recipes',
+      minutesSuffix: 'min',
+      difficultyEasy: 'Easy',
+      difficultyMedium: 'Medium',
+      difficultyHard: 'Hard',
+      retry: 'Try again',
+      errorMessage: 'Could not load recipe.',
+      openRecipe: '🍳 Recipe',
     }
   },
 
@@ -3217,6 +3275,10 @@ export const translations = {
       ofTarget: 'din',
       // ─── Add food dialog keys ───
       addFoodLabel: 'Adaugă aliment',
+      addFoodDesc: 'Scrie sau spune numele alimentelor (ex. păstrăv, nucă, salată iceberg...). Sistemul va prelua valorile nutritive reale la 100g.',
+      unknownFood: 'aliment necunoscut',
+      identifying: 'Identificare în curs...',
+      retry: 'Reîncearcă',
       aiDietLabel: 'Dietă AI',
       voiceNotSupported: 'Browserul tău nu suportă recunoașterea vocală.',
       voiceRecording: 'Înregistrare în curs...',
@@ -3225,6 +3287,7 @@ export const translations = {
       foodAdded: '{n} aliment(e) adăugat(e)',
       foodAddedToast: '{n} aliment(e) adăugat(e) ✓',
       foodSaveFailed: 'Nu s-au putut salva alimentele.',
+      lookupFailed: 'Nu s-au putut încărca valorile nutriționale. Încearcă din nou.',
       addButton: 'Adaugă',
     },
 
@@ -4484,6 +4547,30 @@ export const translations = {
       profileSummaryTitle: 'Profilul tău este setat',
       generateDirect: 'Generează planul lunar de mese',
       editProfile: 'Modifică datele profilului'
+    },
+
+    recipe: {
+      chefWorking: 'Chef lucrează...',
+      cookAtHome: 'Gătesc acasă',
+      findRestaurant: 'Caut la restaurant',
+      ingredients: 'Ingrediente',
+      preparation: 'Preparare',
+      macros: 'Macronutrienți',
+      chefTip: 'Sfat Chef',
+      mealPrepExpand: 'Cum să pregătești în avans',
+      noMenuFound: 'Nu am găsit meniuri zilnice în apropiere astazi',
+      estimatedLabel: 'Estimat',
+      accurateLabel: 'Exact',
+      aiEstimateDisclaimer: 'Estimare AI bazată pe bucătăria locală',
+      matchScore: 'potrivire',
+      premiumRequired: 'Activează abonamentul pentru rețete',
+      minutesSuffix: 'min',
+      difficultyEasy: 'Ușor',
+      difficultyMedium: 'Mediu',
+      difficultyHard: 'Dificil',
+      retry: 'Încearcă din nou',
+      errorMessage: 'Nu s-a putut încărca rețeta.',
+      openRecipe: '🍳 Rețetă',
     }
   }
 };

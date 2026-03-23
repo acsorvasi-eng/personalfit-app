@@ -176,6 +176,28 @@ const ro: LocalePartial = {
   'generate.limitUsed': '{used} / {limit} generări utilizate',
   'generate.limitReached': 'Ai atins limita lunară.',
   'generate.limitResetsAt': 'Disponibil din: {date}',
+
+  'recipe.chefWorking': 'Chef lucrează...',
+  'recipe.cookAtHome': 'Gătesc acasă',
+  'recipe.findRestaurant': 'Caut la restaurant',
+  'recipe.ingredients': 'Ingrediente',
+  'recipe.preparation': 'Preparare',
+  'recipe.macros': 'Macronutrienți',
+  'recipe.chefTip': 'Sfat Chef',
+  'recipe.mealPrepExpand': 'Cum să pregătești în avans',
+  'recipe.noMenuFound': 'Nu am găsit meniuri zilnice în apropiere astazi',
+  'recipe.estimatedLabel': 'Estimat',
+  'recipe.accurateLabel': 'Exact',
+  'recipe.aiEstimateDisclaimer': 'Estimare AI bazată pe bucătăria locală',
+  'recipe.matchScore': 'potrivire',
+  'recipe.premiumRequired': 'Activează abonamentul pentru rețete',
+  'recipe.minutesSuffix': 'min',
+  'recipe.difficultyEasy': 'Ușor',
+  'recipe.difficultyMedium': 'Mediu',
+  'recipe.difficultyHard': 'Dificil',
+  'recipe.retry': 'Încearcă din nou',
+  'recipe.errorMessage': 'Nu s-a putut încărca rețeta.',
+  'recipe.openRecipe': '🍳 Rețetă',
 };
 
 export default ro;
