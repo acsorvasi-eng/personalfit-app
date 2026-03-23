@@ -18,10 +18,6 @@ function todayString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-function makeCacheKey(city: string): string {
-  return `daily_menu_${city}_${todayString()}`;
-}
-
 export async function getDailyMenuMatches(
   targetMeal: { name: string; calories: string; mealType: string },
   language: 'hu' | 'ro' | 'en',
@@ -30,7 +26,8 @@ export async function getDailyMenuMatches(
   const city = userCity || CITY_DEFAULTS[language] || 'Budapest';
   const country = COUNTRY_DEFAULTS[language] || 'Hungary';
   const db = await getDB();
-  const cacheKey = makeCacheKey(city);
+  // Include meal name in cache key so different meals get different results
+  const cacheKey = `daily_menu_${city}_${todayString()}_${targetMeal.name.slice(0, 50).replace(/\s+/g, '_')}`;
 
   // Cache hit (valid for today)
   const cached = await db.get<DailyMenuCacheEntry>('daily_menu_cache', cacheKey);

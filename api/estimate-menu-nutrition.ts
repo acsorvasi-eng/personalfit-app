@@ -1,5 +1,6 @@
 // api/estimate-menu-nutrition.ts
 import Anthropic from '@anthropic-ai/sdk';
+import * as admin from 'firebase-admin';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -9,12 +10,39 @@ const LANG_LABELS: Record<string, string> = {
   en: 'English',
 };
 
+function getAdminApp(): admin.app.App | null {
+  if (admin.apps.length > 0) return admin.apps[0]!;
+  const keyB64 = process.env.FIREBASE_ADMIN_KEY;
+  if (!keyB64) return null;
+  try {
+    const credential = JSON.parse(Buffer.from(keyB64, 'base64').toString('utf8'));
+    return admin.initializeApp({ credential: admin.credential.cert(credential) });
+  } catch (e) {
+    console.warn('[estimate-menu-nutrition] Firebase Admin init failed:', e);
+    return null;
+  }
+}
+
+async function validateUser(userId: string | undefined): Promise<boolean> {
+  if (!userId || userId === 'anonymous') return false;
+  const app = getAdminApp();
+  if (!app) return true; // fail open for local dev
+  try {
+    const snap = await admin.firestore(app).collection('users').doc(userId).get();
+    return snap.exists;
+  } catch {
+    return true; // fail open on error
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { targetMeal, city, country, language } = req.body || {};
+  const { userId, targetMeal, city, country, language } = req.body || {};
+  const isValid = await validateUser(userId);
+  if (!isValid) return res.status(401).json({ error: 'Unauthorized' });
 
   if (!city || !targetMeal?.name) {
     return res.status(400).json({ error: 'Missing city or targetMeal' });
@@ -49,6 +77,15 @@ Rules:
 - Calorie values should realistically match the target (${targetMeal.calories})
 - Return ONLY the JSON array with exactly 3 items.`;
 
+  const tryGenerate = async (): Promise<string> => {
+    const message = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    return message.content[0]?.type === 'text' ? message.content[0].text : '';
+  };
+
   const tryParse = (raw: string): any[] | null => {
     let cleaned = raw.trim()
       .replace(/^```json\s*/i, '').replace(/```$/i, '')
@@ -63,14 +100,14 @@ Rules:
   };
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: prompt }],
-    });
+    let raw = await tryGenerate();
+    let parsed = tryParse(raw);
 
-    const raw = message.content[0]?.type === 'text' ? message.content[0].text : '';
-    const parsed = tryParse(raw);
+    // Retry once on parse failure or insufficient results
+    if (!parsed || parsed.length < 3) {
+      raw = await tryGenerate();
+      parsed = tryParse(raw);
+    }
 
     // Validate array length matches the expected count (3 items requested)
     if (!parsed || parsed.length < 3) {

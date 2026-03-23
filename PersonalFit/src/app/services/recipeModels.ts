@@ -45,6 +45,8 @@ export interface DailyMenuMatch {
   dishName: string;
   estimatedKcal: number;
   estimatedProtein: number;
+  estimatedCarbs: number;
+  estimatedFat: number;
   price: string | null;
   availableFrom: string | null;
   matchScore: number;

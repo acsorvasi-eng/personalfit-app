@@ -105,7 +105,7 @@ export function RecipeOverlay({
       const matches = await getDailyMenuMatches(
         { name: meal.name, calories: meal.calories, mealType: meal.type },
         language as 'hu' | 'ro' | 'en',
-        userProfile ? (userProfile as unknown as Record<string, unknown>).city as string | undefined : undefined,
+        undefined,  // city not yet in StoredUserProfile
       );
       setMenuMatches(matches);
       setMenuState('success');
@@ -269,7 +269,7 @@ export function RecipeOverlay({
                   {/* Chef tip */}
                   <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 space-y-1.5">
                     <p className="text-sm text-gray-700">💡 {recipe.chefTip}</p>
-                    {recipe.gastroNote && <p className="text-sm text-primary font-medium">✓ {recipe.gastroNote}</p>}
+                    {recipe.gastroNote && <p className="text-sm text-amber-600 font-medium">⚠ {recipe.gastroNote}</p>}
                   </div>
 
                   {/* Meal prep guide */}

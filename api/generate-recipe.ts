@@ -1,5 +1,6 @@
 // api/generate-recipe.ts
 import Anthropic from '@anthropic-ai/sdk';
+import * as admin from 'firebase-admin';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -9,12 +10,39 @@ const LANG_LABELS: Record<string, string> = {
   en: 'English',
 };
 
+function getAdminApp(): admin.app.App | null {
+  if (admin.apps.length > 0) return admin.apps[0]!;
+  const keyB64 = process.env.FIREBASE_ADMIN_KEY;
+  if (!keyB64) return null;
+  try {
+    const credential = JSON.parse(Buffer.from(keyB64, 'base64').toString('utf8'));
+    return admin.initializeApp({ credential: admin.credential.cert(credential) });
+  } catch (e) {
+    console.warn('[generate-recipe] Firebase Admin init failed:', e);
+    return null;
+  }
+}
+
+async function validateUser(userId: string | undefined): Promise<boolean> {
+  if (!userId || userId === 'anonymous') return false;
+  const app = getAdminApp();
+  if (!app) return true; // fail open for local dev
+  try {
+    const snap = await admin.firestore(app).collection('users').doc(userId).get();
+    return snap.exists;
+  } catch {
+    return true; // fail open on error
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userProfile, meal, weekContext, language } = req.body || {};
+  const { userId, userProfile, meal, weekContext, language } = req.body || {};
+  const isValid = await validateUser(userId);
+  if (!isValid) return res.status(401).json({ error: 'Unauthorized' });
 
   if (!meal?.name || !meal?.mealType) {
     return res.status(400).json({ error: 'Missing meal data' });
