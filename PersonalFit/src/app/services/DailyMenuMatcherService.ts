@@ -23,6 +23,7 @@ export async function getDailyMenuMatches(
   targetMeal: { name: string; calories: string; mealType: string },
   language: 'hu' | 'ro' | 'en',
   userCity?: string,
+  userId?: string,
 ): Promise<DailyMenuMatch[]> {
   const city = userCity || CITY_DEFAULTS[language] || 'Budapest';
   const country = COUNTRY_DEFAULTS[language] || 'Hungary';
@@ -37,10 +38,17 @@ export async function getDailyMenuMatches(
   }
 
   // API call
-  const response = await fetch(`${apiBase}/api/estimate-menu-nutrition`, {
+  const response = await fetch(`${apiBase}/api/chef`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetMeal, city, country, language }),
+    body: JSON.stringify({
+      type: 'menu',
+      userId: userId ?? 'anonymous',
+      targetMeal,
+      city,
+      country,
+      language,
+    }),
   });
 
   if (!response.ok) {

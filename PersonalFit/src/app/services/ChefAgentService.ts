@@ -56,10 +56,12 @@ export async function generateRecipe(input: ChefAgentInput): Promise<ChefAgentOu
   }
 
   // API call
-  const response = await fetch(`${apiBase}/api/generate-recipe`, {
+  const response = await fetch(`${apiBase}/api/chef`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      type: 'recipe',
+      userId: input.userId,
       userProfile: input.userProfile,
       meal: input.meal,
       weekContext: input.weekContext,
