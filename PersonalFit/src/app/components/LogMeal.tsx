@@ -776,8 +776,9 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
       if (final) {
         setVoiceInterimText('');
         setMealInput(final);
-        setShowDropdown(true);
-        processVoiceTranscript(final);
+        setShowDropdown(false);   // don't show keyword dropdown for voice
+        setVoiceMatches(null);    // clear any old matches
+        analyzeVoiceWithClaude(final);  // go straight to Claude
       }
     };
 
