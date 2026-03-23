@@ -35,7 +35,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 export const DB_NAME = 'NutriPlanDB';
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
 
 // ═══════════════════════════════════════════════════════════════
 // STORE SCHEMAS — defines indexes for each object store
@@ -185,6 +185,14 @@ const STORE_SCHEMAS: Record<string, StoreSchema> = {
     indexes: [
       { name: 'by-queued-at', keyPath: 'queued_at' },
     ],
+  },
+  recipe_cache: {
+    keyPath: 'cacheKey',
+    indexes: [],
+  },
+  daily_menu_cache: {
+    keyPath: 'cacheKey',
+    indexes: [],
   },
 };
 
