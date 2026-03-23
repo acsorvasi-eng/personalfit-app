@@ -1,5 +1,5 @@
 // PersonalFit/src/app/features/menu/components/RecipeOverlay.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Clock, ChevronDown, Utensils, Flame, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -36,6 +36,7 @@ export function RecipeOverlay({
   const [errorMsg, setErrorMsg] = useState('');
   const [showMealPrep, setShowMealPrep] = useState(false);
   const [canAccess, setCanAccess] = useState<boolean | null>(null);
+  const recipeLoadingRef = useRef(false);
 
   // Subscription check
   useEffect(() => {
@@ -53,12 +54,18 @@ export function RecipeOverlay({
   // Load recipe once access is confirmed
   useEffect(() => {
     if (canAccess !== true) return;
-    loadRecipe();
-    loadMenuMatches();
+    let mounted = true;
+    (async () => {
+      if (mounted) await loadRecipe();
+      if (mounted) await loadMenuMatches();
+    })();
+    return () => { mounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canAccess]);
 
   const loadRecipe = async () => {
+    if (recipeLoadingRef.current) return;
+    recipeLoadingRef.current = true;
     setRecipeState('loading');
     setErrorMsg('');
     try {
@@ -87,6 +94,8 @@ export function RecipeOverlay({
     } catch (err) {
       setRecipeState('error');
       setErrorMsg(err instanceof RecipeGenerationError ? err.message : t('recipe.errorMessage'));
+    } finally {
+      recipeLoadingRef.current = false;
     }
   };
 
@@ -96,7 +105,7 @@ export function RecipeOverlay({
       const matches = await getDailyMenuMatches(
         { name: meal.name, calories: meal.calories, mealType: meal.type },
         language as 'hu' | 'ro' | 'en',
-        (userProfile as any)?.city,
+        userProfile ? (userProfile as unknown as Record<string, unknown>).city as string | undefined : undefined,
       );
       setMenuMatches(matches);
       setMenuState('success');
