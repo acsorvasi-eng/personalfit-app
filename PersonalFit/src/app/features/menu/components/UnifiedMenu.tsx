@@ -7,6 +7,7 @@ import { PageHeader } from "../../../components/PageHeader";
 // DSMCoachMark removed — hints no longer used on this screen
 import { DSMQuickLogSheet } from "../../../components/dsm/QuickLogSheet";
 import { useLanguage, getLocaleDayNarrow, getLocaleMonth, getLocale } from "../../../contexts/LanguageContext";
+import { translateFoodName } from "../../../utils/foodTranslations";
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 // getMealAlternatives removed — all data comes from uploaded plans only
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +17,8 @@ import { EmptyState } from "../../../components/EmptyState";
 import { DataUploadSheet } from "../../../components/DataUploadSheet";
 import { GenerateMealPlanSheet } from "../../nutrition/components/GenerateMealPlanSheet";
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
-import { getMealSettings, getUserProfile, type MealSettings } from "../../../backend/services/UserProfileService";
+import { getMealSettings, getUserProfile, type MealSettings, type StoredUserProfile } from "../../../backend/services/UserProfileService";
+import { RecipeOverlay } from './RecipeOverlay';
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 import { SleepService } from "../../../backend/services/SleepService";
 import { WaterService } from "../../../backend/services/WaterService";
@@ -473,6 +475,11 @@ export function UnifiedMenu() {
     runChef();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally no deps — run only on mount
+
+  const [userProfile, setUserProfile] = useState<StoredUserProfile | null>(null);
+  useEffect(() => {
+    getUserProfile().then(setUserProfile).catch(() => {});
+  }, []);
 
   const [mealSettings, setMealSettings] = useState<MealSettings | null>(null);
   useEffect(() => {
@@ -1009,6 +1016,23 @@ export function UnifiedMenu() {
   });
 
   const loggedSlotMap = { breakfast: 'after-breakfast' as const, lunch: 'after-lunch' as const, dinner: 'after-dinner' as const };
+
+  // All meals across the entire week plan (for gastro rules in RecipeOverlay)
+  const weekMeals: MealOption[] = useMemo(() => {
+    const meals: MealOption[] = [];
+    for (const week of planData) {
+      for (const day of week.days) {
+        meals.push(...day.breakfast, ...day.lunch, ...day.dinner, ...(day.snack || []));
+      }
+    }
+    return meals;
+  }, [planData]);
+
+  // All meals for the currently selected day
+  const todayMeals: MealOption[] = useMemo(() => {
+    if (!dayMeals) return [];
+    return [...dayMeals.breakfast, ...dayMeals.lunch, ...dayMeals.dinner, ...(dayMeals.snack || [])];
+  }, [dayMeals]);
 
   // ─── Render ────────────────────────────────────────────────
  
@@ -1637,6 +1661,9 @@ export function UnifiedMenu() {
                         dayLabel={dayLabel}
                         calorieTarget={calorieTarget}
                         mealRef={isFocusMeal ? currentMealRef : (status.isToday && status.currentMeal === slot.type ? currentMealRef : undefined)}
+                        userProfile={userProfile}
+                        weekMeals={weekMeals}
+                        todayMeals={todayMeals}
                       />
                       {/* Water: shown ONLY as floating during meal time; never on dinner card to avoid duplicate */}
                     </div>
@@ -2037,21 +2064,28 @@ interface MealCardWithAlternativesProps {
   canCheck: boolean; isToday: boolean; canEdit: boolean;
   isTrainingDay: boolean; dayLabel: string; calorieTarget: number;
   mealRef?: React.RefObject<HTMLDivElement | null>;
+  userProfile: StoredUserProfile | null;
+  weekMeals: MealOption[];
+  todayMeals: MealOption[];
 }
 
 function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
   const {
     title, time, icon, selectedMeal, alternatives, primaryMeal,
+    mealType,
     onSelect,
     checked, onCheck, isFocus, isPassed, canCheck, isToday,
     canEdit, isTrainingDay, dayLabel, calorieTarget,
-    mealRef
+    mealRef,
+    userProfile, weekMeals, todayMeals,
   } = props;
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [expanded, setExpanded] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
+  const [showRecipe, setShowRecipe] = useState(false);
   const allOptions = primaryMeal ? [primaryMeal, ...alternatives] : alternatives;
+  const canShowRecipe = mealType === 'lunch' || mealType === 'dinner';
 
   const handleCardTap = useCallback(() => {
     setExpanded(prev => !prev);
@@ -2211,7 +2245,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                     <div key={idx} className="bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100/60">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-[13px] font-medium text-gray-800 truncate">{ing.name}</span>
+                          <span className="text-[13px] font-medium text-gray-800 truncate">{translateFoodName(ing.name, language)}</span>
                           <span className="text-[11px] text-gray-400 flex-shrink-0">({ing.quantity})</span>
                         </div>
                         <span className="text-[11px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
@@ -2250,7 +2284,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                       <div key={idx} className="bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100/60">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="text-[13px] font-medium text-gray-800 truncate">{foodName}</span>
+                            <span className="text-[13px] font-medium text-gray-800 truncate">{translateFoodName(foodName, language)}</span>
                             {qty && <span className="text-[11px] text-gray-400 flex-shrink-0">({qty})</span>}
                           </div>
                           <span className="text-[11px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
@@ -2309,6 +2343,18 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                     <span className="text-xs font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
                   </motion.button>
                 )}
+
+                {/* ── Recipe button (lunch/dinner only) ── */}
+                {canShowRecipe && selectedMeal && (
+                  <motion.button
+                    onClick={(e) => { e.stopPropagation(); hapticFeedback('light'); setShowRecipe(true); }}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200/60 active:bg-amber-100 transition-colors"
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className="text-base leading-none">🍳</span>
+                    <span className="text-xs font-bold text-amber-700">{t("recipe.openRecipe") || 'Recept'}</span>
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           )}
@@ -2331,6 +2377,19 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
             checked={checked}
             onSelect={handleAlternativeSelect}
             onClose={() => setSwapOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ─── RECIPE OVERLAY ─── */}
+      <AnimatePresence>
+        {showRecipe && selectedMeal && (
+          <RecipeOverlay
+            meal={selectedMeal}
+            userProfile={userProfile}
+            weekMeals={weekMeals}
+            todayMeals={todayMeals}
+            onClose={() => setShowRecipe(false)}
           />
         )}
       </AnimatePresence>
@@ -2360,7 +2419,7 @@ function MealDetailSheet({
   isTrainingDay, dayLabel, calorieTarget,
   canEdit, checked, onSelect, onClose,
 }: MealDetailSheetProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [showAlternatives, setShowAlternatives] = useState(false);
 
   const parseKcal = (s: string) => parseInt(s.replace(/[^0-9]/g, '')) || 0;
@@ -2511,7 +2570,7 @@ function MealDetailSheet({
                         🍽️
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[13px] font-medium text-gray-800">{ing}</span>
+                        <span className="text-[13px] font-medium text-gray-800">{translateFoodName(ing, language)}</span>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-2xs text-gray-400">~{perIngKcal} kcal</span>
                           <span className="text-2xs text-red-400">P {perIngProtein}g</span>
@@ -2594,13 +2653,13 @@ function MealDetailSheet({
                               </span>
                             </div>
 
-                            <h5 className="font-semibold text-[13px] text-foreground mb-0.5">{meal.name}</h5>
+                            <h5 className="font-semibold text-[13px] text-foreground mb-0.5">{translateFoodName(meal.name, language)}</h5>
                             <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed">{meal.description}</p>
 
                             {meal.ingredients && meal.ingredients.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {meal.ingredients.slice(0, 4).map((ing: string, i: number) => (
-                                  <span key={i} className="text-2xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{ing}</span>
+                                  <span key={i} className="text-2xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{translateFoodName(ing, language)}</span>
                                 ))}
                                 {meal.ingredients.length > 4 && (
                                   <span className="text-2xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-md">+{meal.ingredients.length - 4}</span>
@@ -2641,7 +2700,7 @@ function MealDetailSheet({
 interface LoggedMealAsCardProps { meal: LoggedMeal; onRemove: () => void; }
  
 function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
-  const { t, locale: cardLocale } = useLanguage();
+  const { t, language, locale: cardLocale } = useLanguage();
   const mealTime = new Date(meal.timestamp);
   const timeStr = mealTime.toLocaleTimeString(cardLocale, { hour: '2-digit', minute: '2-digit' });
 
@@ -2662,7 +2721,7 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
               {meal.image || '🍽️'}
             </div>
             <div>
-              <h4 className="font-semibold text-sm text-foreground">{meal.name}</h4>
+              <h4 className="font-semibold text-sm text-foreground">{translateFoodName(meal.name, language)}</h4>
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Clock className="w-3 h-3" /><span>{timeStr}</span>
               </div>

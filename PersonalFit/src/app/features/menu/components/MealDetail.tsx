@@ -18,7 +18,7 @@
  */
 
 import { hapticFeedback } from '@/lib/haptics';
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import {
   ChevronDown,
@@ -33,7 +33,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePlanData, type MealOption, type WeekData } from "../../../hooks/usePlanData";
 import { mealPlan } from "../../../data/mealData";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { translateFoodName } from "../../../utils/foodTranslations";
 import { DSMSubPageHeader } from "../../../components/dsm";
+import { getUserProfile, type StoredUserProfile } from "../../../backend/services/UserProfileService";
+import { RecipeOverlay } from "./RecipeOverlay";
 
 // ══════════════════════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -118,11 +121,17 @@ export function MealDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   const { planData: hookPlanData } = usePlanData();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedAlternative, setSelectedAlternative] = useState<AlternativeMeal | null>(null);
   const [showAllAlternatives, setShowAllAlternatives] = useState(false);
   const [filterDayType, setFilterDayType] = useState<"all" | "training" | "rest">("all");
+  const [showRecipe, setShowRecipe] = useState(false);
+  const [userProfile, setUserProfile] = useState<StoredUserProfile | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getUserProfile().then(setUserProfile).catch(() => {});
+  }, []);
 
   // Get plan data from route state or hook
   const routeState = location.state as {
@@ -136,6 +145,26 @@ export function MealDetail() {
     if (hookPlanData.length > 0) return hookPlanData;
     return mealPlan as unknown as WeekData[];
   }, [routeState, hookPlanData]);
+
+  // All meals across the week (for gastro rules in RecipeOverlay)
+  const weekMeals = useMemo<MealOption[]>(() => {
+    const meals: MealOption[] = [];
+    for (const weekData of effectivePlan) {
+      for (const dayData of weekData.days) {
+        meals.push(...dayData.breakfast, ...dayData.lunch, ...dayData.dinner);
+      }
+    }
+    return meals;
+  }, [effectivePlan]);
+
+  // Today's meals (for gastro rules in RecipeOverlay)
+  const todayMeals = useMemo<MealOption[]>(() => {
+    const { week, day } = calculateWeekAndDay(new Date());
+    const weekData = effectivePlan[week];
+    if (!weekData || !weekData.days[day]) return [];
+    const dayData = weekData.days[day];
+    return [...dayData.breakfast, ...dayData.lunch, ...dayData.dinner];
+  }, [effectivePlan]);
 
   const config = useMemo(() => {
     const gradients: Record<string, { gradientFrom: string; gradientTo: string; icon: string }> = {
@@ -262,7 +291,7 @@ export function MealDetail() {
               className="text-[17px] text-foreground mb-1"
               style={{ fontWeight: 700 }}
             >
-              {displayedMeal.name}
+              {translateFoodName(displayedMeal.name, language)}
             </h2>
             <p className="text-[13px] text-gray-500 mb-4">
               {displayedMeal.description}
@@ -306,12 +335,26 @@ export function MealDetail() {
                       className="text-sm text-gray-700"
                       style={{ fontWeight: 500 }}
                     >
-                      {ingredient}
+                      {translateFoodName(ingredient, language)}
                     </span>
                   </motion.div>
                 ))}
               </div>
             </div>
+
+            {/* ── Recipe button (lunch/dinner only) ── */}
+            {(mealType === 'lunch' || mealType === 'dinner') && (
+              <motion.button
+                onClick={() => { hapticFeedback('light'); setShowRecipe(true); }}
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200/60 active:bg-amber-100 transition-colors cursor-pointer"
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="text-base leading-none">🍳</span>
+                <span className="text-xs text-amber-700" style={{ fontWeight: 700 }}>
+                  {t("recipe.openRecipe") || 'Recept'}
+                </span>
+              </motion.button>
+            )}
           </motion.div>
 
           {/* ── Alternatives section ── */}
@@ -384,7 +427,7 @@ export function MealDetail() {
                             className="text-sm text-foreground truncate"
                             style={{ fontWeight: 600 }}
                           >
-                            {alt.name}
+                            {translateFoodName(alt.name, language)}
                           </h4>
                           <p className="text-xs text-gray-400 mt-0.5 truncate">
                             {alt.description}
@@ -453,6 +496,19 @@ export function MealDetail() {
           <div className="h-8" />
         </div>
       </div>
+
+      {/* ─── RECIPE OVERLAY ─── */}
+      <AnimatePresence>
+        {showRecipe && displayedMeal && (
+          <RecipeOverlay
+            meal={displayedMeal}
+            userProfile={userProfile}
+            weekMeals={weekMeals}
+            todayMeals={todayMeals}
+            onClose={() => setShowRecipe(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
