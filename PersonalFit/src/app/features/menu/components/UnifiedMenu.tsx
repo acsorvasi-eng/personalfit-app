@@ -1205,15 +1205,6 @@ export function UnifiedMenu() {
           icon={UtensilsCrossed}
           title={t("menu.title")}
           subtitle={`28 ${t("menu.dayPlan")} - ${currentTime.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`}
-          action={
-              <button
-                onClick={() => navigate('/profile', { state: { tab: 'settings' } })}
-                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/25 active:bg-white/30 transition-colors"
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-            }
           stats={[
             {
               label: calorieRemaining < 0
