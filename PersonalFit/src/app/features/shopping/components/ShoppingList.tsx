@@ -9,6 +9,13 @@ import {
   Search,
   Plus,
   ShoppingBag,
+  ShoppingCart,
+  Settings,
+  CreditCard,
+  MapPin,
+  Refrigerator,
+  ChevronRight,
+  Bluetooth,
 } from "lucide-react";
 import { DSMSwipeAction, DSMCoachMark } from "../../../components/dsm/ux-patterns";
 import { PageHeader } from "../../../components/PageHeader";
@@ -119,6 +126,164 @@ function SmartStorePanel({
   );
 }
 
+// ─── Shopping Settings Sheet ─────────────────────────────────────────────────
+interface ShoppingSettings {
+  cardHolder: string;
+  cardLast4: string;
+  address: string;
+  fridgePaired: boolean;
+  fridgeName: string;
+}
+
+function ShoppingSettingsSheet({
+  open,
+  onClose,
+  settings,
+  onChange,
+}: {
+  open: boolean;
+  onClose: () => void;
+  settings: ShoppingSettings;
+  onChange: (s: ShoppingSettings) => void;
+}) {
+  const [local, setLocal] = useState(settings);
+  useEffect(() => { setLocal(settings); }, [settings, open]);
+
+  const save = () => { onChange(local); onClose(); hapticFeedback('light'); };
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ background: 'rgba(0,0,0,0.45)' }} onClick={onClose}>
+      <div
+        className="bg-white rounded-t-3xl overflow-hidden"
+        style={{ maxHeight: '90vh', overflowY: 'auto' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
+        {/* Header */}
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-base font-black text-gray-900">Bevásárlás beállítások</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 space-y-6">
+          {/* Payment */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#0d9488' }}>
+                <CreditCard className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-bold text-gray-900">Fizetési kártya</h3>
+            </div>
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Kártyabirtokos neve"
+                value={local.cardHolder}
+                onChange={e => setLocal(p => ({ ...p, cardHolder: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none"
+              />
+              <input
+                type="text"
+                placeholder="Kártya utolsó 4 számjegy"
+                maxLength={4}
+                value={local.cardLast4}
+                onChange={e => setLocal(p => ({ ...p, cardLast4: e.target.value.replace(/\D/g, '') }))}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Delivery address */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#0d9488' }}>
+                <MapPin className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-bold text-gray-900">Szállítási cím</h3>
+            </div>
+            <textarea
+              placeholder="pl. Kolozsvár, Főtér 1., 3. em. 12."
+              value={local.address}
+              onChange={e => setLocal(p => ({ ...p, address: e.target.value }))}
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none resize-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">Ide hozhatja a futár a rendelést</p>
+          </div>
+
+          {/* Smart fridge */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#0d9488' }}>
+                <Refrigerator className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-bold text-gray-900">Okos hűtő</h3>
+            </div>
+            {local.fridgePaired ? (
+              <div className="bg-teal-50 border-2 border-teal-200 rounded-xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Bluetooth className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <div className="font-bold text-teal-800 text-sm">{local.fridgeName || 'Hűtő'}</div>
+                    <div className="text-xs text-teal-600">Párosítva ✓</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setLocal(p => ({ ...p, fridgePaired: false, fridgeName: '' }))}
+                  className="text-xs text-red-500 font-semibold px-3 py-1.5 rounded-lg bg-red-50"
+                >
+                  Lekapcsol
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-4 text-center mb-3">
+                  <Refrigerator className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 font-medium">Nincs párosítva</p>
+                  <p className="text-xs text-gray-400 mt-1">Az okos hűtő automatikusan jelzi ha valami fogyóban van</p>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Hűtő neve (pl. Samsung Family Hub)"
+                  value={local.fridgeName}
+                  onChange={e => setLocal(p => ({ ...p, fridgeName: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none mb-2"
+                />
+                <button
+                  onClick={() => { if (local.fridgeName.trim()) setLocal(p => ({ ...p, fridgePaired: true })); }}
+                  disabled={!local.fridgeName.trim()}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
+                  style={{ background: '#0d9488' }}
+                >
+                  <Bluetooth className="w-4 h-4" /> Párosítás
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Save button */}
+        <div className="px-5 pb-8 pt-2">
+          <button
+            onClick={save}
+            className="w-full py-4 rounded-2xl font-black text-white text-base"
+            style={{ background: '#0d9488' }}
+          >
+            Mentés
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ShoppingList() {
   const { t } = useLanguage();
   const { planData } = usePlanData();
@@ -158,6 +323,23 @@ export function ShoppingList() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [stopByOpen, setStopByOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shoppingSettings, setShoppingSettings] = useState<ShoppingSettings>({
+    cardHolder: '', cardLast4: '', address: '', fridgePaired: false, fridgeName: '',
+  });
+
+  // Load / save shopping settings
+  useEffect(() => {
+    getSetting('shoppingSettings').then((saved) => {
+      if (!saved) return;
+      try { setShoppingSettings(JSON.parse(saved)); } catch { /* ignore */ }
+    });
+  }, []);
+
+  const handleSaveSettings = (s: ShoppingSettings) => {
+    setShoppingSettings(s);
+    setSetting('shoppingSettings', JSON.stringify(s)).catch(() => {});
+  };
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [storePreferences, setStorePreferences] = useState<StorePreferences>({});
 
@@ -319,6 +501,29 @@ export function ShoppingList() {
               suffix: 'lei',
             },
           ] : []}
+          action={
+            <div className="flex items-center gap-2">
+              {/* Cart badge */}
+              <div className="relative">
+                <button className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  <ShoppingCart className="w-4 h-4 text-white" />
+                </button>
+                <span
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black"
+                  style={{ background: totalItems > 0 ? '#fff' : 'rgba(255,255,255,0.35)', color: totalItems > 0 ? '#0d9488' : '#fff' }}
+                >
+                  {totalItems}
+                </span>
+              </div>
+              {/* Settings */}
+              <button
+                onClick={() => { setSettingsOpen(true); hapticFeedback('light'); }}
+                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center"
+              >
+                <Settings className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          }
         />
       </div>
 
@@ -533,14 +738,40 @@ export function ShoppingList() {
 
         {/* Empty state */}
         {totalItems === 0 && !searchQuery && (
-          <div className="text-center py-8 px-4">
-            <div className="text-5xl mb-3">🛒</div>
-            <h3 className="text-lg text-gray-900 mb-1" style={{ fontWeight: 700 }}>
-              {t('shopping.emptyList')}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {t('shopping.emptyListHint')}
-            </p>
+          <div className="px-4 py-6">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-3">🛒</div>
+              <h3 className="text-lg text-gray-900 mb-1" style={{ fontWeight: 700 }}>
+                {t('shopping.emptyList')}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {t('shopping.emptyListHint')}
+              </p>
+            </div>
+
+            {/* Fogyandóba van — smart fridge placeholder */}
+            <div className="rounded-2xl border-2 border-dashed border-teal-200 bg-teal-50/40 p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <Refrigerator className="w-5 h-5 text-teal-500 flex-shrink-0" />
+                <span className="text-sm font-bold text-teal-700">Fogyandóba van</span>
+                <span className="ml-auto text-2xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full font-semibold">Hamarosan</span>
+              </div>
+              {shoppingSettings.fridgePaired ? (
+                <p className="text-xs text-teal-600 leading-relaxed">
+                  Az okos hűtőd (<span className="font-semibold">{shoppingSettings.fridgeName}</span>) figyelni fogja mi van fogyóban és automatikusan ide kerülnek a hiányzó termékek.
+                </p>
+              ) : (
+                <p className="text-xs text-teal-600 leading-relaxed">
+                  Ha párosítasz egy okos hűtőt a beállításokban, automatikusan megjelenik itt ami fogyóban van.{' '}
+                  <button
+                    onClick={() => { setSettingsOpen(true); hapticFeedback('light'); }}
+                    className="font-bold underline underline-offset-2"
+                  >
+                    Hűtő párosítása →
+                  </button>
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -559,6 +790,12 @@ export function ShoppingList() {
         onClose={() => setOrderOpen(false)}
         topRecommendation={topRecommendation}
         twoStoreCombo={twoStoreCombo}
+      />
+      <ShoppingSettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={shoppingSettings}
+        onChange={handleSaveSettings}
       />
     </div>
   );

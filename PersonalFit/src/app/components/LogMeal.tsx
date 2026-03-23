@@ -38,6 +38,24 @@ interface AIFoodAnalysis {
   fat: number;
 }
 
+interface MultiMealItem {
+  name: string;
+  estimatedGrams: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+interface MultiMealAnalysis {
+  items: MultiMealItem[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  confidence: number;
+  note?: string;
+}
+
 type SearchResultType = 'product' | 'recipe' | 'mixed';
 
 export function LogMeal() {
@@ -80,6 +98,9 @@ export function LogMeal() {
   const [photoCustomName, setPhotoCustomName] = useState('');
   const [isVoiceAIAnalyzing, setIsVoiceAIAnalyzing] = useState(false);
   const [voiceAIResult, setVoiceAIResult] = useState<AIFoodAnalysis | null>(null);
+  const [voiceMultiMeal, setVoiceMultiMeal] = useState<MultiMealAnalysis | null>(null);
+  const [photoMultiMeal, setPhotoMultiMeal] = useState<MultiMealAnalysis | null>(null);
+  const [voiceInterimText, setVoiceInterimText] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [recognitionError, setRecognitionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -394,11 +415,46 @@ export function LogMeal() {
     } catch { return null; }
   };
 
+  // Claude multi-food API helper
+  const callClaudeForMultiMeal = async (
+    prompt: string,
+    imageData?: { base64: string; mediaType: string }
+  ): Promise<MultiMealAnalysis | null> => {
+    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    if (!apiKey) return null;
+    const content: any[] = [];
+    if (imageData) {
+      content.push({ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.base64 } });
+    }
+    content.push({ type: 'text', text: prompt });
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 600, messages: [{ role: 'user', content }] }),
+      });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      const text: string = data.content[0].text.trim();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) return null;
+      const parsed = JSON.parse(match[0]);
+      if (!parsed.items || !Array.isArray(parsed.items)) return null;
+      return parsed as MultiMealAnalysis;
+    } catch { return null; }
+  };
+
   // AI image recognition using Claude Vision
   const recognizeFood = async (imageFile: File): Promise<void> => {
     setIsRecognizing(true);
     setRecognitionError(null);
     setPhotoResult(null);
+    setPhotoMultiMeal(null);
     setPhotoNotRecognized(false);
     setPhotoGuess(null);
     setPhotoCustomName('');
@@ -411,21 +467,25 @@ export function LogMeal() {
         reader.readAsDataURL(imageFile);
       });
 
-      const prompt = `Azonosítsd az ételt a képen. Válaszolj KIZÁRÓLAG érvényes JSON-nal, semmi más szöveget ne írj:
-{"name":"étel neve magyarul","confidence":0.85,"estimatedGrams":200,"calories":320,"protein":25,"carbs":30,"fat":8}
-- confidence: 0.0–1.0 (mennyire biztos vagy az azonosításban)
-- estimatedGrams: becsült tipikus adag grammban
-- calories/protein/carbs/fat: az adott adagra számított értékek
-- Ha nem étel látható: {"name":"","confidence":0,"estimatedGrams":0,"calories":0,"protein":0,"carbs":0,"fat":0}`;
+      const prompt = `Azonosítsd az ÖSSZES ételt és italt a képen. Ismerd fel a regionális/erdélyi/román/magyar ételeket is (pl. boeuf saláta, fasírt, töltött káposzta, kürtőskalács, mámáligá, sarmale, stb.).
+Ha egy elem bizonytalan, adj alacsonyabb confidence értéket de próbáld meg azonosítani.
+Ha több étel látható, listázd mindegyiket külön.
 
-      const result = await callClaudeForFood(prompt, { base64, mediaType: imageFile.type || 'image/jpeg' });
+Válaszolj KIZÁRÓLAG érvényes JSON-nal:
+{"items":[{"name":"étel neve magyarul","estimatedGrams":200,"calories":320,"protein":25,"carbs":30,"fat":8}],"totalCalories":320,"totalProtein":25,"totalCarbs":30,"totalFat":8,"confidence":0.85,"note":"opcionális megjegyzés"}
+- Ha nem étel látható: {"items":[],"totalCalories":0,"totalProtein":0,"totalCarbs":0,"totalFat":0,"confidence":0}`;
 
-      if (!result || !result.name || result.confidence < 0.55) {
-        setPhotoGuess(result?.name || null);
+      const result = await callClaudeForMultiMeal(prompt, { base64, mediaType: imageFile.type || 'image/jpeg' });
+
+      if (!result || result.items.length === 0 || result.confidence < 0.4) {
+        // Try to get at least a guess for the not-recognized flow
+        const singlePrompt = `Mi látható a képen? Ha étel: add meg a nevét. Ha nem étel: írj üres stringet. Csak JSON: {"name":"étel neve magyarul"}`;
+        const guessResult = await callClaudeForFood(singlePrompt, { base64, mediaType: imageFile.type || 'image/jpeg' });
+        setPhotoGuess(guessResult?.name || null);
         setPhotoNotRecognized(true);
       } else {
-        setPhotoResult(result);
-        setMealInput(result.name);
+        setPhotoMultiMeal(result);
+        setMealInput(result.items[0]?.name || '');
       }
     } catch {
       setRecognitionError(t("logMealExt.errorRecognize"));
@@ -467,22 +527,62 @@ export function LogMeal() {
     setPhotoCustomName('');
     setVoiceAIResult(null);
     setVoiceTranscript(null);
+    setVoiceMultiMeal(null);
+    setPhotoMultiMeal(null);
     resetForm();
     showSuccessAndNavigate(analysis.name, analysis.calories, analysis.protein, analysis.carbs, analysis.fat);
   };
 
-  // Analyze voice transcript with Claude when local DB has no match
+  // Add a multi-food AI meal (photo or voice)
+  const addMultiMeal = (multi: MultiMealAnalysis) => {
+    const name = multi.items.length === 1
+      ? multi.items[0].name
+      : multi.items.map(i => i.name).join(' + ');
+    const newMeal: LoggedMeal = {
+      id: Date.now().toString(),
+      name,
+      type: 'recipe',
+      quantity: 1,
+      calories: multi.totalCalories,
+      protein: multi.totalProtein,
+      carbs: multi.totalCarbs,
+      fat: multi.totalFat,
+      timestamp: Date.now(),
+      image: '🍽️',
+    };
+    setLoggedMeals(prev => [...prev, newMeal]);
+    setPhotoMultiMeal(null);
+    setVoiceMultiMeal(null);
+    setPhotoResult(null);
+    setVoiceAIResult(null);
+    setVoiceTranscript(null);
+    resetForm();
+    showSuccessAndNavigate(name, multi.totalCalories, multi.totalProtein, multi.totalCarbs, multi.totalFat);
+  };
+
+  // Analyze voice transcript with Claude — multi-food with regional dish knowledge
   const analyzeVoiceWithClaude = async (transcript: string) => {
     setIsVoiceAIAnalyzing(true);
-    const prompt = `A felhasználó azt mondta, hogy ezt ette: "${transcript}"
-Azonosítsd az ételt és becsüld meg a tápértékét. Válaszolj KIZÁRÓLAG érvényes JSON-nal:
-{"name":"étel neve magyarul","confidence":0.8,"estimatedGrams":200,"calories":350,"protein":20,"carbs":40,"fat":10}
-- estimatedGrams: tipikus adag mérete grammban
-- calories/protein/carbs/fat: az adott adagra számított értékek (egész számok)`;
+    setVoiceMultiMeal(null);
+    const prompt = `A felhasználó ezt mondta: "${transcript}"
+
+Azonosítsd az ÖSSZES ételt/italt amit említ, és becsüld meg az adagokat.
+Ismerd fel az erdélyi, román, magyar regionális ételeket is:
+- "boeuf saláta" / "böf saláta" = majonézes marhahúsos-zöldséges saláta (~250g, ~350kcal, F:15g, Szh:20g, Zs:22g)
+- "fasírt" = húspogácsa (~120g sütve, ~280kcal, F:18g, Szh:12g, Zs:18g)
+- "töltött káposzta" = darált húsos-rizses káposzta (~300g, ~380kcal, F:22g, Szh:28g, Zs:18g)
+- "mámáligá" = polentaszerű kukoricapép (~200g, ~180kcal, F:4g, Szh:38g, Zs:2g)
+- "sarmale" = töltött káposzta román verzió (~300g, ~400kcal, F:20g, Szh:30g, Zs:20g)
+- "kürtőskalács" = ~100g, ~350kcal, F:7g, Szh:55g, Zs:12g
+- Ha mennyiséget mond (pl. "200g csirkemell"), azt vedd figyelembe
+
+Válaszolj KIZÁRÓLAG érvényes JSON-nal:
+{"items":[{"name":"étel neve","estimatedGrams":200,"calories":350,"protein":20,"carbs":40,"fat":10}],"totalCalories":350,"totalProtein":20,"totalCarbs":40,"totalFat":10,"confidence":0.85,"note":""}
+Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0,"totalCarbs":0,"totalFat":0,"confidence":0}`;
     try {
-      const result = await callClaudeForFood(prompt);
-      if (result && result.name && result.calories > 0) {
-        setVoiceAIResult(result);
+      const result = await callClaudeForMultiMeal(prompt);
+      if (result && result.items.length > 0 && result.totalCalories > 0) {
+        setVoiceMultiMeal(result);
       }
     } catch { /* ignore */ } finally {
       setIsVoiceAIAnalyzing(false);
@@ -642,40 +742,68 @@ Azonosítsd az ételt és becsüld meg a tápértékét. Válaszolj KIZÁRÓLAG 
 
   const startVoiceRecognition = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setRecognitionError(t("logMealExt.errorVoiceNotSupported"));
+      setRecognitionError('A hangfelismerés nem támogatott ezen az eszközön. Próbáld Chrome vagy Safari böngészővel.');
       return;
     }
 
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const recognition = new SpeechRecognition();
-    
-    recognition.lang = locale;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+
+    // Hungarian for food names (regardless of app locale)
+    recognition.lang = locale?.startsWith('ro') ? 'ro-RO' : 'hu-HU';
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 3;
+    recognition.continuous = false;
 
     recognition.onstart = () => {
       setIsListening(true);
       setRecognitionError(null);
+      setVoiceInterimText('');
+      setVoiceMultiMeal(null);
     };
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setMealInput(transcript);
-      setShowDropdown(true);
-      processVoiceTranscript(transcript);
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+      setVoiceInterimText(interim);
+      if (final) {
+        setVoiceInterimText('');
+        setMealInput(final);
+        setShowDropdown(true);
+        processVoiceTranscript(final);
+      }
     };
 
     recognition.onerror = (event: any) => {
-      setRecognitionError(t("logMealExt.errorVoiceRecognition"));
+      if (event.error === 'no-speech') {
+        setRecognitionError('Nem hallottam semmit. Próbáld újra, és beszélj hangosabban.');
+      } else if (event.error === 'not-allowed') {
+        setRecognitionError('Mikrofon hozzáférés megtagadva. Engedélyezd a mikrofont a böngésző beállításaiban.');
+      } else {
+        setRecognitionError('Hangfelismerési hiba. Próbáld újra.');
+      }
       setIsListening(false);
+      setVoiceInterimText('');
     };
 
     recognition.onend = () => {
       setIsListening(false);
+      setVoiceInterimText('');
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
+    try {
+      recognition.start();
+    } catch {
+      setRecognitionError('Nem sikerült elindítani a hangfelismerést. Frissítsd az oldalt és próbáld újra.');
+    }
   };
 
   const stopVoiceRecognition = () => {
@@ -1232,8 +1360,65 @@ Azonosítsd az ételt és becsüld meg a tápértékét. Válaszolj KIZÁRÓLAG 
             </div>
           )}
 
-          {/* Photo: high-confidence result */}
-          {photoResult && (
+          {/* Photo: multi-food result */}
+          {photoMultiMeal && (
+            <div className="bg-white border-2 rounded-2xl p-4 space-y-3" style={{ borderColor: '#0d9488' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-5 h-5" style={{ color: '#0d9488' }} />
+                  <span className="font-bold text-sm" style={{ color: '#0d9488' }}>
+                    Felismert {photoMultiMeal.items.length > 1 ? `${photoMultiMeal.items.length} étel` : 'étel'}
+                  </span>
+                </div>
+                {photoMultiMeal.note && (
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">⚠ {photoMultiMeal.note}</span>
+                )}
+              </div>
+              {/* Individual items */}
+              {photoMultiMeal.items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                  <div>
+                    <div className="font-semibold text-sm text-gray-900">{item.name}</div>
+                    <div className="text-xs text-gray-400">~{item.estimatedGrams}g</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-black text-sm" style={{ color: '#0d9488' }}>{item.calories} kcal</div>
+                    <div className="text-xs text-gray-400">F:{item.protein}g Sz:{item.carbs}g Zs:{item.fat}g</div>
+                  </div>
+                </div>
+              ))}
+              {/* Totals */}
+              {photoMultiMeal.items.length > 1 && (
+                <div className="rounded-xl p-3 text-white" style={{ background: '#0d9488' }}>
+                  <div className="text-xs font-bold mb-2 opacity-80">ÖSSZESEN</div>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div><div className="text-xl font-black">{photoMultiMeal.totalCalories}</div><div className="text-xs opacity-80">kcal</div></div>
+                    <div><div className="text-xl font-black">{photoMultiMeal.totalProtein}g</div><div className="text-xs opacity-80">fehérje</div></div>
+                    <div><div className="text-xl font-black">{photoMultiMeal.totalCarbs}g</div><div className="text-xs opacity-80">szénhidrát</div></div>
+                    <div><div className="text-xl font-black">{photoMultiMeal.totalFat}g</div><div className="text-xs opacity-80">zsír</div></div>
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => addMultiMeal(photoMultiMeal)}
+                  className="flex-1 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
+                  style={{ background: '#0d9488' }}
+                >
+                  <Plus className="w-4 h-4" /> Rögzítem
+                </button>
+                <button
+                  onClick={() => { setPhotoMultiMeal(null); setMealInput(''); }}
+                  className="px-4 py-3 rounded-xl font-bold bg-gray-100 text-gray-600"
+                >
+                  Mégsem
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Photo: single-food legacy result (from "Igen" confirm flow) */}
+          {photoResult && !photoMultiMeal && (
             <div className="bg-white border-2 rounded-2xl p-4 space-y-3" style={{ borderColor: '#0d9488' }}>
               <div className="flex items-center gap-2">
                 <Camera className="w-5 h-5" style={{ color: '#0d9488' }} />
@@ -1343,31 +1528,61 @@ Azonosítsd az ételt és becsüld meg a tápértékét. Válaszolj KIZÁRÓLAG 
             </div>
           )}
 
-          {/* Voice: Claude AI result */}
-          {voiceAIResult && !isVoiceAIAnalyzing && (
+          {/* Voice: live interim text */}
+          {isListening && voiceInterimText && (
+            <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 flex items-center gap-3">
+              <Mic className="w-4 h-4 text-purple-500 animate-pulse flex-shrink-0" />
+              <p className="text-sm text-purple-700 italic">"{voiceInterimText}"</p>
+            </div>
+          )}
+
+          {/* Voice: Claude multi-food result */}
+          {voiceMultiMeal && !isVoiceAIAnalyzing && (
             <div className="bg-white border-2 rounded-2xl p-4 space-y-3" style={{ borderColor: '#7c3aed' }}>
-              <div className="flex items-center gap-2">
-                <Mic className="w-5 h-5 text-purple-600" />
-                <span className="font-bold text-sm text-purple-700">AI azonosította</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Mic className="w-5 h-5 text-purple-600" />
+                  <span className="font-bold text-sm text-purple-700">
+                    AI azonosította — {voiceMultiMeal.items.length > 1 ? `${voiceMultiMeal.items.length} étel` : voiceMultiMeal.items[0]?.name}
+                  </span>
+                </div>
+                {voiceMultiMeal.note && (
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">⚠ {voiceMultiMeal.note}</span>
+                )}
               </div>
-              <div className="font-black text-lg text-foreground">{voiceAIResult.name}</div>
-              <div className="grid grid-cols-4 gap-2 text-center bg-gray-50 rounded-xl p-3">
-                <div><div className="text-xl font-black text-purple-600">{voiceAIResult.calories}</div><div className="text-xs text-gray-500">kcal</div></div>
-                <div><div className="text-xl font-black text-blue-600">{voiceAIResult.protein}g</div><div className="text-xs text-gray-500">fehérje</div></div>
-                <div><div className="text-xl font-black text-orange-500">{voiceAIResult.carbs}g</div><div className="text-xs text-gray-500">szénhidrát</div></div>
-                <div><div className="text-xl font-black text-yellow-500">{voiceAIResult.fat}g</div><div className="text-xs text-gray-500">zsír</div></div>
-              </div>
-              <div className="text-xs text-gray-400 text-center">~{voiceAIResult.estimatedGrams}g becsült adag</div>
+              {voiceMultiMeal.items.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                  <div>
+                    <div className="font-semibold text-sm text-gray-900">{item.name}</div>
+                    <div className="text-xs text-gray-400">~{item.estimatedGrams}g</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-black text-sm text-purple-600">{item.calories} kcal</div>
+                    <div className="text-xs text-gray-400">F:{item.protein}g Sz:{item.carbs}g Zs:{item.fat}g</div>
+                  </div>
+                </div>
+              ))}
+              {voiceMultiMeal.items.length > 1 && (
+                <div className="rounded-xl p-3 text-white" style={{ background: '#7c3aed' }}>
+                  <div className="text-xs font-bold mb-2 opacity-80">ÖSSZESEN</div>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div><div className="text-xl font-black">{voiceMultiMeal.totalCalories}</div><div className="text-xs opacity-80">kcal</div></div>
+                    <div><div className="text-xl font-black">{voiceMultiMeal.totalProtein}g</div><div className="text-xs opacity-80">fehérje</div></div>
+                    <div><div className="text-xl font-black">{voiceMultiMeal.totalCarbs}g</div><div className="text-xs opacity-80">szénhidrát</div></div>
+                    <div><div className="text-xl font-black">{voiceMultiMeal.totalFat}g</div><div className="text-xs opacity-80">zsír</div></div>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
-                  onClick={() => addAIAnalysisMeal(voiceAIResult)}
+                  onClick={() => addMultiMeal(voiceMultiMeal)}
                   className="flex-1 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2"
                   style={{ background: '#7c3aed' }}
                 >
-                  <Plus className="w-4 h-4" /> Hozzáadom
+                  <Plus className="w-4 h-4" /> Rögzítem
                 </button>
                 <button
-                  onClick={() => { setVoiceAIResult(null); setVoiceTranscript(null); }}
+                  onClick={() => { setVoiceMultiMeal(null); setVoiceTranscript(null); setMealInput(''); }}
                   className="px-4 py-3 rounded-xl font-bold bg-gray-100 text-gray-600"
                 >
                   Mégsem
