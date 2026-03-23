@@ -67,8 +67,13 @@ export async function generateRecipe(input: ChefAgentInput): Promise<ChefAgentOu
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new RecipeGenerationError((err as { error?: string }).error || `HTTP ${response.status}`);
+    let errorPayload: { error?: string } = {};
+    try {
+      errorPayload = await response.json();
+    } catch {
+      // Response body is not JSON (e.g. HTML error page)
+    }
+    throw new RecipeGenerationError(errorPayload.error || `HTTP ${response.status}`);
   }
 
   const result: ChefAgentOutput = await response.json();

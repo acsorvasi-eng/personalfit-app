@@ -46,7 +46,7 @@ export async function getDailyMenuMatches(
   });
 
   if (!response.ok) {
-    throw new Error(`Menu estimation failed: HTTP ${response.status}`);
+    throw new Error(`Menu estimation failed for ${city}: HTTP ${response.status}`);
   }
 
   const result = await response.json();
