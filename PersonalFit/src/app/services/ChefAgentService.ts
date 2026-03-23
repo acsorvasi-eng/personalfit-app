@@ -3,6 +3,7 @@ import { getDB } from '../backend/db';
 import type { ChefAgentInput, ChefAgentOutput, RecipeCacheEntry } from './recipeModels';
 import { RecipeGenerationError } from './recipeModels';
 import type { MealOption } from '../hooks/usePlanData';
+import { apiBase } from '../../lib/api';
 
 // Keywords for weekContext computation
 const EGG_KEYWORDS = ['tojás', 'egg', 'ou', 'ouă'];
@@ -55,7 +56,7 @@ export async function generateRecipe(input: ChefAgentInput): Promise<ChefAgentOu
   }
 
   // API call
-  const response = await fetch('/api/generate-recipe', {
+  const response = await fetch(`${apiBase}/api/generate-recipe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

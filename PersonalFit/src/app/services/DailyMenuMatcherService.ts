@@ -1,6 +1,7 @@
 // PersonalFit/src/app/services/DailyMenuMatcherService.ts
 import { getDB } from '../backend/db';
 import type { DailyMenuMatch, DailyMenuCacheEntry } from './recipeModels';
+import { apiBase } from '../../lib/api';
 
 const CITY_DEFAULTS: Record<string, string> = {
   hu: 'Budapest',
@@ -36,7 +37,7 @@ export async function getDailyMenuMatches(
   }
 
   // API call
-  const response = await fetch('/api/estimate-menu-nutrition', {
+  const response = await fetch(`${apiBase}/api/estimate-menu-nutrition`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ targetMeal, city, country, language }),
