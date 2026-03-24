@@ -835,24 +835,7 @@ export function UnifiedMenu() {
   const handleMealCheck = (mealId: string, date: Date, mealType: string) => {
     const status = getMealStatus(date);
     if (!status.isToday) return;
-    
-    // ─── Feedback when outside time window (UX improvement) ───
-    const canCheck = (mealType === "breakfast" && status.canCheckBreakfast) ||
-      (mealType === "lunch" && status.canCheckLunch) ||
-      (mealType === "dinner" && status.canCheckDinner);
-    
-    if (!canCheck) {
-      const windowMap: Record<string, string> = {
-        breakfast: "06:00 - 08:00",
-        lunch: "12:30 - 13:30",
-        dinner: "17:30 - 18:30",
-      };
-      setWindowFeedback(t("mealDetail.mealWindowMsg").replace('{time}', windowMap[mealType] || ""));
-      hapticFeedback('light');
-      setTimeout(() => setWindowFeedback(null), 3000);
-      return;
-    }
-    
+
     hapticFeedback('light');
     setCheckedMeals(prev => {
       const newSet = new Set(prev);
@@ -2206,6 +2189,29 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                 <span className="text-xs text-gray-400">{time}</span>
               </div>
             </div>
+            {/* Eat check button */}
+            {isToday && (
+              <motion.button
+                onClick={(e) => { e.stopPropagation(); onCheck(); }}
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                  checked
+                    ? 'bg-green-500 active:bg-green-600'
+                    : isPassed
+                    ? 'bg-orange-100 border border-orange-300 active:bg-orange-200'
+                    : 'bg-primary/10 border border-primary/30 active:bg-primary/20'
+                }`}
+                whileTap={{ scale: 0.88 }}
+                aria-label={checked ? 'Visszavonom' : 'Megettem'}
+              >
+                <Check className={`w-4 h-4 ${
+                  checked
+                    ? 'text-white'
+                    : isPassed
+                    ? 'text-orange-500'
+                    : 'text-primary'
+                }`} />
+              </motion.button>
+            )}
             <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }} className="flex-shrink-0">
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </motion.div>
