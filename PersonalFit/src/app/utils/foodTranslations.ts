@@ -157,6 +157,27 @@ const _RAW_FOOD_NAMES: Array<{ hu: string; en: string; ro: string }> = [
   { hu: 'Tönköly',            en: 'Spelt',              ro: 'Spelt'              },
   { hu: 'Búzadara',           en: 'Semolina',           ro: 'Griș'               },
   { hu: 'Polenta',            en: 'Polenta',            ro: 'Mămăligă'           },
+  // Fish (Hungarian freshwater + common)
+  { hu: 'Süllő',             en: 'Pike-perch',         ro: 'Șalău'              },
+  { hu: 'Csuka',             en: 'Pike',               ro: 'Știucă'             },
+  { hu: 'Kárász',            en: 'Crucian carp',       ro: 'Caras'              },
+  { hu: 'Harcsafilé',        en: 'Catfish fillet',     ro: 'File de somn'       },
+  { hu: 'Harcsa',            en: 'Catfish',            ro: 'Somn'               },
+  // More common foods
+  { hu: 'Fehérjepor',        en: 'Protein powder',     ro: 'Pudră proteică'     },
+  { hu: 'Kakaópor',          en: 'Cocoa powder',       ro: 'Pudră de cacao'     },
+  { hu: 'Méz',               en: 'Honey',              ro: 'Miere'              },
+  { hu: 'Aszalt szilva',     en: 'Prunes',             ro: 'Prune uscate'       },
+  { hu: 'Aszalt sárgabarack',en: 'Dried apricot',      ro: 'Caise uscate'       },
+  { hu: 'Datolya',           en: 'Date',               ro: 'Curmale'            },
+  { hu: 'Mazsola',           en: 'Raisin',             ro: 'Stafide'            },
+  { hu: 'Fehér rizs',        en: 'White rice',         ro: 'Orez alb'           },
+  { hu: 'Juhsajt',           en: 'Sheep cheese',       ro: 'Brânză de oaie'     },
+  { hu: 'Feta',              en: 'Feta',               ro: 'Feta'               },
+  { hu: 'Napraforgómag',     en: 'Sunflower seeds',    ro: 'Semințe de floarea-soarelui' },
+  { hu: 'Kendermag',         en: 'Hemp seeds',         ro: 'Semințe de cânepă'  },
+  { hu: 'Gesztenye',         en: 'Chestnut',           ro: 'Castane'            },
+  { hu: 'Pirított napraforgómag', en: 'Roasted sunflower seeds', ro: 'Semințe de floarea-soarelui prăjite' },
 ];
 
 /** Normalized HU name → {en, ro} — built at module load time */
