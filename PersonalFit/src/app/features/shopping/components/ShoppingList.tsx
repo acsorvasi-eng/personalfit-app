@@ -198,6 +198,7 @@ function ShoppingSettingsSheet({
   settings: ShoppingSettings;
   onChange: (s: ShoppingSettings) => void;
 }) {
+  const { t } = useLanguage();
   const [local, setLocal] = useState(settings);
   const [expanded, setExpanded] = useState<'card' | 'address' | 'fridge' | null>(null);
 
@@ -264,7 +265,7 @@ function ShoppingSettingsSheet({
                 onClick={() => saveRow({ cardHolder: local.cardHolder, cardLast4: local.cardLast4 })}
                 style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer' }}
               >
-                Mentés
+                {t('common.save')}
               </button>
             </div>
           )}
@@ -293,18 +294,18 @@ function ShoppingSettingsSheet({
                 onClick={() => saveRow({ address: local.address })}
                 style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer' }}
               >
-                Mentés
+                {t('common.save')}
               </button>
             </div>
           )}
         </SCard>
 
         {/* Smart fridge section */}
-        <SCard sectionTitle="Okos hűtő">
+        <SCard sectionTitle={t('shopping.settings.smartFridgeTitle')}>
           <SRow
-            title="Hűtő párosítás"
-            subtitle={local.fridgePaired ? `✓ ${local.fridgeName}` : 'Nincs párosítva'}
-            rightText={expanded === 'fridge' ? '▲' : (local.fridgePaired ? 'Kezelés ›' : 'Párosítás ›')}
+            title={t('shopping.settings.fridgePairing')}
+            subtitle={local.fridgePaired ? `✓ ${local.fridgeName}` : t('shopping.settings.notPaired')}
+            rightText={expanded === 'fridge' ? '▲' : (local.fridgePaired ? t('shopping.settings.manage') : t('shopping.settings.pairAction'))}
             onClick={() => setExpanded(expanded === 'fridge' ? null : 'fridge')}
           />
           {expanded === 'fridge' && (
@@ -315,22 +316,22 @@ function ShoppingSettingsSheet({
                     <Bluetooth style={{ width: 18, height: 18, color: '#0d9488' }} />
                     <div>
                       <div style={{ fontWeight: 700, color: '#134e4a', fontSize: '0.9rem' }}>{local.fridgeName}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#0d9488' }}>Párosítva ✓</div>
+                      <div style={{ fontSize: '0.75rem', color: '#0d9488' }}>{t('shopping.settings.pairedStatus')}</div>
                     </div>
                   </div>
                   <button
                     onClick={() => saveRow({ fridgePaired: false, fridgeName: '' })}
                     style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: '#dc2626', fontSize: '0.9rem', background: '#fef2f2', border: 'none', cursor: 'pointer' }}
                   >
-                    Lekapcsol
+                    {t('shopping.settings.disconnect')}
                   </button>
                 </>
               ) : (
                 <>
-                  <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: 0 }}>Az okos hűtő automatikusan jelzi ha valami fogyóban van</p>
+                  <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: 0 }}>{t('shopping.settings.fridgeAutoDesc')}</p>
                   <input
                     type="text"
-                    placeholder="Hűtő neve (pl. Samsung Family Hub)"
+                    placeholder={t('shopping.settings.fridgeNamePlaceholder')}
                     value={local.fridgeName}
                     onChange={e => setLocal(p => ({ ...p, fridgeName: e.target.value }))}
                     autoFocus
@@ -341,7 +342,7 @@ function ShoppingSettingsSheet({
                     disabled={!local.fridgeName.trim()}
                     style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer', opacity: local.fridgeName.trim() ? 1 : 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   >
-                    <Bluetooth style={{ width: 16, height: 16 }} /> Párosítás
+                    <Bluetooth style={{ width: 16, height: 16 }} /> {t('shopping.settings.pairButton')}
                   </button>
                 </>
               )}
@@ -1073,21 +1074,21 @@ export function ShoppingList() {
             <div className="rounded-2xl border-2 border-dashed border-teal-200 bg-teal-50/40 p-4">
               <div className="flex items-center gap-3 mb-2">
                 <Refrigerator className="w-5 h-5 text-teal-500 flex-shrink-0" />
-                <span className="text-sm font-bold text-teal-700">Fogyandóba van</span>
-                <span className="ml-auto text-2xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full font-semibold">Hamarosan</span>
+                <span className="text-sm font-bold text-teal-700">{t('shopping.fridgeRunningLow')}</span>
+                <span className="ml-auto text-2xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full font-semibold">{t('shopping.comingSoon')}</span>
               </div>
               {shoppingSettings.fridgePaired ? (
                 <p className="text-xs text-teal-600 leading-relaxed">
-                  Az okos hűtőd (<span className="font-semibold">{shoppingSettings.fridgeName}</span>) figyelni fogja mi van fogyóban és automatikusan ide kerülnek a hiányzó termékek.
+                  <span className="font-semibold">{shoppingSettings.fridgeName}</span>{' '}{t('shopping.fridgePairedDesc')}
                 </p>
               ) : (
                 <p className="text-xs text-teal-600 leading-relaxed">
-                  Ha párosítasz egy okos hűtőt a beállításokban, automatikusan megjelenik itt ami fogyóban van.{' '}
+                  {t('shopping.fridgeUnpairedDesc')}{' '}
                   <button
                     onClick={() => { setSettingsOpen(true); hapticFeedback('light'); }}
                     className="font-bold underline underline-offset-2"
                   >
-                    Hűtő párosítása →
+                    {t('shopping.pairFridgeLink')}
                   </button>
                 </p>
               )}

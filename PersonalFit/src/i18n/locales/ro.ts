@@ -198,6 +198,24 @@ const ro: LocalePartial = {
   'recipe.retry': 'Încearcă din nou',
   'recipe.errorMessage': 'Nu s-a putut încărca rețeta.',
   'recipe.openRecipe': '🍳 Rețetă',
+
+  'common.save': 'Salvează',
+
+  'shopping.fridgeRunningLow': 'Se termină curând',
+  'shopping.comingSoon': 'În curând',
+  'shopping.fridgePairedDesc': 'va monitoriza ce se termină și produsele lipsă vor apărea automat aici.',
+  'shopping.fridgeUnpairedDesc': 'Dacă asociezi un frigider inteligent în setări, produsele care se termină vor apărea automat aici.',
+  'shopping.pairFridgeLink': 'Asociează frigiderul →',
+  'shopping.settings.smartFridgeTitle': 'Frigider inteligent',
+  'shopping.settings.fridgePairing': 'Asociere frigider',
+  'shopping.settings.notPaired': 'Neconectat',
+  'shopping.settings.manage': 'Gestionare ›',
+  'shopping.settings.pairAction': 'Asociați ›',
+  'shopping.settings.pairedStatus': 'Conectat ✓',
+  'shopping.settings.disconnect': 'Deconectați',
+  'shopping.settings.fridgeAutoDesc': 'Frigiderul inteligent indică automat ce produse se termină',
+  'shopping.settings.fridgeNamePlaceholder': 'Numele frigiderului (ex. Samsung Family Hub)',
+  'shopping.settings.pairButton': 'Asociați',
 };
 
 export default ro;

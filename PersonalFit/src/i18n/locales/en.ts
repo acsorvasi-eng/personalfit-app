@@ -198,6 +198,24 @@ const en: LocalePartial = {
   'recipe.retry': 'Try again',
   'recipe.errorMessage': 'Could not load recipe.',
   'recipe.openRecipe': '🍳 Recipe',
+
+  'common.save': 'Save',
+
+  'shopping.fridgeRunningLow': 'Running Low',
+  'shopping.comingSoon': 'Coming Soon',
+  'shopping.fridgePairedDesc': 'will monitor what\'s running low and missing items will appear here automatically.',
+  'shopping.fridgeUnpairedDesc': 'If you pair a smart fridge in settings, items running low will appear here automatically.',
+  'shopping.pairFridgeLink': 'Pair Fridge →',
+  'shopping.settings.smartFridgeTitle': 'Smart Fridge',
+  'shopping.settings.fridgePairing': 'Fridge Pairing',
+  'shopping.settings.notPaired': 'Not paired',
+  'shopping.settings.manage': 'Manage ›',
+  'shopping.settings.pairAction': 'Pair ›',
+  'shopping.settings.pairedStatus': 'Paired ✓',
+  'shopping.settings.disconnect': 'Disconnect',
+  'shopping.settings.fridgeAutoDesc': 'The smart fridge automatically alerts when items are running low',
+  'shopping.settings.fridgeNamePlaceholder': 'Fridge name (e.g. Samsung Family Hub)',
+  'shopping.settings.pairButton': 'Pair',
 };
 
 export default en;

@@ -271,6 +271,24 @@ const hu = {
   'recipe.retry': 'Újra',
   'recipe.errorMessage': 'Nem sikerült betölteni a receptet.',
   'recipe.openRecipe': '🍳 Recept',
+
+  'common.save': 'Mentés',
+
+  'shopping.fridgeRunningLow': 'Fogyandóba van',
+  'shopping.comingSoon': 'Hamarosan',
+  'shopping.fridgePairedDesc': 'figyelni fogja mi van fogyóban és automatikusan ide kerülnek a hiányzó termékek.',
+  'shopping.fridgeUnpairedDesc': 'Ha párosítasz egy okos hűtőt a beállításokban, automatikusan megjelenik itt ami fogyóban van.',
+  'shopping.pairFridgeLink': 'Hűtő párosítása →',
+  'shopping.settings.smartFridgeTitle': 'Okos hűtő',
+  'shopping.settings.fridgePairing': 'Hűtő párosítás',
+  'shopping.settings.notPaired': 'Nincs párosítva',
+  'shopping.settings.manage': 'Kezelés ›',
+  'shopping.settings.pairAction': 'Párosítás ›',
+  'shopping.settings.pairedStatus': 'Párosítva ✓',
+  'shopping.settings.disconnect': 'Lekapcsol',
+  'shopping.settings.fridgeAutoDesc': 'Az okos hűtő automatikusan jelzi ha valami fogyóban van',
+  'shopping.settings.fridgeNamePlaceholder': 'Hűtő neve (pl. Samsung Family Hub)',
+  'shopping.settings.pairButton': 'Párosítás',
 } as const;
 
 export default hu;
