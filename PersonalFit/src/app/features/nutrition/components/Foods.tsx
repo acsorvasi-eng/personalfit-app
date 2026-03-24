@@ -480,15 +480,22 @@ export function Foods() {
       result = result.filter((f) => f.category === activeTab);
     }
 
-    // Search filter
+    // Search filter — matches HU name, translated name, accent-stripped, description, benefits
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (f) =>
-          f.name.toLowerCase().includes(q) ||
+      const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      result = result.filter((f) => {
+        const nameL = f.name.toLowerCase();
+        const nameNorm = nameL.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const translatedName = translateFoodName(f.name, language as LanguageCode).toLowerCase();
+        return (
+          nameL.includes(q) ||
+          nameNorm.includes(qNorm) ||
+          translatedName.includes(q) ||
           f.description.toLowerCase().includes(q) ||
           f.benefits.some((b) => b.toLowerCase().includes(q))
-      );
+        );
+      });
     }
 
     return result;
