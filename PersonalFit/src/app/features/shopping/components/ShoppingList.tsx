@@ -1,5 +1,5 @@
 import { hapticFeedback } from '@/lib/haptics';
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trash2,
@@ -13,16 +13,20 @@ import {
   Settings,
   CreditCard,
   MapPin,
+  Store,
   Refrigerator,
   ChevronRight,
   Bluetooth,
+  SlidersHorizontal,
 } from "lucide-react";
 import { DSMSwipeAction, DSMCoachMark } from "../../../components/dsm/ux-patterns";
+import { DSMModal } from "../../../components/dsm";
 import { PageHeader } from "../../../components/PageHeader";
 import {
   Product,
   productDatabase,
   searchProducts,
+  StoreName,
 } from "../../../data/productDatabase";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { generateWeeklyShoppingList } from "../../../utils/mealPlanToShoppingList";
@@ -135,6 +139,51 @@ interface ShoppingSettings {
   fridgeName: string;
 }
 
+// ─── Reusable helpers matching Profile SettingsSheet style ───────────────────
+function SRow({
+  title, subtitle, rightText, onClick,
+}: { title: string; subtitle?: string; rightText?: string; onClick?: () => void }) {
+  return (
+    <div
+      role={onClick ? 'button' : undefined}
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '1rem', borderBottom: '1px solid #f3f4f6',
+        cursor: onClick ? 'pointer' : 'default', background: 'white',
+      }}
+    >
+      <div>
+        <div style={{ fontSize: '1rem', fontWeight: 500, color: '#111827' }}>{title}</div>
+        {subtitle != null && subtitle !== '' && (
+          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: 2 }}>{subtitle}</div>
+        )}
+      </div>
+      {rightText != null && rightText !== '' && (
+        <span style={{ color: '#0d9488', fontSize: '0.875rem' }}>{rightText}</span>
+      )}
+    </div>
+  );
+}
+
+function SCard({ sectionTitle, children }: { sectionTitle: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: 'white', borderRadius: '1rem', overflow: 'hidden',
+      marginBottom: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+    }}>
+      <div style={{
+        fontSize: '0.75rem', fontWeight: 600, color: '#9ca3af',
+        letterSpacing: '0.08em', textTransform: 'uppercase',
+        padding: '0.75rem 1rem 0.25rem',
+      }}>
+        {sectionTitle}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function ShoppingSettingsSheet({
   open,
   onClose,
@@ -147,47 +196,58 @@ function ShoppingSettingsSheet({
   onChange: (s: ShoppingSettings) => void;
 }) {
   const [local, setLocal] = useState(settings);
-  useEffect(() => { setLocal(settings); }, [settings, open]);
+  const [expanded, setExpanded] = useState<'card' | 'address' | 'fridge' | null>(null);
 
-  const save = () => { onChange(local); onClose(); hapticFeedback('light'); };
+  useEffect(() => { setLocal(settings); }, [settings, open]);
+  useEffect(() => { if (!open) setExpanded(null); }, [open]);
+
+  const saveRow = (patch: Partial<ShoppingSettings>) => {
+    const next = { ...local, ...patch };
+    setLocal(next);
+    onChange(next);
+    hapticFeedback('light');
+    setExpanded(null);
+  };
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end" style={{ background: 'rgba(0,0,0,0.45)' }} onClick={onClose}>
-      <div
-        className="bg-white rounded-t-3xl overflow-hidden"
-        style={{ maxHeight: '90vh', overflowY: 'auto' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: '#f9fafb' }}>
+      {/* Top bar */}
+      <div style={{
+        flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '3rem 1rem 1rem', background: 'white', borderBottom: '1px solid #f3f4f6',
+      }}>
+        <span style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}>Bevásárlás beállítások</span>
+        <button
+          onClick={onClose}
+          style={{ width: 36, height: 36, borderRadius: '50%', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+        >
+          <X style={{ width: 18, height: 18, color: '#6b7280' }} />
+        </button>
+      </div>
 
-        {/* Header */}
-        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-base font-black text-gray-900">Bevásárlás beállítások</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <X className="w-4 h-4 text-gray-500" />
-          </button>
-        </div>
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
 
-        <div className="px-5 py-4 space-y-6">
-          {/* Payment */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#0d9488' }}>
-                <CreditCard className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="font-bold text-gray-900">Fizetési kártya</h3>
-            </div>
-            <div className="space-y-2">
+        {/* Payment card section */}
+        <SCard sectionTitle="Fizetés">
+          <SRow
+            title="Fizetési kártya"
+            subtitle={local.cardHolder && local.cardLast4
+              ? `${local.cardHolder} · ••••${local.cardLast4}`
+              : 'Nincs megadva'}
+            rightText={expanded === 'card' ? '▲' : 'Szerkesztés ›'}
+            onClick={() => setExpanded(expanded === 'card' ? null : 'card')}
+          />
+          {expanded === 'card' && (
+            <div style={{ padding: '1rem', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
                 type="text"
                 placeholder="Kártyabirtokos neve"
                 value={local.cardHolder}
                 onChange={e => setLocal(p => ({ ...p, cardHolder: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none"
+                autoFocus
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 10, padding: '10px 14px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
               />
               <input
                 type="text"
@@ -195,90 +255,97 @@ function ShoppingSettingsSheet({
                 maxLength={4}
                 value={local.cardLast4}
                 onChange={e => setLocal(p => ({ ...p, cardLast4: e.target.value.replace(/\D/g, '') }))}
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none"
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 10, padding: '10px 14px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
               />
+              <button
+                onClick={() => saveRow({ cardHolder: local.cardHolder, cardLast4: local.cardLast4 })}
+                style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer' }}
+              >
+                Mentés
+              </button>
             </div>
-          </div>
+          )}
+        </SCard>
 
-          {/* Delivery address */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#0d9488' }}>
-                <MapPin className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="font-bold text-gray-900">Szállítási cím</h3>
+        {/* Delivery section */}
+        <SCard sectionTitle="Szállítás">
+          <SRow
+            title="Szállítási cím"
+            subtitle={local.address || 'Nincs megadva'}
+            rightText={expanded === 'address' ? '▲' : 'Szerkesztés ›'}
+            onClick={() => setExpanded(expanded === 'address' ? null : 'address')}
+          />
+          {expanded === 'address' && (
+            <div style={{ padding: '1rem', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <textarea
+                placeholder="pl. Kolozsvár, Főtér 1., 3. em. 12."
+                value={local.address}
+                onChange={e => setLocal(p => ({ ...p, address: e.target.value }))}
+                rows={3}
+                autoFocus
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 10, padding: '10px 14px', fontSize: '0.9rem', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
+              />
+              <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: 0 }}>Ide hozhatja a futár a rendelést</p>
+              <button
+                onClick={() => saveRow({ address: local.address })}
+                style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer' }}
+              >
+                Mentés
+              </button>
             </div>
-            <textarea
-              placeholder="pl. Kolozsvár, Főtér 1., 3. em. 12."
-              value={local.address}
-              onChange={e => setLocal(p => ({ ...p, address: e.target.value }))}
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none resize-none"
-            />
-            <p className="text-xs text-gray-400 mt-1">Ide hozhatja a futár a rendelést</p>
-          </div>
+          )}
+        </SCard>
 
-          {/* Smart fridge */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#0d9488' }}>
-                <Refrigerator className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="font-bold text-gray-900">Okos hűtő</h3>
-            </div>
-            {local.fridgePaired ? (
-              <div className="bg-teal-50 border-2 border-teal-200 rounded-xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Bluetooth className="w-5 h-5 text-teal-600" />
-                  <div>
-                    <div className="font-bold text-teal-800 text-sm">{local.fridgeName || 'Hűtő'}</div>
-                    <div className="text-xs text-teal-600">Párosítva ✓</div>
+        {/* Smart fridge section */}
+        <SCard sectionTitle="Okos hűtő">
+          <SRow
+            title="Hűtő párosítás"
+            subtitle={local.fridgePaired ? `✓ ${local.fridgeName}` : 'Nincs párosítva'}
+            rightText={expanded === 'fridge' ? '▲' : (local.fridgePaired ? 'Kezelés ›' : 'Párosítás ›')}
+            onClick={() => setExpanded(expanded === 'fridge' ? null : 'fridge')}
+          />
+          {expanded === 'fridge' && (
+            <div style={{ padding: '1rem', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {local.fridgePaired ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f0fdfa', borderRadius: 10, padding: 12 }}>
+                    <Bluetooth style={{ width: 18, height: 18, color: '#0d9488' }} />
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#134e4a', fontSize: '0.9rem' }}>{local.fridgeName}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#0d9488' }}>Párosítva ✓</div>
+                    </div>
                   </div>
-                </div>
-                <button
-                  onClick={() => setLocal(p => ({ ...p, fridgePaired: false, fridgeName: '' }))}
-                  className="text-xs text-red-500 font-semibold px-3 py-1.5 rounded-lg bg-red-50"
-                >
-                  Lekapcsol
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-4 text-center mb-3">
-                  <Refrigerator className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 font-medium">Nincs párosítva</p>
-                  <p className="text-xs text-gray-400 mt-1">Az okos hűtő automatikusan jelzi ha valami fogyóban van</p>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Hűtő neve (pl. Samsung Family Hub)"
-                  value={local.fridgeName}
-                  onChange={e => setLocal(p => ({ ...p, fridgeName: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-teal-400 text-sm bg-gray-50 outline-none mb-2"
-                />
-                <button
-                  onClick={() => { if (local.fridgeName.trim()) setLocal(p => ({ ...p, fridgePaired: true })); }}
-                  disabled={!local.fridgeName.trim()}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-white disabled:opacity-40 flex items-center justify-center gap-2"
-                  style={{ background: '#0d9488' }}
-                >
-                  <Bluetooth className="w-4 h-4" /> Párosítás
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+                  <button
+                    onClick={() => saveRow({ fridgePaired: false, fridgeName: '' })}
+                    style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: '#dc2626', fontSize: '0.9rem', background: '#fef2f2', border: 'none', cursor: 'pointer' }}
+                  >
+                    Lekapcsol
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: 0 }}>Az okos hűtő automatikusan jelzi ha valami fogyóban van</p>
+                  <input
+                    type="text"
+                    placeholder="Hűtő neve (pl. Samsung Family Hub)"
+                    value={local.fridgeName}
+                    onChange={e => setLocal(p => ({ ...p, fridgeName: e.target.value }))}
+                    autoFocus
+                    style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 10, padding: '10px 14px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                  <button
+                    onClick={() => { if (local.fridgeName.trim()) saveRow({ fridgePaired: true, fridgeName: local.fridgeName }); }}
+                    disabled={!local.fridgeName.trim()}
+                    style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer', opacity: local.fridgeName.trim() ? 1 : 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
+                    <Bluetooth style={{ width: 16, height: 16 }} /> Párosítás
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </SCard>
 
-        {/* Save button */}
-        <div className="px-5 pb-8 pt-2">
-          <button
-            onClick={save}
-            className="w-full py-4 rounded-2xl font-black text-white text-base"
-            style={{ background: '#0d9488' }}
-          >
-            Mentés
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -321,6 +388,25 @@ export function ShoppingList() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [tappedCarouselId, setTappedCarouselId] = useState<string | null>(null);
+  const [selectedStores, setSelectedStores] = useState<StoreName[]>([]);
+  const [storeFilterOpen, setStoreFilterOpen] = useState(false);
+
+  // Persist store filter
+  useEffect(() => {
+    getSetting('storeFilter').then((saved) => {
+      if (!saved) return;
+      try { setSelectedStores(JSON.parse(saved)); } catch { /* ignore */ }
+    });
+  }, []);
+  const toggleStore = (store: StoreName) => {
+    setSelectedStores(prev => {
+      const next = prev.includes(store) ? prev.filter(s => s !== store) : [...prev, store];
+      setSetting('storeFilter', JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+    hapticFeedback('light');
+  };
   const [stopByOpen, setStopByOpen] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -362,26 +448,55 @@ export function ShoppingList() {
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const terms = searchQuery.trim().split(/\s+/).filter(Boolean);
-    if (terms.length <= 1) {
-      return searchProducts(searchQuery, undefined);
-    }
     const seen = new Set<string>();
     const results: Product[] = [];
-    terms.forEach((term) => {
-      searchProducts(term, undefined).forEach((p) => {
-        if (!seen.has(p.id)) {
-          seen.add(p.id);
-          results.push(p);
-        }
-      });
-    });
-    return results;
-  }, [searchQuery]);
+    const base = terms.length <= 1
+      ? searchProducts(searchQuery, undefined)
+      : terms.flatMap(term => searchProducts(term, undefined));
+    for (const p of base) {
+      if (!seen.has(p.id)) { seen.add(p.id); results.push(p); }
+    }
+    return selectedStores.length > 0
+      ? results.filter(p => selectedStores.includes(p.store))
+      : results;
+  }, [searchQuery, selectedStores]);
 
   const browseProducts = useMemo(() => {
     if (searchQuery.trim()) return [];
-    return searchProducts('', undefined);
-  }, [searchQuery]);
+    // Pick the lowest-fat product per category (preferring Kaufland store)
+    // so the carousel always highlights the healthiest option in each category
+    const all = selectedStores.length > 0
+      ? productDatabase.filter(p => selectedStores.includes(p.store))
+      : productDatabase;
+    const byCategory = new Map<string, Product>();
+    const preferredStore = 'Kaufland';
+    for (const p of all) {
+      const existing = byCategory.get(p.category);
+      if (!existing) { byCategory.set(p.category, p); continue; }
+      const existingIsPreferred = existing.store === preferredStore;
+      const currentIsPreferred = p.store === preferredStore;
+      // Within the same store preference tier, pick lowest fat
+      if (existingIsPreferred && !currentIsPreferred) continue;
+      if (!existingIsPreferred && currentIsPreferred) { byCategory.set(p.category, p); continue; }
+      if (p.fat < existing.fat) { byCategory.set(p.category, p); }
+    }
+    // Order by category priority for a balanced carousel
+    const categoryOrder = [
+      'Hús & Hal', 'Zöldség', 'Tejtermék', 'Gyümölcs', 'Gabona',
+      'Hüvelyes', 'Diófélék', 'Olaj & Fűszer', 'Ital', 'Konzerv',
+      'Édesség', 'Sport & Kiegészítő',
+    ];
+    const sorted: Product[] = [];
+    for (const cat of categoryOrder) {
+      const p = byCategory.get(cat);
+      if (p) sorted.push(p);
+    }
+    // Append any leftover categories not in the order list
+    for (const [, p] of byCategory) {
+      if (!sorted.includes(p)) sorted.push(p);
+    }
+    return sorted;
+  }, [searchQuery, selectedStores]);
 
   const displayProducts = searchResults.length > 0 ? searchResults : browseProducts;
 
@@ -485,79 +600,257 @@ export function ShoppingList() {
               ? t('shopping.emptyHint') || 'Adj hozzá termékeket az étrendedből'
               : `${totalItems - checkedCount} termék vár · ${checkedCount} kész`
           }
-          stats={totalItems > 0 ? [
+          stats={[
             {
-              label: t('shopping.total') || 'Összes',
-              value: totalItems,
-              suffix: 'db',
+              label: totalItems === 0 ? (t('shopping.shoppingList') || 'Kosár') : `${totalItems} termék`,
+              value: (
+                <div style={{ position: 'relative', display: 'inline-flex' }}>
+                  <ShoppingCart style={{ width: 16, height: 16, color: 'white' }} />
+                  {totalItems > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -6, right: -6,
+                      background: '#ef4444', color: 'white',
+                      borderRadius: '999px', fontSize: 9, fontWeight: 700,
+                      minWidth: 14, height: 14, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      padding: '0 2px', lineHeight: 1,
+                    }}>
+                      {totalItems}
+                    </span>
+                  )}
+                </div>
+              ),
+              isAction: true,
+              onClick: () => {},
             },
             {
-              label: t('shopping.done') || 'Kész',
-              value: `${checkedCount}/${totalItems}`,
+              label: 'Bolt & Szállítás',
+              value: <Store style={{ width: 16, height: 16, color: 'white' }} />,
+              isAction: true,
+              onClick: () => { setSettingsOpen(true); hapticFeedback('light'); },
             },
-            {
-              label: t('shopping.price') || 'Becsült ár',
-              value: `~${Math.round(totalPrice)}`,
-              suffix: 'lei',
-            },
-          ] : []}
-          action={
-            <div className="flex items-center gap-2">
-              {/* Cart badge */}
-              <div className="relative">
-                <button className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4 text-white" />
-                </button>
-                <span
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black"
-                  style={{ background: totalItems > 0 ? '#fff' : 'rgba(255,255,255,0.35)', color: totalItems > 0 ? '#0d9488' : '#fff' }}
-                >
-                  {totalItems}
-                </span>
-              </div>
-              {/* Settings */}
-              <button
-                onClick={() => { setSettingsOpen(true); hapticFeedback('light'); }}
-                className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center"
-              >
-                <Settings className="w-4 h-4 text-white" />
-              </button>
-            </div>
-          }
+          ]}
         />
       </div>
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
-        {/* Search bar */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-3 sm:px-4 lg:px-6 py-3 border-b border-gray-100">
-          <div className="relative">
-            <div className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 transition-all ${
-              isSearchFocused ? "border-teal-400 bg-teal-50/30" : "border-gray-200 bg-gray-50"
-            }`}>
-              <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                placeholder={t('shopping.addProduct')}
-                className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="p-0.5 hover:bg-gray-200 rounded-full">
-                  <X className="w-3.5 h-3.5 text-gray-400" />
+        {/* Search bar + store filter */}
+        {(() => {
+          const ALL_STORES: StoreName[] = ['Kaufland', 'Lidl', 'Penny', 'Carrefour', 'Auchan', 'Profi'];
+          return (
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-3 sm:px-4 lg:px-6 py-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className={`flex-1 flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 transition-all ${
+                  isSearchFocused ? "border-teal-400 bg-teal-50/30" : "border-gray-200 bg-gray-50"
+                }`}>
+                  <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    placeholder={t('shopping.addProduct')}
+                    className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")} className="p-0.5 hover:bg-gray-200 rounded-full">
+                      <X className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+                  )}
+                </div>
+                {/* Filter button */}
+                <button
+                  onClick={() => { setStoreFilterOpen(v => !v); hapticFeedback('light'); }}
+                  className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all relative"
+                  style={{
+                    background: selectedStores.length > 0 ? '#0d9488' : '#f3f4f6',
+                    border: '2px solid',
+                    borderColor: selectedStores.length > 0 ? '#0d9488' : '#e5e7eb',
+                  }}
+                >
+                  <SlidersHorizontal
+                    className="w-4 h-4"
+                    style={{ color: selectedStores.length > 0 ? 'white' : '#6b7280' }}
+                  />
+                  {selectedStores.length > 0 && (
+                    <span style={{
+                      position: 'absolute', top: -5, right: -5,
+                      background: '#ef4444', color: 'white',
+                      borderRadius: '999px', fontSize: 9, fontWeight: 700,
+                      minWidth: 14, height: 14, display: 'flex',
+                      alignItems: 'center', justifyContent: 'center',
+                      padding: '0 2px', lineHeight: 1,
+                      border: '1.5px solid white',
+                    }}>
+                      {selectedStores.length}
+                    </span>
+                  )}
                 </button>
-              )}
+              </div>
+
+            </div>
+          );
+        })()}
+
+        {/* Store filter — centered overlay */}
+        <AnimatePresence>
+          {storeFilterOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-5"
+              style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+              onClick={() => setStoreFilterOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 12 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                  <span className="text-base font-bold text-gray-900">Üzlet szűrő</span>
+                  <button
+                    onClick={() => setStoreFilterOpen(false)}
+                    className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+                {/* Store list */}
+                <div className="flex flex-col gap-2 px-4 pb-4">
+                  {(['Kaufland', 'Lidl', 'Penny', 'Carrefour', 'Auchan', 'Profi'] as StoreName[]).map((store) => {
+                    const active = selectedStores.includes(store);
+                    return (
+                      <button
+                        key={store}
+                        onClick={() => toggleStore(store)}
+                        className="flex items-center justify-between w-full px-4 py-3 rounded-xl transition-all"
+                        style={{
+                          background: active ? '#f0fdfa' : '#f9fafb',
+                          border: '1.5px solid',
+                          borderColor: active ? '#0d9488' : '#e5e7eb',
+                        }}
+                      >
+                        <span className="text-sm font-semibold" style={{ color: active ? '#0d9488' : '#374151' }}>
+                          {store}
+                        </span>
+                        <div
+                          className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                          style={{
+                            borderColor: active ? '#0d9488' : '#d1d5db',
+                            background: active ? '#0d9488' : 'transparent',
+                          }}
+                        >
+                          {active && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {selectedStores.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedStores([]);
+                        setSetting('storeFilter', '[]').catch(() => {});
+                        hapticFeedback('light');
+                      }}
+                      className="mt-1 w-full py-3 rounded-xl text-sm font-semibold"
+                      style={{ background: '#fef2f2', color: '#ef4444', border: '1.5px solid #fecaca' }}
+                    >
+                      Összes törlése
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Recommended carousel — shown when not searching */}
+        {!searchQuery && browseProducts.length > 0 && (
+          <div className="py-3">
+            <div className="flex items-center gap-2 px-4 mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+              <span className="text-xs text-gray-500" style={{ fontWeight: 600 }}>
+                {t('shopping.recommended')}
+              </span>
+            </div>
+            {/* Peek carousel: center card full, ~20% of adjacent cards visible on each side */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                overflowX: 'auto',
+                scrollSnapType: 'x mandatory',
+                paddingLeft: '18%',
+                paddingRight: '18%',
+                paddingBottom: 8,
+                scrollbarWidth: 'none',
+              }}
+            >
+              <AnimatePresence initial={false}>
+                {browseProducts
+                  .filter(p => !isInList(p.id))
+                  .map((product) => {
+                    const tapped = tappedCarouselId === product.id;
+                    return (
+                      <motion.div
+                        key={product.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{
+                          opacity: 0, scale: 0.3,
+                          x: 120, y: -180,
+                          transition: { duration: 0.38, ease: [0.4, 0, 0.2, 1] },
+                        }}
+                        style={{ scrollSnapAlign: 'center', flexShrink: 0, width: '60%' }}
+                      >
+                        <div
+                          className="bg-white rounded-xl flex flex-col items-center p-3"
+                          style={{ border: `2px solid ${tapped ? '#0d9488' : '#e5e7eb'}` }}
+                        >
+                          <div className="text-2xl mb-1">{product.image}</div>
+                          <div className="text-xs font-semibold text-gray-800 text-center leading-snug truncate w-full">{product.name}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">{product.store}</div>
+                          <div className="text-xs font-bold text-teal-600 mt-0.5 mb-2">{product.price.toFixed(2)} lei</div>
+                          <button
+                            onClick={() => {
+                              if (tapped) return;
+                              setTappedCarouselId(product.id);
+                              hapticFeedback('medium');
+                              setTimeout(() => {
+                                addProduct(product);
+                                setTappedCarouselId(null);
+                              }, 380);
+                            }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+                            style={{
+                              background: tapped ? '#0d9488' : 'transparent',
+                              border: `2px solid ${tapped ? '#0d9488' : '#d1d5db'}`,
+                            }}
+                          >
+                            {tapped && <Plus className="w-4 h-4 text-white" />}
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+              </AnimatePresence>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Search results or browse grid */}
+        {/* Search results grid */}
         <AnimatePresence>
-          {displayProducts.length > 0 && (
+          {searchQuery && searchResults.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -567,34 +860,50 @@ export function ShoppingList() {
               <div className="flex items-center gap-2 mb-3">
                 <Search className="w-3.5 h-3.5 text-gray-400" />
                 <span className="text-xs text-gray-500" style={{ fontWeight: 600 }}>
-                  {searchQuery ? t('shopping.searchResults') : t('shopping.recommended')}
+                  {t('shopping.searchResults')}
                 </span>
-                <span className="text-xs text-gray-400 ml-auto">{displayProducts.length} {t('shopping.product')}</span>
+                <span className="text-xs text-gray-400 ml-auto">{searchResults.length} {t('shopping.product')}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {displayProducts.map((product) => {
+                {searchResults.map((product) => {
                   const alreadyAdded = isInList(product.id);
+                  const tapped = tappedCarouselId === product.id;
                   return (
-                    <button
+                    <div
                       key={product.id}
-                      onClick={() => addProduct(product)}
-                      disabled={alreadyAdded}
-                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all active:scale-95 ${
-                        alreadyAdded
-                          ? "border-green-200 bg-green-50 opacity-60 cursor-default"
-                          : "border-gray-100 bg-white hover:border-teal-200 hover:shadow-sm"
+                      className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${
+                        alreadyAdded ? "border-green-200 bg-green-50 opacity-60" : tapped ? "border-teal-400 bg-white" : "border-gray-100 bg-white"
                       }`}
                     >
                       <div className="text-2xl mb-1">{product.image}</div>
                       <div className="text-xs font-semibold text-gray-800 text-center truncate w-full">{product.name}</div>
-                      <div className="text-xs text-gray-500 truncate w-full text-center">{product.store}</div>
-                      <div className="text-xs font-bold text-teal-600">{product.price.toFixed(2)} lei</div>
-                      {!alreadyAdded && (
-                        <div className="mt-1 w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center">
-                          <Plus className="w-4 h-4 text-white" />
+                      <div className="text-xs text-gray-400 truncate w-full text-center">{product.store}</div>
+                      <div className="text-xs font-bold text-teal-600 mb-2">{product.price.toFixed(2)} lei</div>
+                      {!alreadyAdded ? (
+                        <button
+                          onClick={() => {
+                            if (tapped) return;
+                            setTappedCarouselId(product.id);
+                            hapticFeedback('medium');
+                            setTimeout(() => {
+                              addProduct(product);
+                              setTappedCarouselId(null);
+                            }, 350);
+                          }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+                          style={{
+                            background: tapped ? '#0d9488' : 'transparent',
+                            border: `2px solid ${tapped ? '#0d9488' : '#d1d5db'}`,
+                          }}
+                        >
+                          {tapped && <Plus className="w-4 h-4 text-white" />}
+                        </button>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-green-100 border-2 border-green-300 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-green-600" />
                         </div>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -602,38 +911,6 @@ export function ShoppingList() {
           )}
         </AnimatePresence>
 
-        {/* Meal plan import CTA */}
-        {mealPlanSuggestions.length > 0 && !searchQuery && (
-          <div className="px-3 sm:px-4 py-2">
-            {mealPlanAddedCount > 0 ? (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-                <div className="text-green-700 text-sm font-bold">✓ {mealPlanAddedCount} termék hozzáadva!</div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowMealPlanImport(true)}
-                className="w-full bg-teal-50 border border-teal-200 rounded-xl p-3 text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">📋</span>
-                  <div>
-                    <div className="text-xs font-bold text-teal-700">Heti étrendből ({mealPlanSuggestions.length} termék)</div>
-                    <div className="text-2xs text-teal-600">Koppints a hozzáadáshoz</div>
-                  </div>
-                </div>
-              </button>
-            )}
-            {showMealPlanImport && (
-              <div className="mt-2 bg-white border border-gray-200 rounded-xl p-3">
-                <p className="text-sm text-gray-700 mb-3">{mealPlanSuggestions.length} termék hozzáadása a listához?</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowMealPlanImport(false)} className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg">Mégse</button>
-                  <button onClick={handleAutoPopulateFromMealPlan} className="flex-1 py-2 text-sm font-bold text-white bg-teal-600 rounded-lg">Hozzáadás</button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Shopping list items */}
         {totalItems > 0 && (
@@ -661,9 +938,18 @@ export function ShoppingList() {
             </div>
 
             <div className="space-y-1.5">
+              <AnimatePresence initial={false}>
               {[...shoppingItems]
                 .sort((a, b) => Number(a.checked) - Number(b.checked))
                 .map((item) => (
+                <motion.div
+                  key={item.product.id}
+                  layout
+                  initial={{ opacity: 0, y: -16, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                >
                 <DSMSwipeAction
                   key={item.product.id}
                   onSwipeLeft={() => removeItem(item.product.id)}
@@ -714,7 +1000,9 @@ export function ShoppingList() {
                     </button>
                   </div>
                 </DSMSwipeAction>
+                </motion.div>
               ))}
+              </AnimatePresence>
             </div>
           </div>
         )}

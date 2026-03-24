@@ -120,11 +120,56 @@ const _RAW_FOOD_NAMES: Array<{ hu: string; en: string; ro: string }> = [
   { hu: 'Kecske tejföl',      en: 'Goat sour cream',    ro: 'Smântână de capră'  },
   { hu: 'Kecske kefir',       en: 'Goat kefir',         ro: 'Chefir de capră'    },
   { hu: 'Kecske vaj',         en: 'Goat butter',        ro: 'Unt de capră'       },
+  // More vegetables
+  { hu: 'Zeller',             en: 'Celery',             ro: 'Țelină'             },
+  { hu: 'Pisztráng',          en: 'Trout',              ro: 'Păstrăv'            },
+  { hu: 'Póréhagyma',         en: 'Leek',               ro: 'Praz'               },
+  { hu: 'Káposzta',           en: 'Cabbage',            ro: 'Varză'              },
+  { hu: 'Vörös káposzta',     en: 'Red cabbage',        ro: 'Varză roșie'        },
+  { hu: 'Tök',                en: 'Pumpkin',            ro: 'Dovleac'            },
+  { hu: 'Retek',              en: 'Radish',             ro: 'Ridichi'            },
+  { hu: 'Kelbimbó',           en: 'Brussels sprouts',   ro: 'Varză de Bruxelles' },
+  { hu: 'Karalábé',           en: 'Kohlrabi',           ro: 'Gulie'              },
+  { hu: 'Petrezselyem',       en: 'Parsley',            ro: 'Pătrunjel'          },
+  { hu: 'Édeskömény',         en: 'Fennel',             ro: 'Fenicul'            },
+  { hu: 'Paprika (piros)',     en: 'Red bell pepper',   ro: 'Ardei roșu'         },
+  { hu: 'Paprika (zöld)',      en: 'Green bell pepper', ro: 'Ardei verde'        },
+  { hu: 'Paprika (sárga)',     en: 'Yellow bell pepper',ro: 'Ardei galben'       },
+  // More fruit
+  { hu: 'Szilva',             en: 'Plum',               ro: 'Prune'              },
+  { hu: 'Sárgabarack',        en: 'Apricot',            ro: 'Caise'              },
+  { hu: 'Sárgadinnye',        en: 'Melon',              ro: 'Pepene galben'      },
+  { hu: 'Füge',               en: 'Fig',                ro: 'Smochine'           },
+  { hu: 'Ribizli',            en: 'Currant',            ro: 'Coacăze'            },
+  // More protein
+  { hu: 'Ponty',              en: 'Carp',               ro: 'Crap'               },
+  { hu: 'Tőkehal',            en: 'Cod',                ro: 'Cod'                },
+  { hu: 'Hering',             en: 'Herring',            ro: 'Hering'             },
+  { hu: 'Kacsa',              en: 'Duck',               ro: 'Rață'               },
+  { hu: 'Nyúl',               en: 'Rabbit',             ro: 'Iepure'             },
+  { hu: 'Borjú',              en: 'Veal',               ro: 'Vițel'              },
+  // More dairy/fat
+  { hu: 'Tejszín',            en: 'Cream',              ro: 'Frișcă'             },
+  { hu: 'Napraforgóolaj',     en: 'Sunflower oil',      ro: 'Ulei de floarea-soarelui' },
+  { hu: 'Szezámmag',          en: 'Sesame seeds',       ro: 'Semințe de susan'   },
+  // More grains
+  { hu: 'Köles',              en: 'Millet',             ro: 'Mei'                },
+  { hu: 'Tönköly',            en: 'Spelt',              ro: 'Spelt'              },
+  { hu: 'Búzadara',           en: 'Semolina',           ro: 'Griș'               },
+  { hu: 'Polenta',            en: 'Polenta',            ro: 'Mămăligă'           },
 ];
 
 /** Normalized HU name → {en, ro} — built at module load time */
 const FOOD_NAME_DICT: Record<string, { en: string; ro: string }> =
   Object.fromEntries(_RAW_FOOD_NAMES.map(f => [normalizeToken(f.hu), { en: f.en, ro: f.ro }]));
+
+/** Normalized EN name → hu — reverse lookup for DB names stored in English */
+const FOOD_NAME_DICT_EN_TO_HU: Record<string, string> =
+  Object.fromEntries(_RAW_FOOD_NAMES.map(f => [normalizeToken(f.en), f.hu]));
+
+/** Normalized RO name → hu — reverse lookup */
+const FOOD_NAME_DICT_RO_TO_HU: Record<string, string> =
+  Object.fromEntries(_RAW_FOOD_NAMES.map(f => [normalizeToken(f.ro), f.hu]));
 
 // ─── Word-level fallback ───────────────────────────────────────────────────────
 // Used when the full-name lookup doesn't match (e.g. AI-generated compound names).
@@ -222,14 +267,33 @@ const WORD_MAP_RO: Record<string, string> = {
 };
 
 export function translateFoodName(name: string, lang: LanguageCode): string {
-  if (!name || lang === 'hu') return name;
+  if (!name) return name;
 
-  // 1. Full-name dict lookup (SEED_FOODS based — handles all catalog foods)
   const nameKey = normalizeToken(name);
-  const entry = FOOD_NAME_DICT[nameKey];
-  if (entry) return lang === 'en' ? entry.en : entry.ro;
 
-  // 2. Word-level substitution fallback (handles AI-generated compound names)
+  if (lang === 'hu') {
+    // DB stores names in English — convert EN→HU if needed
+    const huName = FOOD_NAME_DICT_EN_TO_HU[nameKey];
+    if (huName) return huName;
+    // Also try RO→HU in case some names are stored in Romanian
+    const huFromRo = FOOD_NAME_DICT_RO_TO_HU[nameKey];
+    if (huFromRo) return huFromRo;
+    // Already HU (or unknown) — return as-is
+    return name;
+  }
+
+  // For EN/RO: first try HU→target (name is stored as HU)
+  const entryFromHu = FOOD_NAME_DICT[nameKey];
+  if (entryFromHu) return lang === 'en' ? entryFromHu.en : entryFromHu.ro;
+
+  // Name may be stored in English — translate EN→HU→target
+  const huName = FOOD_NAME_DICT_EN_TO_HU[nameKey];
+  if (huName) {
+    const entryViaHu = FOOD_NAME_DICT[normalizeToken(huName)];
+    if (entryViaHu) return lang === 'en' ? entryViaHu.en : entryViaHu.ro;
+  }
+
+  // Word-level substitution fallback (handles AI-generated compound names)
   const dict = lang === 'en' ? WORD_MAP_EN : WORD_MAP_RO;
   const parts = name.split(/(\s+|[,()+/-])/);
   const translated = parts.map((part) => {

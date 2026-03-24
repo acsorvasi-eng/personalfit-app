@@ -248,6 +248,36 @@ export function Foods() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planLoading]);
 
+  // ── Browser-direct Anthropic fallback (used when proxy /api/lookup-foods fails) ──
+  const lookupFoodsDirect = useCallback(async (names: string[]): Promise<any[]> => {
+    const apiKey = (import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined) ?? null;
+    if (!apiKey) throw new Error('no_api_key');
+    const listBlock = names.map(f => `- ${f}`).join('\n');
+    const prompt = `You are a nutrition expert. For each food below return ONLY a JSON array, no markdown.\nEach item: {"name_hu":string,"calories_per_100g":number,"protein_g":number,"fat_g":number,"carbs_g":number,"category":"Fehérje"|"Zsír"|"Szénhidrát"|"Tejtermék"|"Zöldség"|"Gyümölcs"}\nFoods:\n${listBlock}`;
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 512, messages: [{ role: 'user', content: prompt }] }),
+    });
+    if (!resp.ok) throw new Error('direct_api_error');
+    const data = await resp.json();
+    const rawText = data.content?.[0]?.text ?? '';
+    let cleaned = rawText.trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+    const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+    const parsed = arrMatch ? JSON.parse(arrMatch[0]) : JSON.parse(cleaned);
+    return Array.isArray(parsed) ? parsed : [];
+  }, []);
+
+  // ── Normalize food name: strip "bio " / "friss " / "nyers " prefixes ──
+  const normalizeChipName = (raw: string): string => {
+    return raw.trim().replace(/^(bio|friss|nyers|natúr|light|zsírszegény)\s+/i, '').trim();
+  };
+
   const addTokenAsChip = useCallback((token: string) => {
     const value = token.trim();
     if (!value) return;
@@ -276,8 +306,32 @@ export function Foods() {
     setLookupLoading(true);
     setLookupError(null);
 
-    const names = pendingSnapshot.map(c => c.raw);
+    const names = pendingSnapshot.map(c => normalizeChipName(c.raw));
     console.log("[AddFood] Nutrition lookup for:", names);
+
+    const applyResults = (foods: any[]) => {
+      setChips(prev =>
+        prev.map(chip => {
+          const snapshotIdx = pendingSnapshot.findIndex(s => s.id === chip.id);
+          if (snapshotIdx === -1 || chip.status !== "pending") return chip;
+          const match = foods[snapshotIdx];
+          if (!match || match.valid === false) {
+            return { ...chip, status: "invalid" as const, lookupFailed: true };
+          }
+          return {
+            ...chip,
+            status: "valid" as const,
+            lookupFailed: false,
+            name: match.name_hu || match.name || chip.raw,
+            calories_per_100g: Number(match.calories_per_100g) || 0,
+            protein_g: Number(match.protein_g) || 0,
+            fat_g: Number(match.fat_g) || 0,
+            carbs_g: Number(match.carbs_g) || 0,
+            apiCategory: match.category || undefined,
+          };
+        })
+      );
+    };
 
     fetch(`${apiBase}/api/lookup-foods`, {
       method: "POST",
@@ -297,39 +351,25 @@ export function Foods() {
         if (!Array.isArray(foods) || foods.length === 0) {
           throw new Error("empty response");
         }
-        // Match by position using snapshot ids — immune to concurrent state changes
-        setChips(prev =>
-          prev.map(chip => {
-            const snapshotIdx = pendingSnapshot.findIndex(s => s.id === chip.id);
-            if (snapshotIdx === -1 || chip.status !== "pending") return chip;
-            const match = foods[snapshotIdx];
-            if (!match || match.valid === false) {
-              return { ...chip, status: "invalid" as const, lookupFailed: true };
-            }
-            return {
-              ...chip,
-              status: "valid" as const,
-              lookupFailed: false,
-              name: match.name || chip.raw,
-              calories_per_100g: Number(match.calories_per_100g) || 0,
-              protein_g: Number(match.protein_g) || 0,
-              fat_g: Number(match.fat_g) || 0,
-              carbs_g: Number(match.carbs_g) || 0,
-              apiCategory: match.category || undefined,
-            };
-          })
-        );
+        applyResults(foods);
       })
-      .catch(e => {
-        console.error("[AddFood] Lookup failed:", e);
-        setLookupError("Nem sikerült betölteni a tápértékeket. Próbáld újra.");
-        setChips(prev =>
-          prev.map(chip =>
-            pendingSnapshot.some(s => s.id === chip.id)
-              ? { ...chip, lookupFailed: true }
-              : chip
-          )
-        );
+      .catch(async (e) => {
+        console.warn("[AddFood] Proxy lookup failed, trying direct API fallback:", e);
+        try {
+          const foods = await lookupFoodsDirect(names);
+          if (foods.length === 0) throw new Error("empty direct response");
+          applyResults(foods);
+        } catch (directErr) {
+          console.error("[AddFood] Both lookup paths failed:", directErr);
+          setLookupError(t("foods.lookupFailed"));
+          setChips(prev =>
+            prev.map(chip =>
+              pendingSnapshot.some(s => s.id === chip.id)
+                ? { ...chip, lookupFailed: true }
+                : chip
+            )
+          );
+        }
       })
       .finally(() => {
         fetchInProgressRef.current = false;
@@ -487,11 +527,7 @@ export function Foods() {
         <PageHeader
           title={t("foods.title")}
           subtitle={t("foods.foodCount").replace("{n}", String(foods.length))}
-          gradientFrom="from-blue-400"
-          gradientVia="via-blue-500"
-          gradientTo="to-blue-600"
           stats={[
-            { label: t("foods.all"), value: foods.length },
             {
               label: t("foods.addFoodLabel"),
               value: "+",
@@ -620,6 +656,7 @@ export function Foods() {
           <FoodDetailSheet
             food={selectedFood}
             t={t}
+            language={language}
             isFavorite={isFavorite(selectedFood.id)}
             onToggleFavorite={() => {
               hapticFeedback('light');
@@ -654,10 +691,9 @@ export function Foods() {
       }}>
         <DialogContent className="max-w-md sm:max-w-lg bg-white rounded-2xl shadow-xl border border-gray-100 p-5 sm:p-6 space-y-4">
           <DialogHeader>
-            <DialogTitle>Étel hozzáadása</DialogTitle>
+            <DialogTitle>{t('foods.addFoodLabel')}</DialogTitle>
             <DialogDescription>
-              Írd be vagy mondd be az ételek nevét (pl. pisztráng, dió, jégsaláta...).{" "}
-              A rendszer lekéri a valós tápértékeket 100g-ra.
+              {t('foods.addFoodDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -779,7 +815,7 @@ export function Foods() {
                       </span>
                     )}
                     {isInvalid && (
-                      <span className="text-[10px] opacity-70 leading-tight">nem ismert élelmiszer</span>
+                      <span className="text-[10px] opacity-70 leading-tight">{t('foods.unknownFood')}</span>
                     )}
                   </div>
                   {isPending && !chip.lookupFailed && (
@@ -827,7 +863,7 @@ export function Foods() {
             {lookupLoading && (
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="w-3 h-3 rounded-full border-2 border-teal-500 border-t-transparent animate-spin flex-shrink-0" />
-                Azonosítás folyamatban...
+                {t('foods.identifying')}
               </div>
             )}
             {lookupError && !lookupLoading && (
@@ -839,7 +875,7 @@ export function Foods() {
                     onClick={retryLookup}
                     className="text-xs text-teal-700 font-semibold underline underline-offset-2 whitespace-nowrap"
                   >
-                    Újra
+                    {t('foods.retry')}
                   </button>
                 )}
               </div>
@@ -987,12 +1023,14 @@ function FoodCard({
 function FoodDetailSheet({
   food,
   t,
+  language,
   isFavorite,
   onToggleFavorite,
   onClose,
 }: {
   food: PlanFood;
   t: (key: string) => string;
+  language: LanguageCode;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   onClose: () => void;
@@ -1036,7 +1074,7 @@ function FoodDetailSheet({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-[20px] font-bold text-white leading-tight truncate">
-                    {food.name}
+                    {translateFoodName(food.name, language)}
                   </h1>
                   <span className="text-[12px] text-white/70 font-medium">
                     {catLabel}

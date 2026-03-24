@@ -19,20 +19,47 @@ const languages = SUPPORTED_LANGUAGES.map((code) => ({
   flag: LANGUAGE_META[code]?.flag ?? '',
 }));
 
-function ForkLeafLogo() {
+function PersonalFitLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-      {/* fork */}
+    <svg width="110" height="148" viewBox="0 0 110 148" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="pGrad" x1="10" y1="148" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#0a5c5c" />
+          <stop offset="40%" stopColor="#0d9488" />
+          <stop offset="100%" stopColor="#2dd4bf" />
+        </linearGradient>
+        <linearGradient id="hbGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#5eead4" stopOpacity="0.6" />
+          <stop offset="50%" stopColor="#99f6e4" />
+          <stop offset="100%" stopColor="#5eead4" stopOpacity="0.6" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+
+      {/* P shape with counter cutout (fill-rule evenodd creates the hole) */}
       <path
-        d="M9 5 L9 13 M9 13 L9 22 M7 5 L7 10 C7 12.5 11 12.5 11 10 L11 5"
-        stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+        fillRule="evenodd"
+        fill="url(#pGrad)"
+        d="
+          M 12 142 L 12 26 Q 12 8 28 8 L 64 8
+          Q 106 8 106 50 Q 106 92 64 96 L 52 96 L 52 142 Z
+          M 52 30 Q 84 30 84 50 Q 84 72 52 74 Z
+        "
       />
-      {/* leaf */}
+
+      {/* Heartbeat line in lower vertical stroke */}
       <path
-        d="M15 22 C15 22 15 14 20.5 10 C23 8 26 8 26 8 C26 8 26 11 23.5 13.5 C19 18 15 22 15 22 Z"
-        stroke="white" strokeWidth="1.8" strokeLinejoin="round"
+        d="M 12 118 L 24 118 L 30 100 L 38 138 L 44 112 L 52 118"
+        stroke="url(#hbGrad)"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        filter="url(#glow)"
       />
-      <path d="M15 22 L20.5 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -185,17 +212,17 @@ export function SplashScreen() {
       {/* Center — logo + brand + tagline */}
       <motion.div
         className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 text-center"
-        initial={false}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         {/* Logo mark */}
         <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
-          style={{ background: '#0d9488', boxShadow: '0 4px 20px rgba(13,148,136,0.4)' }}
+          className="mb-5 flex items-center justify-center"
+          style={{ filter: 'drop-shadow(0 8px 32px rgba(13,148,136,0.45))' }}
           onDoubleClick={handleSecretLogoBypass}
         >
-          <ForkLeafLogo />
+          <PersonalFitLogo />
         </div>
 
         {/* Brand name */}
@@ -211,7 +238,7 @@ export function SplashScreen() {
 
       {/* Bottom — CTA */}
       <motion.div
-        initial={false}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full"

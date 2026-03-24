@@ -671,6 +671,7 @@ const multiStoreProducts: MultiStoreProductDef[] = [
     aliases: ['kecsketej', 'lapte de capra'],
     stores: [
       ['Kaufland', 'Covalact', 12.49],
+      ['Lidl', 'Pilos', 11.99],
       ['Carrefour', 'Napolact', 13.99],
       ['Auchan', 'Auchan Bio', 12.99],
     ],

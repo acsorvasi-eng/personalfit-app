@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PageHeader } from "../PageHeader";
+import { getSetting } from "../../backend/services/SettingsService";
 import { WaterService } from "../../backend/services/WaterService";
 import { getUserProfile } from "../../backend/services/UserProfileService";
 
@@ -403,6 +404,23 @@ interface BottomNavProps {
 export function BottomNav({ t }: BottomNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const load = () => {
+      getSetting('shoppingItems').then((saved) => {
+        if (!saved) { setCartCount(0); return; }
+        try {
+          const items = JSON.parse(saved);
+          setCartCount(Array.isArray(items) ? items.length : 0);
+        } catch { setCartCount(0); }
+      });
+    };
+    load();
+    const handler = () => load();
+    window.addEventListener('focus', handler);
+    return () => window.removeEventListener('focus', handler);
+  }, [location.pathname]);
 
   const tabs = [
     { path: '/foods', icon: Apple, label: t('nav.foods') },
@@ -419,16 +437,32 @@ export function BottomNav({ t }: BottomNavProps) {
           const active = location.pathname === tab.path ||
             (tab.path !== '/' && location.pathname.startsWith(tab.path));
           const Icon = tab.icon;
+          const isShoppingTab = tab.path === '/shopping';
           return (
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full transition-colors duration-150"
             >
-              <Icon
-                size={22}
-                className={active ? 'text-primary' : 'text-gray-400'}
-              />
+              <div style={{ position: 'relative', display: 'inline-flex' }}>
+                <Icon
+                  size={22}
+                  className={active ? 'text-primary' : 'text-gray-400'}
+                />
+                {isShoppingTab && cartCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -5, right: -7,
+                    background: '#ef4444', color: 'white',
+                    borderRadius: '999px', fontSize: 9, fontWeight: 700,
+                    minWidth: 14, height: 14, display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    padding: '0 2px', lineHeight: 1,
+                    border: '1.5px solid white',
+                  }}>
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </div>
               <span className={`text-2xs font-medium ${active ? 'text-primary' : 'text-gray-400'}`}>
                 {tab.label}
               </span>
