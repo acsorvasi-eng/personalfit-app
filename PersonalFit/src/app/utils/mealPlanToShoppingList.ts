@@ -136,7 +136,7 @@ function extractIngredients(
 /**
  * Parse ingredient string like "Csirkemell (220g)" into a search keyword
  */
-function parseIngredientToKeyword(ingredient: string): string | null {
+export function parseIngredientToKeyword(ingredient: string): string | null {
   // Remove quantity info in parentheses
   const cleaned = ingredient.replace(/\s*\(.*?\)\s*/g, '').trim().toLowerCase();
 
