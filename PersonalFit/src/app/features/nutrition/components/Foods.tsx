@@ -481,19 +481,55 @@ export function Foods() {
     }
 
     // Search filter — matches HU name, translated name, accent-stripped, description, benefits
+    // Also applies fuzzy matching for 1-2 character typos
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      // Levenshtein distance between two strings
+      const levenshtein = (a: string, b: string): number => {
+        if (a.length === 0) return b.length;
+        if (b.length === 0) return a.length;
+        const matrix: number[][] = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+            matrix[i][j] = b[i - 1] === a[j - 1]
+              ? matrix[i - 1][j - 1]
+              : 1 + Math.min(matrix[i - 1][j - 1], matrix[i - 1][j], matrix[i][j - 1]);
+          }
+        }
+        return matrix[b.length][a.length];
+      };
+
+      // Returns true if query fuzzy-matches any word (or the full string) in target
+      const fuzzyMatch = (query: string, target: string): boolean => {
+        if (target.includes(query)) return true;
+        const maxDist = query.length <= 3 ? 1 : 2;
+        // Check against full target
+        if (levenshtein(query, target) <= maxDist) return true;
+        // Check against each word in target (useful for multi-word names)
+        return target.split(/\s+/).some((word) => {
+          if (word.length < query.length - maxDist) return false;
+          return levenshtein(query, word) <= maxDist;
+        });
+      };
+
       result = result.filter((f) => {
         const nameL = f.name.toLowerCase();
         const nameNorm = nameL.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const translatedName = translateFoodName(f.name, language as LanguageCode).toLowerCase();
+        const translatedNorm = translatedName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         return (
           nameL.includes(q) ||
           nameNorm.includes(qNorm) ||
           translatedName.includes(q) ||
+          translatedNorm.includes(qNorm) ||
           f.description.toLowerCase().includes(q) ||
-          f.benefits.some((b) => b.toLowerCase().includes(q))
+          f.benefits.some((b) => b.toLowerCase().includes(q)) ||
+          fuzzyMatch(qNorm, nameNorm) ||
+          fuzzyMatch(qNorm, translatedNorm)
         );
       });
     }
