@@ -8,6 +8,7 @@ import { PageHeader } from "./PageHeader";
 import { useCalorieTracker } from "../hooks/useCalorieTracker";
 import { recognizeFoodFromText, searchFoodKnowledge, AIRecognitionResult, FoodItem, searchCompoundFoods, CompoundFood, CompoundFoodVariant, calculateCompoundFoodNutrition } from "../data/aiFoodKnowledge";
 import { getSetting, setSetting } from "../backend/services/SettingsService";
+import { FoodImage } from "./FoodImage";
 
 interface LoggedMeal {
   id: string;
@@ -2254,7 +2255,7 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                   key={meal.id}
                   className="bg-gray-50 rounded-xl p-3 flex items-center gap-3"
                 >
-                  <div className="text-2xl">{meal.image}</div>
+                  <FoodImage foodName={meal.name} fallbackEmoji={meal.image || '🍽️'} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-foreground truncate">{meal.name}</div>
                     <div className="text-xs text-gray-600">

@@ -1,7 +1,8 @@
 /**
  * OnboardingScreen — white slides with animated SVG illustrations
  * 3 slides: (1) personalized health, (2) data privacy, (3) sport+sleep balance
- * Swipe gesture + pagination dots + fixed CTA button position
+ * Top progress bar + swipe gesture + fixed CTA button position
+ * Titles support *italic* markers for premium typography
  */
 
 import { useState, useCallback, useRef, useMemo } from 'react';
@@ -69,16 +70,18 @@ const TEAL = '#0d9488';
 // Slide 1: plate + fork + knife + heart (inside plate, clearly visible)
 function Slide1Illustration() {
   return (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-      <AnimatedCircle cx={60} cy={68} r={36} delay={0} />
-      <AnimatedCircle cx={60} cy={68} r={25} stroke="#0f172a" strokeWidth={1.5} strokeDasharray="5 4" delay={0.2} />
-      {/* fork left */}
-      <AnimatedPath d="M22 32 L22 50 M22 50 L22 60 M20 32 L20 41 C20 45 24 45 24 41 L24 32" delay={0.3} />
-      {/* knife right */}
-      <AnimatedPath d="M98 32 L98 60 M98 32 C98 32 102 38 102 46 C102 51 98 53 98 53" delay={0.3} />
-      {/* heart — lower inside plate */}
+    <svg width="240" height="240" viewBox="0 0 130 130" fill="none" aria-hidden="true">
+      {/* outer plate circle — full closed circle */}
+      <AnimatedCircle cx={65} cy={72} r={36} delay={0} />
+      {/* inner dashed circle — smaller so it closes cleanly */}
+      <AnimatedCircle cx={65} cy={72} r={24} stroke="#0f172a" strokeWidth={1.5} strokeDasharray="5 4" delay={0.2} />
+      {/* fork left — moved further out, bigger, lower */}
+      <AnimatedPath d="M14 40 L14 62 M14 62 L14 78 M11 40 L11 52 C11 57 17 57 17 52 L17 40" strokeWidth={2.2} delay={0.3} />
+      {/* knife right — moved further out, bigger, lower */}
+      <AnimatedPath d="M116 40 L116 78 M116 40 C116 40 121 48 121 58 C121 64 116 66 116 66" strokeWidth={2.2} delay={0.3} />
+      {/* heart — centered inside plate */}
       <AnimatedPath
-        d="M60 74 C60 74 50 67 50 61 C50 56.5 54.5 54 60 58.5 C65.5 54 70 56.5 70 61 C70 67 60 74 60 74 Z"
+        d="M65 80 C65 80 54 72 54 65 C54 60 59 58 65 63 C71 58 76 60 76 65 C76 72 65 80 65 80 Z"
         stroke={TEAL} strokeWidth={2.2} delay={0.65}
       />
     </svg>
@@ -88,17 +91,18 @@ function Slide1Illustration() {
 // Slide 2: phone + shield + checkmark
 function Slide2Illustration() {
   return (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+    <svg width="240" height="240" viewBox="0 0 120 120" fill="none" aria-hidden="true">
       <AnimatedRect x={34} y={14} width={52} height={92} rx={8} delay={0} />
       <AnimatedPath d="M46 22 L74 22" delay={0.2} />
-      <AnimatedCircle cx={60} cy={97} r={4} delay={0.2} />
+      {/* home button — small filled circle so it doesn't break */}
+      <AnimatedCircle cx={60} cy={97} r={3.5} stroke="#0f172a" strokeWidth={2.5} delay={0.2} />
       {/* shield */}
       <AnimatedPath
-        d="M60 32 C54 32 46 36 46 36 L46 52 C46 61 60 70 60 70 C60 70 74 61 74 52 L74 36 C74 36 66 32 60 32 Z"
+        d="M60 34 C54 34 46 38 46 38 L46 54 C46 63 60 72 60 72 C60 72 74 63 74 54 L74 38 C74 38 66 34 60 34 Z"
         stroke={TEAL} strokeWidth={2.2} delay={0.4}
       />
       {/* checkmark */}
-      <AnimatedPath d="M52 51 L57 57 L69 44" stroke={TEAL} strokeWidth={2.4} delay={0.85} />
+      <AnimatedPath d="M52 53 L57 59 L69 46" stroke={TEAL} strokeWidth={2.4} delay={0.85} />
     </svg>
   );
 }
@@ -106,22 +110,22 @@ function Slide2Illustration() {
 // Slide 3: balance scale — sun (sport) ↔ moon (sleep)
 function Slide3Illustration() {
   return (
-    <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+    <svg width="240" height="240" viewBox="0 0 120 120" fill="none" aria-hidden="true">
       {/* post */}
       <AnimatedPath d="M60 22 L60 96" delay={0} />
       <AnimatedPath d="M44 96 L76 96" delay={0.05} />
       {/* arm */}
       <AnimatedPath d="M26 42 L60 32 L94 42" delay={0.15} />
-      {/* left bowl */}
-      <AnimatedPath d="M26 42 L22 60 C22 65 32 68 32 68 C32 68 42 65 42 60 L38 42" delay={0.3} />
-      {/* sun inside left bowl */}
-      <AnimatedCircle cx={32} cy={55} r={7} stroke={TEAL} strokeWidth={2} delay={0.55} />
-      <AnimatedPath d="M32 45 L32 43 M32 67 L32 65 M22 55 L20 55 M44 55 L42 55 M25 48 L24 47 M40 63 L39 62 M25 62 L24 63 M40 47 L39 48" stroke={TEAL} strokeWidth={1.6} delay={0.7} />
-      {/* right bowl */}
-      <AnimatedPath d="M78 42 L82 60 C82 65 92 68 92 68 C92 68 102 65 102 60 L98 42" delay={0.3} />
-      {/* moon inside right bowl */}
+      {/* left bowl — deeper so sun fits inside */}
+      <AnimatedPath d="M26 42 L20 62 C20 68 32 72 32 72 C32 72 44 68 44 62 L38 42" delay={0.3} />
+      {/* sun — centered inside left bowl, above the bottom */}
+      <AnimatedCircle cx={32} cy={56} r={6} stroke={TEAL} strokeWidth={2} delay={0.55} />
+      <AnimatedPath d="M32 47 L32 45 M32 67 L32 65 M23 56 L21 56 M43 56 L41 56 M26 50 L24.5 48.5 M39.5 63.5 L38 62 M26 62 L24.5 63.5 M39.5 48.5 L38 50" stroke={TEAL} strokeWidth={1.4} delay={0.7} />
+      {/* right bowl — deeper so moon fits inside */}
+      <AnimatedPath d="M82 42 L76 62 C76 68 88 72 88 72 C88 72 100 68 100 62 L94 42" delay={0.3} />
+      {/* moon — centered inside right bowl, above the bottom */}
       <AnimatedPath
-        d="M90 48 C87 48 84 51 84 55 C84 60 87 63 91 63 C88 64 84 63 82 61 C79 58 79 52 82 49 C84 46 88 46 90 48 Z"
+        d="M91 49 C88 49 85 52 85 56 C85 61 88 64 92 64 C89 65 85 64 83 62 C80 59 80 53 83 50 C85 47 89 47 91 49 Z"
         stroke={TEAL} strokeWidth={2} delay={0.55}
       />
     </svg>
@@ -129,6 +133,23 @@ function Slide3Illustration() {
 }
 
 const ILLUSTRATIONS = [Slide1Illustration, Slide2Illustration, Slide3Illustration];
+
+const TOTAL_SLIDES = 3;
+
+/** Converts *word* markers to italic <em> spans */
+function renderStyledText(text: string) {
+  const parts = text.split(/(\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return (
+        <em key={i} style={{ fontStyle: 'italic', fontWeight: 600 }}>
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return part;
+  });
+}
 
 const cardVariants = {
   initial: (dir: number) => ({ opacity: 0, x: dir * 80, scale: 0.95 }),
@@ -189,6 +210,18 @@ export function OnboardingScreen() {
         )}
       </div>
 
+      {/* Progress bar */}
+      <div className="px-6 max-w-md mx-auto w-full">
+        <div className="h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: '#e5e7eb' }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ backgroundColor: '#0d9488' }}
+            animate={{ width: `${((current + 1) / TOTAL_SLIDES) * 100}%` }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          />
+        </div>
+      </div>
+
       {/* Swipeable content */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full"
@@ -209,43 +242,30 @@ export function OnboardingScreen() {
             className="w-full flex flex-col items-center text-center"
           >
             {/* SVG illustration */}
-            <div className="mb-8 flex items-center justify-center" style={{ minHeight: 120 }}>
+            <div className="mb-12 flex items-center justify-center" style={{ minHeight: 240 }}>
               <Illustration />
             </div>
 
             {/* Title */}
-            <h2 className="text-2xl text-gray-900 mb-3 whitespace-pre-line" style={{ fontWeight: 800, lineHeight: 1.3 }}>
-              {slide.title}
+            <h2 className="text-2xl text-gray-900 mb-4 whitespace-pre-line" style={{ fontWeight: 800, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+              {slide.title.split('\n').map((line, li) => (
+                <span key={li}>
+                  {li > 0 && <br />}
+                  {renderStyledText(line)}
+                </span>
+              ))}
             </h2>
 
             {/* Description */}
-            <p className="text-gray-500 leading-relaxed text-sm max-w-xs">
+            <p className="text-gray-500 leading-relaxed text-base max-w-xs">
               {slide.desc}
             </p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Bottom: pagination + CTA */}
+      {/* Bottom: CTA */}
       <div className="px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full">
-
-        {/* Pagination dots — centered, above button */}
-        <div className="flex items-center justify-center gap-2 mb-5">
-          {slides.map((_, i) => (
-            <motion.button
-              key={i}
-              onClick={() => { setDirection(i > current ? 1 : -1); setCurrent(i); }}
-              animate={{
-                width: i === current ? 28 : 8,
-                backgroundColor: i === current ? '#0d9488' : '#e2e8f0',
-              }}
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              className="h-2 rounded-full cursor-pointer"
-              type="button"
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
-        </div>
 
         {/* CTA button — same position on every slide */}
         <button

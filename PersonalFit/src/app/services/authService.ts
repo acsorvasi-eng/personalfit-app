@@ -23,9 +23,11 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  signInWithCredential,
   getRedirectResult,
   type User as FirebaseUser,
 } from 'firebase/auth';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 export interface AuthUser {
   id: string;
@@ -191,8 +193,78 @@ const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
 
+/**
+ * Detect if we're running inside a Capacitor native shell.
+ * Uses window.location checks instead of Capacitor.isNativePlatform()
+ * to avoid import issues that caused black screen in firebase.ts / api.ts.
+ */
+function isNativePlatform(): boolean {
+  const proto = window.location.protocol;
+  const host = window.location.hostname;
+  // Capacitor iOS uses capacitor:// or serves from localhost
+  return proto === 'capacitor:' || host === 'localhost';
+}
+
+/**
+ * Native Google Sign-In via @capacitor-firebase/authentication.
+ * Uses the native Google Sign-In SDK, then exchanges the idToken
+ * for a Firebase Auth credential so the web SDK session stays in sync.
+ */
+async function loginWithGoogleNative(): Promise<AuthUser> {
+  const result = await FirebaseAuthentication.signInWithGoogle();
+  const idToken = result.credential?.idToken;
+  if (!idToken) {
+    throw new Error('Google Sign-In did not return an idToken');
+  }
+
+  // Exchange native idToken for a Firebase web-SDK credential
+  const credential = GoogleAuthProvider.credential(idToken);
+  const userCredential = await signInWithCredential(auth, credential);
+  const fbUser = userCredential.user;
+
+  const creationTime = fbUser.metadata.creationTime
+    ? new Date(fbUser.metadata.creationTime).getTime()
+    : 0;
+  const lastSignIn = fbUser.metadata.lastSignInTime
+    ? new Date(fbUser.metadata.lastSignInTime).getTime()
+    : 0;
+  const isFirstLogin = Math.abs(lastSignIn - creationTime) < 10_000;
+
+  const appUser: AuthUser = {
+    id: fbUser.uid,
+    email: fbUser.email || '',
+    name: fbUser.displayName || fbUser.email?.split('@')[0] || '',
+    avatar: fbUser.photoURL || '',
+    provider: 'google',
+    createdAt: fbUser.metadata.creationTime || new Date().toISOString(),
+    isFirstLogin,
+  };
+
+  await storeUser(appUser);
+  createOrUpdateUser(appUser.id, appUser.name, appUser.email).catch(() => {});
+  return appUser;
+}
+
 export async function loginWithGoogle(): Promise<AuthUser> {
-  // ─── Strategy 1: Popup (preferred) ───
+  // ─── Native path (iOS / Android) ───
+  if (isNativePlatform()) {
+    try {
+      return await loginWithGoogleNative();
+    } catch (nativeError: any) {
+      // User cancelled the native sign-in sheet
+      if (
+        nativeError?.message?.includes('canceled') ||
+        nativeError?.message?.includes('cancelled') ||
+        nativeError?.code === 'auth/popup-closed-by-user'
+      ) {
+        throw nativeError;
+      }
+      console.warn('[Auth] Native Google sign-in error:', nativeError);
+      return createDemoUser('demo@sixth-halt.app', 'Demo User', true);
+    }
+  }
+
+  // ─── Web path: Popup (preferred) ───
   try {
     const result = await signInWithPopup(auth, googleProvider);
     const fbUser = result.user;

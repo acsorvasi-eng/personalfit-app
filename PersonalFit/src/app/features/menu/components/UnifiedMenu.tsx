@@ -8,6 +8,7 @@ import { PageHeader } from "../../../components/PageHeader";
 import { DSMQuickLogSheet } from "../../../components/dsm/QuickLogSheet";
 import { useLanguage, getLocaleDayNarrow, getLocaleMonth, getLocale } from "../../../contexts/LanguageContext";
 import { translateFoodName } from "../../../utils/foodTranslations";
+import { FoodImage } from "../../../components/FoodImage";
 import { useCalorieTracker } from "../../../hooks/useCalorieTracker";
 // getMealAlternatives removed — all data comes from uploaded plans only
 import { motion, AnimatePresence } from "framer-motion";
@@ -2273,6 +2274,12 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
               className="overflow-hidden"
             >
               <div className="px-4 pb-4 space-y-2">
+                {/* Food photo hero */}
+                {mealName && (
+                  <div className="flex justify-center mb-2">
+                    <FoodImage foodName={mealName} size="lg" fallbackEmoji={icon} className="shadow-md" />
+                  </div>
+                )}
                 {/* Description line */}
                 {mealDesc && (
                   <p className="text-[11px] text-gray-400 ml-1 mb-1 italic">{mealDesc}</p>
@@ -2746,9 +2753,7 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
       <div className="p-3">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg bg-primary/10">
-              {meal.image || '🍽️'}
-            </div>
+            <FoodImage foodName={meal.name} fallbackEmoji={meal.image || '🍽️'} size="sm" />
             <div>
               <h4 className="font-semibold text-sm text-foreground">{translateFoodName(meal.name, language)}</h4>
               <div className="flex items-center gap-1 text-xs text-gray-500">

@@ -19,46 +19,67 @@ const languages = SUPPORTED_LANGUAGES.map((code) => ({
   flag: LANGUAGE_META[code]?.flag ?? '',
 }));
 
-function PersonalFitLogo() {
+function NuraLogo() {
   return (
-    <svg width="110" height="148" viewBox="0 0 110 148" fill="none" aria-hidden="true">
+    <svg width="130" height="130" viewBox="0 0 130 130" fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id="pGrad" x1="10" y1="148" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+        <linearGradient id="nGrad" x1="10" y1="130" x2="120" y2="0" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#0a5c5c" />
-          <stop offset="40%" stopColor="#0d9488" />
+          <stop offset="35%" stopColor="#0d9488" />
           <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
+        <linearGradient id="nFill" x1="20" y1="110" x2="110" y2="20" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#0d9488" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.05" />
+        </linearGradient>
         <linearGradient id="hbGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#5eead4" stopOpacity="0.6" />
+          <stop offset="0%" stopColor="#5eead4" stopOpacity="0.5" />
           <stop offset="50%" stopColor="#99f6e4" />
-          <stop offset="100%" stopColor="#5eead4" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#5eead4" stopOpacity="0.5" />
         </linearGradient>
         <filter id="glow">
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feGaussianBlur stdDeviation="3" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
 
-      {/* P shape with counter cutout (fill-rule evenodd creates the hole) */}
-      <path
-        fillRule="evenodd"
-        fill="url(#pGrad)"
-        d="
-          M 12 142 L 12 26 Q 12 8 28 8 L 64 8
-          Q 106 8 106 50 Q 106 92 64 96 L 52 96 L 52 142 Z
-          M 52 30 Q 84 30 84 50 Q 84 72 52 74 Z
-        "
+      {/* Circular frame behind the n */}
+      <motion.circle
+        cx={65} cy={65} r={58}
+        stroke="url(#nGrad)"
+        strokeWidth="2.5"
+        fill="none"
+        opacity={0.3}
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 0.3 }}
+        transition={{ duration: 1.0, ease: [0.4, 0, 0.2, 1] }}
       />
 
-      {/* Heartbeat line in lower vertical stroke */}
-      <path
-        d="M 12 118 L 24 118 L 30 100 L 38 138 L 44 112 L 52 118"
+      {/* Stylized "n" — fluid calligraphic single stroke with a sweeping tail */}
+      <motion.path
+        d="M 34 95 L 34 55 C 34 38 50 30 65 42 C 80 30 96 38 96 55 L 96 95"
+        stroke="url(#nGrad)"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="url(#nFill)"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 1.2, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+      />
+
+      {/* Heartbeat line weaving through the base */}
+      <motion.path
+        d="M 18 92 L 34 92 L 40 80 L 48 104 L 54 88 L 65 92 L 76 88 L 82 104 L 90 80 L 96 92 L 112 92"
         stroke="url(#hbGrad)"
-        strokeWidth="4"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
         filter="url(#glow)"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 0.8 }}
+        transition={{ delay: 1.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       />
     </svg>
   );
@@ -222,12 +243,12 @@ export function SplashScreen() {
           style={{ filter: 'drop-shadow(0 8px 32px rgba(13,148,136,0.45))' }}
           onDoubleClick={handleSecretLogoBypass}
         >
-          <PersonalFitLogo />
+          <NuraLogo />
         </div>
 
         {/* Brand name */}
         <h1 className="text-3xl text-white mb-3" style={{ fontWeight: 800, letterSpacing: '-0.01em' }}>
-          PersonalFit
+          nura
         </h1>
 
         {/* Tagline */}

@@ -336,6 +336,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       const data = responseBody;
 
       // ── Chef review (silent improvement layer) ──────────────────────────────
+      if (!data?.nutritionPlan) {
+        throw new Error('Az API nem adott vissza étrend tervet. Próbáld újra.');
+      }
       const improvedPlan = await callChefReview({
         nutritionPlan: data.nutritionPlan,
         language,
@@ -410,7 +413,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           className="fixed inset-0 z-[9000] bg-background flex flex-col overflow-y-auto"
         >
           {/* ── Top bar ── */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0 sticky top-0 bg-background z-10">
+          <div className="flex items-center justify-between px-5 pb-3 border-b border-border shrink-0 sticky top-0 bg-background z-10" style={{ paddingTop: "calc(env(safe-area-inset-top, 20px) + 0.5rem)" }}>
             <div className="flex items-center gap-[10px]">
               <div className="w-[38px] h-[38px] rounded-[11px] bg-primary flex items-center justify-center shrink-0">
                 <Sparkles size={18} color="#fff" />

@@ -1,7 +1,7 @@
 // PersonalFit/src/app/features/menu/components/RecipeOverlay.tsx
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Clock, ChevronDown, Utensils, Flame, AlertCircle, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Clock, ChevronDown, Utensils, Flame, AlertCircle, RefreshCw, MapPin, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { getTrialInfo } from '../../../components/onboarding/SubscriptionScreen';
@@ -9,6 +9,7 @@ import { generateRecipe, computeWeekContext } from '../../../services/ChefAgentS
 import { getDailyMenuMatches } from '../../../services/DailyMenuMatcherService';
 import { RecipeGenerationError } from '../../../services/recipeModels';
 import { translateFoodName } from '../../../utils/foodTranslations';
+import { FoodImage } from '../../../components/FoodImage';
 import type { MealOption } from '../../../hooks/usePlanData';
 import type { ChefAgentOutput, DailyMenuMatch } from '../../../services/recipeModels';
 import type { StoredUserProfile } from '../../../backend/services/UserProfileService';
@@ -168,6 +169,11 @@ export function RecipeOverlay({
         <div className="w-9" />
       </div>
 
+      {/* Food photo hero */}
+      <div className="flex-shrink-0 flex justify-center py-3 border-b border-border bg-gray-50/50">
+        <FoodImage foodName={meal.name} size="lg" className="shadow-md" />
+      </div>
+
       {/* Tab switcher */}
       <div className="flex-shrink-0 flex gap-1 px-4 py-2 border-b border-border">
         {(['home', 'restaurant'] as const).map(tab => (
@@ -318,7 +324,16 @@ export function RecipeOverlay({
               )}
 
               {(menuState === 'error' || (menuState === 'success' && menuMatches.length === 0)) && (
-                <p className="text-sm text-gray-400 text-center py-8">{t('recipe.noMenuFound')}</p>
+                <div className="flex flex-col items-center gap-4 py-8">
+                  <p className="text-sm text-gray-400 text-center">{t('recipe.noMenuFound')}</p>
+                  <p className="text-sm text-gray-500 text-center px-4">{t('recipe.restaurantTip')}</p>
+                  <button
+                    onClick={loadMenuMatches}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-semibold"
+                  >
+                    <RefreshCw className="w-4 h-4" />{t('recipe.retry')}
+                  </button>
+                </div>
               )}
 
               {menuState === 'success' && menuMatches.map((match, i) => (
@@ -351,6 +366,20 @@ export function RecipeOverlay({
                   )}
                 </div>
               ))}
+
+              {/* Google Maps search button - always shown when not loading */}
+              {menuState !== 'loading' && (
+                <a
+                  href={`https://www.google.com/maps/search/${encodeURIComponent(translateFoodName(meal.name, language) + ' restaurant')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  <MapPin className="w-4 h-4" />
+                  {t('recipe.searchNearby')}
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                </a>
+              )}
             </>
           )}
 

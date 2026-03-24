@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD6Coh3mrokyWQ-AV6rP1rx1nbVfMQai5I",
@@ -11,6 +11,12 @@ const firebaseConfig = {
   appId: "1:736953870888:web:98f1b25e7438b0cd1a631d"
 };
 
+/** Detect Capacitor native: capacitor:// (iOS) or https://localhost (Android) */
+const isNative = typeof window !== 'undefined' && (
+  window.location.protocol === 'capacitor:' ||
+  (window.location.protocol === 'https:' && window.location.hostname === 'localhost')
+);
+
 let app: ReturnType<typeof initializeApp>;
 let db: ReturnType<typeof getFirestore>;
 let auth: ReturnType<typeof getAuth>;
@@ -18,10 +24,17 @@ let auth: ReturnType<typeof getAuth>;
 try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  auth = getAuth(app);
+
+  // Capacitor WebView needs explicit persistence — getAuth() default fails silently
+  if (isNative) {
+    auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+    });
+  } else {
+    auth = getAuth(app);
+  }
 } catch (err) {
   console.warn('[Firebase] Initialization failed (app will use demo mode):', (err as Error)?.message);
-  // Create minimal stubs so imports don't crash the app
   app = {} as any;
   db = {} as any;
   auth = {

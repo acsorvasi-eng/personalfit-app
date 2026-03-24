@@ -143,7 +143,9 @@ export function LoginScreen() {
       }
       onAuthSuccess();
     } catch (err: any) {
-      setError(getAuthErrorMessage(err?.code ?? '', t));
+      // DEBUG: show raw error on device — remove after fixing
+      const raw = err?.code || err?.message || JSON.stringify(err);
+      setError(`[${raw}] ${getAuthErrorMessage(err?.code ?? '', t)}`);
     } finally {
       setIsSubmitting(false);
     }
