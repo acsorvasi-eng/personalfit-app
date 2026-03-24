@@ -51,9 +51,9 @@ export function RecipeOverlay({
     })();
   }, [subscriptionActive]);
 
-  // Load recipe once access is confirmed
+  // Load recipe once access is confirmed AND user is loaded (avoids 'anonymous' userId race)
   useEffect(() => {
-    if (canAccess !== true) return;
+    if (canAccess !== true || !user) return;
     let mounted = true;
     (async () => {
       if (mounted) await loadRecipe();
@@ -61,7 +61,7 @@ export function RecipeOverlay({
     })();
     return () => { mounted = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canAccess]);
+  }, [canAccess, user]);
 
   const loadRecipe = async () => {
     if (recipeLoadingRef.current) return;
@@ -105,7 +105,8 @@ export function RecipeOverlay({
       const matches = await getDailyMenuMatches(
         { name: meal.name, calories: meal.calories, mealType: meal.type },
         language as 'hu' | 'ro' | 'en',
-        undefined,  // city not yet in StoredUserProfile
+        undefined, // city not yet in StoredUserProfile
+        user?.id,
       );
       setMenuMatches(matches);
       setMenuState('success');
