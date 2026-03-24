@@ -191,6 +191,7 @@ export function Foods() {
   const [selectedFood, setSelectedFood] = useState<PlanFood | null>(null);
   const [generateSheetOpen, setGenerateSheetOpen] = useState(false);
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(2000);
+  const [foodToDelete, setFoodToDelete] = useState<PlanFood | null>(null);
 
   // Add Food dialog state
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -422,6 +423,16 @@ export function Foods() {
     }).catch(() => {});
   }, []);
 
+  const handleDeleteFood = useCallback(async (food: PlanFood) => {
+    try {
+      const { deleteFood } = await import('../../../backend/services/FoodCatalogService');
+      await deleteFood(food.id);
+      refreshPlanFoods();
+    } catch (err) {
+      console.error('[Foods] delete failed:', err);
+    }
+  }, [refreshPlanFoods]);
+
   // Decide data source:
   //   - If van aktív tervhez kötött étel (planFoods) → azt használjuk
   //   - Ha nincs aktív terv → ténylegesen üres lista (EmptyState fog megjelenni)
@@ -642,6 +653,10 @@ export function Foods() {
                     hapticFeedback('light');
                     setSelectedFood(food);
                   }}
+                  onLongPress={food.source !== 'predefined' && food.source !== 'system' ? () => {
+                    hapticFeedback('medium');
+                    setFoodToDelete(food);
+                  } : undefined}
                 />
               </motion.div>
             ))}
@@ -649,6 +664,49 @@ export function Foods() {
           </div>
         )}
       </div>
+
+      {/* ═══ Delete Confirmation ═══ */}
+      <AnimatePresence>
+        {foodToDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+            onClick={() => setFoodToDelete(null)}
+          >
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-10"
+              onClick={e => e.stopPropagation()}
+            >
+              <p className="text-[15px] text-gray-600 mb-6 text-center">
+                {t('foods.deleteConfirm')} &ldquo;{translateFoodName(foodToDelete.name, language as LanguageCode)}&rdquo;?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setFoodToDelete(null)}
+                  className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-[15px]"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleDeleteFood(foodToDelete);
+                    setFoodToDelete(null);
+                  }}
+                  className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-[15px]"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ═══ Food Detail Bottom Sheet ═══ */}
       <AnimatePresence>
@@ -959,6 +1017,7 @@ function FoodCard({
   onTap,
   showCategoryLabel,
   language,
+  onLongPress,
 }: {
   food: PlanFood;
   t: (key: string) => string;
@@ -967,12 +1026,33 @@ function FoodCard({
   onTap: () => void;
   showCategoryLabel: boolean;
   language: LanguageCode;
+  onLongPress?: () => void;
 }) {
   const catLabel = t(CATEGORY_I18N_MAP[food.category] || food.category);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePressStart = () => {
+    pressTimer.current = setTimeout(() => {
+      onLongPress?.();
+      hapticFeedback('medium');
+    }, 600);
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
 
   return (
     <button
       onClick={onTap}
+      onMouseDown={handlePressStart}
+      onMouseUp={handlePressEnd}
+      onMouseLeave={handlePressEnd}
+      onTouchStart={handlePressStart}
+      onTouchEnd={handlePressEnd}
       className="w-full bg-white rounded-2xl border border-gray-100 px-4 py-3.5 text-left active:scale-[0.98] transition-all group hover:shadow-sm hover:border-gray-200"
     >
       <div className="flex items-center justify-between gap-3">

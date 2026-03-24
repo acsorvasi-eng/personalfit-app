@@ -216,6 +216,10 @@ const ro: LocalePartial = {
   'shopping.settings.fridgeAutoDesc': 'Frigiderul inteligent indică automat ce produse se termină',
   'shopping.settings.fridgeNamePlaceholder': 'Numele frigiderului (ex. Samsung Family Hub)',
   'shopping.settings.pairButton': 'Asociați',
+
+  'common.cancel': 'Anulare',
+  'common.delete': 'Șterge',
+  'foods.deleteConfirm': 'Vrei să ștergi?',
 };
 
 export default ro;

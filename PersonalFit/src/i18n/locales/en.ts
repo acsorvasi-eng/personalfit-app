@@ -216,6 +216,10 @@ const en: LocalePartial = {
   'shopping.settings.fridgeAutoDesc': 'The smart fridge automatically alerts when items are running low',
   'shopping.settings.fridgeNamePlaceholder': 'Fridge name (e.g. Samsung Family Hub)',
   'shopping.settings.pairButton': 'Pair',
+
+  'common.cancel': 'Cancel',
+  'common.delete': 'Delete',
+  'foods.deleteConfirm': 'Delete?',
 };
 
 export default en;

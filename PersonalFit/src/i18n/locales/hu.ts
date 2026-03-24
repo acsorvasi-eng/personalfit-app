@@ -289,6 +289,10 @@ const hu = {
   'shopping.settings.fridgeAutoDesc': 'Az okos hűtő automatikusan jelzi ha valami fogyóban van',
   'shopping.settings.fridgeNamePlaceholder': 'Hűtő neve (pl. Samsung Family Hub)',
   'shopping.settings.pairButton': 'Párosítás',
+
+  'common.cancel': 'Mégse',
+  'common.delete': 'Törlés',
+  'foods.deleteConfirm': 'Törölni szeretnéd?',
 } as const;
 
 export default hu;
