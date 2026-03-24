@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 type LookupFood = {
+  valid: boolean;
   /** Hungarian display name (name_hu from the LLM) */
   name: string;
   calories_per_100g: number;
@@ -49,13 +50,20 @@ You are a nutrition expert with access to a reliable nutrition database.
 For each food in this list, return ONLY a JSON array with no markdown, no explanation.
 Each item MUST have this exact shape:
 {
-  "name_hu": string,                       // Hungarian name, short, singular
-  "calories_per_100g": number,            // kcal per 100g
-  "protein_g": number,                    // grams of protein per 100g
-  "fat_g": number,                        // grams of fat per 100g
-  "carbs_g": number,                      // grams of carbohydrates per 100g
+  "valid": boolean,                           // true if this is a real, recognizable food ingredient; false if misspelled, fictional, or not a food
+  "name_hu": string,                          // Correct Hungarian name with proper accents (e.g. "sullo" → "Süllő", "csirke" → "Csirke")
+  "calories_per_100g": number,               // kcal per 100g
+  "protein_g": number,                       // grams of protein per 100g
+  "fat_g": number,                           // grams of fat per 100g
+  "carbs_g": number,                         // grams of carbohydrates per 100g
   "category": "Fehérje" | "Zsír" | "Szénhidrát" | "Tejtermék" | "Zöldség" | "Gyümölcs"
 }
+
+Rules:
+- Set "valid": false if the input is clearly misspelled (e.g. "sully", "chicke"), fictional, or not a real food ingredient.
+- Set "valid": true for real food ingredients even if the name lacks accents (e.g. "sullo" is a valid but unaccented form of "Süllő").
+- Always correct accents in "name_hu": return the properly-accented Hungarian name (e.g. "sullo" → "Süllő", "csirkemell" → "Csirkemell", "tulas" → invalid).
+- For invalid foods, you may set nutritional values to 0.
 
 Foods:
 ${listBlock}
@@ -133,12 +141,14 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
         if (!item) return null;
         const name = String(item.name_hu || item.name || '').trim();
         if (!name) return null;
+        const isValid = item.valid !== false; // default true if not present
         const toNum = (v: any, fallback: number) => {
           const n = Number(v);
           return Number.isFinite(n) && n > 0 ? n : fallback;
         };
         const category = typeof item.category === 'string' ? String(item.category).trim() : undefined;
         return {
+          valid: isValid,
           name,
           calories_per_100g: toNum(item.calories_per_100g, 100),
           protein_g: toNum(item.protein_g, 5),
