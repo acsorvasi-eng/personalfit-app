@@ -31,6 +31,9 @@ import {
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { generateWeeklyShoppingList } from "../../../utils/mealPlanToShoppingList";
 import { usePlanData } from "../../../hooks/usePlanData";
+import { useFavoriteFoods } from '../../../hooks/useFavoriteFoods';
+import { buildSmartRecommendations, PurchaseHistory } from '../utils/smartRecommendations';
+import { getCurrentWeekIndex } from '../../../utils/mealPlanToShoppingList';
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 import { ShoppingItem } from "../types";
 import {
@@ -354,9 +357,13 @@ function ShoppingSettingsSheet({
 export function ShoppingList() {
   const { t } = useLanguage();
   const { planData } = usePlanData();
+  const { favoriteIds } = useFavoriteFoods();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistory>({});
+  const [purchaseHistoryLoaded, setPurchaseHistoryLoaded] = useState(false);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
   useEffect(() => {
     getSetting("shoppingItems").then((saved) => {
       if (!saved) return;
@@ -398,6 +405,30 @@ export function ShoppingList() {
       if (!saved) return;
       try { setSelectedStores(JSON.parse(saved)); } catch { /* ignore */ }
     });
+  }, []);
+
+  // Load purchase history
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await getSetting('sh-purchase-history');
+        const history: PurchaseHistory = raw ? JSON.parse(raw) : {};
+        setPurchaseHistory(history);
+      } catch {
+        // ignore
+      } finally {
+        setPurchaseHistoryLoaded(true);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (favoriteIds.size > 0) setFavoritesLoaded(true);
+  }, [favoriteIds]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setFavoritesLoaded(true), 300);
+    return () => clearTimeout(t);
   }, []);
   const toggleStore = (store: StoreName) => {
     setSelectedStores(prev => {
@@ -461,42 +492,34 @@ export function ShoppingList() {
       : results;
   }, [searchQuery, selectedStores]);
 
+  const mealIngredients = useMemo(() => {
+    if (!planData || planData.length === 0) return [];
+    const weekIndex = getCurrentWeekIndex();
+    const week = planData[weekIndex];
+    if (!week) return [];
+    return week.days.flatMap((day) =>
+      [...day.breakfast, ...day.lunch, ...day.dinner, ...(day.snack ?? [])].flatMap(
+        (meal) => meal.ingredients
+      )
+    );
+  }, [planData]);
+
   const browseProducts = useMemo(() => {
-    if (searchQuery.trim()) return [];
-    // Pick the lowest-fat product per category (preferring Kaufland store)
-    // so the carousel always highlights the healthiest option in each category
-    const all = selectedStores.length > 0
-      ? productDatabase.filter(p => selectedStores.includes(p.store))
-      : productDatabase;
-    const byCategory = new Map<string, Product>();
-    const preferredStore = 'Kaufland';
-    for (const p of all) {
-      const existing = byCategory.get(p.category);
-      if (!existing) { byCategory.set(p.category, p); continue; }
-      const existingIsPreferred = existing.store === preferredStore;
-      const currentIsPreferred = p.store === preferredStore;
-      // Within the same store preference tier, pick lowest fat
-      if (existingIsPreferred && !currentIsPreferred) continue;
-      if (!existingIsPreferred && currentIsPreferred) { byCategory.set(p.category, p); continue; }
-      if (p.fat < existing.fat) { byCategory.set(p.category, p); }
-    }
-    // Order by category priority for a balanced carousel
-    const categoryOrder = [
-      'Hús & Hal', 'Zöldség', 'Tejtermék', 'Gyümölcs', 'Gabona',
-      'Hüvelyes', 'Diófélék', 'Olaj & Fűszer', 'Ital', 'Konzerv',
-      'Édesség', 'Sport & Kiegészítő',
-    ];
-    const sorted: Product[] = [];
-    for (const cat of categoryOrder) {
-      const p = byCategory.get(cat);
-      if (p) sorted.push(p);
-    }
-    // Append any leftover categories not in the order list
-    for (const [, p] of byCategory) {
-      if (!sorted.includes(p)) sorted.push(p);
-    }
-    return sorted;
-  }, [searchQuery, selectedStores]);
+    if (!favoritesLoaded || !purchaseHistoryLoaded) return [];
+    const currentCartIds = new Set(shoppingItems.map(i => i.product.id));
+    const isNewUser = favoriteIds.size === 0 && Object.keys(purchaseHistory).length === 0;
+    return buildSmartRecommendations({
+      searchQuery,
+      products: productDatabase,
+      currentCartIds,
+      mealIngredients,
+      favoriteIds,
+      purchaseHistory,
+      selectedStores,
+      isNewUser,
+    });
+  }, [favoritesLoaded, purchaseHistoryLoaded, shoppingItems, favoriteIds, purchaseHistory,
+      searchQuery, productDatabase, mealIngredients, selectedStores]);
 
   const displayProducts = searchResults.length > 0 ? searchResults : browseProducts;
 
@@ -507,13 +530,18 @@ export function ShoppingList() {
     return shoppingItems.reduce((sum, item) => sum + item.product.price, 0);
   }, [shoppingItems]);
 
-  const addProduct = (product: Product) => {
+  const addProduct = async (product: Product) => {
     const exists = shoppingItems.some((i) => i.product.id === product.id);
     if (exists) return;
-    updateShoppingItems((prev) => [
-      ...prev,
-      { product, quantity: product.defaultQuantity, checked: false },
-    ]);
+    updateShoppingItems((prev) => [...prev, { product, quantity: product.defaultQuantity, checked: false }]);
+    try {
+      const raw = await getSetting('sh-purchase-history');
+      const history: PurchaseHistory = raw ? JSON.parse(raw) : {};
+      const prev = history[product.id] ?? { addCount: 0, lastAdded: 0 };
+      history[product.id] = { addCount: prev.addCount + 1, lastAdded: Date.now() };
+      await setSetting('sh-purchase-history', JSON.stringify(history));
+      setPurchaseHistory(history);
+    } catch { /* silently ignore */ }
   };
 
   const removeItem = (productId: string) => {
