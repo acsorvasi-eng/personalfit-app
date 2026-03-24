@@ -35,8 +35,8 @@ export function matchFoodToProducts(keyword: string, products: Product[]): Produ
 // ─── Health-first fallback ────────────────────────────────────────────────────
 
 /**
- * STUB — implemented in Task 4.
  * Pick the lowest-fat product per category, preferring Kaufland.
+ * Used as fallback for new users (no favorites and no purchase history).
  */
 export function buildHealthFirstRecommendations(
   products: Product[],

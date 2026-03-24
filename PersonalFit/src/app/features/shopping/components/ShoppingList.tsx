@@ -426,9 +426,11 @@ export function ShoppingList() {
     if (favoriteIds.size > 0) setFavoritesLoaded(true);
   }, [favoriteIds]);
 
+  // Fallback: users with zero favorites will never trigger the size>0 effect above.
+  // The 300ms timeout ensures favoritesLoaded resolves even with no favorites or slow Firestore.
   useEffect(() => {
-    const t = setTimeout(() => setFavoritesLoaded(true), 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setFavoritesLoaded(true), 300);
+    return () => clearTimeout(timer);
   }, []);
   const toggleStore = (store: StoreName) => {
     setSelectedStores(prev => {
@@ -519,7 +521,7 @@ export function ShoppingList() {
       isNewUser,
     });
   }, [favoritesLoaded, purchaseHistoryLoaded, shoppingItems, favoriteIds, purchaseHistory,
-      searchQuery, productDatabase, mealIngredients, selectedStores]);
+      searchQuery, mealIngredients, selectedStores]);
 
   const displayProducts = searchResults.length > 0 ? searchResults : browseProducts;
 
@@ -535,6 +537,8 @@ export function ShoppingList() {
     if (exists) return;
     updateShoppingItems((prev) => [...prev, { product, quantity: product.defaultQuantity, checked: false }]);
     try {
+      // Re-read from storage (not component state) to avoid clobbering concurrent writes
+      // from other tabs or rapid sequential addProduct calls.
       const raw = await getSetting('sh-purchase-history');
       const history: PurchaseHistory = raw ? JSON.parse(raw) : {};
       const prev = history[product.id] ?? { addCount: 0, lastAdded: 0 };
