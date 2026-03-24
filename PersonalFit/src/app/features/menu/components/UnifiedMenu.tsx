@@ -2067,6 +2067,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
   const [expanded, setExpanded] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
   const [showRecipe, setShowRecipe] = useState(false);
+  const [recipeInitialTab, setRecipeInitialTab] = useState<'home' | 'restaurant'>('home');
   const allOptions = primaryMeal ? [primaryMeal, ...alternatives] : alternatives;
   const canShowRecipe = mealType === 'lunch' || mealType === 'dinner';
 
@@ -2227,6 +2228,38 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
               </span>
             </div>
           )}
+
+          {/* Recipe + Restaurant badges — lunch/dinner only */}
+          {canShowRecipe && (
+            <div className="mt-1.5 ml-[52px] flex items-center gap-2">
+              <motion.button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  hapticFeedback('light');
+                  setRecipeInitialTab('home');
+                  setShowRecipe(true);
+                }}
+                className="flex items-center gap-1 bg-amber-50 border border-amber-200/70 rounded-full px-2.5 py-1 active:bg-amber-100 transition-colors"
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-[11px] leading-none">🍳</span>
+                <span className="text-[11px] font-semibold text-amber-700">Recept</span>
+              </motion.button>
+              <motion.button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  hapticFeedback('light');
+                  setRecipeInitialTab('restaurant');
+                  setShowRecipe(true);
+                }}
+                className="flex items-center gap-1 bg-teal-50 border border-teal-200/70 rounded-full px-2.5 py-1 active:bg-teal-100 transition-colors"
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="text-[11px] leading-none">🏪</span>
+                <span className="text-[11px] font-semibold text-teal-700">Éttermek</span>
+              </motion.button>
+            </div>
+          )}
         </div>
 
         {/* ─── Inline expanded: ingredients with per-item macros ─── */}
@@ -2350,17 +2383,6 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                   </motion.button>
                 )}
 
-                {/* ── Recipe button (lunch/dinner only) ── */}
-                {canShowRecipe && selectedMeal && (
-                  <motion.button
-                    onClick={(e) => { e.stopPropagation(); hapticFeedback('light'); setShowRecipe(true); }}
-                    className="w-full flex items-center justify-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200/60 active:bg-amber-100 transition-colors"
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <span className="text-base leading-none">🍳</span>
-                    <span className="text-xs font-bold text-amber-700">{t("recipe.openRecipe") || 'Recept'}</span>
-                  </motion.button>
-                )}
               </div>
             </motion.div>
           )}
@@ -2396,6 +2418,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
             weekMeals={weekMeals}
             todayMeals={todayMeals}
             onClose={() => setShowRecipe(false)}
+            initialTab={recipeInitialTab}
           />
         )}
       </AnimatePresence>

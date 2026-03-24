@@ -19,16 +19,17 @@ interface RecipeOverlayProps {
   weekMeals: MealOption[];
   todayMeals: MealOption[];
   onClose: () => void;
+  initialTab?: 'home' | 'restaurant';
 }
 
 type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function RecipeOverlay({
-  meal, userProfile, weekMeals, todayMeals, onClose,
+  meal, userProfile, weekMeals, todayMeals, onClose, initialTab,
 }: RecipeOverlayProps) {
   const { t, language } = useLanguage();
   const { user, subscriptionActive } = useAuth();
-  const [activeTab, setActiveTab] = useState<'home' | 'restaurant'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'restaurant'>(initialTab ?? 'home');
   const [recipeState, setRecipeState] = useState<LoadState>('idle');
   const [menuState, setMenuState] = useState<LoadState>('idle');
   const [recipe, setRecipe] = useState<ChefAgentOutput | null>(null);
