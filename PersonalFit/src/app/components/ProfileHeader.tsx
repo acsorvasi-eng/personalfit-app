@@ -51,12 +51,12 @@ export function ProfileHeader({
     <button
       onClick={onAvatarClick}
       className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-sm border border-white/10 flex items-center justify-center group cursor-pointer"
-      aria-label="Profilkép módosítása"
+      aria-label={t('profile.editAvatar')}
     >
       {avatar ? (
         <img
           src={avatar}
-          alt="Profilkép"
+          alt={t('profile.avatarAlt')}
           className="w-full h-full object-cover"
         />
       ) : (
@@ -80,15 +80,15 @@ export function ProfileHeader({
         isTitle
       />
       <InlineEditableText
-        value={age > 0 ? `${age} éves` : "Profil"}
-        placeholder="Kor"
+        value={age > 0 ? `${age} ${t('profile.yearsOld')}` : t('nav.profile')}
+        placeholder={t('profile.agePlaceholder')}
         onSave={(v) => {
           // Parse out the number from something like "32 éves" or just "32"
           const num = parseInt(v.replace(/[^\d]/g, ""), 10);
           if (!isNaN(num) && num > 0) onAgeSave?.(num);
         }}
         rawValue={age > 0 ? String(age) : ""}
-        suffix=" éves"
+        suffix={` ${t('profile.yearsOld')}`}
         className="text-white/80 text-xs sm:text-sm mt-0.5 truncate"
         isTitle={false}
       />

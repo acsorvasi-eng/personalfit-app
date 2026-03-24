@@ -21,21 +21,21 @@ interface MealNameResult {
   emoji: string;
 }
 
-const GEO_OPTIONS: Array<{ id: MealGeo; label: string; description: string }> = [
+const GEO_OPTIONS: Array<{ id: MealGeo; labelKey: string; descKey: string }> = [
   {
     id: "transylvania",
-    label: "Erdély / Románia",
-    description: "Erdélyi, román és szász konyha hangulata",
+    labelKey: "mealNamer.geoTransylvania",
+    descKey: "mealNamer.geoTransylvaniaDesc",
   },
   {
     id: "budapest",
-    label: "Budapest / Magyarország",
-    description: "Magyar és közép-európai éttermi stílus",
+    labelKey: "mealNamer.geoBudapest",
+    descKey: "mealNamer.geoBudapestDesc",
   },
   {
     id: "mediterranean",
-    label: "Mediterrán",
-    description: "Mediterrán fusion, tengerparti bisztró vibe",
+    labelKey: "mealNamer.geoMediterranean",
+    descKey: "mealNamer.geoMediterraneanDesc",
   },
 ];
 
@@ -74,7 +74,7 @@ export function MealNamer({
 
   const handleGenerate = async () => {
     if (ingredients.length === 0) {
-      showToast("Nincsenek összetevők ehhez az étkezéshez.");
+      showToast(t("mealNamer.noIngredients"));
       return;
     }
 
@@ -119,7 +119,7 @@ export function MealNamer({
       console.error("[MealNamer] Failed to generate name", err);
       setError(
         err?.message ||
-          "Nem sikerült nevet generálni. Próbáld újra néhány másodperc múlva."
+          t("mealNamer.generateFailed")
       );
     } finally {
       setLoading(false);
@@ -184,7 +184,7 @@ export function MealNamer({
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-[11px] font-medium text-amber-200/80 uppercase tracking-wide">
                 <MapPin className="w-3.5 h-3.5 text-amber-300" />
-                <span>Földrajzi stílus</span>
+                <span>{t('mealNamer.geoStyle')}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {GEO_OPTIONS.map((opt) => {
@@ -202,10 +202,10 @@ export function MealNamer({
                       ].join(" ")}
                     >
                       <div className="font-semibold text-[11px]">
-                        {opt.label}
+                        {t(opt.labelKey)}
                       </div>
                       <div className="text-2xs opacity-80 mt-0.5 line-clamp-2">
-                        {opt.description}
+                        {t(opt.descKey)}
                       </div>
                     </button>
                   );
@@ -216,7 +216,7 @@ export function MealNamer({
             {/* Language selector */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-[11px] font-medium text-amber-200/80 uppercase tracking-wide">
-                <span>Nyelv</span>
+                <span>{t('mealNamer.language')}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {(["hu", "ro", "en"] as LanguageCode[]).map((code) => {
@@ -244,7 +244,7 @@ export function MealNamer({
             {/* Ingredients chips */}
             <div className="space-y-1">
               <p className="text-[11px] text-amber-100/80 uppercase tracking-wide">
-                Összetevők
+                {t('mealNamer.ingredients')}
               </p>
               <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto pr-1">
                 {ingredients.map((ing) => (
@@ -257,7 +257,7 @@ export function MealNamer({
                 ))}
                 {ingredients.length === 0 && (
                   <span className="text-[11px] text-amber-300/70 italic">
-                    Nincsenek összetevők ehhez az étkezéshez.
+                    {t('mealNamer.noIngredientsHint')}
                   </span>
                 )}
               </div>
@@ -274,7 +274,7 @@ export function MealNamer({
                     className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-2xl bg-black/40 border border-amber-500/50 text-amber-100 hover:bg-black/60 transition-colors"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    Újra generál
+                    {t('mealNamer.regenerate')}
                   </button>
                 )}
               </div>
@@ -283,7 +283,7 @@ export function MealNamer({
                   className="text-[17px] font-semibold text-[#c9a96e]"
                   style={{ fontFamily: '"Playfair Display", system-ui, serif' }}
                 >
-                  {result?.name || "Várakozás az AI névre..."}
+                  {result?.name || t('mealNamer.waiting')}
                 </p>
                 {result?.subtitle && (
                   <p className="text-xs text-amber-100/80 italic">
@@ -305,7 +305,7 @@ export function MealNamer({
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-[13px] font-semibold text-white bg-primary shadow-sm disabled:opacity-60"
               >
                 <Sparkles className="w-4 h-4" />
-                {loading ? "AI név generálása..." : "✨ Generálj nevet"}
+                {loading ? t('mealNamer.generating') : `✨ ${t('mealNamer.generate')}`}
               </button>
               <button
                 type="button"
@@ -313,7 +313,7 @@ export function MealNamer({
                 disabled={!result}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-[13px] font-medium border border-amber-500/60 text-amber-50 bg-black/30 disabled:opacity-40"
               >
-                Név alkalmazása
+                {t('mealNamer.apply')}
               </button>
             </div>
           </div>

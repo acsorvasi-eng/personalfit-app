@@ -24,9 +24,10 @@ export async function getDailyMenuMatches(
   language: 'hu' | 'ro' | 'en',
   userCity?: string,
   userId?: string,
+  userCountry?: string,
 ): Promise<DailyMenuMatch[]> {
   const city = userCity || CITY_DEFAULTS[language] || 'Budapest';
-  const country = COUNTRY_DEFAULTS[language] || 'Hungary';
+  const country = userCountry || COUNTRY_DEFAULTS[language] || 'Hungary';
   const db = await getDB();
   // Include meal name in cache key so different meals get different results
   const cacheKey = `daily_menu_${city}_${todayString()}_${targetMeal.name.slice(0, 50).replace(/\s+/g, '_')}`;

@@ -785,11 +785,11 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
 
     recognition.onerror = (event: any) => {
       if (event.error === 'no-speech') {
-        setRecognitionError('Nem hallottam semmit. Próbáld újra, és beszélj hangosabban.');
+        setRecognitionError(t('logMeal.noSpeech'));
       } else if (event.error === 'not-allowed') {
-        setRecognitionError('Mikrofon hozzáférés megtagadva. Engedélyezd a mikrofont a böngésző beállításaiban.');
+        setRecognitionError(t('logMeal.micDenied'));
       } else {
-        setRecognitionError('Hangfelismerési hiba. Próbáld újra.');
+        setRecognitionError(t('logMeal.voiceError'));
       }
       setIsListening(false);
       setVoiceInterimText('');
@@ -804,7 +804,7 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
     try {
       recognition.start();
     } catch {
-      setRecognitionError('Nem sikerült elindítani a hangfelismerést. Frissítsd az oldalt és próbáld újra.');
+      setRecognitionError(t('logMeal.voiceStartFailed'));
     }
   };
 
@@ -1472,30 +1472,30 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                         const result = await callClaudeForFood(prompt);
                         setIsRecognizing(false);
                         if (result) { setPhotoResult(result); setMealInput(result.name); }
-                        else setRecognitionError('Nem sikerült a tápértéket meghatározni.');
+                        else setRecognitionError(t('logMeal.nutritionFailed'));
                       }}
                       className="flex-1 py-2.5 rounded-xl font-bold text-white"
                       style={{ background: '#0d9488' }}
                     >
-                      Igen
+                      {t('logMeal.yes')}
                     </button>
                     <button
                       onClick={() => setPhotoGuess(null)}
                       className="flex-1 py-2.5 rounded-xl font-bold bg-gray-200 text-gray-700"
                     >
-                      Nem
+                      {t('logMeal.no')}
                     </button>
                   </div>
                 </div>
               )}
               {!photoGuess && (
                 <div className="space-y-2">
-                  <p className="text-sm text-amber-700">Írd be az étel nevét:</p>
+                  <p className="text-sm text-amber-700">{t('logMeal.enterFoodName')}</p>
                   <input
                     type="text"
                     value={photoCustomName}
                     onChange={e => setPhotoCustomName(e.target.value)}
-                    placeholder="pl. Erdélyi éttermi leves"
+                    placeholder={t('logMeal.foodPlaceholder')}
                     className="w-full px-4 py-3 border-2 border-amber-300 rounded-xl focus:border-amber-500 bg-white text-foreground"
                   />
                   <button
@@ -1509,13 +1509,13 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                       const result = await callClaudeForFood(prompt);
                       setIsRecognizing(false);
                       if (result) { setPhotoResult(result); setMealInput(result.name); }
-                      else setRecognitionError('Nem sikerült a tápértéket meghatározni.');
+                      else setRecognitionError(t('logMeal.nutritionFailed'));
                     }}
                     className="w-full py-3 rounded-xl font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2"
                     style={{ background: '#0d9488' }}
                   >
                     {isRecognizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    Elemzés
+                    {t('logMeal.analyze')}
                   </button>
                 </div>
               )}
@@ -2053,7 +2053,7 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                   { key: 'ml',   label: 'ml' },
                   { key: 'l',    label: 'liter' },
                   { key: 'db',   label: 'db' },
-                  { key: 'adag', label: 'adag' },
+                  { key: 'adag', label: t('logMeal.unitServing') },
                 ].map(({ key, label }) => (
                   <button
                     key={key}

@@ -60,10 +60,11 @@ function SmartStorePanel({
   onStopBy: () => void;
   onOrder: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="mx-4 mb-4 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-3 border border-teal-200">
       <div className="text-2xs font-bold text-teal-600 tracking-wide mb-2.5">
-        🏪 LEGJOBB BOLT MOST
+        🏪 {t('shopping.bestStoreNow')}
       </div>
 
       {/* Best single store */}
@@ -72,11 +73,11 @@ function SmartStorePanel({
           <div className="text-sm font-bold text-gray-800">
             {topRec.store.name}
             {topRec.isPreferred && (
-              <span className="ml-1.5 text-2xs text-amber-500 font-semibold">⭐ Megszokott</span>
+              <span className="ml-1.5 text-2xs text-amber-500 font-semibold">⭐ {t('shopping.preferred')}</span>
             )}
           </div>
           <div className="text-2xs text-gray-500">
-            {topRec.matchCount}/{uncheckedCount} termék elérhető
+            {topRec.matchCount}/{uncheckedCount} {t('shopping.productsAvailable')}
             {" · "}{topRec.distanceKm} km
           </div>
         </div>
@@ -86,7 +87,7 @@ function SmartStorePanel({
           </div>
           {topRec.missingItems.length > 0 && (
             <div className="text-2xs text-gray-400">
-              {topRec.missingItems.length} hiányzó
+              {topRec.missingItems.length} {t('shopping.missing')}
             </div>
           )}
         </div>
@@ -100,7 +101,7 @@ function SmartStorePanel({
               {twoStoreCombo.primary.store.name} + {twoStoreCombo.secondary.store.name}
             </div>
             <div className="text-2xs text-gray-500">
-              {twoStoreCombo.combinedMatchCount}/{uncheckedCount} termék · 2 futár
+              {twoStoreCombo.combinedMatchCount}/{uncheckedCount} {t('store.productSuffix')} · 2 {t('shopping.courierSuffix')}
             </div>
           </div>
           <div className="text-right">
@@ -108,7 +109,7 @@ function SmartStorePanel({
               ~{(twoStoreCombo.combinedTotal + twoStoreCombo.combinedDeliveryFee).toFixed(0)} lei
             </div>
             <div className="text-2xs text-red-400">
-              +{twoStoreCombo.combinedDeliveryFee.toFixed(2)} lei futár (2×)
+              +{twoStoreCombo.combinedDeliveryFee.toFixed(2)} lei {t('shopping.courierDouble')}
             </div>
           </div>
         </div>
@@ -120,13 +121,13 @@ function SmartStorePanel({
           onClick={onStopBy}
           className="flex-1 py-2.5 bg-white border-2 border-teal-600 rounded-xl text-xs font-semibold text-teal-600 active:scale-95 transition-all"
         >
-          🚶 Megállok útban
+          🚶 {t('shopping.stopBy')}
         </button>
         <button
           onClick={onOrder}
           className="flex-1 py-2.5 bg-teal-600 rounded-xl text-xs font-semibold text-white active:scale-95 transition-all"
         >
-          🛵 Megrendelem
+          🛵 {t('shopping.orderNow')}
         </button>
       </div>
     </div>
@@ -234,20 +235,20 @@ function ShoppingSettingsSheet({
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
 
         {/* Payment card section */}
-        <SCard sectionTitle="Fizetés">
+        <SCard sectionTitle={t('shopping.paymentSection')}>
           <SRow
-            title="Fizetési kártya"
+            title={t('shopping.paymentCard')}
             subtitle={local.cardHolder && local.cardLast4
               ? `${local.cardHolder} · ••••${local.cardLast4}`
-              : 'Nincs megadva'}
-            rightText={expanded === 'card' ? '▲' : 'Szerkesztés ›'}
+              : t('shopping.notProvided')}
+            rightText={expanded === 'card' ? '▲' : t('shopping.edit')}
             onClick={() => setExpanded(expanded === 'card' ? null : 'card')}
           />
           {expanded === 'card' && (
             <div style={{ padding: '1rem', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
                 type="text"
-                placeholder="Kártyabirtokos neve"
+                placeholder={t('shopping.cardHolderPlaceholder')}
                 value={local.cardHolder}
                 onChange={e => setLocal(p => ({ ...p, cardHolder: e.target.value }))}
                 autoFocus
@@ -255,7 +256,7 @@ function ShoppingSettingsSheet({
               />
               <input
                 type="text"
-                placeholder="Kártya utolsó 4 számjegy"
+                placeholder={t('shopping.cardLast4Placeholder')}
                 maxLength={4}
                 value={local.cardLast4}
                 onChange={e => setLocal(p => ({ ...p, cardLast4: e.target.value.replace(/\D/g, '') }))}
@@ -272,24 +273,24 @@ function ShoppingSettingsSheet({
         </SCard>
 
         {/* Delivery section */}
-        <SCard sectionTitle="Szállítás">
+        <SCard sectionTitle={t('shopping.deliverySection')}>
           <SRow
-            title="Szállítási cím"
-            subtitle={local.address || 'Nincs megadva'}
-            rightText={expanded === 'address' ? '▲' : 'Szerkesztés ›'}
+            title={t('shopping.deliveryAddress')}
+            subtitle={local.address || t('shopping.notProvided')}
+            rightText={expanded === 'address' ? '▲' : t('shopping.edit')}
             onClick={() => setExpanded(expanded === 'address' ? null : 'address')}
           />
           {expanded === 'address' && (
             <div style={{ padding: '1rem', borderTop: '1px solid #f3f4f6', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <textarea
-                placeholder="pl. Kolozsvár, Főtér 1., 3. em. 12."
+                placeholder={t('shopping.addressPlaceholder')}
                 value={local.address}
                 onChange={e => setLocal(p => ({ ...p, address: e.target.value }))}
                 rows={3}
                 autoFocus
                 style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 10, padding: '10px 14px', fontSize: '0.9rem', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
               />
-              <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: 0 }}>Ide hozhatja a futár a rendelést</p>
+              <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: 0 }}>{t('shopping.deliveryHint')}</p>
               <button
                 onClick={() => saveRow({ address: local.address })}
                 style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer' }}
@@ -657,7 +658,7 @@ export function ShoppingList() {
               onClick: () => {},
             },
             {
-              label: 'Bolt & Szállítás',
+              label: t('shopping.storeAndDelivery'),
               value: <Store style={{ width: 16, height: 16, color: 'white' }} />,
               isAction: true,
               onClick: () => { setSettingsOpen(true); hapticFeedback('light'); },

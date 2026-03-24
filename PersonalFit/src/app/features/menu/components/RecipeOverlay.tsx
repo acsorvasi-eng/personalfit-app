@@ -7,6 +7,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import { getTrialInfo } from '../../../components/onboarding/SubscriptionScreen';
 import { generateRecipe, computeWeekContext } from '../../../services/ChefAgentService';
 import { getDailyMenuMatches } from '../../../services/DailyMenuMatcherService';
+import { useGeolocation } from '../../../hooks/useGeolocation';
 import { RecipeGenerationError } from '../../../services/recipeModels';
 import { translateFoodName } from '../../../utils/foodTranslations';
 import { FoodImage } from '../../../components/FoodImage';
@@ -39,6 +40,7 @@ export function RecipeOverlay({
   const [showMealPrep, setShowMealPrep] = useState(false);
   const [canAccess, setCanAccess] = useState<boolean | null>(null);
   const recipeLoadingRef = useRef(false);
+  const geo = useGeolocation();
 
   // Subscription check
   useEffect(() => {
@@ -107,8 +109,9 @@ export function RecipeOverlay({
       const matches = await getDailyMenuMatches(
         { name: meal.name, calories: meal.calories, mealType: meal.type },
         language as 'hu' | 'ro' | 'en',
-        undefined, // city not yet in StoredUserProfile
+        geo.city || undefined,
         user?.id,
+        geo.country || undefined,
       );
       setMenuMatches(matches);
       setMenuState('success');
@@ -314,6 +317,12 @@ export function RecipeOverlay({
 
           {activeTab === 'restaurant' && (
             <>
+              {geo.city && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium">{t('recipe.restaurantsNear')} {geo.city}</span>
+                </div>
+              )}
               <p className="text-xs text-gray-400 italic">{t('recipe.aiEstimateDisclaimer')}</p>
 
               {menuState === 'loading' && (
@@ -370,7 +379,11 @@ export function RecipeOverlay({
               {/* Google Maps search button - always shown when not loading */}
               {menuState !== 'loading' && (
                 <a
-                  href={`https://www.google.com/maps/search/${encodeURIComponent(translateFoodName(meal.name, language) + ' restaurant')}`}
+                  href={
+                    geo.latitude && geo.longitude
+                      ? `https://www.google.com/maps/search/${encodeURIComponent(translateFoodName(meal.name, language) + ' restaurant')}/@${geo.latitude},${geo.longitude},14z`
+                      : `https://www.google.com/maps/search/${encodeURIComponent(translateFoodName(meal.name, language) + ' restaurant')}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"

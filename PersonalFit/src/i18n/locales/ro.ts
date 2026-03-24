@@ -186,6 +186,7 @@ const ro: LocalePartial = {
   'recipe.chefTip': 'Sfat Chef',
   'recipe.mealPrepExpand': 'Cum să pregătești în avans',
   'recipe.noMenuFound': 'Nu am găsit meniuri zilnice în apropiere astazi',
+  'recipe.restaurantsNear': 'Restaurante lângă',
   'recipe.searchNearby': 'Caută în apropiere pe Google Maps',
   'recipe.restaurantTip': 'Sfat: Caută restaurante care servesc acest tip de fel de mâncare — folosește butonul de căutare de mai jos pentru a găsi opțiuni în apropiere.',
   'recipe.estimatedLabel': 'Estimat',
@@ -222,6 +223,95 @@ const ro: LocalePartial = {
   'common.cancel': 'Anulare',
   'common.delete': 'Șterge',
   'foods.deleteConfirm': 'Vrei să ștergi?',
+
+  // QuickLogSheet
+  'quickLog.title': 'Înregistrare rapidă',
+  'quickLog.searchPlaceholder': 'Caută aliment, produs sau rețetă...',
+  'quickLog.quickPick': 'Alegere rapidă',
+  'quickLog.recipe': 'Rețetă',
+  'quickLog.product': 'Produs',
+  'quickLog.noResults': 'Niciun rezultat',
+  'quickLog.tryDifferent': 'Încearcă o altă scriere',
+  'quickLog.quantity': 'Cantitate:',
+  'quickLog.logging': 'Se înregistrează...',
+  'quickLog.log': 'Înregistrează',
+
+  // MealNamer
+  'mealNamer.noIngredients': 'Nu sunt ingrediente pentru această masă.',
+  'mealNamer.generateFailed': 'Nu s-a putut genera un nume. Încearcă din nou în câteva secunde.',
+  'mealNamer.geoStyle': 'Stil geografic',
+  'mealNamer.language': 'Limbă',
+  'mealNamer.ingredients': 'Ingrediente',
+  'mealNamer.noIngredientsHint': 'Nu sunt ingrediente pentru această masă.',
+  'mealNamer.regenerate': 'Regenerează',
+  'mealNamer.waiting': 'Se așteaptă numele AI...',
+  'mealNamer.generating': 'Se generează numele AI...',
+  'mealNamer.generate': 'Generează nume',
+  'mealNamer.apply': 'Aplică numele',
+  'mealNamer.geoTransylvania': 'Transilvania / România',
+  'mealNamer.geoTransylvaniaDesc': 'Bucătărie transilvăneană, românească și săsească',
+  'mealNamer.geoBudapest': 'Budapesta / Ungaria',
+  'mealNamer.geoBudapestDesc': 'Stil de restaurant maghiar și central-european',
+  'mealNamer.geoMediterranean': 'Mediteranean',
+  'mealNamer.geoMediterraneanDesc': 'Fuziune mediteraneană, atmosferă de bistro la mare',
+
+  // ShoppingList settings
+  'shopping.paymentSection': 'Plată',
+  'shopping.paymentCard': 'Card de plată',
+  'shopping.notProvided': 'Nespecificat',
+  'shopping.edit': 'Editare ›',
+  'shopping.cardHolderPlaceholder': 'Numele titularului cardului',
+  'shopping.cardLast4Placeholder': 'Ultimele 4 cifre ale cardului',
+  'shopping.deliverySection': 'Livrare',
+  'shopping.deliveryAddress': 'Adresa de livrare',
+  'shopping.addressPlaceholder': 'ex. Cluj-Napoca, Piața Unirii 1, et. 3, ap. 12',
+  'shopping.storeAndDelivery': 'Magazin & Livrare',
+  'shopping.deliveryHint': 'Curierul va livra comanda aici',
+  'shopping.courierSuffix': 'curier',
+  'shopping.courierDouble': 'curier (2×)',
+  'shopping.bestStoreNow': 'CEL MAI BUN MAGAZIN ACUM',
+  'shopping.preferred': 'Preferat',
+  'shopping.productsAvailable': 'produse disponibile',
+  'shopping.missing': 'lipsă',
+  'shopping.stopBy': 'Opresc pe drum',
+  'shopping.orderNow': 'Comand acum',
+
+  // StoreStopBySheet
+  'store.notInStore': 'Nu e în {store}',
+  'store.notAvailable': 'Indisponibil',
+  'store.share': 'Distribuie',
+  'store.directions': 'Direcții',
+  'store.productSuffix': 'produse',
+  'store.estimated': 'lei estimat',
+
+  // DSM defaults
+  'dsm.confirm': 'Confirmă',
+
+  // ProfileHeader
+  'profile.editAvatar': 'Modifică poza de profil',
+  'profile.avatarAlt': 'Poză de profil',
+  'profile.yearsOld': 'ani',
+  'profile.agePlaceholder': 'Vârstă',
+
+  // LogMeal
+  'logMeal.noSpeech': 'Nu am auzit nimic. Încearcă din nou și vorbește mai tare.',
+  'logMeal.micDenied': 'Acces la microfon refuzat. Activează microfonul din setările browserului.',
+  'logMeal.voiceError': 'Eroare de recunoaștere vocală. Încearcă din nou.',
+  'logMeal.voiceStartFailed': 'Nu s-a putut porni recunoașterea vocală. Reîncarcă pagina și încearcă din nou.',
+  'logMeal.nutritionFailed': 'Nu s-au putut determina valorile nutriționale.',
+  'logMeal.yes': 'Da',
+  'logMeal.no': 'Nu',
+  'logMeal.enterFoodName': 'Introdu numele alimentului:',
+  'logMeal.foodPlaceholder': 'ex. Supă de casă tradițională',
+  'logMeal.analyze': 'Analizează',
+  'logMeal.unitServing': 'porție',
+
+  // Foods
+  'foods.loadFailed': 'Încărcare eșuată',
+  'foods.userAdded': 'Aliment adăugat de utilizator',
+
+  // UnifiedMenu
+  'menu.noIngredientData': 'Nicio dată de ingrediente',
 };
 
 export default ro;

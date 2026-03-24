@@ -2359,7 +2359,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                   })
                 ) : (
                   <div className="text-xs text-gray-400 text-center py-2">
-                    {t("mealDetail.ingredients") || 'Nincs összetevő adat'}
+                    {t("mealDetail.ingredients") || t('menu.noIngredientData')}
                   </div>
                 )}
 

@@ -186,6 +186,7 @@ const en: LocalePartial = {
   'recipe.chefTip': 'Chef tip',
   'recipe.mealPrepExpand': 'How to meal prep this',
   'recipe.noMenuFound': 'No daily menus found near you today',
+  'recipe.restaurantsNear': 'Restaurants near',
   'recipe.searchNearby': 'Search nearby on Google Maps',
   'recipe.restaurantTip': 'Tip: Look for restaurants that serve this type of dish — use the search button below to find options near you.',
   'recipe.estimatedLabel': 'Estimated',
@@ -222,6 +223,95 @@ const en: LocalePartial = {
   'common.cancel': 'Cancel',
   'common.delete': 'Delete',
   'foods.deleteConfirm': 'Delete?',
+
+  // QuickLogSheet
+  'quickLog.title': 'Quick Log',
+  'quickLog.searchPlaceholder': 'Search food, product or recipe...',
+  'quickLog.quickPick': 'Quick pick',
+  'quickLog.recipe': 'Recipe',
+  'quickLog.product': 'Product',
+  'quickLog.noResults': 'No results',
+  'quickLog.tryDifferent': 'Try a different spelling',
+  'quickLog.quantity': 'Quantity:',
+  'quickLog.logging': 'Logging...',
+  'quickLog.log': 'Log',
+
+  // MealNamer
+  'mealNamer.noIngredients': 'No ingredients for this meal.',
+  'mealNamer.generateFailed': 'Could not generate a name. Try again in a few seconds.',
+  'mealNamer.geoStyle': 'Geographic style',
+  'mealNamer.language': 'Language',
+  'mealNamer.ingredients': 'Ingredients',
+  'mealNamer.noIngredientsHint': 'No ingredients for this meal.',
+  'mealNamer.regenerate': 'Regenerate',
+  'mealNamer.waiting': 'Waiting for AI name...',
+  'mealNamer.generating': 'Generating AI name...',
+  'mealNamer.generate': 'Generate name',
+  'mealNamer.apply': 'Apply name',
+  'mealNamer.geoTransylvania': 'Transylvania / Romania',
+  'mealNamer.geoTransylvaniaDesc': 'Transylvanian, Romanian and Saxon cuisine vibes',
+  'mealNamer.geoBudapest': 'Budapest / Hungary',
+  'mealNamer.geoBudapestDesc': 'Hungarian and Central European restaurant style',
+  'mealNamer.geoMediterranean': 'Mediterranean',
+  'mealNamer.geoMediterraneanDesc': 'Mediterranean fusion, seaside bistro vibe',
+
+  // ShoppingList settings
+  'shopping.paymentSection': 'Payment',
+  'shopping.paymentCard': 'Payment card',
+  'shopping.notProvided': 'Not provided',
+  'shopping.edit': 'Edit ›',
+  'shopping.cardHolderPlaceholder': 'Cardholder name',
+  'shopping.cardLast4Placeholder': 'Last 4 digits of card',
+  'shopping.deliverySection': 'Delivery',
+  'shopping.deliveryAddress': 'Delivery address',
+  'shopping.addressPlaceholder': 'e.g. 123 Main St, Apt 4',
+  'shopping.storeAndDelivery': 'Store & Delivery',
+  'shopping.deliveryHint': 'The courier will deliver your order here',
+  'shopping.courierSuffix': 'courier',
+  'shopping.courierDouble': 'courier (2×)',
+  'shopping.bestStoreNow': 'BEST STORE NOW',
+  'shopping.preferred': 'Preferred',
+  'shopping.productsAvailable': 'products available',
+  'shopping.missing': 'missing',
+  'shopping.stopBy': 'Stop by on the way',
+  'shopping.orderNow': 'Order now',
+
+  // StoreStopBySheet
+  'store.notInStore': 'Not in {store}',
+  'store.notAvailable': 'Not available',
+  'store.share': 'Share',
+  'store.directions': 'Directions',
+  'store.productSuffix': 'products',
+  'store.estimated': 'lei estimated',
+
+  // DSM defaults
+  'dsm.confirm': 'Confirm',
+
+  // ProfileHeader
+  'profile.editAvatar': 'Edit profile picture',
+  'profile.avatarAlt': 'Profile picture',
+  'profile.yearsOld': 'years old',
+  'profile.agePlaceholder': 'Age',
+
+  // LogMeal
+  'logMeal.noSpeech': "I didn't hear anything. Try again and speak louder.",
+  'logMeal.micDenied': 'Microphone access denied. Enable microphone in browser settings.',
+  'logMeal.voiceError': 'Voice recognition error. Try again.',
+  'logMeal.voiceStartFailed': 'Could not start voice recognition. Refresh the page and try again.',
+  'logMeal.nutritionFailed': 'Could not determine nutritional values.',
+  'logMeal.yes': 'Yes',
+  'logMeal.no': 'No',
+  'logMeal.enterFoodName': 'Enter the food name:',
+  'logMeal.foodPlaceholder': 'e.g. Homemade chicken soup',
+  'logMeal.analyze': 'Analyze',
+  'logMeal.unitServing': 'serving',
+
+  // Foods
+  'foods.loadFailed': 'Failed to load',
+  'foods.userAdded': 'User-added food',
+
+  // UnifiedMenu
+  'menu.noIngredientData': 'No ingredient data',
 };
 
 export default en;

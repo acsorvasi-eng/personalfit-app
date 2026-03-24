@@ -815,8 +815,11 @@ interface DSMConfirmDialogProps {
 
 export function DSMConfirmDialog({
   open, onClose, onConfirm, title, message,
-  confirmLabel = "Megerősítés", cancelLabel = "Mégse", variant = "default",
+  confirmLabel, cancelLabel, variant = "default",
 }: DSMConfirmDialogProps) {
+  const { t } = useLanguage();
+  const resolvedConfirm = confirmLabel || t('dsm.confirm');
+  const resolvedCancel = cancelLabel || t('common.cancel');
   if (!open) return null;
   return (
     <DSMModal open={open} onClose={onClose}>
@@ -827,7 +830,7 @@ export function DSMConfirmDialog({
           onClick={onClose}
           className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-gray-100 text-gray-600"
         >
-          {cancelLabel}
+          {resolvedCancel}
         </button>
         <button
           onClick={() => { onConfirm(); onClose(); }}
@@ -835,7 +838,7 @@ export function DSMConfirmDialog({
             variant === "danger" ? "bg-red-500" : "bg-primary"
           }`}
         >
-          {confirmLabel}
+          {resolvedConfirm}
         </button>
       </div>
     </DSMModal>
@@ -882,8 +885,10 @@ interface DSMNotificationProps {
 
 export function DSMNotification({
   open, onClose, variant = "success", position = "top", icon: Icon,
-  title, message, onConfirm, confirmLabel = "OK", cancelLabel = "Mégse", confirmVariant = "default", children,
+  title, message, onConfirm, confirmLabel = "OK", cancelLabel, confirmVariant = "default", children,
 }: DSMNotificationProps) {
+  const { t: tNotif } = useLanguage();
+  const resolvedCancelLabel = cancelLabel || tNotif('common.cancel');
   if (!open) return null;
 
   const bgColor = {
@@ -925,7 +930,7 @@ export function DSMNotification({
                 onClick={onClose}
                 className="flex-1 px-3 py-2 rounded-xl text-xs font-medium bg-white/10 text-white/80"
               >
-                {cancelLabel}
+                {resolvedCancelLabel}
               </button>
               <button
                 onClick={() => { onConfirm(); onClose(); }}

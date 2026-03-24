@@ -923,7 +923,7 @@ export function Foods() {
                     <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse flex-shrink-0" />
                   )}
                   {isPending && chip.lookupFailed && (
-                    <span className="text-amber-500 text-xs flex-shrink-0" title="Nem sikerült betölteni">⚠</span>
+                    <span className="text-amber-500 text-xs flex-shrink-0" title={t('foods.loadFailed')}>⚠</span>
                   )}
                   <button
                     type="button"
@@ -1013,7 +1013,7 @@ export function Foods() {
                     const source: FoodSource = "user_uploaded";
                     return {
                       name: chip.name,
-                      description: "Felhasználó által hozzáadott étel",
+                      description: t('foods.userAdded'),
                       category: cat,
                       calories_per_100g: chip.calories_per_100g ?? 0,
                       protein_per_100g: chip.protein_g ?? 0,

@@ -23,6 +23,7 @@ import { DSMNutritionBar } from "./molecules";
 import { Product, productDatabase, calculateNutrition } from "../../data/productDatabase";
 import { Recipe, recipeDatabase, calculateRecipeNutrition, searchRecipes } from "../../data/recipeDatabase";
 import { recognizeFoodFromText, AIRecognitionResult } from "../../data/aiFoodKnowledge";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface QuickLogItem {
@@ -53,6 +54,7 @@ interface DSMQuickLogSheetProps {
 
 // ─── Component ──────────────────────────────────────────────────────
 export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLogSheetProps) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<QuickLogItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<QuickLogItem | null>(null);
@@ -170,7 +172,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
     <DSMBottomSheet
       open={open}
       onClose={onClose}
-      title="Gyors rogzites"
+      title={t('quickLog.title')}
       subtitle={slotLabel}
       icon={Plus}
       snapPoint="full"
@@ -210,7 +212,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                 type="text"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); setSelectedItem(null); }}
-                placeholder="Keress etelt, termeketvagy receptet..."
+                placeholder={t('quickLog.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-light)] focus:border-[var(--primary)] bg-white text-gray-900 placeholder:text-gray-400"
                 autoComplete="off"
               />
@@ -227,7 +229,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
             {/* ── Quick Suggestions ── */}
             {query.length < 2 && !selectedItem && (
               <div className="space-y-2">
-                <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Gyors valasztas</p>
+                <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">{t('quickLog.quickPick')}</p>
                 <div className="flex flex-wrap gap-2">
                   {["Alma", "Banan", "Tojas", "Zab", "Csirkemell", "Joghurt", "Rizs", "Brokkoli"].map(item => (
                     <button
@@ -264,7 +266,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-2xs text-gray-400">{item.calories} kcal</span>
                         <DSMChip
-                          label={item.type === "recipe" ? "Recept" : item.type === "ai" ? "AI" : "Termek"}
+                          label={item.type === "recipe" ? t('quickLog.recipe') : item.type === "ai" ? "AI" : t('quickLog.product')}
                           color={item.type === "recipe" ? "amber" : item.type === "ai" ? "purple" : "blue"}
                           variant="soft"
                           size="xs"
@@ -281,8 +283,8 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
             {query.length >= 2 && results.length === 0 && (
               <div className="py-6 text-center">
                 <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-400">Nincs talalat: "{query}"</p>
-                <p className="text-2xs text-gray-300 mt-1">Probald maskepp iras</p>
+                <p className="text-sm text-gray-400">{t('quickLog.noResults')}: "{query}"</p>
+                <p className="text-2xs text-gray-300 mt-1">{t('quickLog.tryDifferent')}</p>
               </div>
             )}
 
@@ -327,7 +329,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                   {/* Quantity (for products only) */}
                   {selectedItem.type !== "recipe" && (
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-gray-500 flex-shrink-0">Mennyiseg:</label>
+                      <label className="text-xs text-gray-500 flex-shrink-0">{t('quickLog.quantity')}</label>
                       <div className="flex items-center gap-1">
                         {["50", "100", "150", "200"].map(q => (
                           <button
@@ -369,12 +371,12 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
                           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
                           className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
                         />
-                        Rogzites...
+                        {t('quickLog.logging')}
                       </>
                     ) : (
                       <>
                         <Check className="w-4 h-4" />
-                        Rogzites ({Math.round(selectedItem.calories * (selectedItem.type === "recipe" ? 1 : (parseInt(quantity) || 100) / 100))} kcal)
+                        {t('quickLog.log')} ({Math.round(selectedItem.calories * (selectedItem.type === "recipe" ? 1 : (parseInt(quantity) || 100) / 100))} kcal)
                       </>
                     )}
                   </button>

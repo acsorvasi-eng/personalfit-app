@@ -259,6 +259,7 @@ const hu = {
   'recipe.chefTip': 'Chef tanács',
   'recipe.mealPrepExpand': 'Hogyan készítsd el előre',
   'recipe.noMenuFound': 'Nem találtunk ma napi menüt a közeledben',
+  'recipe.restaurantsNear': 'Éttermek itt:',
   'recipe.searchNearby': 'Keresés a közelben a Google Maps-en',
   'recipe.restaurantTip': 'Tipp: Keress olyan éttermeket, ahol ilyen típusú ételt szolgálnak fel — használd az alábbi keresőgombot a közelben lévő lehetőségekhez.',
   'recipe.estimatedLabel': 'Becsült',
@@ -295,6 +296,95 @@ const hu = {
   'common.cancel': 'Mégse',
   'common.delete': 'Törlés',
   'foods.deleteConfirm': 'Törölni szeretnéd?',
+
+  // QuickLogSheet
+  'quickLog.title': 'Gyors rögzítés',
+  'quickLog.searchPlaceholder': 'Keress ételt, terméket vagy receptet...',
+  'quickLog.quickPick': 'Gyors választás',
+  'quickLog.recipe': 'Recept',
+  'quickLog.product': 'Termék',
+  'quickLog.noResults': 'Nincs találat',
+  'quickLog.tryDifferent': 'Próbáld másképp írni',
+  'quickLog.quantity': 'Mennyiség:',
+  'quickLog.logging': 'Rögzítés...',
+  'quickLog.log': 'Rögzítés',
+
+  // MealNamer
+  'mealNamer.noIngredients': 'Nincsenek összetevők ehhez az étkezéshez.',
+  'mealNamer.generateFailed': 'Nem sikerült nevet generálni. Próbáld újra néhány másodperc múlva.',
+  'mealNamer.geoStyle': 'Földrajzi stílus',
+  'mealNamer.language': 'Nyelv',
+  'mealNamer.ingredients': 'Összetevők',
+  'mealNamer.noIngredientsHint': 'Nincsenek összetevők ehhez az étkezéshez.',
+  'mealNamer.regenerate': 'Újra generál',
+  'mealNamer.waiting': 'Várakozás az AI névre...',
+  'mealNamer.generating': 'AI név generálása...',
+  'mealNamer.generate': 'Generálj nevet',
+  'mealNamer.apply': 'Név alkalmazása',
+  'mealNamer.geoTransylvania': 'Erdély / Románia',
+  'mealNamer.geoTransylvaniaDesc': 'Erdélyi, román és szász konyha hangulata',
+  'mealNamer.geoBudapest': 'Budapest / Magyarország',
+  'mealNamer.geoBudapestDesc': 'Magyar és közép-európai éttermi stílus',
+  'mealNamer.geoMediterranean': 'Mediterrán',
+  'mealNamer.geoMediterraneanDesc': 'Mediterrán fusion, tengerparti bisztró vibe',
+
+  // ShoppingList settings
+  'shopping.paymentSection': 'Fizetés',
+  'shopping.paymentCard': 'Fizetési kártya',
+  'shopping.notProvided': 'Nincs megadva',
+  'shopping.edit': 'Szerkesztés ›',
+  'shopping.cardHolderPlaceholder': 'Kártyabirtokos neve',
+  'shopping.cardLast4Placeholder': 'Kártya utolsó 4 számjegy',
+  'shopping.deliverySection': 'Szállítás',
+  'shopping.deliveryAddress': 'Szállítási cím',
+  'shopping.addressPlaceholder': 'pl. Kolozsvár, Főtér 1., 3. em. 12.',
+  'shopping.storeAndDelivery': 'Bolt & Szállítás',
+  'shopping.deliveryHint': 'Ide hozhatja a futár a rendelést',
+  'shopping.courierSuffix': 'futár',
+  'shopping.courierDouble': 'futár (2×)',
+  'shopping.bestStoreNow': 'LEGJOBB BOLT MOST',
+  'shopping.preferred': 'Megszokott',
+  'shopping.productsAvailable': 'termék elérhető',
+  'shopping.missing': 'hiányzó',
+  'shopping.stopBy': 'Megállok útban',
+  'shopping.orderNow': 'Megrendelem',
+
+  // StoreStopBySheet
+  'store.notInStore': 'Nincs {store}-ban',
+  'store.notAvailable': 'Nem kapható',
+  'store.share': 'Megosztás',
+  'store.directions': 'Útvonal',
+  'store.productSuffix': 'termék',
+  'store.estimated': 'lei becsült',
+
+  // DSM defaults
+  'dsm.confirm': 'Megerősítés',
+
+  // ProfileHeader
+  'profile.editAvatar': 'Profilkép módosítása',
+  'profile.avatarAlt': 'Profilkép',
+  'profile.yearsOld': 'éves',
+  'profile.agePlaceholder': 'Kor',
+
+  // LogMeal
+  'logMeal.noSpeech': 'Nem hallottam semmit. Próbáld újra, és beszélj hangosabban.',
+  'logMeal.micDenied': 'Mikrofon hozzáférés megtagadva. Engedélyezd a mikrofont a böngésző beállításaiban.',
+  'logMeal.voiceError': 'Hangfelismerési hiba. Próbáld újra.',
+  'logMeal.voiceStartFailed': 'Nem sikerült elindítani a hangfelismerést. Frissítsd az oldalt és próbáld újra.',
+  'logMeal.nutritionFailed': 'Nem sikerült a tápértéket meghatározni.',
+  'logMeal.yes': 'Igen',
+  'logMeal.no': 'Nem',
+  'logMeal.enterFoodName': 'Írd be az étel nevét:',
+  'logMeal.foodPlaceholder': 'pl. Erdélyi éttermi leves',
+  'logMeal.analyze': 'Elemzés',
+  'logMeal.unitServing': 'adag',
+
+  // Foods
+  'foods.loadFailed': 'Nem sikerült betölteni',
+  'foods.userAdded': 'Felhasználó által hozzáadott étel',
+
+  // UnifiedMenu
+  'menu.noIngredientData': 'Nincs összetevő adat',
 } as const;
 
 export default hu;
