@@ -49,15 +49,28 @@ const DAY_NAMES: Record<string, string[]> = {
 const CUISINE: Record<string, { intro: string; style: string }> = {
   hu: {
     intro: 'Te egy magyarországi és erdélyi konyhában jártas dietetikus és séf vagy.',
-    style: 'Magyar és erdélyi recepteket használj valódi gasztronómiai nevekkel (csirkepaprikás galuskával, halászlé, erdélyi rakott krumpli, pörkölt, zabkása gyümölccsel stb.). TILOS semmitmondó neveket használni mint "Csirke rizzsel".',
+    style: `Magyar és erdélyi recepteket használj valódi gasztronómiai nevekkel (csirkepaprikás galuskával, halászlé, erdélyi rakott krumpli, pörkölt, zabkása gyümölccsel stb.). TILOS semmitmondó neveket használni mint "Csirke rizzsel".
+KRITIKUS SZABÁLY AZ ÉTELNEVEKHEZ:
+- KIZÁRÓLAG valódi, közismert ételneveket használj. SOHA ne találj ki nem létező ételneveket.
+- Minden ételnévnek egy valódi, felismerhető ételnek kell lennie, amit egy magyar szakácskönyvben vagy étteremben megtalálnál.
+- NE kombinálj véletlenszerű szavakat ételnevek létrehozásához. Pl. "Sülthüllő" NEM létező étel — ilyet TILOS generálni.
+- Használj hagyományos magyar/közép-európai ételeket: gulyás, pörkölt, töltött káposzta, lecsó, túrós csusza, lángos, paprikás csirke, meggyleves, somlói galuska stb.`,
   },
   ro: {
     intro: 'Ești un nutriționist și expert culinar în bucătăria română și transilvăneană.',
-    style: 'Folosește rețete autentice românești cu denumiri gastronomice reale (ciorbă de pui, mămăligă cu brânză, papricaș cu găluște etc.).',
+    style: `Folosește rețete autentice românești cu denumiri gastronomice reale (ciorbă de pui, mămăligă cu brânză, papricaș cu găluște etc.).
+REGULĂ CRITICĂ PENTRU DENUMIRILE PREPARATELOR:
+- Folosește NUMAI denumiri de preparate reale, cunoscute. NU inventa denumiri fictive de mâncăruri.
+- Fiecare denumire trebuie să fie un preparat real, recunoscut din bucătăria românească, transilvăneană sau internațională.
+- NU combina cuvinte aleatorii pentru a crea denumiri de preparate. Fiecare preparat trebuie să existe într-o carte de bucate sau pe un meniu de restaurant real.`,
   },
   en: {
     intro: 'You are a nutritionist and culinary expert specializing in Central European cuisine.',
-    style: 'Use authentic recipes with proper gastronomic names (Chicken Paprikash with dumplings, Hungarian Goulash, etc.). Never use bland names like "Chicken with rice".',
+    style: `Use authentic recipes with proper gastronomic names (Chicken Paprikash with dumplings, Hungarian Goulash, etc.). Never use bland names like "Chicken with rice".
+CRITICAL RULE FOR DISH NAMES:
+- ONLY use real, commonly known dishes and ingredients. Never invent fictional food names.
+- Every dish name must be a real, recognizable dish from the target cuisine (Hungarian, Romanian, or international).
+- Do NOT combine random words to create food names. Each dish should be something you could find in a real cookbook or restaurant menu.`,
   },
 };
 
@@ -228,7 +241,7 @@ Napi célkalória: ${dailyCalorieTarget} kcal. Étkezések: ${mealTypes.join(', 
 
 SZABÁLYOK:
 1. CSAK a megadott alapanyagokat használd
-2. Minden ételnél adj meg egy VALÓDI, vonzó étlapszerű nevet
+2. Minden ételnél adj meg egy VALÓDI, vonzó étlapszerű nevet — KIZÁRÓLAG létező, közismert ételek neveit használd. TILOS kitalált, értelmetlen ételneveket generálni (pl. "Sülthüllő" NEM étel). Minden névnek olyannak kell lennie, amit egy valódi étterem étlapján vagy szakácskönyvben megtalálnál.
 3. Változatos ételek napról napra — ne ismételj egymás után
 4. ingredients.g = gramm mennyiség az adott étkezésben
 5. is_training_day értékét állítsd helyesen minden napra
