@@ -850,13 +850,23 @@ export function ProfileSetupWizard() {
           if (data.nutritionPlan) {
             console.log('[ProfileSetup] Importing nutrition plan...');
 
-            // Chef review — improves plan for seasonality/locality before saving
-            const improvedPlan = await callChefReview({
-              nutritionPlan: data.nutritionPlan,
-              language,
-              userName: user?.name ?? '',
-              userProfile: userProfilePayload,
-            });
+            // Chef review with 15s timeout — skip if slow
+            let improvedPlan = data.nutritionPlan;
+            try {
+              improvedPlan = await Promise.race([
+                callChefReview({
+                  nutritionPlan: data.nutritionPlan,
+                  language,
+                  userName: user?.name ?? '',
+                  userProfile: userProfilePayload,
+                }),
+                new Promise<typeof data.nutritionPlan>((_, reject) =>
+                  setTimeout(() => reject(new Error('chef-timeout')), 15000)
+                ),
+              ]);
+            } catch {
+              console.warn('[ProfileSetup] Chef review skipped (timeout or error)');
+            }
 
             const { importFromAIParse, activatePlan } = await import('../../backend/services/NutritionPlanService');
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
