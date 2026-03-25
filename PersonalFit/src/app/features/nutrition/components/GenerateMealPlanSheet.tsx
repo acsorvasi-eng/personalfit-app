@@ -510,7 +510,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
     } catch (e: any) {
       const msg = e?.message || e?.toString() || t('generatePlan.unknownError');
       console.error('[GenerateMealPlan] Error:', msg, e);
-      setError(`[DEBUG] ${msg}`);
+      setError(msg);
       setStep("calc");
     }
   }

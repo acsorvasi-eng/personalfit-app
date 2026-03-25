@@ -7,10 +7,11 @@ const config: CapacitorConfig = {
   server: {
     // REQUIRED for IndexedDB and secure-context APIs on Android.
     androidScheme: 'https',
-    // Allow fetch/XHR to the Vercel API domain from the native WebView
-    allowNavigation: ['personalfit-app.vercel.app', '*.vercel.app', 'api.unsplash.com', 'nominatim.openstreetmap.org'],
   },
   plugins: {
+    CapacitorHttp: {
+      enabled: true,
+    },
     StatusBar: {
       // 'Light' = white icons on dark background (teal). Counter-intuitive name — DO NOT change to 'Dark'.
       style: 'Light',
