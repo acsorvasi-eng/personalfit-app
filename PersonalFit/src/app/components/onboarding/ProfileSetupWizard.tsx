@@ -906,7 +906,7 @@ export function ProfileSetupWizard() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-4 pt-6 pb-3">
+      <div className="flex items-center gap-3 px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 20px) + 0.5rem)" }}>
         {(step > 0 || step === LEGACY_FOODS_STEP) && (
           <button onClick={goPrev} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
