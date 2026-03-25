@@ -41,6 +41,7 @@ export interface UserFirestoreProfile {
 // ─── Constants ───────────────────────────────────────────────────
 
 const FREE_DAILY_LIMIT = 5;
+const ADMIN_EMAILS = ['acsorvasi@gmail.com', 'acsorvasi@yahoo.com'];
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -101,7 +102,11 @@ export interface UsageStatus {
  * Check whether this user can generate a new meal plan.
  * Fails open (returns allowed=true) if Firestore is unreachable.
  */
-export async function canGenerate(uid: string): Promise<UsageStatus> {
+export async function canGenerate(uid: string, email?: string): Promise<UsageStatus> {
+  // Admin bypass — unlimited generations
+  if (email && ADMIN_EMAILS.includes(email.toLowerCase())) {
+    return { allowed: true, remaining: 999, plan: 'pro', totalToday: 0 };
+  }
   try {
     const snap = await getDoc(doc(db, 'users', uid));
     if (!snap.exists()) {
@@ -109,6 +114,10 @@ export async function canGenerate(uid: string): Promise<UsageStatus> {
     }
 
     const data = snap.data() as UserFirestoreProfile;
+    // Check admin by email from Firestore
+    if (data.email && ADMIN_EMAILS.includes(data.email.toLowerCase())) {
+      return { allowed: true, remaining: 999, plan: 'pro', totalToday: 0 };
+    }
     const isPro = data.plan === 'pro';
     if (isPro) return { allowed: true, remaining: 999, plan: 'pro', totalToday: data.usage.totalGenerations };
 

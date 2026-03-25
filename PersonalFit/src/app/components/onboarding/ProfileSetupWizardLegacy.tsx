@@ -642,7 +642,7 @@ export function ProfileSetupWizardLegacy() {
   const handleGenerate = async () => {
     // Usage limit check (free tier: 5 generations/day)
     if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {
-      const usage = await canGenerate(user.id);
+      const usage = await canGenerate(user.id, user.email);
       if (!usage.allowed) {
         alert(`Ma már felhasználtad a napi ${5} ingyenes generálást.\nPróbáld holnap újra, vagy válts Pro-ra.`);
         return;
