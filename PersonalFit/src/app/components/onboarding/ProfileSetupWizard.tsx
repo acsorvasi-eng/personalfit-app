@@ -896,13 +896,17 @@ export function ProfileSetupWizard() {
       }
       await setSetting('forceNoActivePlan', '0');
 
-      // 6. Mark flow complete
+      // 6. Show 100% and navigate
+      setGenProgress(100);
+      setGenPhase(2);
+      await new Promise(r => setTimeout(r, 1200));
       setHasPlanSetup(true);
       setHasCompletedFullFlow(true);
       navigate('/', { replace: true });
     } catch (err) {
       console.error('[ProfileSetup] Error:', err);
-      // Still navigate — user can fix later
+      setGenProgress(100);
+      await new Promise(r => setTimeout(r, 800));
       await setSetting('forceNoActivePlan', '0').catch(() => {});
       setHasPlanSetup(true);
       setHasCompletedFullFlow(true);
@@ -930,12 +934,17 @@ export function ProfileSetupWizard() {
   }, [step]);
 
   if (step === 99) {
-    const PHASES = [
-      { emoji: '🥗', text: t('wizard.genPhase1') || 'Profilod elemzése...' },
-      { emoji: '🧠', text: t('wizard.genPhase2') || 'Ételek generálása...' },
-      { emoji: '⚡', text: t('wizard.genPhase3') || 'Utolsó simítások...' },
-    ];
-    const phase = PHASES[genPhase] || PHASES[0];
+    const phaseTexts = language === 'ro'
+      ? ['Se analizează profilul tău...', 'Se generează mesele...', 'Ultimele retușuri...']
+      : language === 'en'
+      ? ['Analyzing your profile...', 'Generating meals...', 'Final touches...']
+      : ['Profilod elemzése...', 'Ételek generálása...', 'Utolsó simítások...'];
+    const subtexts = language === 'ro'
+      ? 'Pe baza rețetelor reale, din ingredientele tale'
+      : language === 'en'
+      ? 'Based on real recipes, from your ingredients'
+      : 'Valós receptek alapján, a megadott alapanyagokból';
+    const phase = phaseTexts[genPhase] || phaseTexts[0];
     const radius = 54;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (genProgress / 100) * circumference;
@@ -957,7 +966,6 @@ export function ProfileSetupWizard() {
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-4xl font-bold text-teal-700">{genProgress}%</span>
           </div>
-          {/* Orbiting icons */}
           {['🥗', '⚡', '🧠', '❤️', '🔧'].map((emoji, i) => {
             const angle = ((genProgress / 100) * 360 + i * 72) * (Math.PI / 180);
             const x = 96 + 80 * Math.cos(angle);
@@ -980,11 +988,9 @@ export function ProfileSetupWizard() {
           animate={{ opacity: 1, y: 0 }}
           className="text-lg font-semibold text-gray-800"
         >
-          {phase.text}
+          {phase}
         </motion.p>
-        <p className="text-sm text-gray-400 mt-2">
-          {t('wizard.genSubtext') || 'Valós receptek alapján, a megadott alapanyagokból'}
-        </p>
+        <p className="text-sm text-gray-400 mt-2">{subtexts}</p>
       </div>
     );
   }
