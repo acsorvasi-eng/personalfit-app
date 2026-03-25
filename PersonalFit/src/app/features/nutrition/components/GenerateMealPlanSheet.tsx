@@ -651,7 +651,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                           <div className="mb-[10px]">
                             <div className="text-[0.73rem] font-semibold text-gray-500 mb-[6px]">{t('generatePlan.trainingDays')}</div>
                             <div className="flex gap-[5px]">
-                              {(t('generatePlan.calDays') as unknown as string[]).map((label: string, idx: number) => {
+                              {((() => { try { const d = t('generatePlan.calDays'); return Array.isArray(d) ? d : ['H','K','Sze','Cs','P','Szo','V']; } catch { return ['H','K','Sze','Cs','P','Szo','V']; } })()).map((label: string, idx: number) => {
                                 const active = sport.days.includes(idx);
                                 return (
                                   <button key={idx} onClick={() => toggleDay(sport.id, idx)}
@@ -750,7 +750,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     {personal.gender === "male" ? t('generatePlan.genderSumMale') : t('generatePlan.genderSumFemale')} · {personal.age} {t('generatePlan.yearUnit')} · {personal.heightCm} cm · {personal.weightKg} kg
                     {" · "}{{ sedentary: t('generatePlan.actSumSedentary'), light: t('generatePlan.actSumLight'), moderate: t('generatePlan.actSumModerate'), active: t('generatePlan.actSumActive') }[activity.level]}
                     {activity.sports.filter(s => s.days.length > 0).map(s => {
-                      const calDays = t('generatePlan.calDays') as unknown as string[];
+                      const calDays = (() => { try { const d = t('generatePlan.calDays'); return Array.isArray(d) ? d : ['H','K','Sze','Cs','P','Szo','V']; } catch { return ['H','K','Sze','Cs','P','Szo','V']; } })();
                       return <span key={s.id}> · {s.type || "Sport"} {s.days.map(d => calDays[d]).join("/")} ({s.minutesPerSession || "?"}{t('generatePlan.minuteUnit')})</span>;
                     })}
                   </div>
