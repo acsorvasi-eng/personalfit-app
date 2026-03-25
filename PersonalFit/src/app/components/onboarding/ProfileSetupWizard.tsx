@@ -720,6 +720,7 @@ export function ProfileSetupWizard() {
     }
 
     setIsGenerating(true);
+    setStep(99); // Switch to full-screen loading animation
     try {
       const mealModelMap: Record<number, string> = { 2: '2meals', 4: '4meals', 5: '5meals' };
       const effectiveMealModel = mealModel ?? mealModelMap[mealCount]; // IF model takes priority
@@ -912,6 +913,81 @@ export function ProfileSetupWizard() {
   // ─────────────────────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────────────────────
+
+  // ── Full-screen generating animation (step 99) ──────────────
+  const [genProgress, setGenProgress] = useState(0);
+  const [genPhase, setGenPhase] = useState(0);
+
+  useEffect(() => {
+    if (step !== 99) return;
+    setGenProgress(0);
+    setGenPhase(0);
+    // Simulate progress: 0→55 in 8s (plan), 55→90 in 6s (chef), 90→95 in 2s (final)
+    const t1 = setInterval(() => setGenProgress(p => p < 55 ? p + 1 : p), 145);
+    const t2 = setTimeout(() => { setGenPhase(1); const i = setInterval(() => setGenProgress(p => p < 90 ? p + 1 : p), 170); return () => clearInterval(i); }, 8000);
+    const t3 = setTimeout(() => { setGenPhase(2); setGenProgress(90); const i = setInterval(() => setGenProgress(p => p < 95 ? p + 1 : p), 400); return () => clearInterval(i); }, 14000);
+    return () => { clearInterval(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [step]);
+
+  if (step === 99) {
+    const PHASES = [
+      { emoji: '🥗', text: t('wizard.genPhase1') || 'Profilod elemzése...' },
+      { emoji: '🧠', text: t('wizard.genPhase2') || 'Ételek generálása...' },
+      { emoji: '⚡', text: t('wizard.genPhase3') || 'Utolsó simítások...' },
+    ];
+    const phase = PHASES[genPhase] || PHASES[0];
+    const radius = 54;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (genProgress / 100) * circumference;
+
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+        <div className="relative w-48 h-48 mb-8">
+          <svg width="192" height="192" viewBox="0 0 128 128" className="transform -rotate-90">
+            <circle cx="64" cy="64" r={radius} stroke="#e5e7eb" strokeWidth="8" fill="none" />
+            <motion.circle
+              cx="64" cy="64" r={radius}
+              stroke="#0d9488" strokeWidth="8" fill="none"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              animate={{ strokeDashoffset: offset }}
+              transition={{ type: 'spring', stiffness: 40, damping: 15 }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl font-bold text-teal-700">{genProgress}%</span>
+          </div>
+          {/* Orbiting icons */}
+          {['🥗', '⚡', '🧠', '❤️', '🔧'].map((emoji, i) => {
+            const angle = ((genProgress / 100) * 360 + i * 72) * (Math.PI / 180);
+            const x = 96 + 80 * Math.cos(angle);
+            const y = 96 + 80 * Math.sin(angle);
+            return (
+              <motion.div
+                key={i}
+                className="absolute w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-lg shadow-sm"
+                animate={{ left: x - 20, top: y - 20 }}
+                transition={{ type: 'spring', stiffness: 60, damping: 20 }}
+              >
+                {emoji}
+              </motion.div>
+            );
+          })}
+        </div>
+        <motion.p
+          key={genPhase}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-lg font-semibold text-gray-800"
+        >
+          {phase.text}
+        </motion.p>
+        <p className="text-sm text-gray-400 mt-2">
+          {t('wizard.genSubtext') || 'Valós receptek alapján, a megadott alapanyagokból'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
