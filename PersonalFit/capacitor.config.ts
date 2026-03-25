@@ -7,6 +7,8 @@ const config: CapacitorConfig = {
   server: {
     // REQUIRED for IndexedDB and secure-context APIs on Android.
     androidScheme: 'https',
+    // Allow fetch/XHR to the Vercel API domain from the native WebView
+    allowNavigation: ['personalfit-app.vercel.app', '*.vercel.app', 'api.unsplash.com', 'nominatim.openstreetmap.org'],
   },
   plugins: {
     StatusBar: {

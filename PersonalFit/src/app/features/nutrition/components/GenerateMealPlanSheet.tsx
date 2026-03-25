@@ -508,7 +508,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       if (data.resetsAt) setResetsAt(data.resetsAt);
       setStep("preview");
     } catch (e: any) {
-      setError(e.message || t('generatePlan.unknownError'));
+      const msg = e?.message || e?.toString() || t('generatePlan.unknownError');
+      console.error('[GenerateMealPlan] Error:', msg, e);
+      setError(`[DEBUG] ${msg}`);
       setStep("calc");
     }
   }
