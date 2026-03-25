@@ -343,8 +343,13 @@ export default async function handler(req: any, res: any) {
     trainingCaloriesPerDay?: Record<string, number>;
   } = req.body || {};
 
+  // If no ingredients provided, use sensible defaults so generation still works
   if (!Array.isArray(ingredients) || ingredients.length === 0) {
-    return res.status(400).json({ error: 'ingredients array required' });
+    ingredients = [
+      { name: 'csirke', calories_per_100g: 165, protein_per_100g: 31, carbs_per_100g: 0, fat_per_100g: 3.6 },
+      { name: 'rizs', calories_per_100g: 130, protein_per_100g: 2.7, carbs_per_100g: 28, fat_per_100g: 0.3 },
+      { name: 'tojás', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11 },
+    ];
   }
 
   // ── Cache check (24h) ─────────────────────────────────────────
