@@ -56,7 +56,7 @@ export async function generateRecipe(input: ChefAgentInput): Promise<ChefAgentOu
   }
 
   // API call
-  const response = await fetch(`${apiBase}/api/chef`, {
+  const response = await fetch(`${apiBase}/api/chef-review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
