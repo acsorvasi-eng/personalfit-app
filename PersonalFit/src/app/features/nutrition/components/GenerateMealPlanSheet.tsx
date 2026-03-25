@@ -923,8 +923,8 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                     <button onClick={() => setStep("activity")} className={btnBack}><ArrowLeft size={17} color="#6b7280" /></button>
                     <button
                       onClick={handleGenerate}
-                      disabled={foods.length === 0 || (remaining === 0 && !isAdminUser)}
-                      className={`${btnPrimary} flex-1 ${foods.length === 0 || (remaining === 0 && !isAdminUser) ? "opacity-50 cursor-not-allowed" : ""}`}
+                      disabled={remaining === 0 && !isAdminUser}
+                      className={`${btnPrimary} flex-1 ${remaining === 0 && !isAdminUser ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       <Sparkles size={17} /> {t('generatePlan.generateButton')}
                     </button>
