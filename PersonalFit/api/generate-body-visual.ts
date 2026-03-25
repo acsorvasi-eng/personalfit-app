@@ -4,6 +4,7 @@
  * Requires Vercel env: ANTHROPIC_API_KEY
  */
 
+import { handleCors } from './_cors';
 import Anthropic from "@anthropic-ai/sdk";
 
 export interface GenerateBodyVisualBody {
@@ -17,6 +18,7 @@ export interface GenerateBodyVisualBody {
 }
 
 export default async function handler(req: any, res: any) {
+  if (handleCors(req, res)) return;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }

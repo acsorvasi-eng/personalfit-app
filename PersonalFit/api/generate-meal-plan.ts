@@ -1,3 +1,4 @@
+import { handleCors } from './_cors';
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
@@ -127,6 +128,7 @@ function extractJSON(text: string): any {
 
 // ─── Handler ──────────────────────────────────────────────────
 export default async function handler(req: any, res: any) {
+  if (handleCors(req, res)) return;
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method !== 'POST') {

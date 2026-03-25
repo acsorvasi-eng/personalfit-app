@@ -6,10 +6,13 @@
  * Requires UNSPLASH_ACCESS_KEY env var set in Vercel dashboard.
  */
 
+import { handleCors } from './_cors';
+
 const CACHE: Map<string, { url: string | null; photographer: string | null; ts: number }> = new Map();
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours in-memory
 
 export default async function handler(req: any, res: any) {
+  if (handleCors(req, res)) return;
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');

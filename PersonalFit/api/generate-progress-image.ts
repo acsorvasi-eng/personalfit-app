@@ -4,6 +4,7 @@
  * Requires Vercel env: REPLICATE_API_TOKEN
  */
 
+import { handleCors } from './_cors';
 import Replicate from "replicate";
 
 export interface GenerateProgressImageBody {
@@ -15,6 +16,7 @@ export interface GenerateProgressImageBody {
 }
 
 export default async function handler(req: any, res: any) {
+  if (handleCors(req, res)) return;
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }

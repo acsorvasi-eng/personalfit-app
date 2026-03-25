@@ -15,6 +15,7 @@
  *   customer.subscription.updated (status: canceled/unpaid) → downgrade to 'free'
  */
 
+import { handleCors } from './_cors';
 import Stripe from 'stripe';
 import * as admin from 'firebase-admin';
 
@@ -44,6 +45,7 @@ async function setUserPlan(userId: string, plan: 'free' | 'pro'): Promise<void> 
 
 // ─── Handler ──────────────────────────────────────────────────────
 export default async function handler(req: any, res: any) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;

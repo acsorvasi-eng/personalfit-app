@@ -10,6 +10,7 @@
  *   APP_URL                — Base URL for success/cancel redirects (https://yourapp.com)
  */
 
+import { handleCors } from './_cors';
 import Stripe from 'stripe';
 
 function getStripe(): Stripe | null {
@@ -19,6 +20,7 @@ function getStripe(): Stripe | null {
 }
 
 export default async function handler(req: any, res: any) {
+  if (handleCors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const stripe = getStripe();
