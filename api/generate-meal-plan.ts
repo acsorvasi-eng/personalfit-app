@@ -333,7 +333,7 @@ export default async function handler(req: any, res: any) {
     trainingDays = [],
     trainingCaloriesPerDay = {},
   }: {
-    ingredients: IngredientInput[];
+    ingredients?: IngredientInput[];
     dailyCalorieTarget?: number;
     days?: number;
     language?: string;
