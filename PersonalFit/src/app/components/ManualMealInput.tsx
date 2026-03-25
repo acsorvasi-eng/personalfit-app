@@ -421,7 +421,7 @@ export function ManualMealInput() {
                   <button
                     key={day}
                     onClick={() => setCurrentDay(day)}
-                    className={`w-9 h-9 rounded-full text-[11px] transition-all flex flex-col items-center justify-center ${
+                    className={`w-9 h-9 rounded-full text-xs transition-all flex flex-col items-center justify-center ${
                       day === currentDay
                         ? 'bg-primary text-white shadow-md'
                         : hasData
@@ -526,7 +526,7 @@ export function ManualMealInput() {
                 <p className="text-sm text-gray-400 mb-1" style={{ fontWeight: 500 }}>
                   {t('manualInput.emptySlot')}
                 </p>
-                <p className="text-[11px] text-gray-300">
+                <p className="text-xs text-gray-500">
                   {t('manualInput.tapAdd')}
                 </p>
               </div>
@@ -640,7 +640,7 @@ export function ManualMealInput() {
                     </div>
                   </div>
 
-                  <label className="block text-[11px] text-gray-500 mb-1.5" style={{ fontWeight: 500 }}>
+                  <label className="block text-xs text-gray-500 mb-1.5" style={{ fontWeight: 500 }}>
                     {t('manualInput.quantity')} (g)
                   </label>
                   <input
@@ -660,9 +660,9 @@ export function ManualMealInput() {
                         <span className="text-orange-500" style={{ fontWeight: 600 }}>
                           {Math.round(addingItem.caloriesPer100g * (parseInt(addQuantity) || 0) / 100)} kcal
                         </span>
-                        <span className="text-blue-500 text-[11px]">F: {Math.round(addingItem.proteinPer100g * (parseInt(addQuantity) || 0) / 100)}g</span>
-                        <span className="text-amber-500 text-[11px]">Sz: {Math.round(addingItem.carbsPer100g * (parseInt(addQuantity) || 0) / 100)}g</span>
-                        <span className="text-red-400 text-[11px]">Zs: {Math.round(addingItem.fatPer100g * (parseInt(addQuantity) || 0) / 100)}g</span>
+                        <span className="text-blue-500 text-xs">F: {Math.round(addingItem.proteinPer100g * (parseInt(addQuantity) || 0) / 100)}g</span>
+                        <span className="text-amber-500 text-xs">Sz: {Math.round(addingItem.carbsPer100g * (parseInt(addQuantity) || 0) / 100)}g</span>
+                        <span className="text-red-400 text-xs">Zs: {Math.round(addingItem.fatPer100g * (parseInt(addQuantity) || 0) / 100)}g</span>
                       </div>
                     </div>
                   )}

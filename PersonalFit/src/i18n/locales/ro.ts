@@ -312,6 +312,14 @@ const ro: LocalePartial = {
 
   // UnifiedMenu
   'menu.noIngredientData': 'Nicio dată de ingrediente',
+
+  // Wizard generation loading phases
+  'wizard.genPhase1': 'Se analizează profilul tău...',
+  'wizard.genPhase2': 'Se calculează macronutrienții...',
+  'wizard.genPhase3': 'Se generează mesele...',
+  'wizard.genPhase4': 'Revizuire de chef...',
+  'wizard.genPhase5': 'Ultimele retușuri...',
+  'wizard.genSubtext': 'Pe baza rețetelor reale, din ingredientele tale',
 };
 
 export default ro;

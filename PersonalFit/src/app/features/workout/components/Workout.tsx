@@ -429,7 +429,7 @@ export function Workout() {
               {searchQuery.length >= 3 && aiSuggestions.length > 0 && searchFocused && (
                 <motion.div initial={{ opacity: 0, y: -8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }} className="absolute left-0 right-0 top-full mt-1 z-30 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-h-72 overflow-y-auto">
                   <div className="px-3 py-2 bg-orange-50 border-b border-orange-100 flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-orange-500" /><span className="text-[11px] font-semibold text-orange-700">{t('workout.aiSuggestions')}</span>
+                    <Sparkles className="w-3.5 h-3.5 text-orange-500" /><span className="text-xs font-semibold text-orange-700">{t('workout.aiSuggestions')}</span>
                     <span className="text-2xs text-orange-500 ml-auto">{aiSuggestions.length} {t('workout.results')}</span>
                   </div>
                   {aiSuggestions.map(sport => (
@@ -500,7 +500,7 @@ export function Workout() {
                     <span className="text-2xl flex-shrink-0">{entry.activityIcon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 text-sm truncate">{entry.activityName}</div>
-                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span>{entry.duration} {t('workout.min')}</span><span>·</span><span className="text-orange-600 font-semibold">{entry.calories} kcal</span>
                       </div>
                     </div>
@@ -526,7 +526,7 @@ export function Workout() {
                       <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center"><Activity className="w-4 h-4 text-purple-600" /></div>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-gray-900 text-sm">{dayName}</div>
-                        <div className="text-[11px] text-gray-500">{day.entries.length} {t('workout.workout')} · {day.entries.map(e => e.activityIcon).join(' ')}</div>
+                        <div className="text-xs text-gray-500">{day.entries.length} {t('workout.workout')} · {day.entries.map(e => e.activityIcon).join(' ')}</div>
                       </div>
                       <div className="text-right"><div className="text-sm font-bold text-orange-600">{day.totalCalories}</div><div className="text-2xs text-gray-400">{day.totalDuration}{t('calendar.minShort')}</div></div>
                     </div>
@@ -569,7 +569,7 @@ export function Workout() {
                   {ALL_SPORTS.filter(s => !collectionFilter || s.category === collectionFilter).map(sport => (
                     <button key={sport.id} onClick={() => handleSelectSport(sport)} className="flex flex-col items-center gap-1.5 group" aria-label={`${getSportName(sport)} — ${sport.caloriesPerMinute} ${t('workout.kcalPerMin')}`}>
                       <div className="w-16 h-16 bg-gray-100 group-hover:bg-orange-50 rounded-full flex items-center justify-center text-2xl border-2 border-gray-200 group-hover:border-orange-300 transition-all group-active:scale-90 shadow-sm">{sport.icon}</div>
-                      <span className="text-[11px] text-gray-700 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
+                      <span className="text-xs text-gray-700 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
                     </button>
                   ))}
                 </div>

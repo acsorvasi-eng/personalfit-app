@@ -159,7 +159,7 @@ export default async function handler(req: any, res: any) {
       trainingDays = [],
       goal = 'maintain',
     }: {
-      ingredients: Ingredient[];
+      ingredients?: Ingredient[];
       dailyCalorieTarget?: number;
       days?: number;
       language?: string;

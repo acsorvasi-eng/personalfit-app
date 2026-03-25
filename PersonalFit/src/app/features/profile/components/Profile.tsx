@@ -652,7 +652,7 @@ export function Profile() {
                   profile.gender ? t(`profile.gender${profile.gender === 'male' ? 'Male' : profile.gender === 'female' ? 'Female' : 'Other'}`) : null,
                   profile.height ? `${profile.height} cm` : null,
                 ].filter(Boolean).join(' · ') || t('profile.addPersonalData') || 'Személyes adatok'}
-                <span className="ml-1 text-gray-300">{personalExpanded ? '▲' : '▼'}</span>
+                <span className="ml-1 text-gray-400">{personalExpanded ? '▲' : '▼'}</span>
               </button>
             </div>
           </div>
@@ -845,7 +845,7 @@ export function Profile() {
                   ) : (
                     <TrendingDown className="w-3.5 h-3.5 text-teal-600" />
                   )}
-                  <span className="text-[11px] text-gray-700" style={{ fontWeight: 500 }}>
+                  <span className="text-xs text-gray-700" style={{ fontWeight: 500 }}>
                     {Math.abs(deviation) <= 0.5
                       ? t('profile.onPlan')
                       : deviation > 0
@@ -866,7 +866,7 @@ export function Profile() {
             <div className="mt-3 p-3 bg-teal-50/50 rounded-xl border border-teal-200/50">
               <div className="flex items-center gap-2 mb-2.5">
                 <Target className="w-3.5 h-3.5 text-teal-600" />
-                <span className="text-[11px] text-gray-700" style={{ fontWeight: 600 }}>{t('profile.goal')}</span>
+                <span className="text-xs text-gray-700" style={{ fontWeight: 600 }}>{t('profile.goal')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1">

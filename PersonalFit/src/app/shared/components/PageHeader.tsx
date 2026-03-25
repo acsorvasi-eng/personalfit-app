@@ -123,7 +123,7 @@ export function PageHeader({
               <div style={{ fontSize: "1.1rem", fontWeight: 700 }}>
                 {stat.isAction ? <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, background: "rgba(255,255,255,0.25)", borderRadius: "50%" }}>{stat.value}</span> : <>{stat.value}{stat.suffix != null ? ` ${stat.suffix}` : ""}</>}
               </div>
-              <div style={{ fontSize: "0.7rem", marginTop: 2, opacity: 0.9 }}>{stat.label}</div>
+              <div style={{ fontSize: "0.75rem", marginTop: 2, opacity: 0.9 }}>{stat.label}</div>
             </div>
           ))}
         </div>

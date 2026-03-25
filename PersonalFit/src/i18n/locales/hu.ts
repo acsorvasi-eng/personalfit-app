@@ -385,6 +385,14 @@ const hu = {
 
   // UnifiedMenu
   'menu.noIngredientData': 'Nincs összetevő adat',
+
+  // Wizard generation loading phases
+  'wizard.genPhase1': 'Profilod elemzése...',
+  'wizard.genPhase2': 'Makrók kiszámítása...',
+  'wizard.genPhase3': 'Ételek generálása...',
+  'wizard.genPhase4': 'Séf felülvizsgálat...',
+  'wizard.genPhase5': 'Utolsó simítások...',
+  'wizard.genSubtext': 'Valós receptek alapján, a megadott alapanyagokból',
 } as const;
 
 export default hu;

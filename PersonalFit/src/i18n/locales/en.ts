@@ -312,6 +312,14 @@ const en: LocalePartial = {
 
   // UnifiedMenu
   'menu.noIngredientData': 'No ingredient data',
+
+  // Wizard generation loading phases
+  'wizard.genPhase1': 'Analyzing your profile...',
+  'wizard.genPhase2': 'Calculating macros...',
+  'wizard.genPhase3': 'Generating meals...',
+  'wizard.genPhase4': 'Chef review...',
+  'wizard.genPhase5': 'Final touches...',
+  'wizard.genSubtext': 'Based on real recipes, from your ingredients',
 };
 
 export default en;

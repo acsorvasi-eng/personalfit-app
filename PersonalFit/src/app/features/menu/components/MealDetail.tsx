@@ -328,7 +328,7 @@ export function MealDetail() {
                     transition={{ delay: i * 0.05, duration: 0.2 }}
                     className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50"
                   >
-                    <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[11px] text-primary shrink-0" style={{ fontWeight: 700 }}>
+                    <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary shrink-0" style={{ fontWeight: 700 }}>
                       {i + 1}
                     </span>
                     <span
@@ -369,7 +369,7 @@ export function MealDetail() {
                   >
                     {t('foods.alternativeMeals')} {config.title.toLowerCase()}
                   </h3>
-                  <span className="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                     {filteredAlternatives.length}
                   </span>
                 </div>
@@ -434,7 +434,7 @@ export function MealDetail() {
                           </p>
                           <div className="flex items-center gap-2 mt-1.5">
                             <span
-                              className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-md"
+                              className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md"
                               style={{ fontWeight: 700 }}
                             >
                               {alt.calories}
@@ -449,7 +449,7 @@ export function MealDetail() {
                             >
                               {alt.dayLabel}
                             </span>
-                            <span className="text-2xs text-gray-300">
+                            <span className="text-2xs text-gray-500">
                               {alt.weekNum}. {t('common.week')} / {alt.dayNum}. {t('common.day')}
                             </span>
                           </div>

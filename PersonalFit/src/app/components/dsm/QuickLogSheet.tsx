@@ -284,7 +284,7 @@ export function DSMQuickLogSheet({ open, onClose, onLogMeal, slot }: DSMQuickLog
               <div className="py-6 text-center">
                 <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                 <p className="text-sm text-gray-400">{t('quickLog.noResults')}: "{query}"</p>
-                <p className="text-2xs text-gray-300 mt-1">{t('quickLog.tryDifferent')}</p>
+                <p className="text-2xs text-gray-500 mt-1">{t('quickLog.tryDifferent')}</p>
               </div>
             )}
 

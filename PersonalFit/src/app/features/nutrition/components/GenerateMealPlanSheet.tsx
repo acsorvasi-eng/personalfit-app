@@ -455,13 +455,15 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user?.id,
-          ingredients: validFoods.map(f => ({
-            name: f.name,
-            calories_per_100g: f.calories ?? 100,
-            protein_per_100g: f.protein ?? 5,
-            carbs_per_100g: f.carbs ?? 10,
-            fat_per_100g: f.fat ?? 3,
-          })),
+          ...(validFoods.length > 0 ? {
+            ingredients: validFoods.map(f => ({
+              name: f.name,
+              calories_per_100g: f.calories ?? 100,
+              protein_per_100g: f.protein ?? 5,
+              carbs_per_100g: f.carbs ?? 10,
+              fat_per_100g: f.fat ?? 3,
+            })),
+          } : {}),
           dailyCalorieTarget: dailyTarget,
           days: 7,
           language,
@@ -586,7 +588,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
               </div>
               <div>
                 <div className="font-bold text-base text-foreground leading-tight">{t('generatePlan.title')}</div>
-                <div className="text-[0.72rem] text-gray-400">{t('generatePlan.ingredientsAvailable').replace('{n}', String(foods.length))}</div>
+                <div className="text-xs text-gray-400">{t('generatePlan.ingredientsAvailable').replace('{n}', String(foods.length))}</div>
               </div>
             </div>
             {step !== "generating" && step !== "saving" && (
@@ -629,15 +631,15 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
                           <div className="text-[1.15rem] font-bold text-green-800">{personal.age}</div>
-                          <div className="text-[0.7rem] text-green-400">{t('generatePlan.age')}</div>
+                          <div className="text-xs text-green-400">{t('generatePlan.age')}</div>
                         </div>
                         <div>
                           <div className="text-[1.15rem] font-bold text-green-800">{personal.heightCm} cm</div>
-                          <div className="text-[0.7rem] text-green-400">{t('generatePlan.height')}</div>
+                          <div className="text-xs text-green-400">{t('generatePlan.height')}</div>
                         </div>
                         <div>
                           <div className="text-[1.15rem] font-bold text-green-800">{personal.weightKg} kg</div>
-                          <div className="text-[0.7rem] text-green-400">{t('generatePlan.weight')}</div>
+                          <div className="text-xs text-green-400">{t('generatePlan.weight')}</div>
                         </div>
                       </div>
                     </div>
@@ -708,7 +710,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                           <input type="number" inputMode="numeric" value={(personal as any)[f]}
                             onChange={e => setPersonal(prev => ({ ...prev, [f]: e.target.value }))}
                             placeholder={p} className={`${inp} pr-[26px]`} />
-                          <span className="absolute right-[9px] top-1/2 -translate-y-1/2 text-[0.7rem] text-gray-400">{u}</span>
+                          <span className="absolute right-[9px] top-1/2 -translate-y-1/2 text-xs text-gray-400">{u}</span>
                         </div>
                       </div>
                     ))}
@@ -768,9 +770,9 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                           <span className="text-[19px]">{a.e}</span>
                           <div className="flex-1">
                             <div className={`font-bold text-[0.87rem] ${activity.level === a.v ? "text-primary" : "text-foreground"}`}>{a.l}</div>
-                            <div className="text-[0.72rem] text-gray-400">{a.d}</div>
+                            <div className="text-xs text-gray-400">{a.d}</div>
                           </div>
-                          <span className={`text-[0.72rem] font-bold ${activity.level === a.v ? "text-indigo-500" : "text-gray-300"}`}>
+                          <span className={`text-xs font-bold ${activity.level === a.v ? "text-indigo-500" : "text-gray-400"}`}>
                             ×{ACTIVITY_MULTIPLIERS[a.v as ActivityLevel]}
                           </span>
                         </button>
@@ -784,7 +786,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                       <div className="flex items-center gap-[7px]">
                         <Dumbbell size={15} color="#6366f1" />
                         <span className="font-bold text-[0.88rem] text-foreground">{t('generatePlan.sportSection')}</span>
-                        <span className="text-[0.71rem] text-gray-400">{t('generatePlan.sportOptional')}</span>
+                        <span className="text-xs text-gray-400">{t('generatePlan.sportOptional')}</span>
                       </div>
                       <button onClick={addSport} className="flex items-center gap-[5px] py-[5px] px-[11px] rounded-full border-[1.5px] border-indigo-500 bg-primary/10 text-indigo-500 font-semibold text-[0.77rem] cursor-pointer">
                         <Plus size={13} /> {t('generatePlan.addSport')}
@@ -841,7 +843,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                                 placeholder="60"
                                 className={`${inp} pr-[34px] w-full`}
                               />
-                              <span className="absolute right-[9px] top-1/2 -translate-y-1/2 text-[0.7rem] text-gray-400">{t('generatePlan.minuteUnit')}</span>
+                              <span className="absolute right-[9px] top-1/2 -translate-y-1/2 text-xs text-gray-400">{t('generatePlan.minuteUnit')}</span>
                             </div>
                           </div>
                         </div>
@@ -879,13 +881,13 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                         { l: t('generatePlan.dailyGoal'), v: dailyTarget, d: { loss: t('generatePlan.goalLoss300'), maintain: t('generatePlan.goalMaintain0'), gain: t('generatePlan.goalGain300') }[personal.goal] },
                       ].map(({ l, v, d }) => (
                         <div key={l} className="bg-white/60 rounded-[11px] px-[6px] py-[9px] text-center">
-                          <div className="text-[0.68rem] text-primary font-semibold mb-[2px]">{l}</div>
+                          <div className="text-xs text-primary font-semibold mb-[2px]">{l}</div>
                           <div className="font-extrabold text-[1.15rem] text-primary">{v}</div>
-                          <div className="text-[0.63rem] text-primary">{d}</div>
+                          <div className="text-xs text-primary">{d}</div>
                         </div>
                       ))}
                     </div>
-                    <div className="text-[0.7rem] text-primary font-semibold mb-[7px]">{t('generatePlan.mealDistribution')}</div>
+                    <div className="text-xs text-primary font-semibold mb-[7px]">{t('generatePlan.mealDistribution')}</div>
                     {[{ l: t('generatePlan.mealBreakfast'), p: 25, c: "#f59e0b" }, { l: t('generatePlan.mealLunch'), p: 40, c: "#10b981" }, { l: t('generatePlan.mealDinner'), p: 35, c: "#6366f1" }].map(({ l, p, c }) => (
                       <div key={l} className="flex items-center gap-2 mb-[5px]">
                         <div className="w-[52px] text-[0.74rem] text-foreground font-medium">{l}</div>
@@ -968,7 +970,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                       ].map(({ l, v }) => (
                         <div key={l} className="flex-1 bg-gray-50 rounded-[11px] px-[7px] py-[9px] text-center">
                           <div className="font-bold text-[1.1rem] text-foreground">{v}</div>
-                          <div className="text-[0.68rem] text-gray-400">{l}</div>
+                          <div className="text-xs text-gray-400">{l}</div>
                         </div>
                       ))}
                     </div>
@@ -985,7 +987,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                           {showWeekHeader && (
                             <div className="flex items-center gap-2 mt-2 mb-1">
                               <div className="flex-1 h-px bg-border" />
-                              <span className="text-[0.7rem] font-bold text-gray-400 uppercase tracking-wider px-2">
+                              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2">
                                 {weekNum}. {t('generatePlan.weekLabel') || 'hét'}
                               </span>
                               <div className="flex-1 h-px bg-border" />
@@ -995,19 +997,19 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                             {/* Day header */}
                             <div className={`px-[14px] py-[10px] flex items-center justify-between border-b border-border ${day.is_training_day ? "bg-primary/10" : "bg-gray-50"}`}>
                               <div className="flex items-center gap-[7px]">
-                                <span className="text-[0.68rem] font-semibold text-gray-400 shrink-0">{di + 1}.</span>
+                                <span className="text-xs font-semibold text-gray-400 shrink-0">{di + 1}.</span>
                                 <span className={`font-extrabold text-[0.92rem] ${day.is_training_day ? "text-primary" : "text-foreground"}`}>
                                   {day.day_label ?? `${di + 1}. nap`}
                                 </span>
                                 {day.is_training_day && (
-                                  <span className="bg-indigo-500 text-white text-[0.65rem] font-bold px-[7px] py-[2px] rounded-full">
+                                  <span className="bg-indigo-500 text-white text-xs font-bold px-[7px] py-[2px] rounded-full">
                                     {t('generatePlan.trainingDayBadge')}
                                   </span>
                                 )}
                                 {day.is_training_day && (() => {
                                   const burn = burnPerDay[day.weekday_index ?? ((day.day - 1) % 7)] ?? 0;
                                   return burn > 0 ? (
-                                    <span className={`text-[0.65rem] font-bold px-[7px] py-[2px] rounded-full ${
+                                    <span className={`text-xs font-bold px-[7px] py-[2px] rounded-full ${
                                       burn > 500 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
                                     }`}>
                                       {t('generatePlan.burnBadge').replace('{n}', String(burn))}
@@ -1019,7 +1021,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                             </div>
                             {/* Macro summary row */}
                             {(day.daily_protein != null) && (
-                              <div className="flex gap-3 px-[14px] py-[6px] border-b border-gray-100 bg-gray-50/60 text-[0.68rem] text-gray-500">
+                              <div className="flex gap-3 px-[14px] py-[6px] border-b border-gray-100 bg-gray-50/60 text-xs text-gray-500">
                                 <span>🥩 <strong className="text-gray-700">{day.daily_protein}g</strong> {t('generatePlan.macroProtein')}</span>
                                 <span>🌾 <strong className="text-gray-700">{day.daily_carbs}g</strong> {t('generatePlan.macroCarbs')}</span>
                                 <span>🥑 <strong className="text-gray-700">{day.daily_fat}g</strong> {t('generatePlan.macroFat')}</span>
@@ -1031,7 +1033,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
                                 <div key={mi} className={`px-[14px] py-[9px] flex items-center gap-[10px] ${mi < day.meals.length - 1 ? "border-b border-gray-100" : ""}`}>
                                   <span className="text-lg shrink-0">{MEAL_EMOJI[meal.meal_type] ?? "🍽️"}</span>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-[0.7rem] text-gray-400 font-semibold">{{ breakfast: t('generatePlan.mealBreakfast'), lunch: t('generatePlan.mealLunch'), dinner: t('generatePlan.mealDinner'), snack: t('generatePlan.mealSnack') }[meal.meal_type as string] ?? meal.meal_type}</div>
+                                    <div className="text-xs text-gray-400 font-semibold">{{ breakfast: t('generatePlan.mealBreakfast'), lunch: t('generatePlan.mealLunch'), dinner: t('generatePlan.mealDinner'), snack: t('generatePlan.mealSnack') }[meal.meal_type as string] ?? meal.meal_type}</div>
                                     <div className="text-[0.88rem] text-foreground font-bold truncate">{meal.name}</div>
                                   </div>
                                   <span className="bg-gray-100 rounded-lg px-[9px] py-[3px] text-[0.77rem] text-foreground font-bold shrink-0">

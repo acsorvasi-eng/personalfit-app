@@ -290,14 +290,14 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-white/70 text-[11px] font-medium">{dayName}</span>
+            <span className="text-white/70 text-xs font-medium">{dayName}</span>
             <span className="text-white/40">·</span>
             {hasPlan ? (
-              <span className="text-white/70 text-[11px]">
+              <span className="text-white/70 text-xs">
                 {todayPlan.length} {t("calendar.workoutPlanned")}
               </span>
             ) : (
-              <span className="text-white/70 text-[11px]">😴</span>
+              <span className="text-white/70 text-xs">😴</span>
             )}
           </div>
           <div className="text-white text-sm mt-0.5" style={{ fontWeight: 700 }}>
@@ -306,7 +306,7 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
               : t("menu.restDay")
             }
           </div>
-          <div className="text-white/70 text-[11px] mt-0.5">
+          <div className="text-white/70 text-xs mt-0.5">
             {hasPlan
               ? todayPlan.some(w => w.plannedDuration)
                 ? `${todayPlan.reduce((s, w) => s + (w.plannedDuration || 0), 0)} ${t("calendar.minPlanned")}`
@@ -460,7 +460,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                   <div className="flex bg-gray-100 rounded-lg p-0.5">
                     <button
                       onClick={() => setView('week')}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                         view === 'week'
                           ? 'bg-white text-orange-600 shadow-sm'
                           : 'text-gray-500'
@@ -471,7 +471,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                     </button>
                     <button
                       onClick={() => setView('month')}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all ${
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                         view === 'month'
                           ? 'bg-white text-orange-600 shadow-sm'
                           : 'text-gray-500'
@@ -808,21 +808,21 @@ function WeekView({ weekDays, schedule, todayKey, selectedDate, weekLabel, onPre
         }, 0);
         return (
           <div className="flex items-center justify-center gap-4 mt-3 px-2 py-2 bg-gray-50 rounded-xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <Dumbbell className="w-3 h-3 text-orange-500" />
               <span>{weekWorkouts} {t("calendar.workoutN")}</span>
             </div>
             {weekDuration > 0 && (
               <>
                 <div className="w-px h-3 bg-gray-200" />
-                <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
+                <div className="flex items-center gap-1.5 text-xs text-gray-600">
                   <Clock className="w-3 h-3 text-blue-500" />
                   <span>{weekDuration} {t("calendar.minUnit")}</span>
                 </div>
               </>
             )}
             <div className="w-px h-3 bg-gray-200" />
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <Moon className="w-3 h-3 text-indigo-400" />
               <span>{7 - weekDays.filter(d => (schedule[dateToKey(d)] || []).length > 0).length} {t("calendar.restN")}</span>
             </div>
@@ -940,12 +940,12 @@ function MonthView({ monthDays, monthMonth, monthYear, schedule, todayKey, selec
         const trainingDays = monthDays.filter(d => d.getMonth() === monthMonth && (schedule[dateToKey(d)] || []).length > 0).length;
         return (
           <div className="flex items-center justify-center gap-4 mt-3 px-2 py-2 bg-gray-50 rounded-xl">
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <Dumbbell className="w-3 h-3 text-orange-500" />
               <span>{monthWorkouts} {t("calendar.workoutN")}</span>
             </div>
             <div className="w-px h-3 bg-gray-200" />
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-600">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <Calendar className="w-3 h-3 text-blue-500" />
               <span>{trainingDays} {t("calendar.trainingDayN")}</span>
             </div>

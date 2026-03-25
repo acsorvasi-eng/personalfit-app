@@ -1458,7 +1458,13 @@ export const translations = {
         restDaysLoading: 'Pihenőnapok: elemzés folyamatban...',
         continueToFoods: 'Tovább az ételekhez →',
         publish: '📤 Publikálás'
-      }
+      },
+      genPhase1: 'Profilod elemzése...',
+      genPhase2: 'Makrók kiszámítása...',
+      genPhase3: 'Ételek generálása...',
+      genPhase4: 'Séf felülvizsgálat...',
+      genPhase5: 'Utolsó simítások...',
+      genSubtext: 'Valós receptek alapján, a megadott alapanyagokból'
     },
     generatePlan: {
       title: 'AI Étrend Generátor',
@@ -2961,7 +2967,13 @@ export const translations = {
         restDaysLoading: 'Rest days: analysis in progress...',
         continueToFoods: 'Continue to foods →',
         publish: '📤 Publish'
-      }
+      },
+      genPhase1: 'Analyzing your profile...',
+      genPhase2: 'Calculating macros...',
+      genPhase3: 'Generating meals...',
+      genPhase4: 'Chef review...',
+      genPhase5: 'Final touches...',
+      genSubtext: 'Based on real recipes, from your ingredients'
     },
     generatePlan: {
       title: 'AI Meal Plan Generator',
@@ -4464,7 +4476,13 @@ export const translations = {
         restDaysLoading: 'Zile de odihnă: analiză în curs...',
         continueToFoods: 'Continuă la alimente →',
         publish: '📤 Publică'
-      }
+      },
+      genPhase1: 'Se analizează profilul tău...',
+      genPhase2: 'Se calculează macronutrienții...',
+      genPhase3: 'Se generează mesele...',
+      genPhase4: 'Revizuire de chef...',
+      genPhase5: 'Ultimele retușuri...',
+      genSubtext: 'Pe baza rețetelor reale, din ingredientele tale'
     },
     generatePlan: {
       title: 'Generator Plan Alimentar AI',

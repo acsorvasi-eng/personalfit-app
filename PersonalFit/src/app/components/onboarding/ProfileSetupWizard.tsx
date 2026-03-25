@@ -898,8 +898,8 @@ export function ProfileSetupWizard() {
 
       // 6. Show 100% and navigate
       setGenProgress(100);
-      setGenPhase(2);
-      await new Promise(r => setTimeout(r, 1200));
+      setGenPhase(4);
+      await new Promise(r => setTimeout(r, 500));
       setHasPlanSetup(true);
       setHasCompletedFullFlow(true);
       navigate('/', { replace: true });
@@ -926,24 +926,31 @@ export function ProfileSetupWizard() {
     if (step !== 99) return;
     setGenProgress(0);
     setGenPhase(0);
-    // Simulate progress: 0→55 in 8s (plan), 55→90 in 6s (chef), 90→95 in 2s (final)
-    const t1 = setInterval(() => setGenProgress(p => p < 55 ? p + 1 : p), 145);
-    const t2 = setTimeout(() => { setGenPhase(1); const i = setInterval(() => setGenProgress(p => p < 90 ? p + 1 : p), 170); return () => clearInterval(i); }, 8000);
-    const t3 = setTimeout(() => { setGenPhase(2); setGenProgress(90); const i = setInterval(() => setGenProgress(p => p < 95 ? p + 1 : p), 400); return () => clearInterval(i); }, 14000);
-    return () => { clearInterval(t1); clearTimeout(t2); clearTimeout(t3); };
+    // Simulate progress across 5 phases: profile→macros→meals→chef→finishing
+    const intervals: ReturnType<typeof setInterval>[] = [];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    // Phase 0 (0→25) — ~4s
+    intervals.push(setInterval(() => setGenProgress(p => p < 25 ? p + 1 : p), 160));
+    // Phase 1 (25→50) — starts at 4s
+    timeouts.push(setTimeout(() => { setGenPhase(1); intervals.push(setInterval(() => setGenProgress(p => p < 50 ? p + 1 : p), 160)); }, 4000));
+    // Phase 2 (50→75) — starts at 8s
+    timeouts.push(setTimeout(() => { setGenPhase(2); intervals.push(setInterval(() => setGenProgress(p => p < 75 ? p + 1 : p), 160)); }, 8000));
+    // Phase 3 (75→90) — starts at 12s
+    timeouts.push(setTimeout(() => { setGenPhase(3); intervals.push(setInterval(() => setGenProgress(p => p < 90 ? p + 1 : p), 200)); }, 12000));
+    // Phase 4 (90→95) — starts at 15s
+    timeouts.push(setTimeout(() => { setGenPhase(4); intervals.push(setInterval(() => setGenProgress(p => p < 95 ? p + 1 : p), 400)); }, 15000));
+    return () => { intervals.forEach(clearInterval); timeouts.forEach(clearTimeout); };
   }, [step]);
 
   if (step === 99) {
-    const phaseTexts = language === 'ro'
-      ? ['Se analizează profilul tău...', 'Se generează mesele...', 'Ultimele retușuri...']
-      : language === 'en'
-      ? ['Analyzing your profile...', 'Generating meals...', 'Final touches...']
-      : ['Profilod elemzése...', 'Ételek generálása...', 'Utolsó simítások...'];
-    const subtexts = language === 'ro'
-      ? 'Pe baza rețetelor reale, din ingredientele tale'
-      : language === 'en'
-      ? 'Based on real recipes, from your ingredients'
-      : 'Valós receptek alapján, a megadott alapanyagokból';
+    const phaseTexts = [
+      t('wizard.genPhase1'),
+      t('wizard.genPhase2'),
+      t('wizard.genPhase3'),
+      t('wizard.genPhase4'),
+      t('wizard.genPhase5'),
+    ];
+    const subtexts = t('wizard.genSubtext');
     const phase = phaseTexts[genPhase] || phaseTexts[0];
     const radius = 54;
     const circumference = 2 * Math.PI * radius;
@@ -1196,9 +1203,9 @@ function NumericField({ label, value, onChange, min, max, step, unit }: {
           <input
             ref={inputRef}
             type="number"
-            inputMode="numeric"
+            inputMode="decimal"
             value={draft}
-            onChange={e => setDraft(e.target.value)}
+            onChange={e => setDraft(e.target.value.replace(',', '.'))}
             onBlur={commitEdit}
             onKeyDown={e => {
               if (e.key === 'Enter') commitEdit();
@@ -1778,7 +1785,7 @@ function StepSport({ activity, setActivity, sports, addSport, removeSport, updat
               <Plus className="w-5 h-5 text-primary" />
             </div>
             <span className="text-sm font-medium text-gray-500">{t('wizard.sport.addSport')}</span>
-            <span className="text-xs text-gray-300">{t('wizard.sport.noSportsHint')}</span>
+            <span className="text-xs text-gray-500">{t('wizard.sport.noSportsHint')}</span>
           </button>
         )}
 
