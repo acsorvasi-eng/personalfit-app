@@ -324,7 +324,7 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const {
-    ingredients,
+    ingredients: rawIngredients,
     dailyCalorieTarget = 2000,
     days = 7,
     language = 'hu',
@@ -344,13 +344,13 @@ export default async function handler(req: any, res: any) {
   } = req.body || {};
 
   // If no ingredients provided, use sensible defaults so generation still works
-  if (!Array.isArray(ingredients) || ingredients.length === 0) {
-    ingredients = [
-      { name: 'csirke', calories_per_100g: 165, protein_per_100g: 31, carbs_per_100g: 0, fat_per_100g: 3.6 },
-      { name: 'rizs', calories_per_100g: 130, protein_per_100g: 2.7, carbs_per_100g: 28, fat_per_100g: 0.3 },
-      { name: 'tojás', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11 },
-    ];
-  }
+  const ingredients: IngredientInput[] = Array.isArray(rawIngredients) && rawIngredients.length > 0
+    ? rawIngredients
+    : [
+        { name: 'csirke', calories_per_100g: 165, protein_per_100g: 31, carbs_per_100g: 0, fat_per_100g: 3.6 },
+        { name: 'rizs', calories_per_100g: 130, protein_per_100g: 2.7, carbs_per_100g: 28, fat_per_100g: 0.3 },
+        { name: 'tojás', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11 },
+      ];
 
   // ── Cache check (24h) ─────────────────────────────────────────
   const cacheKey = makeCacheKey(ingredients, dailyCalorieTarget, language, trainingDays, trainingCaloriesPerDay);
