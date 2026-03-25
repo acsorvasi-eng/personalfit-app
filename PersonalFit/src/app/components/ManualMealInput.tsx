@@ -391,7 +391,7 @@ export function ManualMealInput() {
           <button
             type="button"
             onClick={handleClose}
-            className="w-9 h-9 rounded-full bg-gray-200/80 flex items-center justify-center hover:bg-gray-300/80 transition-all"
+            className="w-11 h-11 rounded-full bg-gray-200/80 flex items-center justify-center hover:bg-gray-300/80 transition-all"
             aria-label="Close"
           >
             <X className="w-5 h-5 text-gray-700" />
@@ -408,7 +408,7 @@ export function ManualMealInput() {
 
         {/* Day Selector */}
         <div className="flex items-center justify-between px-4 py-2">
-          <button onClick={prevDay} disabled={currentDay === 1} className="p-1.5 text-gray-400 disabled:opacity-30">
+          <button onClick={prevDay} disabled={currentDay === 1} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 disabled:opacity-30">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex-1 overflow-x-auto scrollbar-hide">
@@ -421,25 +421,25 @@ export function ManualMealInput() {
                   <button
                     key={day}
                     onClick={() => setCurrentDay(day)}
-                    className={`w-9 h-9 rounded-full text-xs transition-all flex flex-col items-center justify-center ${
+                    className={`w-9 h-9 rounded-full text-sm transition-all flex flex-col items-center justify-center ${
                       day === currentDay
                         ? 'bg-primary text-white shadow-md'
                         : hasData
-                          ? 'bg-blue-50 text-blue-600'
+                          ? 'bg-teal-50 text-teal-600'
                           : 'bg-gray-50 text-gray-500'
                     }`}
                     style={{ fontWeight: day === currentDay ? 700 : 500, minWidth: '36px' }}
                   >
                     {day}
                     {hasData && day !== currentDay && (
-                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-0.5" />
+                      <span className="w-1 h-1 rounded-full bg-teal-400 mt-0.5" />
                     )}
                   </button>
                 );
               })}
             </div>
           </div>
-          <button onClick={nextDay} disabled={currentDay === TOTAL_DAYS} className="p-1.5 text-gray-400 disabled:opacity-30">
+          <button onClick={nextDay} disabled={currentDay === TOTAL_DAYS} className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 disabled:opacity-30">
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -463,7 +463,7 @@ export function ManualMealInput() {
                 <slot.icon className={`w-3.5 h-3.5 mx-auto mb-0.5 ${activeSlot === slot.key ? slot.colorClass : 'text-gray-400'}`} />
                 {t(`menu.${slot.key}`)}
                 {count > 0 && (
-                  <span className="block text-[9px] opacity-70">{cal} kcal</span>
+                  <span className="block text-sm opacity-70">{cal} kcal</span>
                 )}
               </button>
             );
@@ -519,7 +519,7 @@ export function ManualMealInput() {
                   {MEAL_SLOTS.find(s => s.key === activeSlot)?.icon && (
                     (() => {
                       const Icon = MEAL_SLOTS.find(s => s.key === activeSlot)!.icon;
-                      return <Icon className="w-6 h-6 text-gray-300" />;
+                      return <Icon className="w-6 h-6 text-gray-400" />;
                     })()
                   )}
                 </div>
@@ -559,7 +559,7 @@ export function ManualMealInput() {
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-red-400 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -698,19 +698,19 @@ export function ManualMealInput() {
                               <p className="text-sm text-foreground truncate" style={{ fontWeight: 500 }}>{food.name}</p>
                               <p className="text-2xs text-gray-400">{food.caloriesPer100g} kcal/100g · {food.category}</p>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-gray-300" />
+                            <ChevronRight className="w-4 h-4 text-gray-400" />
                           </button>
                         ))}
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-400">{t('foods.noResults')}</p>
                       </div>
                     )
                   ) : (
                     <div className="text-center py-8">
-                      <Search className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                      <Search className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-400">{t('manualInput.typeToSearch')}</p>
                     </div>
                   )}

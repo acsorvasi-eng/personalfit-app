@@ -368,7 +368,7 @@ export function Workout() {
         <div className="bg-white border-b border-gray-200 px-4 py-4 flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-gray-900">{t('workout.syncApps')}</h2>
-            <p className="text-xs text-gray-500">{t('workout.connectAppsDesc')}</p>
+            <p className="text-sm text-gray-500">{t('workout.connectAppsDesc')}</p>
           </div>
           <button onClick={() => setShowApps(false)} className="w-10 h-10 flex-shrink-0 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors" aria-label={t('common.close')}>
             <X className="w-5 h-5 text-gray-700" />
@@ -452,7 +452,7 @@ export function Workout() {
           {/* ── MY SPORTS (from onboarding wizard) ── */}
           {wizardSports.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-gray-400 mb-2">{t('workout.mySports')}</p>
+              <p className="text-sm font-medium text-gray-400 mb-2">{t('workout.mySports')}</p>
               <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                 {wizardSports.map(({ sport, defaultMinutes }, i) => (
                   <button
@@ -462,7 +462,7 @@ export function Workout() {
                   >
                     <span className="text-2xl">{sport.icon}</span>
                     <span className="text-2xs font-medium text-gray-700 text-center leading-tight line-clamp-2">{getSportName(sport)}</span>
-                    <span className="text-[9px] text-orange-500 font-semibold">{defaultMinutes} perc</span>
+                    <span className="text-sm text-teal-500 font-semibold">{defaultMinutes} perc</span>
                   </button>
                 ))}
               </div>
@@ -504,7 +504,7 @@ export function Workout() {
                         <span>{entry.duration} {t('workout.min')}</span><span>·</span><span className="text-orange-600 font-semibold">{entry.calories} kcal</span>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteEntry(index)} aria-label={t('workout.delete')} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => handleDeleteEntry(index)} aria-label={t('workout.delete')} className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all">
                       <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
                   </div>
@@ -555,7 +555,7 @@ export function Workout() {
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-h-[85vh] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} role="dialog" aria-modal="true" aria-label={t('workout.collection')}>
               <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
               <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                <div><h3 className="text-lg font-bold text-gray-900">{t('workout.collection')}</h3><p className="text-xs text-gray-500">{ALL_SPORTS.length} {t('workout.availableSports')}</p></div>
+                <div><h3 className="text-lg font-bold text-gray-900">{t('workout.collection')}</h3><p className="text-sm text-gray-500">{ALL_SPORTS.length} {t('workout.availableSports')}</p></div>
                 <button onClick={() => setShowCollection(false)} className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation cursor-pointer" aria-label={t('workout.close')}><X className="w-4 h-4 text-gray-600" /></button>
               </div>
               <div className="px-4 py-3 overflow-x-auto flex gap-2 border-b border-gray-50" style={{ scrollbarWidth: 'none' }}>
@@ -569,7 +569,7 @@ export function Workout() {
                   {ALL_SPORTS.filter(s => !collectionFilter || s.category === collectionFilter).map(sport => (
                     <button key={sport.id} onClick={() => handleSelectSport(sport)} className="flex flex-col items-center gap-1.5 group" aria-label={`${getSportName(sport)} — ${sport.caloriesPerMinute} ${t('workout.kcalPerMin')}`}>
                       <div className="w-16 h-16 bg-gray-100 group-hover:bg-orange-50 rounded-full flex items-center justify-center text-2xl border-2 border-gray-200 group-hover:border-orange-300 transition-all group-active:scale-90 shadow-sm">{sport.icon}</div>
-                      <span className="text-xs text-gray-700 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
+                      <span className="text-sm text-gray-700 font-medium text-center leading-tight line-clamp-2 max-w-[80px]">{getSportName(sport)}</span>
                     </button>
                   ))}
                 </div>

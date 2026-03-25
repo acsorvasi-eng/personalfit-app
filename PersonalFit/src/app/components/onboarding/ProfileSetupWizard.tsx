@@ -1190,7 +1190,7 @@ function NumericField({ label, value, onChange, min, max, step, unit }: {
         disabled={atMin}
         className={`w-11 h-11 rounded-xl border flex items-center justify-center text-xl font-light select-none transition-colors shrink-0 ${
           atMin
-            ? 'border-gray-200 bg-white text-gray-300 cursor-not-allowed'
+            ? 'border-gray-200 bg-white text-gray-400 cursor-not-allowed'
             : 'border-gray-200 bg-white text-gray-700 active:bg-gray-100 shadow-sm'
         }`}
       >
@@ -1541,7 +1541,7 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
                   {r.stores.length > 0 && <> · <span className="text-primary">{r.stores.join(', ')}</span></>}
                 </p>
               </div>
-              <Plus className="w-4 h-4 text-gray-300 group-hover:text-primary shrink-0 transition-colors" />
+              <Plus className="w-4 h-4 text-gray-400 group-hover:text-primary shrink-0 transition-colors" />
             </button>
           ))}
         </div>

@@ -266,7 +266,7 @@ export function MealDetail() {
             >
               <RefreshCw className="w-3.5 h-3.5 text-primary" />
               <span
-                className="text-xs text-primary"
+                className="text-sm text-primary"
                 style={{ fontWeight: 500 }}
               >
                 {t('foods.backToOriginal')}
@@ -293,13 +293,13 @@ export function MealDetail() {
             >
               {translateFoodName(displayedMeal.name, language)}
             </h2>
-            <p className="text-[13px] text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 mb-4">
               {displayedMeal.description}
             </p>
 
             {/* Calorie badge */}
             <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center gap-1.5 bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg">
+              <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-lg">
                 <Flame className="w-4 h-4" />
                 <span className="text-sm" style={{ fontWeight: 700 }}>
                   {calories} kcal
@@ -312,7 +312,7 @@ export function MealDetail() {
               <div className="flex items-center gap-2 mb-3">
                 <UtensilsCrossed className="w-4 h-4 text-gray-400" />
                 <h3
-                  className="text-[13px] text-gray-500 uppercase tracking-wider"
+                  className="text-sm text-gray-500 uppercase tracking-wider"
                   style={{ fontWeight: 600 }}
                 >
                   {t('foods.ingredients')}
@@ -328,7 +328,7 @@ export function MealDetail() {
                     transition={{ delay: i * 0.05, duration: 0.2 }}
                     className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50"
                   >
-                    <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary shrink-0" style={{ fontWeight: 700 }}>
+                    <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-sm text-primary shrink-0" style={{ fontWeight: 700 }}>
                       {i + 1}
                     </span>
                     <span
@@ -350,7 +350,7 @@ export function MealDetail() {
                 whileTap={{ scale: 0.98 }}
               >
                 <span className="text-base leading-none">🍳</span>
-                <span className="text-xs text-amber-700" style={{ fontWeight: 700 }}>
+                <span className="text-sm text-teal-700" style={{ fontWeight: 700 }}>
                   {t("recipe.openRecipe") || 'Recept'}
                 </span>
               </motion.button>
@@ -369,7 +369,7 @@ export function MealDetail() {
                   >
                     {t('foods.alternativeMeals')} {config.title.toLowerCase()}
                   </h3>
-                  <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                  <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                     {filteredAlternatives.length}
                   </span>
                 </div>
@@ -387,7 +387,7 @@ export function MealDetail() {
                   <button
                     key={f.key}
                     onClick={() => setFilterDayType(f.key)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+                    className={`text-sm px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
                       filterDayType === f.key
                         ? "bg-primary/10 border-primary/30 text-primary"
                         : "bg-gray-50 border-gray-200 text-gray-500"
@@ -429,32 +429,32 @@ export function MealDetail() {
                           >
                             {translateFoodName(alt.name, language)}
                           </h4>
-                          <p className="text-xs text-gray-400 mt-0.5 truncate">
+                          <p className="text-sm text-gray-500 mt-0.5 truncate">
                             {alt.description}
                           </p>
                           <div className="flex items-center gap-2 mt-1.5">
                             <span
-                              className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-md"
+                              className="text-sm text-primary bg-primary/10 px-2 py-0.5 rounded-md"
                               style={{ fontWeight: 700 }}
                             >
                               {alt.calories}
                             </span>
                             <span
-                              className={`text-2xs px-1.5 py-0.5 rounded ${
+                              className={`text-sm px-1.5 py-0.5 rounded ${
                                 alt.isTrainingDay
-                                  ? "bg-orange-50 text-orange-600"
+                                  ? "bg-primary/10 text-primary"
                                   : "bg-primary/5 text-primary"
                               }`}
                               style={{ fontWeight: 500 }}
                             >
                               {alt.dayLabel}
                             </span>
-                            <span className="text-2xs text-gray-500">
+                            <span className="text-sm text-gray-500">
                               {alt.weekNum}. {t('common.week')} / {alt.dayNum}. {t('common.day')}
                             </span>
                           </div>
                         </div>
-                        <ChevronDown className="w-4 h-4 text-gray-300 shrink-0 -rotate-90" />
+                        <ChevronDown className="w-4 h-4 text-gray-500 shrink-0 -rotate-90" />
                       </div>
                     </motion.button>
                   ))}
@@ -465,7 +465,7 @@ export function MealDetail() {
               {filteredAlternatives.length > 5 && (
                 <button
                   onClick={() => setShowAllAlternatives(!showAllAlternatives)}
-                  className="w-full flex items-center justify-center gap-1.5 py-3 mt-2 text-[13px] text-primary cursor-pointer"
+                  className="w-full flex items-center justify-center gap-1.5 py-3 mt-2 text-sm text-primary cursor-pointer"
                   style={{ fontWeight: 500 }}
                 >
                   {showAllAlternatives ? (
@@ -487,7 +487,7 @@ export function MealDetail() {
           {/* No alternatives message */}
           {allAlternatives.length === 0 && (
             <div className="text-center py-6">
-              <p className="text-[13px] text-gray-400">
+              <p className="text-sm text-gray-500">
                 {t('foods.noAlternatives')}
               </p>
             </div>

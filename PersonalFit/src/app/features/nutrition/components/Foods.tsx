@@ -625,7 +625,7 @@ export function Foods() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("foods.search")}
-              className="w-full bg-transparent py-2.5 pl-2.5 pr-3 text-[13px] text-gray-800 placeholder-gray-400 focus:outline-none"
+              className="w-full bg-transparent py-2.5 pl-2.5 pr-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
               style={{ fontWeight: 500 }}
             />
             {searchQuery && (
@@ -651,7 +651,7 @@ export function Foods() {
         ) : filteredFoods.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <Search className="w-7 h-7 text-gray-300" />
+              <Search className="w-7 h-7 text-gray-400" />
             </div>
             <p
               className="text-sm text-gray-500"
@@ -662,7 +662,7 @@ export function Foods() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="mt-3 text-[13px] text-[var(--color-primary-500)]"
+                className="mt-3 text-sm text-[var(--color-primary-500)]"
                 style={{ fontWeight: 600 }}
               >
                 {t("foods.all")}
@@ -879,7 +879,7 @@ export function Foods() {
             >
               <Mic className="w-7 h-7" />
             </button>
-            <span className="text-xs text-gray-500">
+            <span className="text-sm text-gray-500">
               {isListening ? t("foods.voiceRecording") : t("foods.voiceInstruction")}
             </span>
           </div>
@@ -898,7 +898,7 @@ export function Foods() {
               const isPending = chip.status === "pending";
               const isInvalid = chip.status === "invalid";
               const baseClasses =
-                "px-2.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border";
+                "px-2.5 py-1.5 rounded-xl text-sm flex items-center gap-1.5 border";
               const styleClasses = isValid
                 ? "bg-primary/10 border-primary text-primary"
                 : isInvalid
@@ -911,26 +911,26 @@ export function Foods() {
                       {chip.name}
                     </span>
                     {isValid && chip.calories_per_100g != null && (
-                      <span className="text-xs opacity-70 leading-tight">
+                      <span className="text-sm opacity-70 leading-tight">
                         {chip.calories_per_100g} kcal · {chip.protein_g}g P
                       </span>
                     )}
                     {isInvalid && (
-                      <span className="text-xs opacity-70 leading-tight">{t('foods.unknownFood')}</span>
+                      <span className="text-sm opacity-70 leading-tight">{t('foods.unknownFood')}</span>
                     )}
                   </div>
                   {isPending && !chip.lookupFailed && (
                     <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse flex-shrink-0" />
                   )}
                   {isPending && chip.lookupFailed && (
-                    <span className="text-amber-500 text-xs flex-shrink-0" title={t('foods.loadFailed')}>⚠</span>
+                    <span className="text-amber-500 text-sm flex-shrink-0" title={t('foods.loadFailed')}>⚠</span>
                   )}
                   <button
                     type="button"
                     onClick={() =>
                       setChips(prev => prev.filter(c => c.id !== chip.id))
                     }
-                    className="w-4 h-4 flex items-center justify-center rounded-full bg-black/10 text-2xs flex-shrink-0"
+                    className="w-5 h-5 flex items-center justify-center rounded-full bg-black/10 text-sm flex-shrink-0"
                   >
                     ×
                   </button>
@@ -962,19 +962,19 @@ export function Foods() {
 
           <div className="space-y-2 mt-3">
             {lookupLoading && (
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="w-3 h-3 rounded-full border-2 border-teal-500 border-t-transparent animate-spin flex-shrink-0" />
                 {t('foods.identifying')}
               </div>
             )}
             {lookupError && !lookupLoading && (
               <div className="flex items-center gap-2">
-                <p className="text-xs text-red-500 flex-1">{lookupError}</p>
+                <p className="text-sm text-red-500 flex-1">{lookupError}</p>
                 {chips.some(c => c.status === "pending" && c.lookupFailed) && (
                   <button
                     type="button"
                     onClick={retryLookup}
-                    className="text-xs text-teal-700 font-semibold underline underline-offset-2 whitespace-nowrap"
+                    className="text-sm text-teal-700 font-semibold underline underline-offset-2 whitespace-nowrap"
                   >
                     {t('foods.retry')}
                   </button>
@@ -982,7 +982,7 @@ export function Foods() {
               </div>
             )}
             {addResultMessage && (
-              <p className="text-xs text-primary">{addResultMessage}</p>
+              <p className="text-sm text-primary">{addResultMessage}</p>
             )}
           </div>
 
@@ -1096,7 +1096,7 @@ function FoodCard({
       onMouseLeave={handlePressEnd}
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
-      className="w-full bg-white rounded-2xl border border-gray-100 px-4 py-3.5 text-left active:scale-[0.98] transition-all group hover:shadow-sm hover:border-gray-200"
+      className="w-full bg-white rounded-2xl border border-gray-200 px-4 py-3.5 text-left active:scale-[0.98] transition-all group hover:shadow-sm hover:border-gray-300"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left: Name + category label */}
@@ -1105,7 +1105,7 @@ function FoodCard({
             {translateFoodName(food.name, language)}
           </h3>
           {showCategoryLabel && (
-            <span className="text-[12px] font-normal text-gray-500 mt-0.5 block">
+            <span className="text-sm font-normal text-gray-500 mt-0.5 block">
               {catLabel}
             </span>
           )}
@@ -1114,8 +1114,8 @@ function FoodCard({
         {/* Right: calories (right-aligned) → heart (last) */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="text-right min-w-[48px]">
-            <span className="text-[14px] font-bold text-gray-800">{food.calories}</span>
-            <span className="text-xs text-gray-500 ml-0.5">kcal</span>
+            <span className="text-sm font-bold text-gray-800">{food.calories}</span>
+            <span className="text-sm text-gray-500 ml-0.5">kcal</span>
           </div>
           <motion.div
             whileTap={{ scale: 0.8 }}
@@ -1123,7 +1123,7 @@ function FoodCard({
               e.stopPropagation();
               onToggleFavorite();
             }}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-rose-50 cursor-pointer"
+            className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-rose-50 cursor-pointer"
           >
             <Heart
               className={`w-[18px] h-[18px] transition-colors ${
@@ -1199,7 +1199,7 @@ function FoodDetailSheet({
                   <h1 className="text-[20px] font-bold text-white leading-tight truncate">
                     {translateFoodName(food.name, language)}
                   </h1>
-                  <span className="text-[12px] text-white/70 font-medium">
+                  <span className="text-sm text-white/70 font-medium">
                     {catLabel}
                   </span>
                 </div>
@@ -1208,7 +1208,7 @@ function FoodDetailSheet({
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={onToggleFavorite}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors ${
+                  className={`w-11 h-11 rounded-full border flex items-center justify-center transition-colors ${
                     isFavorite
                       ? "bg-rose-500 border-rose-400"
                       : "bg-white/20 border-white/25 hover:bg-white/30"
@@ -1223,7 +1223,7 @@ function FoodDetailSheet({
                 </motion.button>
                 <button
                   onClick={onClose}
-                  className="w-9 h-9 rounded-full bg-white/20 border border-white/25 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  className="w-11 h-11 rounded-full bg-white/20 border border-white/25 hover:bg-white/30 flex items-center justify-center transition-colors"
                   aria-label={t("foods.close")}
                 >
                   <X className="w-4 h-4 text-white" />
@@ -1236,13 +1236,13 @@ function FoodDetailSheet({
               <div className="flex items-center gap-2 bg-white/15 border border-white/20 rounded-xl px-3 py-2">
                 <Flame className="w-4 h-4 text-amber-300 shrink-0" />
                 <div>
-                  <div className="text-xs text-white/70 font-medium leading-none">{t("foods.calories")}</div>
+                  <div className="text-sm text-white/70 font-medium leading-none">{t("foods.calories")}</div>
                   <div className="text-[15px] font-bold text-white leading-tight">{food.calories} kcal</div>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-xl px-3 py-2">
                 <Info className="w-3.5 h-3.5 text-white/60 shrink-0" />
-                <span className="text-xs text-white/70 font-medium">{t("foods.nutritionPer100g")}</span>
+                <span className="text-sm text-white/70 font-medium">{t("foods.nutritionPer100g")}</span>
               </div>
             </div>
           </div>
@@ -1254,18 +1254,18 @@ function FoodDetailSheet({
 
             {/* Description */}
             {food.description && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                <p className="text-[13px] text-gray-600 font-normal leading-relaxed">
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+                <p className="text-sm text-gray-600 font-normal leading-relaxed">
                   {food.description}
                 </p>
               </div>
             )}
 
             {/* ── Macro Breakdown ── */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">
                   {t("foods.macroRatio")}
                 </span>
               </div>
@@ -1295,55 +1295,55 @@ function FoodDetailSheet({
               {/* Macro cards */}
               <div className="grid grid-cols-3 gap-2.5">
                 {/* Protein */}
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-center">
                   <div className="flex items-center justify-center gap-1 mb-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                       {t("foods.protein")}
                     </span>
                   </div>
                   <div className="text-[20px] font-bold text-gray-800 leading-none">
-                    {food.protein}<span className="text-xs font-medium text-gray-400 ml-0.5">g</span>
+                    {food.protein}<span className="text-sm font-medium text-gray-400 ml-0.5">g</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{macros.protein}%</div>
+                  <div className="text-sm text-gray-500 mt-1">{macros.protein}%</div>
                 </div>
 
                 {/* Carbs */}
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-center">
                   <div className="flex items-center justify-center gap-1 mb-2">
                     <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                       {t("foods.carbs")}
                     </span>
                   </div>
                   <div className="text-[20px] font-bold text-gray-800 leading-none">
-                    {food.carbs}<span className="text-xs font-medium text-gray-400 ml-0.5">g</span>
+                    {food.carbs}<span className="text-sm font-medium text-gray-400 ml-0.5">g</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{macros.carbs}%</div>
+                  <div className="text-sm text-gray-500 mt-1">{macros.carbs}%</div>
                 </div>
 
                 {/* Fat */}
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-center">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-center">
                   <div className="flex items-center justify-center gap-1 mb-2">
                     <div className="w-2 h-2 rounded-full bg-primary/60 shrink-0" />
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                       {t("foods.fat")}
                     </span>
                   </div>
                   <div className="text-[20px] font-bold text-gray-800 leading-none">
-                    {food.fat}<span className="text-xs font-medium text-gray-400 ml-0.5">g</span>
+                    {food.fat}<span className="text-sm font-medium text-gray-400 ml-0.5">g</span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{macros.fat}%</div>
+                  <div className="text-sm text-gray-500 mt-1">{macros.fat}%</div>
                 </div>
               </div>
             </div>
 
             {/* ── Benefits ── */}
             {food.benefits.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <Heart className="w-4 h-4 text-rose-400" />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">
                     {t("foods.benefitsLabel")}
                   </span>
                 </div>
@@ -1356,10 +1356,10 @@ function FoodDetailSheet({
                       transition={{ delay: i * 0.05, duration: 0.22 }}
                       className="flex items-start gap-3 py-2.5 px-3.5 rounded-xl bg-primary/5 border border-primary/10"
                     >
-                      <span className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center text-xs font-bold text-primary shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center text-sm font-bold text-primary shrink-0 mt-0.5">
                         {i + 1}
                       </span>
-                      <span className="text-[13px] text-gray-700 font-normal leading-snug">
+                      <span className="text-sm text-gray-700 font-normal leading-snug">
                         {benefit}
                       </span>
                     </motion.div>
@@ -1370,10 +1370,10 @@ function FoodDetailSheet({
 
             {/* ── Suitable For ── */}
             {food.suitableFor.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <UtensilsCrossed className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                  <span className="text-sm font-bold text-gray-500 uppercase tracking-widest">
                     {t("foods.suitableForLabel")}
                   </span>
                 </div>
@@ -1381,7 +1381,7 @@ function FoodDetailSheet({
                   {food.suitableFor.map((meal, i) => (
                     <span
                       key={i}
-                      className="text-[12px] font-medium text-primary bg-primary/8 border border-primary/15 px-3 py-1.5 rounded-lg"
+                      className="text-sm font-medium text-primary bg-primary/8 border border-primary/15 px-3 py-1.5 rounded-lg"
                     >
                       {meal}
                     </span>
@@ -1391,7 +1391,7 @@ function FoodDetailSheet({
             )}
 
             {/* ── Footer note ── */}
-            <p className="text-xs text-gray-500 text-center font-normal pb-2">
+            <p className="text-sm text-gray-500 text-center font-normal pb-2">
               {t("foods.fromMealPlan")}
             </p>
 

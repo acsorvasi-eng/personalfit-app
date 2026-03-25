@@ -142,7 +142,7 @@ export function DSMButton({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loading: _loading,
 }: DSMButtonProps) {
-  const base = 'h-11 rounded-xl px-4 text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2';
+  const base = 'h-14 rounded-2xl px-4 text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2';
   const width = fullWidth ? 'w-full' : 'w-auto';
   const variants: Record<string, string> = {
     primary:        'bg-primary text-white hover:bg-primary-hover active:scale-95',
@@ -203,7 +203,7 @@ export function DSMIconButton({ onClick, active = false, children, className = '
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-150 ${
+      className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors duration-150 ${
         active
           ? 'bg-primary-light text-primary'
           : 'bg-surface text-gray-900 hover:bg-gray-100'
@@ -243,7 +243,7 @@ export function DSMInput({
   return (
     <div className={`flex flex-col ${className}`}>
       {label && (
-        <label className="text-xs font-medium text-gray-600 mb-1">{label}</label>
+        <label className="text-sm font-medium text-gray-500 mb-1">{label}</label>
       )}
       <input
         type={type}
@@ -253,12 +253,12 @@ export function DSMInput({
         maxLength={maxLength}
         inputMode={inputMode}
         onChange={e => onChange(e.target.value)}
-        className={`bg-surface border rounded-xl h-11 px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-150 ${
+        className={`bg-surface border rounded-2xl h-12 px-3 text-base text-gray-900 placeholder:text-gray-400 outline-none transition-colors duration-150 ${
           error ? 'border-error focus:border-error' : 'border-border focus:border-primary'
         }`}
       />
       {error && (
-        <span className="text-xs text-error mt-1">{error}</span>
+        <span className="text-sm text-error mt-1">{error}</span>
       )}
     </div>
   );
@@ -319,7 +319,7 @@ export function DSMProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-[11px] font-medium text-gray-400">{label || `${Math.round(pct)}%`}</span>
+        <span className="text-sm font-medium text-gray-400">{label || `${Math.round(pct)}%`}</span>
       )}
     </div>
   );
@@ -335,7 +335,7 @@ interface DSMSectionTitleProps {
   className?: string;
 }
 
-export function DSMSectionTitle({ icon: Icon, iconColor = "text-purple-600", title, action, className = "" }: DSMSectionTitleProps) {
+export function DSMSectionTitle({ icon: Icon, iconColor = "text-primary", title, action, className = "" }: DSMSectionTitleProps) {
   return (
     <div className={`flex items-center justify-between ${className}`}>
       <div className="flex items-center gap-2">
@@ -380,7 +380,7 @@ export function DSMHint({ icon: Icon, text, variant = "info", className = "", ta
         <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${HINT_ICON_BG[variant]}`}>
           <Icon className="w-3.5 h-3.5" />
         </div>
-        <span className="text-xs font-medium leading-snug">{text}</span>
+        <span className="text-sm font-medium leading-snug">{text}</span>
       </div>
       {/* Speech bubble tail */}
       {tailPosition !== "none" && (
@@ -640,20 +640,20 @@ export function WaterTracker({ current, goal, onAdd, onReset, waterLabel = 'Víz
 
       {/* Text label */}
       <div className="flex flex-col items-start min-w-0">
-        <span className={`text-[11px] font-bold leading-tight ${
+        <span className={`text-sm font-bold leading-tight ${
           isFull
-            ? "text-blue-600"
-            : "text-cyan-700"
+            ? "text-teal-600"
+            : "text-teal-700"
         }`}>
           <Droplets className="w-3 h-3 inline-block mr-0.5 -mt-0.5" />
           {waterLabel}
         </span>
-        <span className={`text-xs font-bold leading-tight ${
+        <span className={`text-sm font-bold leading-tight ${
           isFull
-            ? "text-blue-500"
+            ? "text-teal-500"
             : isEmpty
               ? "text-gray-400"
-              : "text-blue-500"
+              : "text-teal-500"
         }`}>
           {isEmpty ? "+250ml" : isFull ? `${liters}L ✓` : `${liters}L`}
         </span>
@@ -789,7 +789,7 @@ export function DSMModal({ open, onClose, title, children, maxWidth = "max-w-lg"
         {title && (
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-h2 font-heading font-semibold text-gray-900">{title}</h2>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600">
+            <button onClick={onClose} className="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full">
               <X size={20} />
             </button>
           </div>
@@ -915,7 +915,7 @@ export function DSMNotification({
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white">{title}</p>
-              {message && <p className="text-xs text-white/70 mt-0.5">{message}</p>}
+              {message && <p className="text-sm text-white/70 mt-0.5">{message}</p>}
               {children}
             </div>
             {!onConfirm && (
@@ -928,13 +928,13 @@ export function DSMNotification({
             <div className="flex gap-2 mt-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-3 py-2 rounded-xl text-xs font-medium bg-white/10 text-white/80"
+                className="flex-1 px-3 py-2 rounded-xl text-sm font-medium bg-white/10 text-white/80"
               >
                 {resolvedCancelLabel}
               </button>
               <button
                 onClick={() => { onConfirm(); onClose(); }}
-                className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold text-white ${
+                className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold text-white ${
                   confirmVariant === "danger" ? "bg-red-500" : confirmVariant === "warning" ? "bg-amber-500" : "bg-primary"
                 }`}
               >
@@ -970,7 +970,7 @@ export function DSMSubPageHeader({ title, subtitle, onBack, rightActions }: DSMS
         )}
         <div className="flex-1 min-w-0">
           <h2 className="text-h2 font-heading font-semibold text-gray-900 truncate">{title}</h2>
-          {subtitle && <p className="text-xs text-gray-500 truncate">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-gray-500 truncate">{subtitle}</p>}
         </div>
         {rightActions && <div className="flex items-center gap-2">{rightActions}</div>}
       </div>
@@ -991,7 +991,7 @@ export function DSMStatCard({ value, label, color = "text-white", fontSize = "1.
   return (
     <div className="bg-white/10 backdrop-blur rounded-xl p-2.5 text-center">
       <div className={`font-bold ${color}`} style={{ fontSize }}>{value}</div>
-      <div className="text-2xs text-white/50 mt-0.5">{label}</div>
+      <div className="text-sm text-white/50 mt-0.5">{label}</div>
     </div>
   );
 }
@@ -1002,7 +1002,7 @@ export function DSMPrivacyStrip() {
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-3 py-1.5 flex items-center gap-2">
       <Info className="w-3 h-3 text-white/40 flex-shrink-0" />
-      <span className="text-[9px] text-white/40">A kepek kizarolag helyileg, a keszulekeden tarolodnak.</span>
+      <span className="text-sm text-white/40">A kepek kizarolag helyileg, a keszulekeden tarolodnak.</span>
     </div>
   );
 }

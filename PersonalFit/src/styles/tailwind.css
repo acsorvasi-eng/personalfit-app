@@ -4,7 +4,7 @@
 @import 'tw-animate-css';
 
 @theme {
-  --text-2xs: 0.75rem; /* 12px — bumped from 10px for readability */
+  --text-2xs: 0.875rem; /* 14px — brand minimum (was 12px) */
 
   /* Heading scale — generates text-h0, text-h1, text-h2, text-h3 */
   --text-h0: 2rem;       /* 32px */

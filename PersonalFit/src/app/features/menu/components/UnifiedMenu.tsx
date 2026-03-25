@@ -223,7 +223,7 @@ function CalendarStrip({
           aria-haspopup="listbox"
           aria-expanded={monthPickerOpen}
         >
-          <span className="text-[13px] font-semibold text-gray-700 tracking-wide">
+          <span className="text-sm font-semibold text-gray-700 tracking-wide">
             {displayMonth} {displayYear}
           </span>
           <ChevronDown className="w-3 h-3 text-gray-400" />
@@ -233,7 +233,7 @@ function CalendarStrip({
             <button
               type="button"
               onClick={handleTodayClick}
-              className="px-[12px] py-[4px] rounded-[20px] text-[13px] font-medium bg-[#f0f0f0] text-[#333333]"
+              className="px-[12px] py-[4px] rounded-[20px] text-sm font-medium bg-[#f0f0f0] text-[#333333]"
             >
               {todayLabel}
             </button>
@@ -247,7 +247,7 @@ function CalendarStrip({
           <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 z-20">
             <div className="rounded-2xl border border-gray-200 bg-white shadow-lg px-3 py-2">
               <select
-                className="bg-transparent text-xs text-gray-800 outline-none"
+                className="bg-transparent text-sm text-gray-800 outline-none"
                 value={`${calendarYear}-${calendarMonth}`}
                 onChange={handleMonthChange}
               >
@@ -299,8 +299,8 @@ function CalendarStrip({
               whileTap={{ scale: 0.93 }}
               layout
             >
-              <span className={`text-xs font-medium mb-0.5 ${
-                isSelected ? 'text-white/80' : 'text-gray-400'
+              <span className={`text-sm font-medium mb-0.5 ${
+                isSelected ? 'text-white/80' : 'text-gray-500'
               }`}>
                 {dayShort}
               </span>
@@ -1090,11 +1090,11 @@ export function UnifiedMenu() {
                     <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800' : isSwimDay ? 'text-cyan-800' : 'text-blue-800'}`}>
                       {dayLabel}
                     </span>
-                    <span className={`text-xs font-medium ${isTrainingDay ? 'text-orange-500' : isSwimDay ? 'text-cyan-500' : 'text-blue-500'}`}>
+                    <span className={`text-sm font-medium ${isTrainingDay ? 'text-gray-600' : isSwimDay ? 'text-gray-600' : 'text-gray-600'}`}>
                       • {isTrainingDay ? t("menu.higherCarbs") : t("menu.lowerCarbs")}
                     </span>
                   </div>
-                  <p className={`text-xs mt-0.5 ${isTrainingDay ? 'text-orange-400' : isSwimDay ? 'text-cyan-400' : 'text-blue-400'}`}>
+                  <p className={`text-sm mt-0.5 ${isTrainingDay ? 'text-gray-500' : isSwimDay ? 'text-gray-500' : 'text-gray-500'}`}>
                     {t("menu.day")} {((dayOfMonth - 1) % 28) + 1}
                   </p>
                 </div>
@@ -1143,7 +1143,7 @@ export function UnifiedMenu() {
               </button>
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400">{t("empty.orDivider")}</span>
+                <span className="text-sm text-gray-500">{t("empty.orDivider")}</span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
               <button
@@ -1202,7 +1202,7 @@ export function UnifiedMenu() {
             className="absolute top-2 left-4 right-4 z-50 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg"
           >
             <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span className="text-[13px] text-amber-800 font-medium">{windowFeedback}</span>
+            <span className="text-sm text-gray-700 font-medium">{windowFeedback}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1310,11 +1310,11 @@ export function UnifiedMenu() {
                     <span className={`text-[15px] font-bold ${isTrainingDay ? 'text-orange-800' : isSwimDay ? 'text-cyan-800' : 'text-blue-800'}`}>
                       {dayLabel}
                     </span>
-                    <span className={`text-xs font-medium ${isTrainingDay ? 'text-orange-500' : isSwimDay ? 'text-cyan-500' : 'text-blue-500'}`}>
+                    <span className={`text-sm font-medium ${isTrainingDay ? 'text-gray-600' : isSwimDay ? 'text-gray-600' : 'text-gray-600'}`}>
                       • {isTrainingDay ? t("menu.higherCarbs") : t("menu.lowerCarbs")}
                     </span>
                   </div>
-                  <p className={`text-xs mt-0.5 ${isTrainingDay ? 'text-orange-400' : isSwimDay ? 'text-cyan-400' : 'text-blue-400'}`}>
+                  <p className={`text-sm mt-0.5 ${isTrainingDay ? 'text-gray-500' : isSwimDay ? 'text-gray-500' : 'text-gray-500'}`}>
                     {t("menu.day")} {((dayOfMonth - 1) % 28) + 1} • {mealData.week + 1}. {t("menu.week")}
                     {hasScheduledWorkout && scheduledWorkouts.some(w => w.plannedDuration) && (
                       <span className="ml-1">
@@ -1349,7 +1349,7 @@ export function UnifiedMenu() {
                           background: "rgba(255,255,255,0.15)",
                           borderRadius: 999,
                           padding: "2px 10px",
-                          fontSize: "0.8rem",
+                          fontSize: "0.875rem",
                         }}
                       >
                         {t("sleep.score")}: {sleepData.score}
@@ -1433,7 +1433,7 @@ export function UnifiedMenu() {
                           borderRadius: "0.5rem",
                           padding: "0.5rem",
                           color: "#fbbf24",
-                          fontSize: "0.8rem",
+                          fontSize: "0.875rem",
                           marginBottom: "1rem",
                         }}
                       >
@@ -1567,7 +1567,7 @@ export function UnifiedMenu() {
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="text-sm font-semibold text-slate-800 truncate">{slot.title}</span>
-                          <span className="text-xs text-slate-400">{slot.time}</span>
+                          <span className="text-sm text-slate-400">{slot.time}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -1592,14 +1592,14 @@ export function UnifiedMenu() {
                             <span className="text-sm font-semibold text-slate-800">
                               Vacsora még nincs hozzáadva
                             </span>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-sm text-slate-500">
                               Adj hozzá egy vacsorát ehhez a naphoz.
                             </span>
                           </div>
                         </div>
                         <button
                           type="button"
-                          className="shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary text-white text-lg shadow-md"
+                          className="shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary text-white text-lg shadow-md"
                           onClick={() => navigate("/log-meal")}
                         >
                           +
@@ -1852,7 +1852,7 @@ function RestTimerCard({
         <div className="relative z-10 flex flex-col gap-2">
           {/* 1. Day info (optional) */}
           {dayInfoLabel && (
-            <p className="text-center text-xs font-medium" style={{ color: "rgba(30,58,95,0.7)" }}>
+            <p className="text-center text-sm font-medium" style={{ color: "rgba(30,58,95,0.7)" }}>
               {dayInfoLabel}
             </p>
           )}
@@ -1860,7 +1860,7 @@ function RestTimerCard({
           {/* 2. Countdown + label */}
           <p
             className="text-center uppercase font-bold"
-            style={{ fontSize: "0.65rem", letterSpacing: "0.12em", color: "rgba(30,58,95,0.6)" }}
+            style={{ fontSize: "0.875rem", letterSpacing: "0.12em", color: "rgba(30,58,95,0.6)" }}
           >
             {t("menu.timeRemaining")}
           </p>
@@ -1888,7 +1888,7 @@ function RestTimerCard({
                 transition={{ duration: 1, ease: "easeOut" }}
               />
             </div>
-            <p className="text-center text-xs font-medium" style={{ color: "rgba(30,58,95,0.6)" }}>
+            <p className="text-center text-sm font-medium" style={{ color: "rgba(30,58,95,0.6)" }}>
               {t("menu.percentRemaining").replace("{n}", String(Math.round(percentRemaining)))}
             </p>
           </div>
@@ -1896,7 +1896,7 @@ function RestTimerCard({
           {/* 4. Snacks — compact chips */}
           {allowedSnackIds.length > 0 && (
             <>
-              <p className="text-center uppercase text-xs font-bold" style={{ letterSpacing: "0.08em", color: "rgba(30,58,95,0.5)" }}>
+              <p className="text-center uppercase text-sm font-bold" style={{ letterSpacing: "0.08em", color: "rgba(30,58,95,0.5)" }}>
                 {t("menu.allowed")}
               </p>
               <div className="flex flex-wrap gap-1.5 justify-center">
@@ -1910,7 +1910,7 @@ function RestTimerCard({
                       key={snackId}
                       type="button"
                       onClick={() => onSnackConsume(snackId)}
-                      className="flex items-center gap-1 rounded-full border border-white/30 text-xs font-medium transition-colors py-1 px-3"
+                      className="flex items-center gap-1 rounded-full border border-white/30 text-sm font-medium transition-colors py-1 px-3"
                       style={{
                         background: "rgba(255,255,255,0.2)",
                         backdropFilter: "blur(10px)",
@@ -1934,7 +1934,7 @@ function RestTimerCard({
           {/* 7. Next meal */}
           <div className="flex items-center justify-center gap-1.5 py-1">
             <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#1e3a5f" }} />
-            <span className="font-bold text-xs" style={{ color: "#1e3a5f" }}>
+            <span className="font-bold text-sm" style={{ color: "#1e3a5f" }}>
               {t("menu.nextMeal")}: {nextMealTimeStr} {nextMealTitle ? `(${nextMealTitle})` : ""}
             </span>
           </div>
@@ -1943,7 +1943,7 @@ function RestTimerCard({
           <p
             style={{
               textAlign: "center",
-              fontSize: "0.6rem",
+              fontSize: "0.875rem",
               color: "rgba(30,58,95,0.4)",
               marginTop: "0.25rem",
               letterSpacing: "0.05em",
@@ -2025,7 +2025,7 @@ function ConsumedMealCompact({ title, icon, time }: {
           <h4 className="font-bold text-[15px] text-green-700 line-through">{title}</h4>
           <div className="flex items-center gap-1 mt-0.5">
             <Clock className="w-3 h-3 text-gray-400" />
-            <span className="text-xs text-gray-400">{time}</span>
+            <span className="text-sm text-gray-500">{time}</span>
           </div>
         </div>
       </div>
@@ -2160,7 +2160,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
             <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
               <Clock className="w-3.5 h-3.5 text-white" />
             </motion.div>
-            <span className="text-[13px] font-semibold text-white">{t("menu.eatingWindow")}</span>
+            <span className="text-sm font-semibold text-white">{t("menu.eatingWindow")}</span>
           </motion.div>
         )}
 
@@ -2181,21 +2181,21 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
               <div className="flex items-center gap-2">
                 <h4 className={`font-bold text-[15px] ${titleClass}`}>{title}</h4>
                 {totalKcal > 0 && (
-                  <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
+                  <span className="text-sm font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md">
                     {totalKcal} kcal
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1 mt-0.5">
                 <Clock className="w-3 h-3 text-gray-400" />
-                <span className="text-xs text-gray-400">{time}</span>
+                <span className="text-sm text-gray-400">{time}</span>
               </div>
             </div>
             {/* Eat check button */}
             {isToday && (
               <motion.button
                 onClick={(e) => { e.stopPropagation(); onCheck(); }}
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
                   checked
                     ? 'bg-green-500 active:bg-green-600'
                     : isPassed
@@ -2223,8 +2223,8 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
           {mealName && (
             <div className="mt-2 ml-[52px] flex items-center gap-2">
               <UtensilsCrossed className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span className="text-[13px] text-gray-700 truncate">{mealName}</span>
-              <span className="text-2xs font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0 ml-auto">
+              <span className="text-sm text-gray-700 truncate">{mealName}</span>
+              <span className="text-sm font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0 ml-auto">
                 1 {t("mealDetail.serving") || 'adag'}
               </span>
             </div>
@@ -2243,8 +2243,8 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                 className="flex items-center gap-1 bg-amber-50 border border-amber-200/70 rounded-full px-2.5 py-1 active:bg-amber-100 transition-colors"
                 whileTap={{ scale: 0.95 }}
               >
-                <span className="text-xs leading-none">🍳</span>
-                <span className="text-xs font-semibold text-amber-700">Recept</span>
+                <span className="text-sm leading-none">🍳</span>
+                <span className="text-sm font-semibold text-teal-700">Recept</span>
               </motion.button>
               <motion.button
                 onClick={(e) => {
@@ -2256,8 +2256,8 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                 className="flex items-center gap-1 bg-teal-50 border border-teal-200/70 rounded-full px-2.5 py-1 active:bg-teal-100 transition-colors"
                 whileTap={{ scale: 0.95 }}
               >
-                <span className="text-xs leading-none">🏪</span>
-                <span className="text-xs font-semibold text-teal-700">Éttermek</span>
+                <span className="text-sm leading-none">🏪</span>
+                <span className="text-sm font-semibold text-teal-700">Éttermek</span>
               </motion.button>
             </div>
           )}
@@ -2282,7 +2282,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                 )}
                 {/* Description line */}
                 {mealDesc && (
-                  <p className="text-xs text-gray-400 ml-1 mb-1 italic">{mealDesc}</p>
+                  <p className="text-sm text-gray-400 ml-1 mb-1 italic">{mealDesc}</p>
                 )}
 
                 {/* ── Structured ingredient rows (from IndexedDB upload) ── */}
@@ -2291,28 +2291,28 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                     <div key={idx} className="bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100/60">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="text-[13px] font-medium text-gray-800 truncate">{translateFoodName(ing.name, language)}</span>
-                          <span className="text-xs text-gray-400 flex-shrink-0">({ing.quantity})</span>
+                          <span className="text-sm font-medium text-gray-800 truncate">{translateFoodName(ing.name, language)}</span>
+                          <span className="text-sm text-gray-400 flex-shrink-0">({ing.quantity})</span>
                         </div>
-                        <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                        <span className="text-sm font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
                           {Math.round(ing.calories)} kcal
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-1.5">
                         <div className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                          <span className="text-2xs text-gray-500">{t("menu.proteinG")}</span>
-                          <span className="text-2xs font-medium text-red-600">{ing.protein.toFixed(1)}g</span>
+                          <span className="text-sm text-gray-500">{t("menu.proteinG")}</span>
+                          <span className="text-sm font-medium text-red-600">{ing.protein.toFixed(1)}g</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                          <span className="text-2xs text-gray-500">{t("menu.carbsG")}</span>
-                          <span className="text-2xs font-medium text-amber-600">{ing.carbs.toFixed(1)}g</span>
+                          <span className="text-sm text-gray-500">{t("menu.carbsG")}</span>
+                          <span className="text-sm font-medium text-amber-600">{ing.carbs.toFixed(1)}g</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          <span className="text-2xs text-gray-500">{t("menu.fatG")}</span>
-                          <span className="text-2xs font-medium text-primary">{ing.fat.toFixed(1)}g</span>
+                          <span className="text-sm text-gray-500">{t("menu.fatG")}</span>
+                          <span className="text-sm font-medium text-primary">{ing.fat.toFixed(1)}g</span>
                         </div>
                       </div>
                     </div>
@@ -2330,35 +2330,35 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                       <div key={idx} className="bg-gray-50/80 rounded-xl px-3 py-2.5 border border-gray-100/60">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <span className="text-[13px] font-medium text-gray-800 truncate">{translateFoodName(foodName, language)}</span>
-                            {qty && <span className="text-xs text-gray-400 flex-shrink-0">({qty})</span>}
+                            <span className="text-sm font-medium text-gray-800 truncate">{translateFoodName(foodName, language)}</span>
+                            {qty && <span className="text-sm text-gray-400 flex-shrink-0">({qty})</span>}
                           </div>
-                          <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                          <span className="text-sm font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md flex-shrink-0">
                             ~{perKcal} kcal
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1.5">
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                            <span className="text-2xs text-gray-500">{t("menu.proteinG")}</span>
-                            <span className="text-2xs font-medium text-red-600">{perP}g</span>
+                            <span className="text-sm text-gray-500">{t("menu.proteinG")}</span>
+                            <span className="text-sm font-medium text-red-600">{perP}g</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                            <span className="text-2xs text-gray-500">{t("menu.carbsG")}</span>
-                            <span className="text-2xs font-medium text-amber-600">{perC}g</span>
+                            <span className="text-sm text-gray-500">{t("menu.carbsG")}</span>
+                            <span className="text-sm font-medium text-amber-600">{perC}g</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                            <span className="text-2xs text-gray-500">{t("menu.fatG")}</span>
-                            <span className="text-2xs font-medium text-primary">{perF}g</span>
+                            <span className="text-sm text-gray-500">{t("menu.fatG")}</span>
+                            <span className="text-sm font-medium text-primary">{perF}g</span>
                           </div>
                         </div>
                       </div>
                     );
                   })
                 ) : (
-                  <div className="text-xs text-gray-400 text-center py-2">
+                  <div className="text-sm text-gray-400 text-center py-2">
                     {t("mealDetail.ingredients") || t('menu.noIngredientData')}
                   </div>
                 )}
@@ -2368,12 +2368,12 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                   <div className="flex items-center justify-between bg-primary/5 rounded-xl px-3 py-2.5 border border-primary/15">
                     <div className="flex items-center gap-1.5">
                       <Flame className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs font-bold text-primary">{totalKcal} kcal</span>
+                      <span className="text-sm font-bold text-primary">{totalKcal} kcal</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-2xs font-medium text-red-600">{typeof mealProtein === 'number' ? mealProtein.toFixed(1) : mealProtein}g F</span>
-                      <span className="text-2xs font-medium text-amber-600">{typeof mealCarbs === 'number' ? mealCarbs.toFixed(1) : mealCarbs}g Sz</span>
-                      <span className="text-2xs font-medium text-primary">{typeof mealFat === 'number' ? mealFat.toFixed(1) : mealFat}g Zs</span>
+                      <span className="text-sm font-medium text-red-600">{typeof mealProtein === 'number' ? mealProtein.toFixed(1) : mealProtein}g F</span>
+                      <span className="text-sm font-medium text-amber-600">{typeof mealCarbs === 'number' ? mealCarbs.toFixed(1) : mealCarbs}g Sz</span>
+                      <span className="text-sm font-medium text-primary">{typeof mealFat === 'number' ? mealFat.toFixed(1) : mealFat}g Zs</span>
                     </div>
                   </div>
                 )}
@@ -2386,7 +2386,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
                     whileTap={{ scale: 0.98 }}
                   >
                     <ArrowRightLeft className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
+                    <span className="text-sm font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
                   </motion.button>
                 )}
 
@@ -2493,7 +2493,7 @@ function MealDetailSheet({
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-border">
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
           aria-label={t("mealDetail.close")}
         >
           <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -2502,7 +2502,7 @@ function MealDetailSheet({
           <h2 className="font-bold text-base text-foreground">{title}</h2>
           <div className="flex items-center justify-center gap-1 mt-0.5">
             <Clock className="w-3 h-3 text-gray-400" />
-            <span className="text-xs text-gray-400">{time}</span>
+            <span className="text-sm text-gray-400">{time}</span>
           </div>
         </div>
         <div className="w-9" /> {/* Spacer for centering */}
@@ -2524,13 +2524,13 @@ function MealDetailSheet({
                   ? <Dumbbell className="w-4 h-4 text-orange-600" />
                   : <Moon className="w-4 h-4 text-primary" />
                 }
-                <span className={`text-xs font-bold ${
+                <span className={`text-sm font-bold ${
                   isTrainingDay ? 'text-orange-700' : 'text-primary'
                 }`}>
                   {dayLabel}
                 </span>
               </div>
-              <p className={`text-xs ${
+              <p className={`text-sm ${
                 isTrainingDay ? 'text-orange-500' : 'text-primary/70'
               }`}>
                 {isTrainingDay ? t("mealDetail.higherCarbs") : t("mealDetail.lowerCarbs")}
@@ -2539,11 +2539,11 @@ function MealDetailSheet({
             <div className="flex-1 rounded-xl p-3 bg-primary/5 border border-primary/20">
               <div className="flex items-center gap-2 mb-1">
                 <Flame className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-primary">{t("mealDetail.calorieBudget")}</span>
+                <span className="text-sm font-bold text-primary">{t("mealDetail.calorieBudget")}</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-[17px] font-bold text-primary">~{mealAllowance}</span>
-                <span className="text-xs text-primary/70">kcal</span>
+                <span className="text-sm text-primary/70">kcal</span>
               </div>
             </div>
           </div>
@@ -2557,7 +2557,7 @@ function MealDetailSheet({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-base text-foreground mb-1">{selectedMeal.name}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{selectedMeal.description}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed">{selectedMeal.description}</p>
                 </div>
               </div>
 
@@ -2565,20 +2565,20 @@ function MealDetailSheet({
               <div className="flex items-center justify-between bg-white/70 rounded-xl p-3 border border-primary/10">
                 <div>
                   <span className="text-2xl font-black text-primary">{totalKcal}</span>
-                  <span className="text-[13px] text-primary/70 ml-1">kcal</span>
+                  <span className="text-sm text-primary/70 ml-1">kcal</span>
                 </div>
                 <div className="flex gap-4">
                   <div className="text-center">
                     <div className="text-sm font-bold text-red-600">{macros.protein}g</div>
-                    <div className="text-2xs text-gray-400 uppercase tracking-wider">🥩 {t("menu.proteinG")}</div>
+                    <div className="text-sm text-gray-400 uppercase tracking-wider">🥩 {t("menu.proteinG")}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-sm font-bold text-amber-600">{macros.carbs}g</div>
-                    <div className="text-2xs text-gray-400 uppercase tracking-wider">🌾 {t("menu.carbsG")}</div>
+                    <div className="text-sm text-gray-400 uppercase tracking-wider">🌾 {t("menu.carbsG")}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-sm font-bold text-primary">{macros.fat}g</div>
-                    <div className="text-2xs text-gray-400 uppercase tracking-wider">🫒 {t("menu.fatG")}</div>
+                    <div className="text-sm text-gray-400 uppercase tracking-wider">🫒 {t("menu.fatG")}</div>
                   </div>
                 </div>
               </div>
@@ -2590,7 +2590,7 @@ function MealDetailSheet({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Utensils className="w-4 h-4 text-gray-500" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("mealDetail.ingredients") || 'Összetevők'}</span>
+                <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t("mealDetail.ingredients") || 'Összetevők'}</span>
               </div>
               <div className="space-y-2">
                 {selectedMeal.ingredients.map((ing: string, idx: number) => {
@@ -2606,12 +2606,12 @@ function MealDetailSheet({
                         🍽️
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[13px] font-medium text-gray-800">{translateFoodName(ing, language)}</span>
+                        <span className="text-sm font-medium text-gray-800">{translateFoodName(ing, language)}</span>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-2xs text-gray-400">~{perIngKcal} kcal</span>
-                          <span className="text-2xs text-red-400">P {perIngProtein}g</span>
-                          <span className="text-2xs text-amber-400">C {perIngCarbs}g</span>
-                          <span className="text-2xs text-primary">F {perIngFat}g</span>
+                          <span className="text-sm text-gray-400">~{perIngKcal} kcal</span>
+                          <span className="text-sm text-red-400">P {perIngProtein}g</span>
+                          <span className="text-sm text-amber-400">C {perIngCarbs}g</span>
+                          <span className="text-sm text-primary">F {perIngFat}g</span>
                         </div>
                       </div>
                     </div>
@@ -2631,7 +2631,7 @@ function MealDetailSheet({
               >
                 <div className="flex items-center gap-2">
                   <UtensilsCrossed className="w-4 h-4 text-primary" />
-                  <span className="text-[13px] font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
+                  <span className="text-sm font-bold text-primary">{t("mealDetail.swapMeal") || 'Étkezés cseréje'}</span>
                 </div>
                 <motion.div animate={{ rotate: showAlternatives ? 180 : 0 }} transition={{ duration: 0.2 }}>
                   <ChevronDown className="w-4 h-4 text-primary" />
@@ -2648,7 +2648,7 @@ function MealDetailSheet({
                     className="overflow-hidden"
                   >
                     <div className="space-y-2 pt-3">
-                      <span className="text-xs text-gray-400">{t("mealDetail.tapToChoose")}</span>
+                      <span className="text-sm text-gray-400">{t("mealDetail.tapToChoose")}</span>
                       {allOptions.map((meal, idx) => {
                         const isSelected = selectedMeal?.id === meal.id;
                         const kcal = parseKcal(meal.calories);
@@ -2672,13 +2672,13 @@ function MealDetailSheet({
                                     <Check className="w-3 h-3 text-white" />
                                   </div>
                                 )}
-                                <span className={`text-xs font-bold uppercase tracking-wider ${
+                                <span className={`text-sm font-bold uppercase tracking-wider ${
                                   idx === 0 ? 'text-primary' : 'text-gray-600'
                                 }`}>
                                   {idx === 0 ? `🥗 ${t("mealDetail.dietPlanLabel")}` : t("mealDetail.alternativeN").replace('{n}', String(idx))}
                                 </span>
                               </div>
-                              <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${
+                              <span className={`text-sm font-bold px-2 py-0.5 rounded-lg ${
                                 isSelected
                                   ? 'bg-primary/10 text-primary'
                                   : isOverBudget
@@ -2689,16 +2689,16 @@ function MealDetailSheet({
                               </span>
                             </div>
 
-                            <h5 className="font-semibold text-[13px] text-foreground mb-0.5">{translateFoodName(meal.name, language)}</h5>
-                            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{meal.description}</p>
+                            <h5 className="font-semibold text-sm text-foreground mb-0.5">{translateFoodName(meal.name, language)}</h5>
+                            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{meal.description}</p>
 
                             {meal.ingredients && meal.ingredients.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {meal.ingredients.slice(0, 4).map((ing: string, i: number) => (
-                                  <span key={i} className="text-2xs bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{translateFoodName(ing, language)}</span>
+                                  <span key={i} className="text-sm bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{translateFoodName(ing, language)}</span>
                                 ))}
                                 {meal.ingredients.length > 4 && (
-                                  <span className="text-2xs bg-gray-50 text-gray-400 px-2 py-0.5 rounded-md">+{meal.ingredients.length - 4}</span>
+                                  <span className="text-sm bg-gray-50 text-gray-400 px-2 py-0.5 rounded-md">+{meal.ingredients.length - 4}</span>
                                 )}
                               </div>
                             )}
@@ -2716,7 +2716,7 @@ function MealDetailSheet({
           {(!canEdit || checked) && allOptions.length > 1 && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
               <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span className="text-xs text-gray-400">
+              <span className="text-sm text-gray-400">
                 {checked ? t("mealDetail.mealConsumed") : t("mealDetail.altWindowExpired")}
               </span>
             </div>
@@ -2748,7 +2748,7 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
     >
       <div className="bg-primary/10 px-3 py-1.5 flex items-center gap-2">
         <span className="text-sm">✅</span>
-        <span className="text-xs font-bold text-primary uppercase tracking-wider">{t("menu.alsoConsumed")}</span>
+        <span className="text-sm font-bold text-primary uppercase tracking-wider">{t("menu.alsoConsumed")}</span>
       </div>
       <div className="p-3">
         <div className="flex items-center justify-between mb-2">
@@ -2756,7 +2756,7 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
             <FoodImage foodName={meal.name} fallbackEmoji={meal.image || '🍽️'} size="sm" />
             <div>
               <h4 className="font-semibold text-sm text-foreground">{translateFoodName(meal.name, language)}</h4>
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-sm text-gray-500">
                 <Clock className="w-3 h-3" /><span>{timeStr}</span>
               </div>
             </div>
@@ -2768,12 +2768,12 @@ function LoggedMealAsCard({ meal, onRemove }: LoggedMealAsCardProps) {
         <div className="rounded-lg p-2 bg-primary/5 border border-primary/20">
           <div className="flex justify-between items-start mb-1">
             <span className="font-medium text-foreground text-sm">{meal.quantity} {t("menu.serving")}</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded text-primary bg-primary/10">{meal.calories} kcal</span>
+            <span className="text-sm font-semibold px-2 py-0.5 rounded text-primary bg-primary/10">{meal.calories} kcal</span>
           </div>
           <div className="flex flex-wrap gap-1.5 mt-1.5">
-            <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🥩 {meal.protein}g {t("menu.proteinG")}</span>
-            <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🌾 {meal.carbs}g {t("menu.carbsG")}</span>
-            <span className="text-xs bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🫒 {meal.fat}g {t("menu.fatG")}</span>
+            <span className="text-sm bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🥩 {meal.protein}g {t("menu.proteinG")}</span>
+            <span className="text-sm bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🌾 {meal.carbs}g {t("menu.carbsG")}</span>
+            <span className="text-sm bg-white px-2 py-0.5 rounded-full text-gray-600 border border-gray-100">🫒 {meal.fat}g {t("menu.fatG")}</span>
           </div>
         </div>
       </div>
@@ -2796,16 +2796,16 @@ function EmptyMealCard({ title, time, icon }: { title: string; time: string; ico
           <span className="text-sm font-semibold text-gray-800">
             {title}
           </span>
-          <span className="text-xs text-gray-500">
+          <span className="text-sm text-gray-500">
             {time}
           </span>
         </div>
       </div>
       <div className="flex flex-col items-end gap-0.5">
-        <span className="text-xs font-semibold text-gray-400">
+        <span className="text-sm font-semibold text-gray-500">
           –
         </span>
-        <span className="text-2xs text-gray-400">
+        <span className="text-sm text-gray-500">
           kcal
         </span>
       </div>

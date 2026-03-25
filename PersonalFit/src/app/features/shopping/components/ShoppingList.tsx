@@ -63,7 +63,7 @@ function SmartStorePanel({
   const { t } = useLanguage();
   return (
     <div className="mx-4 mb-4 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-3 border border-teal-200">
-      <div className="text-2xs font-bold text-teal-600 tracking-wide mb-2.5">
+      <div className="text-sm font-bold text-teal-600 tracking-wide mb-2.5">
         🏪 {t('shopping.bestStoreNow')}
       </div>
 
@@ -73,10 +73,10 @@ function SmartStorePanel({
           <div className="text-sm font-bold text-gray-800">
             {topRec.store.name}
             {topRec.isPreferred && (
-              <span className="ml-1.5 text-2xs text-amber-500 font-semibold">⭐ {t('shopping.preferred')}</span>
+              <span className="ml-1.5 text-sm text-amber-500 font-semibold">⭐ {t('shopping.preferred')}</span>
             )}
           </div>
-          <div className="text-2xs text-gray-500">
+          <div className="text-sm text-gray-500">
             {topRec.matchCount}/{uncheckedCount} {t('shopping.productsAvailable')}
             {" · "}{topRec.distanceKm} km
           </div>
@@ -86,7 +86,7 @@ function SmartStorePanel({
             ~{topRec.estimatedTotal.toFixed(0)} lei
           </div>
           {topRec.missingItems.length > 0 && (
-            <div className="text-2xs text-gray-400">
+            <div className="text-sm text-gray-400">
               {topRec.missingItems.length} {t('shopping.missing')}
             </div>
           )}
@@ -100,7 +100,7 @@ function SmartStorePanel({
             <div className="text-sm font-semibold text-gray-800">
               {twoStoreCombo.primary.store.name} + {twoStoreCombo.secondary.store.name}
             </div>
-            <div className="text-2xs text-gray-500">
+            <div className="text-sm text-gray-500">
               {twoStoreCombo.combinedMatchCount}/{uncheckedCount} {t('store.productSuffix')} · 2 {t('shopping.courierSuffix')}
             </div>
           </div>
@@ -108,7 +108,7 @@ function SmartStorePanel({
             <div className="text-sm font-extrabold text-gray-700">
               ~{(twoStoreCombo.combinedTotal + twoStoreCombo.combinedDeliveryFee).toFixed(0)} lei
             </div>
-            <div className="text-2xs text-red-400">
+            <div className="text-sm text-red-400">
               +{twoStoreCombo.combinedDeliveryFee.toFixed(2)} lei {t('shopping.courierDouble')}
             </div>
           </div>
@@ -119,13 +119,13 @@ function SmartStorePanel({
       <div className="flex gap-2">
         <button
           onClick={onStopBy}
-          className="flex-1 py-2.5 bg-white border-2 border-teal-600 rounded-xl text-xs font-semibold text-teal-600 active:scale-95 transition-all"
+          className="flex-1 py-2.5 bg-white border-2 border-teal-600 rounded-xl text-sm font-semibold text-teal-600 active:scale-95 transition-all"
         >
           🚶 {t('shopping.stopBy')}
         </button>
         <button
           onClick={onOrder}
-          className="flex-1 py-2.5 bg-teal-600 rounded-xl text-xs font-semibold text-white active:scale-95 transition-all"
+          className="flex-1 py-2.5 bg-teal-600 rounded-xl text-sm font-semibold text-white active:scale-95 transition-all"
         >
           🛵 {t('shopping.orderNow')}
         </button>
@@ -177,7 +177,7 @@ function SCard({ sectionTitle, children }: { sectionTitle: string; children: Rea
       marginBottom: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     }}>
       <div style={{
-        fontSize: '0.75rem', fontWeight: 600, color: '#9ca3af',
+        fontSize: '0.875rem', fontWeight: 600, color: '#9ca3af',
         letterSpacing: '0.08em', textTransform: 'uppercase',
         padding: '0.75rem 1rem 0.25rem',
       }}>
@@ -220,12 +220,12 @@ function ShoppingSettingsSheet({
       {/* Top bar */}
       <div style={{
         flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '3rem 1rem 1rem', background: 'white', borderBottom: '1px solid #f3f4f6',
+        paddingTop: 'calc(env(safe-area-inset-top, 20px) + 1rem)', paddingLeft: '1rem', paddingRight: '1rem', paddingBottom: '1rem', background: 'white', borderBottom: '1px solid #f3f4f6',
       }}>
         <span style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}>Bevásárlás beállítások</span>
         <button
           onClick={onClose}
-          style={{ width: 36, height: 36, borderRadius: '50%', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+          style={{ width: 44, height: 44, borderRadius: '50%', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
         >
           <X style={{ width: 18, height: 18, color: '#6b7280' }} />
         </button>
@@ -290,7 +290,7 @@ function ShoppingSettingsSheet({
                 autoFocus
                 style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: 10, padding: '10px 14px', fontSize: '0.9rem', outline: 'none', resize: 'none', boxSizing: 'border-box' }}
               />
-              <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: 0 }}>{t('shopping.deliveryHint')}</p>
+              <p style={{ fontSize: '0.875rem', color: '#9ca3af', margin: 0 }}>{t('shopping.deliveryHint')}</p>
               <button
                 onClick={() => saveRow({ address: local.address })}
                 style={{ width: '100%', padding: '12px', borderRadius: 10, fontWeight: 700, color: 'white', fontSize: '0.9rem', background: '#0d9488', border: 'none', cursor: 'pointer' }}
@@ -317,7 +317,7 @@ function ShoppingSettingsSheet({
                     <Bluetooth style={{ width: 18, height: 18, color: '#0d9488' }} />
                     <div>
                       <div style={{ fontWeight: 700, color: '#134e4a', fontSize: '0.9rem' }}>{local.fridgeName}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#0d9488' }}>{t('shopping.settings.pairedStatus')}</div>
+                      <div style={{ fontSize: '0.875rem', color: '#0d9488' }}>{t('shopping.settings.pairedStatus')}</div>
                     </div>
                   </div>
                   <button
@@ -329,7 +329,7 @@ function ShoppingSettingsSheet({
                 </>
               ) : (
                 <>
-                  <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: 0 }}>{t('shopping.settings.fridgeAutoDesc')}</p>
+                  <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>{t('shopping.settings.fridgeAutoDesc')}</p>
                   <input
                     type="text"
                     placeholder={t('shopping.settings.fridgeNamePlaceholder')}
@@ -812,7 +812,7 @@ export function ShoppingList() {
           <div className="py-3">
             <div className="flex items-center gap-2 px-4 mb-3">
               <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-              <span className="text-xs text-gray-500" style={{ fontWeight: 600 }}>
+              <span className="text-sm text-gray-500" style={{ fontWeight: 600 }}>
                 {t('shopping.recommended')}
               </span>
             </div>
@@ -852,9 +852,9 @@ export function ShoppingList() {
                           style={{ border: `2px solid ${tapped ? '#0d9488' : '#e5e7eb'}` }}
                         >
                           <div className="text-2xl mb-1">{product.image}</div>
-                          <div className="text-xs font-semibold text-gray-800 text-center leading-snug truncate w-full">{product.name}</div>
-                          <div className="text-xs text-gray-400 mt-0.5">{product.store}</div>
-                          <div className="text-xs font-bold text-teal-600 mt-0.5 mb-2">{product.price.toFixed(2)} lei</div>
+                          <div className="text-sm font-semibold text-gray-800 text-center leading-snug truncate w-full">{product.name}</div>
+                          <div className="text-sm text-gray-400 mt-0.5">{product.store}</div>
+                          <div className="text-sm font-bold text-teal-600 mt-0.5 mb-2">{product.price.toFixed(2)} lei</div>
                           <button
                             onClick={() => {
                               if (tapped) return;
@@ -893,10 +893,10 @@ export function ShoppingList() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Search className="w-3.5 h-3.5 text-gray-400" />
-                <span className="text-xs text-gray-500" style={{ fontWeight: 600 }}>
+                <span className="text-sm text-gray-500" style={{ fontWeight: 600 }}>
                   {t('shopping.searchResults')}
                 </span>
-                <span className="text-xs text-gray-400 ml-auto">{searchResults.length} {t('shopping.product')}</span>
+                <span className="text-sm text-gray-400 ml-auto">{searchResults.length} {t('shopping.product')}</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {searchResults.map((product) => {
@@ -910,9 +910,9 @@ export function ShoppingList() {
                       }`}
                     >
                       <div className="text-2xl mb-1">{product.image}</div>
-                      <div className="text-xs font-semibold text-gray-800 text-center truncate w-full">{product.name}</div>
-                      <div className="text-xs text-gray-400 truncate w-full text-center">{product.store}</div>
-                      <div className="text-xs font-bold text-teal-600 mb-2">{product.price.toFixed(2)} lei</div>
+                      <div className="text-sm font-semibold text-gray-800 text-center truncate w-full">{product.name}</div>
+                      <div className="text-sm text-gray-400 truncate w-full text-center">{product.store}</div>
+                      <div className="text-sm font-bold text-teal-600 mb-2">{product.price.toFixed(2)} lei</div>
                       {!alreadyAdded ? (
                         <button
                           onClick={() => {
@@ -952,7 +952,7 @@ export function ShoppingList() {
             <div className="flex items-center justify-between mb-3">
               <div className="relative">
                 <h3 className="text-sm text-gray-800 flex items-center gap-2" style={{ fontWeight: 800 }}>
-                  <ShoppingBag className="w-4 h-4 text-indigo-500" />
+                  <ShoppingBag className="w-4 h-4 text-primary" />
                   {t('shopping.shoppingList')}{' '}
                   ({totalItems})
                 </h3>
@@ -965,7 +965,7 @@ export function ShoppingList() {
                 />
               </div>
               {checkedCount > 0 && (
-                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full" style={{ fontWeight: 700 }}>
+                <span className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full" style={{ fontWeight: 700 }}>
                   {checkedCount}/{totalItems} {t('shopping.done').toLowerCase()}
                 </span>
               )}
@@ -990,10 +990,10 @@ export function ShoppingList() {
                   leftAction={{ icon: Trash2, color: "bg-red-500", label: t('shopping.remove') }}
                 >
                   <div
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${
                       item.checked
                         ? "bg-gray-50 border-gray-200 opacity-40"
-                        : "bg-white border-gray-100 hover:border-indigo-200"
+                        : "bg-white border-gray-200 hover:border-teal-200"
                     }`}
                   >
                     <button
@@ -1002,7 +1002,7 @@ export function ShoppingList() {
                       className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${
                         item.checked
                           ? "bg-green-500 border-green-500"
-                          : "border-gray-300 hover:border-indigo-400"
+                          : "border-gray-300 hover:border-teal-400"
                       }`}
                     >
                       {item.checked && <Check className="w-4 h-4 text-white" />}
@@ -1016,7 +1016,7 @@ export function ShoppingList() {
                       >
                         {item.product.name}
                       </div>
-                      <div className="text-2xs text-gray-400">legjobb ár: {item.product.store}</div>
+                      <div className="text-sm text-gray-400">legjobb ár: {item.product.store}</div>
                     </div>
 
                     <div className="text-right">
@@ -1076,14 +1076,14 @@ export function ShoppingList() {
               <div className="flex items-center gap-3 mb-2">
                 <Refrigerator className="w-5 h-5 text-teal-500 flex-shrink-0" />
                 <span className="text-sm font-bold text-teal-700">{t('shopping.fridgeRunningLow')}</span>
-                <span className="ml-auto text-2xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full font-semibold">{t('shopping.comingSoon')}</span>
+                <span className="ml-auto text-sm bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full font-semibold">{t('shopping.comingSoon')}</span>
               </div>
               {shoppingSettings.fridgePaired ? (
-                <p className="text-xs text-teal-600 leading-relaxed">
+                <p className="text-sm text-teal-600 leading-relaxed">
                   <span className="font-semibold">{shoppingSettings.fridgeName}</span>{' '}{t('shopping.fridgePairedDesc')}
                 </p>
               ) : (
-                <p className="text-xs text-teal-600 leading-relaxed">
+                <p className="text-sm text-teal-600 leading-relaxed">
                   {t('shopping.fridgeUnpairedDesc')}{' '}
                   <button
                     onClick={() => { setSettingsOpen(true); hapticFeedback('light'); }}

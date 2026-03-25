@@ -89,7 +89,7 @@ export function ProfileHeader({
         }}
         rawValue={age > 0 ? String(age) : ""}
         suffix={` ${t('profile.yearsOld')}`}
-        className="text-white/80 text-xs sm:text-sm mt-0.5 truncate"
+        className="text-white/80 text-sm mt-0.5 truncate"
         isTitle={false}
       />
     </div>
@@ -101,9 +101,9 @@ export function ProfileHeader({
       title={name || defaultName}
       titleElement={titleElement}
       subtitle={subtitle}
-      gradientFrom="from-blue-400"
+      gradientFrom="from-teal-600"
       gradientVia="via-teal-500"
-      gradientTo="to-blue-500"
+      gradientTo="to-teal-700"
       stats={[
         {
           label: `${consumed} / ${adjustedAllowance} kcal`,

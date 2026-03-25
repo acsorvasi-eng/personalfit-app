@@ -88,7 +88,7 @@ export function DSMBottomSheet({
                   )}
                   <div className="min-w-0">
                     {title && <div className="text-sm text-gray-900 truncate" style={{ fontWeight: 700 }}>{title}</div>}
-                    {subtitle && <div className="text-[11px] text-gray-400 truncate">{subtitle}</div>}
+                    {subtitle && <div className="text-sm text-gray-400 truncate">{subtitle}</div>}
                   </div>
                 </div>
                 <button
@@ -181,12 +181,12 @@ export function DSMCoachMark({
                 <CoachIcon className="w-4 h-4 text-[var(--primary)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] text-gray-900 mb-0.5" style={{ fontWeight: 700 }}>{title}</div>
-                <div className="text-xs text-gray-500 leading-relaxed">{message}</div>
+                <div className="text-sm text-gray-900 mb-0.5" style={{ fontWeight: 700 }}>{title}</div>
+                <div className="text-sm text-gray-500 leading-relaxed">{message}</div>
               </div>
               <button
                 onClick={dismiss}
-                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 hover:bg-gray-200 transition-colors"
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 hover:bg-gray-200 transition-colors"
               >
                 <X className="w-3 h-3 text-gray-400" />
               </button>
@@ -195,7 +195,7 @@ export function DSMCoachMark({
             {/* Got it button */}
             <button
               onClick={dismiss}
-              className="w-full mt-3 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition-colors"
+              className="w-full mt-3 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-bold transition-colors min-h-[44px]"
             >
               Értem! 👍
             </button>
@@ -244,7 +244,7 @@ export function DSMProgressSteps({ steps, currentStep, className = "" }: DSMProg
               ) : step.icon ? (
                 <step.icon className="w-3.5 h-3.5" />
               ) : (
-                <span className="text-[11px] font-bold">{i + 1}</span>
+                <span className="text-sm font-bold">{i + 1}</span>
               )}
             </div>
 
@@ -395,7 +395,7 @@ export function DSMEmptyFlow({
             <div className="w-5 h-5 bg-[var(--primary-light)] rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-2xs text-[var(--primary-hover)] font-bold">{i + 1}</span>
             </div>
-            <span className="text-xs text-gray-500">{step}</span>
+            <span className="text-sm text-gray-500">{step}</span>
           </div>
         ))}
       </div>

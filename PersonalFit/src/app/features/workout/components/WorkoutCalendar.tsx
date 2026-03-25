@@ -290,14 +290,14 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-white/70 text-xs font-medium">{dayName}</span>
+            <span className="text-white/70 text-sm font-medium">{dayName}</span>
             <span className="text-white/40">·</span>
             {hasPlan ? (
-              <span className="text-white/70 text-xs">
+              <span className="text-white/70 text-sm">
                 {todayPlan.length} {t("calendar.workoutPlanned")}
               </span>
             ) : (
-              <span className="text-white/70 text-xs">😴</span>
+              <span className="text-white/70 text-sm">😴</span>
             )}
           </div>
           <div className="text-white text-sm mt-0.5" style={{ fontWeight: 700 }}>
@@ -306,7 +306,7 @@ export function WorkoutPlannerBanner({ onOpenCalendar, className = '' }: Workout
               : t("menu.restDay")
             }
           </div>
-          <div className="text-white/70 text-xs mt-0.5">
+          <div className="text-white/70 text-sm mt-0.5">
             {hasPlan
               ? todayPlan.some(w => w.plannedDuration)
                 ? `${todayPlan.reduce((s, w) => s + (w.plannedDuration || 0), 0)} ${t("calendar.minPlanned")}`
@@ -641,7 +641,7 @@ export function WorkoutCalendarSheet({ open, onClose }: WorkoutCalendarSheetProp
                                 className="flex flex-col items-center gap-1 p-2 rounded-xl bg-white border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95"
                               >
                                 <span className="text-xl">{sport.icon}</span>
-                                <span className="text-[9px] text-gray-600 font-medium leading-tight text-center">{t('sportNames.' + sport.id) || sport.name}</span>
+                                <span className="text-sm text-gray-600 font-medium leading-tight text-center">{t('sportNames.' + sport.id) || sport.name}</span>
                               </button>
                             ))}
                           </div>

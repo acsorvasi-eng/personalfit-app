@@ -804,15 +804,15 @@ export function Profile() {
             <div className="flex items-center justify-center gap-4 mt-2 pb-0.5">
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-[2.5px] bg-teal-600 rounded-full" />
-                <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.measured')}</span>
+                <span className="text-sm text-gray-500" style={{ fontWeight: 500 }}>{t('profile.measured')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-4 h-[2px] rounded-full" style={{ background: 'repeating-linear-gradient(90deg, #9ca3af 0px, #9ca3af 3px, transparent 3px, transparent 5.5px)' }} />
-                <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.predicted')}</span>
+                <span className="text-sm text-gray-500" style={{ fontWeight: 500 }}>{t('profile.predicted')}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-teal-600 border-2 border-white shadow-sm" />
-                <span className="text-[9px] text-gray-500" style={{ fontWeight: 500 }}>{t('profile.now')}</span>
+                <span className="text-sm text-gray-500" style={{ fontWeight: 500 }}>{t('profile.now')}</span>
               </div>
             </div>
           </div>
@@ -913,7 +913,7 @@ export function Profile() {
                   setIsGoalEditing(false);
                   hapticFeedback('light');
                 }}
-                className="mt-2.5 w-full py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs transition-colors"
+                className="mt-2.5 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-sm min-h-[44px] transition-colors"
                 style={{ fontWeight: 600 }}
               >
                 {t('profile.save')}
@@ -1636,7 +1636,7 @@ function MetabolicAgeTile({ realAge, metabolicAge, onSave }: {
       </div>
       <div className="text-2xs text-gray-500 mt-0.5">{t('profileExtra.metabolicAgeLabel')}</div>
       {color.indicator && metabolicAge > 0 && (
-        <div className={`text-[9px] ${color.label} mt-0.5`} style={{ fontWeight: 600 }}>{color.indicator}</div>
+        <div className={`text-sm ${color.label} mt-0.5`} style={{ fontWeight: 600 }}>{color.indicator}</div>
       )}
     </button>
   );

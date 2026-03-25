@@ -1068,7 +1068,7 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                             <div className="flex items-center gap-1.5">
                               <span className="font-bold text-foreground text-sm">{food.name}</span>
                               {food.isMealPlan && (
-                                <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{t("logMealExt.inMealPlan")}</span>
+                                <span className="text-sm bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-bold">{t("logMealExt.inMealPlan")}</span>
                               )}
                             </div>
                             <div className="text-xs text-gray-500 mt-0.5">{food.category} · {food.region}</div>
@@ -1756,19 +1756,19 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                           <p className="text-[11px] text-gray-500 mb-2">{variant.description}</p>
                           <div className="flex flex-wrap gap-1 mb-2">
                             {variant.tags.map(tag => (
-                              <span key={tag} className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
+                              <span key={tag} className="text-sm bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
                                 {tag}
                               </span>
                             ))}
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {variant.keyIngredients.slice(0, 4).map(ing => (
-                              <span key={ing} className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+                              <span key={ing} className="text-sm bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
                                 {ing}
                               </span>
                             ))}
                             {variant.keyIngredients.length > 4 && (
-                              <span className="text-[9px] text-gray-400">+{variant.keyIngredients.length - 4}</span>
+                              <span className="text-sm text-gray-400">+{variant.keyIngredients.length - 4}</span>
                             )}
                           </div>
                         </div>
@@ -1777,7 +1777,7 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                             {variant.per100.calories}
                           </div>
                           <div className="text-2xs text-gray-400">kcal/100g</div>
-                          <div className="flex gap-1.5 mt-1 text-[9px] text-gray-400">
+                          <div className="flex gap-1.5 mt-1 text-sm text-gray-400">
                             <span>F:{variant.per100.protein}g</span>
                             <span>Sz:{variant.per100.carbs}g</span>
                             <span>Zs:{variant.per100.fat}g</span>
@@ -1924,7 +1924,7 @@ Ha nem tudsz azonosítani semmit: {"items":[],"totalCalories":0,"totalProtein":0
                         </span>
                         <span className="text-2xs text-gray-500">kcal</span>
                       </div>
-                      <div className="flex gap-2 mt-1 text-[9px] text-gray-400">
+                      <div className="flex gap-2 mt-1 text-sm text-gray-400">
                         <span>{t("logMealExt.proteinShort")}:{nutr.protein}g</span>
                         <span>{t("logMealExt.carbsShort")}:{nutr.carbs}g</span>
                         <span>{t("logMealExt.fatShort")}:{nutr.fat}g</span>

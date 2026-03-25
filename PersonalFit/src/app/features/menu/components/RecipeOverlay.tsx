@@ -135,7 +135,7 @@ export function RecipeOverlay({
         initial={{ opacity: 0, y: "100%" }} animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: "100%" }} transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <button onClick={onClose} className="absolute top-[max(0.75rem,env(safe-area-inset-top))] left-4 w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center">
+        <button onClick={onClose} className="absolute top-[max(0.75rem,env(safe-area-inset-top))] left-4 w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center">
           <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
         <div className="text-4xl mb-4">🔒</div>
@@ -163,7 +163,7 @@ export function RecipeOverlay({
     >
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-border">
-        <button onClick={onClose} className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+        <button onClick={onClose} className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
           <ChevronLeft className="w-5 h-5 text-gray-600" />
         </button>
         <h2 className="font-bold text-base text-foreground truncate max-w-[200px]">
@@ -219,13 +219,13 @@ export function RecipeOverlay({
                 <>
                   {/* Meta row */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg text-xs text-gray-600">
+                    <span className="flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg text-sm text-gray-600">
                       <Clock className="w-3.5 h-3.5" />{recipe.prepTime} {t('recipe.minutesSuffix')}
                     </span>
-                    <span className="flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg text-xs text-gray-600">
+                    <span className="flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg text-sm text-gray-600">
                       👨‍🍳 {difficultyLabel(recipe.difficulty)}
                     </span>
-                    <span className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-lg text-xs text-primary font-semibold">
+                    <span className="flex items-center gap-1 bg-primary/10 px-2.5 py-1 rounded-lg text-sm text-primary font-semibold">
                       <Flame className="w-3.5 h-3.5" />{meal.calories}
                     </span>
                   </div>
@@ -235,13 +235,13 @@ export function RecipeOverlay({
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <Utensils className="w-4 h-4 text-gray-400" />
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('recipe.ingredients')}</span>
+                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t('recipe.ingredients')}</span>
                       </div>
                       <div className="space-y-1">
                         {meal.ingredientDetails.map((ing, i) => (
                           <div key={i} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-gray-50">
                             <span className="text-sm text-gray-700">{translateFoodName(ing.name, language)}</span>
-                            <span className="text-xs text-gray-400">{ing.quantity}</span>
+                            <span className="text-sm text-gray-500">{ing.quantity}</span>
                           </div>
                         ))}
                       </div>
@@ -250,11 +250,11 @@ export function RecipeOverlay({
 
                   {/* Steps */}
                   <div>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('recipe.preparation')}</span>
+                    <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">{t('recipe.preparation')}</span>
                     <div className="space-y-2 mt-2">
                       {recipe.steps.map((step, i) => (
                         <div key={i} className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+                          <span className="w-6 h-6 rounded-full bg-primary text-white text-sm font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
                           <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
                         </div>
                       ))}
@@ -323,7 +323,7 @@ export function RecipeOverlay({
                   <span className="font-medium">{t('recipe.restaurantsNear')} {geo.city}</span>
                 </div>
               )}
-              <p className="text-xs text-gray-400 italic">{t('recipe.aiEstimateDisclaimer')}</p>
+              <p className="text-sm text-gray-500 italic">{t('recipe.aiEstimateDisclaimer')}</p>
 
               {menuState === 'loading' && (
                 <div className="flex flex-col items-center py-12 gap-3">
@@ -346,21 +346,21 @@ export function RecipeOverlay({
               )}
 
               {menuState === 'success' && menuMatches.map((match, i) => (
-                <div key={i} className="rounded-xl border border-gray-100 p-4 space-y-2">
+                <div key={i} className="rounded-2xl border border-gray-200 p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-sm text-foreground">{match.restaurantName}</p>
                       <p className="text-sm text-gray-600">{match.dishName}</p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-lg font-medium flex-shrink-0 ${
-                      match.confidence === 'high' ? 'bg-green-50 text-green-700'
-                      : match.confidence === 'medium' ? 'bg-amber-50 text-amber-700'
+                    <span className={`text-sm px-2 py-0.5 rounded-lg font-medium flex-shrink-0 ${
+                      match.confidence === 'high' ? 'bg-primary/10 text-primary'
+                      : match.confidence === 'medium' ? 'bg-gray-100 text-gray-600'
                       : 'bg-gray-100 text-gray-500'
                     }`}>
                       {match.confidence === 'high' ? t('recipe.accurateLabel') : t('recipe.estimatedLabel')}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+                  <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
                     {match.estimatedKcal > 0 && <span>🔥 ~{match.estimatedKcal} kcal</span>}
                     {match.price && <span>💰 {match.price}</span>}
                     {match.availableFrom && <span>🕐 {match.availableFrom}</span>}
@@ -370,7 +370,7 @@ export function RecipeOverlay({
                       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full" style={{ width: `${match.matchScore}%` }} />
                       </div>
-                      <span className="text-xs text-gray-400">{match.matchScore}% {t('recipe.matchScore')}</span>
+                      <span className="text-sm text-gray-500">{match.matchScore}% {t('recipe.matchScore')}</span>
                     </div>
                   )}
                 </div>
