@@ -491,14 +491,26 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       if (!data?.nutritionPlan) {
         throw new Error('Az API nem adott vissza étrend tervet. Próbáld újra.');
       }
-      const improvedPlan = await callChefReview({
-        nutritionPlan: data.nutritionPlan,
-        language,
-        userName: user?.name ?? '',
-        userProfile: userProfile ?? undefined,
-        onProgress: () => setGeneratingPhase('chef'),
-        onDone: () => setGeneratingPhase('plan'),
-      });
+      // Chef review with 15s timeout — skip if it takes too long
+      setGeneratingPhase('chef');
+      let improvedPlan = data.nutritionPlan;
+      try {
+        improvedPlan = await Promise.race([
+          callChefReview({
+            nutritionPlan: data.nutritionPlan,
+            language,
+            userName: user?.name ?? '',
+            userProfile: userProfile ?? undefined,
+            onProgress: () => {},
+            onDone: () => {},
+          }),
+          new Promise<typeof data.nutritionPlan>((_, reject) =>
+            setTimeout(() => reject(new Error('chef-timeout')), 15000)
+          ),
+        ]);
+      } catch {
+        console.warn('[GenerateMealPlan] Chef review skipped (timeout or error)');
+      }
 
       setGeneratedPlan(improvedPlan);
       setStats(data.stats);
