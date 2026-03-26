@@ -12,6 +12,7 @@ import { useLanguage, LanguageCode } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPPORTED_LANGUAGES, LANGUAGE_META } from '../../i18n';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { APP_VERSION, BUILD_DATE } from '../version';
 
 const languages = SUPPORTED_LANGUAGES.map((code) => ({
   code,
@@ -254,6 +255,11 @@ export function SplashScreen() {
         {/* Tagline */}
         <p className="text-base leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
           {t('splash.appSubtitle') || 'Személyre szabott étrend, amit tényleg betartasz.'}
+        </p>
+
+        {/* Version badge */}
+        <p className="mt-4 text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          v{APP_VERSION} · {BUILD_DATE}
         </p>
       </motion.div>
 
