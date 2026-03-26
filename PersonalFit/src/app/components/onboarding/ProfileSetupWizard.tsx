@@ -1093,19 +1093,33 @@ export function ProfileSetupWizard() {
 
       {/* Bottom CTA */}
       {step !== LEGACY_FOODS_STEP && (
-        <div className="sticky bottom-0 bg-white px-6 pb-10 pt-3 border-t border-gray-100">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm px-6 pt-3 border-t border-gray-100 z-50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 0.75rem)' }}>
           {step < STEPS.length - 1 ? (
-            <DSMButton
-              onClick={goNext}
-              disabled={step === 1 && selectedStyles.length < 1}
-              variant="primary"
-              className="w-full h-14 rounded-2xl gap-2 text-base"
-            >
-              {step === 1 && selectedStyles.length < 1
-                ? t('wizard.foodStyle.ctaDisabled')
-                : <>{t('wizard.next')} <ChevronRight className="w-5 h-5" /></>
-              }
-            </DSMButton>
+            <>
+              <DSMButton
+                onClick={goNext}
+                disabled={step === 1 && selectedStyles.length < 1}
+                variant="primary"
+                className="w-full h-14 rounded-2xl gap-2 text-base"
+              >
+                {step === 1 && selectedStyles.length < 1
+                  ? t('wizard.foodStyle.ctaDisabled')
+                  : <>{t('wizard.next')} <ChevronRight className="w-5 h-5" /></>
+                }
+              </DSMButton>
+              {/* Upload own plan option — show on food style step */}
+              {step === 1 && (
+                <button
+                  onClick={() => {
+                    // Navigate to menu and let user upload from there
+                    navigate('/menu', { replace: true });
+                  }}
+                  className="w-full text-center text-sm text-gray-500 mt-2 py-2"
+                >
+                  {t('wizard.uploadOwnPlan') || 'Van már étrendem →'}
+                </button>
+              )}
+            </>
           ) : (
             <DSMButton
               onClick={handleGenerate}

@@ -1365,6 +1365,10 @@ export const translations = {
         mediterraneanDesc: 'Hal, olívaolaj, zöldségek, rizs',
         maxReached: '✓ {n}/2 kiválasztva',
         detailedSetup: 'Részletesebb alapanyag beállítás →',
+      allergiesTitle: 'Allergiák és korlátozások',
+      allergiesDone: 'Kész',
+      uploadOwnPlan: 'Van már étrendem →',
+      uploadOwnPlanDesc: 'PDF, XLS vagy Word feltöltése',
         ctaDisabled: 'Válassz legalább 1 stílust',
       },
       meals: {
@@ -2901,6 +2905,10 @@ export const translations = {
         mediterraneanDesc: 'Fish, olive oil, vegetables, rice',
         maxReached: '✓ {n}/2 selected',
         detailedSetup: 'Detailed ingredient setup →',
+      allergiesTitle: 'Allergies & restrictions',
+      allergiesDone: 'Done',
+      uploadOwnPlan: 'I have my own plan →',
+      uploadOwnPlanDesc: 'Upload PDF, XLS, or Word',
         ctaDisabled: 'Select at least 1 style',
       },
       meals: {
@@ -4410,6 +4418,10 @@ export const translations = {
         mediterraneanDesc: 'Pește, ulei de măsline, legume, orez',
         maxReached: '✓ {n}/2 selectate',
         detailedSetup: 'Configurare detaliată ingrediente →',
+      allergiesTitle: 'Alergii și restricții',
+      allergiesDone: 'Gata',
+      uploadOwnPlan: 'Am deja un plan →',
+      uploadOwnPlanDesc: 'Încarcă PDF, XLS sau Word',
         ctaDisabled: 'Selectează cel puțin 1 stil',
       },
       meals: {
