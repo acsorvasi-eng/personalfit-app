@@ -512,8 +512,8 @@ export function Profile() {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         appData={appData}
-        onUploadOpen={() => setIsUploadOpen(true)}
-        onBodyCompOpen={() => setIsBodyCompUploadOpen(true)}
+        onUploadOpen={() => { setSettingsOpen(false); setTimeout(() => setIsUploadOpen(true), 300); }}
+        onBodyCompOpen={() => { setSettingsOpen(false); setTimeout(() => setIsBodyCompUploadOpen(true), 300); }}
         showResetConfirm={showResetConfirm}
         showResetFinal={showResetFinal}
         isResetting={isResetting}
