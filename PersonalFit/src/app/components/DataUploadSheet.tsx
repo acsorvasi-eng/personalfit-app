@@ -77,6 +77,74 @@ const UPLOAD_PHASES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════
+// Upload progress overlay with simulated smooth progress
+// ═══════════════════════════════════════════════════════════════
+
+function UploadProgressOverlay({ upload, strategy, onDone, onBack }: {
+  upload: { step: string; progress: number; error?: string | null; isLoading: boolean };
+  strategy: 'foodsOnly' | 'full';
+  onDone: () => void;
+  onBack: () => void;
+}) {
+  const { t } = useLanguage();
+
+  // Simulated smooth progress: slowly fills between real progress jumps
+  const [displayProgress, setDisplayProgress] = useState(0);
+  const realProgress = upload.progress ?? 0;
+
+  useEffect(() => {
+    // When real progress jumps, animate display toward it
+    if (realProgress > displayProgress) {
+      setDisplayProgress(realProgress);
+      return;
+    }
+    // While loading and real progress is low (AI parsing), slowly increment
+    if (upload.isLoading && displayProgress < 85 && realProgress < 85) {
+      const timer = setInterval(() => {
+        setDisplayProgress(prev => {
+          const target = Math.max(realProgress, prev);
+          // Slow crawl: max +0.5 per tick, never exceed real + 15
+          if (prev >= realProgress + 15) return prev;
+          return Math.min(prev + 0.5, 85);
+        });
+      }, 200);
+      return () => clearInterval(timer);
+    }
+  }, [realProgress, displayProgress, upload.isLoading]);
+
+  // Auto-continue after complete (1.5s delay for visual feedback)
+  useEffect(() => {
+    if (upload.step === 'complete') {
+      setDisplayProgress(100);
+      const timer = setTimeout(onDone, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [upload.step, onDone]);
+
+  return (
+    <div className="fixed inset-0 z-[300] bg-white flex flex-col items-center justify-center">
+      <SharedPremiumLoader
+        progress={displayProgress}
+        phaseText={getPhaseText(displayProgress, UPLOAD_PHASES, t)}
+        subtext={t('upload.subtext') || 'Dietetikus étrendet dolgozzuk fel...'}
+        fullScreen={false}
+      />
+      {upload.step === 'error' && (
+        <div className="mt-6 text-center px-6">
+          <p className="text-sm text-red-500 mb-3">{upload.error || 'Hiba történt'}</p>
+          <button
+            onClick={onBack}
+            className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-2xl text-sm"
+          >
+            {t('wizard.back') || 'Vissza'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // COMPONENT
 // ═══════════════════════════════════════════════════════════════
 
@@ -367,40 +435,19 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
           </motion.div>
 
           {showImportProgress && (
-            <div className="fixed inset-0 z-[300] bg-white flex flex-col items-center justify-center">
-              <SharedPremiumLoader
-                progress={upload.progress ?? 0}
-                phaseText={getPhaseText(upload.progress ?? 0, UPLOAD_PHASES, t)}
-                subtext={t('upload.subtext') || 'A dietetikus étrendet feldolgozzuk...'}
-                fullScreen={false}
-              />
-              {upload.step === 'complete' && (
-                <button
-                  onClick={() => {
-                    setShowImportProgress(false);
-                    if (strategy === 'foodsOnly') {
-                      window.location.assign('/foods');
-                    } else {
-                      handleDone();
-                    }
-                  }}
-                  className="mt-6 px-8 py-3 bg-primary text-white font-semibold rounded-2xl text-base"
-                >
-                  {t('common.continue') || 'Tovább'}
-                </button>
-              )}
-              {upload.step === 'error' && (
-                <div className="mt-6 text-center px-6">
-                  <p className="text-sm text-red-500 mb-3">{upload.error || 'Hiba történt'}</p>
-                  <button
-                    onClick={() => setShowImportProgress(false)}
-                    className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-2xl text-sm"
-                  >
-                    {t('common.back') || 'Vissza'}
-                  </button>
-                </div>
-              )}
-            </div>
+            <UploadProgressOverlay
+              upload={upload}
+              strategy={strategy}
+              onDone={() => {
+                setShowImportProgress(false);
+                if (strategy === 'foodsOnly') {
+                  window.location.assign('/foods');
+                } else {
+                  handleDone();
+                }
+              }}
+              onBack={() => setShowImportProgress(false)}
+            />
           )}
 
           {showMergeDialog && (
