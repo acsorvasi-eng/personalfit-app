@@ -8,6 +8,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { apiBase } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import SharedPremiumLoader, { MEAL_GEN_PHASES, getPhaseText } from '../PremiumLoader';
 import {
   ChevronLeft,
   ChevronRight,
@@ -954,62 +955,20 @@ export function ProfileSetupWizard() {
   }, [step]);
 
   if (step === 99) {
-    const phaseTexts = [
-      t('wizard.genPhase1'),
-      t('wizard.genPhase2'),
-      t('wizard.genPhase3'),
-      t('wizard.genPhase4'),
-      t('wizard.genPhase5'),
+    const WIZARD_PHASES = [
+      { threshold: 0,  key: 'wizard.genPhase1' },
+      { threshold: 12, key: 'wizard.genPhase2' },
+      { threshold: 30, key: 'wizard.genPhase3' },
+      { threshold: 55, key: 'wizard.genPhase4' },
+      { threshold: 80, key: 'wizard.genPhase5' },
     ];
-    const subtexts = t('wizard.genSubtext');
-    const phase = phaseTexts[genPhase] || phaseTexts[0];
-    const radius = 54;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (genProgress / 100) * circumference;
-
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
-        <div className="relative w-48 h-48 mb-8">
-          <svg width="192" height="192" viewBox="0 0 128 128" className="transform -rotate-90">
-            <circle cx="64" cy="64" r={radius} stroke="#e5e7eb" strokeWidth="8" fill="none" />
-            <motion.circle
-              cx="64" cy="64" r={radius}
-              stroke="#0d9488" strokeWidth="8" fill="none"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              animate={{ strokeDashoffset: offset }}
-              transition={{ type: 'spring', stiffness: 40, damping: 15 }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-4xl font-bold text-teal-700">{genProgress}%</span>
-          </div>
-          {['🥗', '⚡', '🧠', '❤️', '🔧'].map((emoji, i) => {
-            const angle = ((genProgress / 100) * 360 + i * 72) * (Math.PI / 180);
-            const x = 96 + 80 * Math.cos(angle);
-            const y = 96 + 80 * Math.sin(angle);
-            return (
-              <motion.div
-                key={i}
-                className="absolute w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-lg shadow-sm"
-                animate={{ left: x - 20, top: y - 20 }}
-                transition={{ type: 'spring', stiffness: 60, damping: 20 }}
-              >
-                {emoji}
-              </motion.div>
-            );
-          })}
-        </div>
-        <motion.p
-          key={genPhase}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-lg font-semibold text-gray-800"
-        >
-          {phase}
-        </motion.p>
-        <p className="text-sm text-gray-400 mt-2">{subtexts}</p>
-      </div>
+      <SharedPremiumLoader
+        progress={genProgress}
+        phaseText={getPhaseText(genProgress, WIZARD_PHASES, t)}
+        subtext={t('wizard.genSubtext')}
+        fullScreen={true}
+      />
     );
   }
 
@@ -1034,12 +993,7 @@ export function ProfileSetupWizard() {
         </span>
       </div>
 
-      {/* Step title */}
-      <div className="px-6 pb-2">
-        <p className="text-xs text-primary font-medium uppercase tracking-wider">
-          {step === LEGACY_FOODS_STEP ? t('wizard.foods.title') : STEPS[step]}
-        </p>
-      </div>
+      {/* Step title — removed duplicate label, the step content has its own title */}
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">

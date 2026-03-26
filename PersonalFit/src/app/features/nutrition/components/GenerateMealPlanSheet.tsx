@@ -82,41 +82,19 @@ function calcWater(p: PersonalData, sports: SportEntry[]): number {
 }
 
 // ─── Premium Loader ──────────────────────────────────────────
-const ORBIT_ICONS = [
-  { emoji: "🥗", color: "#22c55e" },
-  { emoji: "⚡", color: "#eab308" },
-  { emoji: "🧠", color: "#a855f7" },
-  { emoji: "❤️", color: "#ef4444" },
-  { emoji: "🔧", color: "#3b82f6" },
-];
-
-const PHASE_KEYS = [
-  'generatePlan.loaderPhase1',
-  'generatePlan.loaderPhase2',
-  'generatePlan.loaderPhase3',
-  'generatePlan.loaderPhase4',
-  'generatePlan.loaderPhase5',
-] as const;
+import SharedPremiumLoader, { MEAL_GEN_PHASES, getPhaseText } from '../../../components/PremiumLoader';
 
 function PremiumLoader({ phase, t }: { phase: 'plan' | 'chef'; t: (key: string) => string }) {
   const [progress, setProgress] = useState(0);
-  const [phaseIndex, setPhaseIndex] = useState(0);
 
-  useEffect(() => {
-    setProgress(0);
-    setPhaseIndex(0);
-  }, []);
+  useEffect(() => { setProgress(0); }, []);
 
-  // Animate progress from 0 → 95 (plan: 0-55, chef: 55-95)
   useEffect(() => {
     const target = phase === 'plan' ? 55 : 95;
-    const start = phase === 'chef' ? 55 : 0;
     if (phase === 'chef' && progress < 55) setProgress(55);
-
     const interval = setInterval(() => {
       setProgress(prev => {
         if (prev >= target) { clearInterval(interval); return prev; }
-        // Slow down as we approach target
         const remaining = target - prev;
         const step = Math.max(0.3, remaining * 0.04);
         return Math.min(prev + step, target);
@@ -125,138 +103,13 @@ function PremiumLoader({ phase, t }: { phase: 'plan' | 'chef'; t: (key: string) 
     return () => clearInterval(interval);
   }, [phase]);
 
-  // Cycle phase text based on progress
-  useEffect(() => {
-    if (progress < 12) setPhaseIndex(0);
-    else if (progress < 30) setPhaseIndex(1);
-    else if (progress < 55) setPhaseIndex(2);
-    else if (progress < 80) setPhaseIndex(3);
-    else setPhaseIndex(4);
-  }, [progress]);
-
-  const radius = 70;
-  const stroke = 6;
-  const circumference = 2 * Math.PI * radius;
-  const dashoffset = circumference - (progress / 100) * circumference;
-  const center = radius + stroke + 20; // extra space for orbiting icons
-  const svgSize = center * 2;
-  const orbitRadius = radius + 28;
-
   return (
-    <div className="flex flex-col items-center justify-center pt-10 pb-8">
-      {/* SVG ring + orbiting icons */}
-      <div className="relative" style={{ width: svgSize, height: svgSize }}>
-        <svg width={svgSize} height={svgSize} className="block">
-          {/* Background ring */}
-          <circle
-            cx={center} cy={center} r={radius}
-            fill="none" stroke="var(--border, #e5e7eb)" strokeWidth={stroke}
-            opacity={0.4}
-          />
-          {/* Progress ring */}
-          <circle
-            cx={center} cy={center} r={radius}
-            fill="none"
-            stroke="var(--primary, #0d9488)"
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashoffset}
-            style={{
-              transition: 'stroke-dashoffset 0.3s ease-out',
-              transform: 'rotate(-90deg)',
-              transformOrigin: `${center}px ${center}px`,
-            }}
-          />
-          {/* Glow filter */}
-          <defs>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-          {/* Glowing dot at progress tip */}
-          <circle
-            cx={center + radius * Math.cos(((progress / 100) * 360 - 90) * Math.PI / 180)}
-            cy={center + radius * Math.sin(((progress / 100) * 360 - 90) * Math.PI / 180)}
-            r={4}
-            fill="var(--primary, #0d9488)"
-            filter="url(#glow)"
-            style={{ transition: 'cx 0.3s, cy 0.3s' }}
-          />
-        </svg>
-
-        {/* Percentage text in center */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <motion.span
-            key={Math.round(progress)}
-            className="text-[2rem] font-extrabold"
-            style={{ color: 'var(--primary, #0d9488)' }}
-            initial={{ scale: 1.1, opacity: 0.7 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.15 }}
-          >
-            {Math.round(progress)}%
-          </motion.span>
-        </div>
-
-        {/* Orbiting icons */}
-        {ORBIT_ICONS.map((icon, i) => {
-          const angle = (i / ORBIT_ICONS.length) * 360;
-          return (
-            <motion.div
-              key={icon.emoji}
-              className="absolute flex items-center justify-center"
-              style={{
-                width: 36, height: 36,
-                top: center - 18,
-                left: center - 18,
-                fontSize: '1.1rem',
-              }}
-              animate={{
-                x: Math.cos(((angle + progress * 2) - 90) * Math.PI / 180) * orbitRadius,
-                y: Math.sin(((angle + progress * 2) - 90) * Math.PI / 180) * orbitRadius,
-                scale: [0.85, 1.15, 0.85],
-                opacity: [0.6, 1, 0.6],
-              }}
-              transition={{
-                x: { duration: 0.3, ease: 'easeOut' },
-                y: { duration: 0.3, ease: 'easeOut' },
-                scale: { duration: 2.5, repeat: Infinity, delay: i * 0.4, ease: 'easeInOut' },
-                opacity: { duration: 2.5, repeat: Infinity, delay: i * 0.4, ease: 'easeInOut' },
-              }}
-            >
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center shadow-md"
-                style={{ background: `${icon.color}18`, border: `1.5px solid ${icon.color}40` }}
-              >
-                {icon.emoji}
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* Phase text */}
-      <div className="mt-5 text-center min-h-[48px]">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={phaseIndex}
-            className="font-semibold text-[1rem] text-foreground mb-1"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.3 }}
-          >
-            {t(PHASE_KEYS[phaseIndex])}
-          </motion.p>
-        </AnimatePresence>
-        <p className="text-sm text-gray-400">{t('generatePlan.loaderSubtext')}</p>
-      </div>
-    </div>
+    <SharedPremiumLoader
+      progress={progress}
+      phaseText={getPhaseText(progress, MEAL_GEN_PHASES, t)}
+      subtext={t('generatePlan.loaderSubtext')}
+      fullScreen={false}
+    />
   );
 }
 
