@@ -893,13 +893,28 @@ function filterCleanIngredients(names: string[]): string[] {
   ];
   const measurementWords = [
     'g','gramm','gram','kg','db','ml','dl','evőkanál','evokanal','ek',
-    'teáskanál','teaskanal','tk','csésze','csesze','adag','adagok'
+    'teáskanál','teaskanal','tk','csésze','csesze','adag','adagok',
+    'kanál','kanal','kis','nagy','szelet','gerezd','csipet','bögre','bogre',
+    'csomag','pohár','pohar','marék','marek','darab','fej'
   ];
+
+  // Measurement-prefixed patterns: "evőkanál kendermag" → "kendermag", "2 kanál méz" → "méz"
+  const measurePrefixPattern = /^(?:\d+[.,]?\d*\s*)?(?:evőkanál|evokanal|teáskanál|teaskanal|kanál|kanal|kis kanál|nagy kanál|csésze|csesze|bögre|bogre|csipet|szelet|gerezd|marék|marek|adag|pohár|pohar|fej)\s+/i;
+
+  // Non-food items to completely exclude (prepared dish descriptions, not ingredients)
+  const nonFoodPhrases = [
+    'napi összesen', 'összesen', 'protein + egészséges zsír',
+    'edzés előtti', 'edzés utáni', 'edzés előtt', 'edzés után',
+    'reggeli', 'ebéd', 'vacsora', 'tízórai', 'uzsonna',
+    'i. nap', 'ii. nap', 'iii. nap', 'iv. nap', 'v. nap', 'vi. nap', 'vii. nap',
+    'pihenő nap', 'edzős nap', 'edzés nap',
+  ];
+
   const synonymMap: Record<string, string> = {
-    'fehérje por': 'fehérjepor',
-    'feherje por': 'fehérjepor',
-    'fehérjepor': 'fehérjepor',
-    'feherjepor': 'fehérjepor',
+    'fehérje por': 'fehérjepor', 'feherje por': 'fehérjepor',
+    'fehérjepor': 'fehérjepor', 'feherjepor': 'fehérjepor',
+    'extra szűz olívaolaj': 'olívaolaj', 'extravirgin olivaolaj': 'olívaolaj',
+    'extra virgin olivaolaj': 'olívaolaj', 'extra szuz olivaolaj': 'olívaolaj',
   };
 
   const seen = new Set<string>(); // accent-insensitive key
@@ -911,7 +926,11 @@ function filterCleanIngredients(names: string[]): string[] {
     if (forbidden.test(s)) continue;
 
     // Strip leading quantity (e.g. "220g csirkemell" -> "csirkemell")
-    let base = s.replace(/^\d+[.,]?\d*\s*[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ]*\s+/, '').trim();
+    let base = s.replace(/^\d+[.,]?\d*\s*(?:g|gramm|kg|db|ml|dl)\s+/i, '').trim();
+    if (!base) base = s; // fallback if regex ate everything
+
+    // Strip measurement prefix ("evőkanál kendermag" → "kendermag")
+    base = base.replace(measurePrefixPattern, '').trim();
     if (!base) continue;
 
     // Split on commas, slashes, plus and dashes into candidate tokens
@@ -923,6 +942,9 @@ function filterCleanIngredients(names: string[]): string[] {
     for (let part of parts) {
       let n = part.toLowerCase();
 
+      // Skip non-food phrases
+      if (nonFoodPhrases.some(phrase => n.includes(phrase))) continue;
+
       // Remove category words
       for (const w of categoryWords) {
         n = n.replace(new RegExp(`\\b${w}\\b`, 'gi'), '').trim();
@@ -932,6 +954,9 @@ function filterCleanIngredients(names: string[]): string[] {
       for (const w of measurementWords) {
         n = n.replace(new RegExp(`\\b${w}\\b`, 'gi'), '').trim();
       }
+
+      // Strip any remaining leading numbers + units
+      n = n.replace(/^\d+[.,]?\d*\s*/g, '').trim();
 
       // Collapse whitespace
       n = n.replace(/\s+/g, ' ').trim();
