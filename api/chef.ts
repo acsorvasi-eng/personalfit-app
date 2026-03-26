@@ -206,8 +206,9 @@ export default async function handler(req: any, res: any) {
   if (type === 'recipe') return handleRecipe(req.body, res);
   if (type === 'menu') return handleMenu(req.body, res);
   if (type === 'find-stores') return handleFindStores(req.body, res);
+  if (type === 'daily-menus') return handleDailyMenus(req.body, res);
 
-  return res.status(400).json({ error: 'Missing or invalid type. Use "recipe", "menu", or "find-stores".' });
+  return res.status(400).json({ error: 'Missing or invalid type. Use "recipe", "menu", "find-stores", or "daily-menus".' });
 }
 
 // ─── Nearby grocery stores (Google Places Nearby Search) ────────────────────
@@ -256,4 +257,201 @@ async function handleFindStores(body: any, res: any) {
     console.error('[chef/find-stores] Error:', err.message);
     return res.status(200).json({ stores: [], fallback: true });
   }
+}
+
+// ─── Daily menus scraper (meniulzilei.info + mitegyek.hu) ───────────────────
+
+interface DailyMenuItem {
+  name: string;
+  type?: 'soup' | 'main' | 'dessert' | 'side' | 'other';
+}
+
+interface DailyMenuRestaurant {
+  name: string;
+  address?: string;
+  slug: string;
+  platform: string;
+  menuDate?: string;
+  variants: Array<{
+    name?: string;
+    items: DailyMenuItem[];
+    price?: string;
+  }>;
+  detailUrl?: string;
+}
+
+const dailyMenuCache: Record<string, { data: DailyMenuRestaurant[]; ts: number }> = {};
+const DAILY_CACHE_TTL = 60 * 60 * 1000;
+
+async function handleDailyMenus(body: any, res: any) {
+  const { platform, url, city } = body || {};
+  if (!platform || !url) {
+    return res.status(400).json({ error: 'platform and url are required' });
+  }
+
+  const cacheKey = platform + ':' + (city || url);
+  const cached = dailyMenuCache[cacheKey];
+  if (cached && Date.now() - cached.ts < DAILY_CACHE_TTL) {
+    return res.status(200).json({ restaurants: cached.data, cached: true });
+  }
+
+  try {
+    let restaurants: DailyMenuRestaurant[] = [];
+    if (platform === 'meniulzilei') restaurants = await scrapeMeniulZilei(url, city || '');
+    else if (platform === 'mitegyek') restaurants = await scrapeMitegyek(url);
+    else return res.status(200).json({ restaurants: [], fallback: true });
+
+    dailyMenuCache[cacheKey] = { data: restaurants, ts: Date.now() };
+    console.log('[chef/daily-menus] ' + platform + '/' + city + ': ' + restaurants.length + ' restaurants');
+    return res.status(200).json({ restaurants, cached: false });
+  } catch (err: any) {
+    console.error('[chef/daily-menus] Error:', err.message);
+    return res.status(200).json({ restaurants: [], error: err.message });
+  }
+}
+
+async function fetchPage(pageUrl: string): Promise<string> {
+  const resp = await fetch(pageUrl, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; NuraBot/1.0)',
+      'Accept': 'text/html',
+      'Accept-Language': 'hu,ro,en;q=0.5',
+    },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return resp.text();
+}
+
+function guessItemType(name: string): DailyMenuItem['type'] {
+  const l = name.toLowerCase();
+  if (/\b(sup[aă]|ciorb[aă]|leves|bors|consomm|cr[eé]m[aă])\b/.test(l)) return 'soup';
+  if (/\b(desert|prajit|tort|clatit|fruct|inghetat|rétes|palacsinta|torta|sütemény)\b/.test(l)) return 'dessert';
+  if (/\b(garnit|salat[aă]|orez|cartofi|piure|mamalig|rizs|burgonya)\b/.test(l)) return 'side';
+  return 'main';
+}
+
+// ─── meniulzilei.info ───────────────────────────────────────────────────────
+
+async function scrapeMeniulZilei(baseUrl: string, city: string): Promise<DailyMenuRestaurant[]> {
+  const listHtml = await fetchPage(baseUrl);
+
+  const restPattern = /<h2\s+class="title">\s*<a[^>]*href="[^"]*\/restaurante\/([^/"]+)\/detalii"[^>]*(?:title="([^"]*)")?[^>]*>([^<]*)<\/a>/gi;
+  const rests: Array<{ slug: string; name: string }> = [];
+  let m;
+  while ((m = restPattern.exec(listHtml)) !== null) {
+    rests.push({ slug: m[1], name: m[2] || m[3] || m[1] });
+  }
+
+  const addrPattern = /<span\s+class="icon\s+home"><\/span>\s*([^<]+)/gi;
+  const addrs: string[] = [];
+  while ((m = addrPattern.exec(listHtml)) !== null) addrs.push(m[1].trim());
+
+  const results: DailyMenuRestaurant[] = [];
+  const citySlug = city || baseUrl.split('/')[3] || 'targu-mures';
+  const max = Math.min(rests.length, 15);
+
+  for (let i = 0; i < max; i += 5) {
+    const batch = rests.slice(i, i + 5);
+    const settled = await Promise.allSettled(
+      batch.map(async (r, idx) => {
+        const dUrl = 'https://www.meniulzilei.info/' + citySlug + '/restaurante/' + r.slug + '/daily-menu-list';
+        const html = await fetchPage(dUrl);
+        if (!html || html.length < 50) return null;
+        const parsed = parseMZDaily(html);
+        if (parsed.variants.length === 0) return null;
+        return {
+          name: r.name, address: addrs[i + idx], slug: r.slug, platform: 'meniulzilei',
+          menuDate: parsed.date, variants: parsed.variants,
+          detailUrl: 'https://www.meniulzilei.info/' + citySlug + '/restaurante/' + r.slug + '/detalii',
+        } as DailyMenuRestaurant;
+      })
+    );
+    for (const r of settled) if (r.status === 'fulfilled' && r.value) results.push(r.value);
+  }
+  return results;
+}
+
+function parseMZDaily(html: string): { date?: string; variants: DailyMenuRestaurant['variants'] } {
+  const variants: DailyMenuRestaurant['variants'] = [];
+  const dateMatch = html.match(/<h3\s+class="textToBold"[^>]*>([^<]+)/i);
+  const date = dateMatch?.[1]?.trim();
+
+  const blocks = html.split(/<h3(?:\s[^>]*)?>/).slice(1);
+  for (const block of blocks) {
+    const nameMatch = block.match(/^([^<]+)/);
+    const vName = nameMatch?.[1]?.trim();
+    if (!vName || vName.length > 100) continue;
+
+    if (vName.toLowerCase().startsWith('pret') || vName.toLowerCase().startsWith('preţ')) {
+      const pm = block.match(/<b>([^<]+)<\/b>/);
+      if (pm && variants.length > 0) variants[variants.length - 1].price = pm[1].trim();
+      continue;
+    }
+
+    const items: DailyMenuItem[] = [];
+    const ip = /<li>\s*<span>([^<]+)<\/span>/gi;
+    let im;
+    while ((im = ip.exec(block)) !== null) {
+      const n = im[1].trim();
+      if (n && !n.toLowerCase().includes('paine inclus')) items.push({ name: n, type: guessItemType(n) });
+    }
+
+    const pm = block.match(/<b>([^<]*lei[^<]*)<\/b>/i) || block.match(/<b>(\d+[.,]\d+)<\/b>/);
+    if (items.length > 0) {
+      variants.push({ name: vName.replace(/^varianta\s*/i, 'V'), items, price: pm?.[1]?.trim() });
+    }
+  }
+  return { date, variants };
+}
+
+// ─── mitegyek.hu ────────────────────────────────────────────────────────────
+
+async function scrapeMitegyek(url: string): Promise<DailyMenuRestaurant[]> {
+  const html = await fetchPage(url);
+  const results: DailyMenuRestaurant[] = [];
+
+  const boxPattern = /<div\s+class="dailyBox[^"]*"\s*data-url="\/ettermek\/([^"]+)"[^>]*>([\s\S]*?)(?=<div\s+class="dailyBox|<div\s+class="contentBlock|$)/gi;
+  let bm;
+  while ((bm = boxPattern.exec(html)) !== null) {
+    const slug = bm[1];
+    const boxHtml = bm[2];
+
+    const nm = boxHtml.match(/<h2[^>]*>\s*<a[^>]*>([^<]+)<\/a>/i);
+    const name = nm?.[1]?.trim();
+    if (!name) continue;
+
+    const lm = boxHtml.match(/<\/h2>\s*<span>([^<]+)<\/span>/i);
+    const address = lm?.[1]?.trim();
+
+    const items: DailyMenuItem[] = [];
+    const liPattern = /<li[^>]*>\s*(?:<img[^>]*src="[^"]*\/([^"/.]+)\.svg"[^>]*>)?\s*([^<]+)/gi;
+    let li;
+    while ((li = liPattern.exec(boxHtml)) !== null) {
+      const icon = li[1] || '';
+      const raw = li[2]?.trim();
+      if (!raw) continue;
+      const parts = raw.split('\t');
+      const foodName = parts[0]?.trim();
+      const priceInfo = parts[1]?.trim();
+      if (!foodName) continue;
+
+      let t: DailyMenuItem['type'] = 'other';
+      if (icon.includes('soupe')) t = 'soup';
+      else if (icon.includes('second-course')) t = 'main';
+      else if (icon.includes('dessert')) t = 'dessert';
+      else t = guessItemType(foodName);
+
+      items.push({ name: foodName + (priceInfo ? ' (' + priceInfo + ')' : ''), type: t });
+    }
+
+    if (items.length > 0) {
+      results.push({
+        name, address, slug, platform: 'mitegyek',
+        variants: [{ items }],
+        detailUrl: 'https://www.mitegyek.hu/ettermek/' + slug,
+      });
+    }
+  }
+  return results;
 }
