@@ -6,13 +6,13 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { getTrialInfo } from '../../../components/onboarding/SubscriptionScreen';
 import { generateRecipe, computeWeekContext } from '../../../services/ChefAgentService';
-import { getDailyMenuMatches } from '../../../services/DailyMenuMatcherService';
+import { getDailyMenuMatches, findNearbyRestaurants, getDeliveryLinks } from '../../../services/DailyMenuMatcherService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { RecipeGenerationError } from '../../../services/recipeModels';
 import { translateFoodName } from '../../../utils/foodTranslations';
 import { FoodImage } from '../../../components/FoodImage';
 import type { MealOption } from '../../../hooks/usePlanData';
-import type { ChefAgentOutput, DailyMenuMatch } from '../../../services/recipeModels';
+import type { ChefAgentOutput, DailyMenuMatch, GooglePlaceRestaurant } from '../../../services/recipeModels';
 import type { StoredUserProfile } from '../../../backend/services/UserProfileService';
 
 interface RecipeOverlayProps {
@@ -39,7 +39,11 @@ export function RecipeOverlay({
   const [errorMsg, setErrorMsg] = useState('');
   const [showMealPrep, setShowMealPrep] = useState(false);
   const [canAccess, setCanAccess] = useState<boolean | null>(null);
+  const [realRestaurants, setRealRestaurants] = useState<GooglePlaceRestaurant[]>([]);
+  const [realRestaurantsLoading, setRealRestaurantsLoading] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const recipeLoadingRef = useRef(false);
+  const realRestaurantsLoadedRef = useRef(false);
   const geo = useGeolocation();
 
   // Subscription check
@@ -119,6 +123,51 @@ export function RecipeOverlay({
       setMenuState('error');
     }
   };
+
+  const loadRealRestaurants = async () => {
+    if (realRestaurantsLoadedRef.current || !geo.latitude || !geo.longitude) return;
+    realRestaurantsLoadedRef.current = true;
+    setRealRestaurantsLoading(true);
+    try {
+      const { restaurants, fallback } = await findNearbyRestaurants(
+        translateFoodName(meal.name, language),
+        geo.latitude,
+        geo.longitude,
+      );
+      setRealRestaurants(restaurants);
+      setUseFallback(fallback || restaurants.length === 0);
+    } catch {
+      setUseFallback(true);
+    } finally {
+      setRealRestaurantsLoading(false);
+    }
+  };
+
+  // Load real restaurants when restaurant tab is selected and geo is ready
+  useEffect(() => {
+    if (activeTab === 'restaurant' && geo.latitude && geo.longitude && canAccess === true) {
+      loadRealRestaurants();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, geo.latitude, geo.longitude, canAccess]);
+
+  /** Haversine distance in km between user and restaurant */
+  const distanceKm = (rLat: number | null, rLng: number | null): string | null => {
+    if (!geo.latitude || !geo.longitude || rLat == null || rLng == null) return null;
+    const R = 6371;
+    const dLat = ((rLat - geo.latitude) * Math.PI) / 180;
+    const dLon = ((rLng - geo.longitude) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((geo.latitude * Math.PI) / 180) *
+        Math.cos((rLat * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c;
+    return d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+  };
+
+  const deliveryLinks = getDeliveryLinks('', geo.city || '', geo.country || '');
 
   const difficultyLabel = (d?: string) => {
     if (d === 'easy') return t('recipe.difficultyEasy');
@@ -323,61 +372,147 @@ export function RecipeOverlay({
                   <span className="font-medium">{t('recipe.restaurantsNear')} {geo.city}</span>
                 </div>
               )}
-              <p className="text-sm text-gray-500 italic">{t('recipe.aiEstimateDisclaimer')}</p>
 
-              {menuState === 'loading' && (
-                <div className="flex flex-col items-center py-12 gap-3">
+              {/* Real restaurants from Google Places */}
+              {realRestaurantsLoading && (
+                <div className="flex flex-col items-center py-8 gap-3">
                   <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-gray-400">{t('recipe.chefWorking')}</p>
+                  <p className="text-sm text-gray-400">{t('recipe.searchingRestaurants')}</p>
                 </div>
               )}
 
-              {(menuState === 'error' || (menuState === 'success' && menuMatches.length === 0)) && (
-                <div className="flex flex-col items-center gap-4 py-8">
-                  <p className="text-sm text-gray-400 text-center">{t('recipe.noMenuFound')}</p>
-                  <p className="text-sm text-gray-500 text-center px-4">{t('recipe.restaurantTip')}</p>
-                  <button
-                    onClick={loadMenuMatches}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-semibold"
-                  >
-                    <RefreshCw className="w-4 h-4" />{t('recipe.retry')}
-                  </button>
-                </div>
-              )}
-
-              {menuState === 'success' && menuMatches.map((match, i) => (
-                <div key={i} className="rounded-2xl border border-gray-200 p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{match.restaurantName}</p>
-                      <p className="text-sm text-gray-600">{match.dishName}</p>
-                    </div>
-                    <span className={`text-sm px-2 py-0.5 rounded-lg font-medium flex-shrink-0 ${
-                      match.confidence === 'high' ? 'bg-primary/10 text-primary'
-                      : match.confidence === 'medium' ? 'bg-gray-100 text-gray-600'
-                      : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {match.confidence === 'high' ? t('recipe.accurateLabel') : t('recipe.estimatedLabel')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
-                    {match.estimatedKcal > 0 && <span>🔥 ~{match.estimatedKcal} kcal</span>}
-                    {match.price && <span>💰 {match.price}</span>}
-                    {match.availableFrom && <span>🕐 {match.availableFrom}</span>}
-                  </div>
-                  {match.matchScore > 0 && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full" style={{ width: `${match.matchScore}%` }} />
+              {!realRestaurantsLoading && realRestaurants.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('recipe.realRestaurants')}</p>
+                  {realRestaurants.map((r, i) => {
+                    const dist = distanceKm(r.lat, r.lng);
+                    const directionsUrl = r.placeId
+                      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(r.name)}&destination_place_id=${r.placeId}`
+                      : `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}`;
+                    const restaurantDeliveryLinks = getDeliveryLinks(r.name, geo.city || '', geo.country || '');
+                    return (
+                      <div key={r.placeId || i} className="rounded-2xl border border-gray-200 p-4 space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground truncate">{r.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{r.address}</p>
+                          </div>
+                          {r.openNow != null && (
+                            <span className={`text-xs px-2 py-0.5 rounded-lg font-medium flex-shrink-0 ${
+                              r.openNow ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+                            }`}>
+                              {r.openNow ? t('recipe.openNow') : t('recipe.closed')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+                          {r.rating != null && (
+                            <span className="flex items-center gap-0.5">
+                              <span className="text-yellow-500">{'★'.repeat(Math.round(r.rating))}</span>
+                              <span className="text-xs">{r.rating.toFixed(1)}</span>
+                            </span>
+                          )}
+                          {r.priceLevel != null && (
+                            <span>{'$'.repeat(r.priceLevel)}</span>
+                          )}
+                          {dist && <span>{dist}</span>}
+                        </div>
+                        {/* Action buttons */}
+                        <div className="flex gap-2 flex-wrap">
+                          <a
+                            href={directionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary/90 transition-colors"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {t('recipe.directions')}
+                          </a>
+                          {restaurantDeliveryLinks.map(link => (
+                            <a
+                              key={link.name}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                              style={{ backgroundColor: `${link.color}20`, color: link.color }}
+                            >
+                              {link.name}
+                              <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                            </a>
+                          ))}
+                        </div>
                       </div>
-                      <span className="text-sm text-gray-500">{match.matchScore}% {t('recipe.matchScore')}</span>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* No real restaurants found message */}
+              {!realRestaurantsLoading && realRestaurants.length === 0 && !useFallback && geo.latitude && (
+                <p className="text-sm text-gray-400 text-center py-4">{t('recipe.noRestaurantsFound')}</p>
+              )}
+
+              {/* AI-generated fallback suggestions */}
+              {useFallback && (
+                <>
+                  <p className="text-sm text-gray-500 italic">{t('recipe.aiEstimateDisclaimer')}</p>
+
+                  {menuState === 'loading' && (
+                    <div className="flex flex-col items-center py-8 gap-3">
+                      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-sm text-gray-400">{t('recipe.chefWorking')}</p>
                     </div>
                   )}
-                </div>
-              ))}
+
+                  {(menuState === 'error' || (menuState === 'success' && menuMatches.length === 0)) && (
+                    <div className="flex flex-col items-center gap-4 py-4">
+                      <p className="text-sm text-gray-400 text-center">{t('recipe.noMenuFound')}</p>
+                      <p className="text-sm text-gray-500 text-center px-4">{t('recipe.restaurantTip')}</p>
+                      <button
+                        onClick={loadMenuMatches}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-sm font-semibold"
+                      >
+                        <RefreshCw className="w-4 h-4" />{t('recipe.retry')}
+                      </button>
+                    </div>
+                  )}
+
+                  {menuState === 'success' && menuMatches.map((match, i) => (
+                    <div key={i} className="rounded-2xl border border-gray-200 p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-sm text-foreground">{match.restaurantName}</p>
+                          <p className="text-sm text-gray-600">{match.dishName}</p>
+                        </div>
+                        <span className={`text-sm px-2 py-0.5 rounded-lg font-medium flex-shrink-0 ${
+                          match.confidence === 'high' ? 'bg-primary/10 text-primary'
+                          : match.confidence === 'medium' ? 'bg-gray-100 text-gray-600'
+                          : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {match.confidence === 'high' ? t('recipe.accurateLabel') : t('recipe.estimatedLabel')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+                        {match.estimatedKcal > 0 && <span>🔥 ~{match.estimatedKcal} kcal</span>}
+                        {match.price && <span>💰 {match.price}</span>}
+                        {match.availableFrom && <span>🕐 {match.availableFrom}</span>}
+                      </div>
+                      {match.matchScore > 0 && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${match.matchScore}%` }} />
+                          </div>
+                          <span className="text-sm text-gray-500">{match.matchScore}% {t('recipe.matchScore')}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
 
               {/* Google Maps search button - always shown when not loading */}
-              {menuState !== 'loading' && (
+              {!realRestaurantsLoading && menuState !== 'loading' && (
                 <a
                   href={
                     geo.latitude && geo.longitude
@@ -389,7 +524,7 @@ export function RecipeOverlay({
                   className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
                   <MapPin className="w-4 h-4" />
-                  {t('recipe.searchNearby')}
+                  {t('recipe.openInMaps')}
                   <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </a>
               )}

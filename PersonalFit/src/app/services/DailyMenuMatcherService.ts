@@ -1,6 +1,6 @@
 // PersonalFit/src/app/services/DailyMenuMatcherService.ts
 import { getDB } from '../backend/db';
-import type { DailyMenuMatch, DailyMenuCacheEntry } from './recipeModels';
+import type { DailyMenuMatch, DailyMenuCacheEntry, GooglePlaceRestaurant } from './recipeModels';
 import { apiBase } from '../../lib/api';
 
 const CITY_DEFAULTS: Record<string, string> = {
@@ -70,4 +70,79 @@ export async function getDailyMenuMatches(
   await db.put('daily_menu_cache', entry);
 
   return matches;
+}
+
+/**
+ * Search for real nearby restaurants using Google Places API via the chef-review endpoint.
+ * Returns an empty array (with fallback=true) if no GOOGLE_PLACES_API_KEY is configured.
+ */
+export async function findNearbyRestaurants(
+  mealName: string,
+  lat: number,
+  lng: number,
+  radius?: number,
+): Promise<{ restaurants: GooglePlaceRestaurant[]; fallback: boolean }> {
+  try {
+    const response = await fetch(`${apiBase}/api/chef-review`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'find-restaurants',
+        mealName,
+        lat,
+        lng,
+        radius: radius ?? 5000,
+      }),
+    });
+
+    if (!response.ok) {
+      return { restaurants: [], fallback: true };
+    }
+
+    const data = await response.json();
+    return {
+      restaurants: Array.isArray(data.restaurants) ? data.restaurants : [],
+      fallback: data.fallback ?? true,
+    };
+  } catch {
+    return { restaurants: [], fallback: true };
+  }
+}
+
+/**
+ * Generate food delivery deep links based on country.
+ * RO: Bolt Food + Glovo
+ * HU: Bolt Food + Wolt
+ * Other: Bolt Food + Wolt
+ */
+export function getDeliveryLinks(
+  restaurantName: string,
+  city: string,
+  country: string,
+): Array<{ name: string; url: string; color: string }> {
+  const q = encodeURIComponent(`${restaurantName} ${city}`);
+  const citySlug = encodeURIComponent(city.toLowerCase().replace(/\s+/g, '-'));
+  const countryLower = country.toLowerCase();
+
+  const bolt = {
+    name: 'Bolt Food',
+    url: `https://food.bolt.eu/en-US/search?q=${q}`,
+    color: '#34D186',
+  };
+  const glovo = {
+    name: 'Glovo',
+    url: `https://glovoapp.com/${countryLower.startsWith('ro') ? 'ro' : 'hu'}/ro/${citySlug}/?search=${q}`,
+    color: '#FFC244',
+  };
+  const wolt = {
+    name: 'Wolt',
+    url: `https://wolt.com/${countryLower.startsWith('hu') ? 'hu' : 'en'}/hun/${citySlug}/search?q=${q}`,
+    color: '#009DE0',
+  };
+
+  if (countryLower.startsWith('ro') || countryLower === 'romania' || countryLower === 'románia') {
+    return [bolt, glovo];
+  }
+  // Hungary or default
+  return [bolt, wolt];
 }

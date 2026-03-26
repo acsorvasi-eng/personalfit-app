@@ -65,9 +65,10 @@ export default async function handler(req: any, res: any) {
   try {
     const { type } = req.body || {};
 
-    // Route recipe / menu requests (merged from former api/chef.ts)
+    // Route recipe / menu / restaurant requests (merged from former api/chef.ts)
     if (type === 'recipe') return handleRecipe(req, res);
     if (type === 'menu')   return handleMenu(req, res);
+    if (type === 'find-restaurants') return handleFindRestaurants(req, res);
 
     // Default: seasonal review (original chef-review behaviour)
     const {
@@ -259,6 +260,58 @@ Keep steps concise (max 6-8 steps). Use everyday language.`;
   }
 
   return res.status(200).json(parsed);
+}
+
+// ─── Google Places restaurant finder ─────────────────────────────────────────
+
+async function handleFindRestaurants(req: any, res: any) {
+  const { mealName, lat, lng, radius = 5000 } = req.body;
+
+  if (!mealName || lat == null || lng == null) {
+    return res.status(400).json({ error: 'mealName, lat, lng are required' });
+  }
+
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+  // If no API key configured, return empty so the client falls back to AI suggestions
+  if (!apiKey) {
+    console.log('[chef-review/find-restaurants] No GOOGLE_PLACES_API_KEY set — returning empty');
+    return res.status(200).json({ restaurants: [], fallback: true });
+  }
+
+  try {
+    const query = encodeURIComponent(`${mealName} restaurant`);
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&type=restaurant&key=${apiKey}`;
+
+    console.log(`[chef-review/find-restaurants] Searching: "${mealName}" near ${lat},${lng} radius=${radius}`);
+
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      console.error(`[chef-review/find-restaurants] Google Places HTTP ${resp.status}`);
+      return res.status(200).json({ restaurants: [], fallback: true });
+    }
+
+    const data = await resp.json();
+    const results = (data.results ?? []).slice(0, 8);
+
+    const restaurants = results.map((place: any) => ({
+      name: place.name ?? '',
+      address: place.formatted_address ?? '',
+      rating: place.rating ?? null,
+      priceLevel: place.price_level ?? null,
+      placeId: place.place_id ?? '',
+      lat: place.geometry?.location?.lat ?? null,
+      lng: place.geometry?.location?.lng ?? null,
+      photoRef: place.photos?.[0]?.photo_reference ?? null,
+      openNow: place.opening_hours?.open_now ?? null,
+    }));
+
+    console.log(`[chef-review/find-restaurants] Found ${restaurants.length} restaurants`);
+    return res.status(200).json({ restaurants, fallback: false });
+  } catch (err: any) {
+    console.error('[chef-review/find-restaurants] Error:', err.message);
+    return res.status(200).json({ restaurants: [], fallback: true });
+  }
 }
 
 // ─── Menu / restaurant matcher handler (merged from api/chef.ts) ────────────

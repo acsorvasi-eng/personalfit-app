@@ -53,6 +53,18 @@ export interface DailyMenuMatch {
   confidence: 'high' | 'medium' | 'low';
 }
 
+export interface GooglePlaceRestaurant {
+  name: string;
+  address: string;
+  rating: number | null;
+  priceLevel: number | null;
+  placeId: string;
+  lat: number | null;
+  lng: number | null;
+  photoRef: string | null;
+  openNow: boolean | null;
+}
+
 export interface RecipeCacheEntry {
   cacheKey: string;
   userId: string;
