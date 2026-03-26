@@ -342,6 +342,11 @@ const ro: LocalePartial = {
   'upload.phase.finishing': 'Ultimele retușuri...',
   'upload.phase.done': 'Gata!',
   'upload.subtext': 'Procesăm planul alimentar de la dietetician',
+
+  // Daily menus in RecipeOverlay
+  'recipe.loadingDailyMenus': 'Căutare meniuri zilnice...',
+  'recipe.dailyMenusTitle': 'Meniuri zilnice lângă tine',
+  'recipe.viewMenu': 'Vezi meniul',
 };
 
 export default ro;

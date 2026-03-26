@@ -415,6 +415,11 @@ const hu = {
   'upload.phase.finishing': 'Utolsó simítások...',
   'upload.phase.done': 'Kész!',
   'upload.subtext': 'Dietetikus étrendet dolgozzuk fel',
+
+  // Daily menus in RecipeOverlay
+  'recipe.loadingDailyMenus': 'Napi menük keresése...',
+  'recipe.dailyMenusTitle': 'Napi menük a közeledben',
+  'recipe.viewMenu': 'Menü megtekintése',
 } as const;
 
 export default hu;

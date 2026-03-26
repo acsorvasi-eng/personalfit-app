@@ -8,6 +8,7 @@ import { getTrialInfo } from '../../../components/onboarding/SubscriptionScreen'
 import { generateRecipe, computeWeekContext } from '../../../services/ChefAgentService';
 import { getDailyMenuMatches, findNearbyRestaurants, getDeliveryLinks } from '../../../services/DailyMenuMatcherService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
+import { useDailyMenus, type DailyMenuRestaurant } from '../../../hooks/useDailyMenus';
 import { RecipeGenerationError } from '../../../services/recipeModels';
 import { translateFoodName } from '../../../utils/foodTranslations';
 import { FoodImage } from '../../../components/FoodImage';
@@ -45,6 +46,7 @@ export function RecipeOverlay({
   const recipeLoadingRef = useRef(false);
   const realRestaurantsLoadedRef = useRef(false);
   const geo = useGeolocation();
+  const dailyMenus = useDailyMenus(geo.latitude, geo.longitude);
 
   // Subscription check
   useEffect(() => {
@@ -371,6 +373,75 @@ export function RecipeOverlay({
                   <MapPin className="w-3.5 h-3.5 text-primary" />
                   <span className="font-medium">{t('recipe.restaurantsNear')} {geo.city}</span>
                 </div>
+              )}
+
+              {/* ─── Real daily menus from meniulzilei / mitegyek ─── */}
+              {dailyMenus.loading && (
+                <div className="flex items-center gap-2 py-3">
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-gray-400">{t('recipe.loadingDailyMenus') || 'Napi menük keresése...'}</p>
+                </div>
+              )}
+
+              {!dailyMenus.loading && dailyMenus.restaurants.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wider">
+                    🍽️ {t('recipe.dailyMenusTitle') || 'Napi menük a közeledben'}
+                  </p>
+                  {dailyMenus.restaurants.slice(0, 5).map((r, i) => (
+                    <div key={r.slug + i} className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2.5">
+                      <div className="flex items-start gap-3">
+                        {/* Food image for the first menu item */}
+                        {r.variants[0]?.items[0] && (
+                          <div className="flex-shrink-0">
+                            <FoodImage
+                              foodName={r.variants[0].items.find(it => it.type === 'main')?.name || r.variants[0].items[0].name}
+                              size="md"
+                              fallbackEmoji="🍲"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-foreground">{r.name}</p>
+                          {r.address && <p className="text-xs text-gray-500 truncate">{r.address}</p>}
+                          {r.menuDate && <p className="text-xs text-primary/70 italic">{r.menuDate}</p>}
+                        </div>
+                      </div>
+
+                      {/* Menu variants */}
+                      {r.variants.map((v, vi) => (
+                        <div key={vi} className="space-y-1">
+                          {v.name && <p className="text-xs font-semibold text-gray-600">{v.name}</p>}
+                          {v.items.map((item, ii) => (
+                            <div key={ii} className="flex items-center gap-2">
+                              <span className="text-xs">
+                                {item.type === 'soup' ? '🥣' : item.type === 'main' ? '🍖' : item.type === 'dessert' ? '🍰' : '•'}
+                              </span>
+                              <span className="text-sm text-gray-700">{item.name}</span>
+                            </div>
+                          ))}
+                          {v.price && (
+                            <p className="text-sm font-bold text-primary mt-1">💰 {v.price}</p>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Detail link */}
+                      {r.detailUrl && (
+                        <a
+                          href={r.detailUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-xs text-primary font-semibold"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          {t('recipe.viewMenu') || 'Menü megtekintése'}
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                  <div className="h-px bg-gray-200 my-1" />
+                </>
               )}
 
               {/* Real restaurants from Google Places */}

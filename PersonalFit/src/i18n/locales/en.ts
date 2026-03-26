@@ -342,6 +342,11 @@ const en: LocalePartial = {
   'upload.phase.finishing': 'Final touches...',
   'upload.phase.done': 'Done!',
   'upload.subtext': 'Processing your dietician meal plan',
+
+  // Daily menus in RecipeOverlay
+  'recipe.loadingDailyMenus': 'Searching daily menus...',
+  'recipe.dailyMenusTitle': 'Daily menus near you',
+  'recipe.viewMenu': 'View menu',
 };
 
 export default en;
