@@ -313,9 +313,11 @@ export function Profile() {
       : 10 * profile.weight + 6.25 * profile.height - 5 * profile.age - 161)
     : 0;
 
-  const activityMultiplier = profile.activityLevel === "Alacsony" ? 1.2 :
-    profile.activityLevel === "Közepes" ? 1.55 :
-      profile.activityLevel === "Magas" ? 1.725 : 1.55;
+  const activityMultiplier =
+    (profile.activityLevel === 'sedentary' || profile.activityLevel === 'Alacsony') ? 1.2 :
+    (profile.activityLevel === 'light' || profile.activityLevel === 'Konnyu') ? 1.375 :
+    (profile.activityLevel === 'moderate' || profile.activityLevel === 'Kozepes') ? 1.55 :
+    (profile.activityLevel === 'active' || profile.activityLevel === 'Magas' || profile.activityLevel === 'Nagyon magas') ? 1.725 : 1.55;
 
   const dailyCalories = Math.round(bmr * activityMultiplier);
 
@@ -329,8 +331,8 @@ export function Profile() {
   }
 
   const targetCalories = profile.calorieTarget ?? (
-    profile.goal === "Fogyás" ? dailyCalories - 500 :
-    profile.goal === "Súlygyarapodás" ? dailyCalories + 500 : dailyCalories
+    (profile.goal === 'lose' || profile.goal === 'Fogyás') ? dailyCalories - 500 :
+    (profile.goal === 'gain' || profile.goal === 'Súlygyarapodás') ? dailyCalories + 500 : dailyCalories
   );
 
   // Chart data
@@ -718,11 +720,10 @@ export function Profile() {
           <label className="text-xs text-gray-500 block mb-2">{t('profile.activityLevel')}</label>
           <div className="flex flex-wrap gap-2">
             {[
-              { key: 'Alacsony', labelKey: 'profile.activitySedentary' },
-              { key: 'Konnyu', labelKey: 'profile.activityLight' },
-              { key: 'Kozepes', labelKey: 'profile.activityModerate' },
-              { key: 'Magas', labelKey: 'profile.activityActive' },
-              { key: 'Nagyon magas', labelKey: 'profile.activityVeryActive' },
+              { key: 'sedentary', labelKey: 'profile.activitySedentary' },
+              { key: 'light', labelKey: 'profile.activityLight' },
+              { key: 'moderate', labelKey: 'profile.activityModerate' },
+              { key: 'active', labelKey: 'profile.activityActive' },
             ].map(({ key, labelKey }) => (
               <button key={key} type="button" onClick={() => { setProfile((p) => ({ ...p, activityLevel: key })); saveUserProfile({ activityLevel: key }).then(() => { window.dispatchEvent(new Event('profileUpdated')); showToast(t('toast.saved')); }); }} style={{ padding: '0.4rem 0.75rem', borderRadius: 999, border: 'none', background: profile.activityLevel === key ? '#f3f4f6' : 'transparent', color: profile.activityLevel === key ? '#111827' : '#6b7280', fontWeight: profile.activityLevel === key ? 600 : 400, fontSize: '0.8125rem' }}>{t(labelKey)}</button>
             ))}
