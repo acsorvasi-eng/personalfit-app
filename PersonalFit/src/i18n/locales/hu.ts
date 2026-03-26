@@ -403,6 +403,18 @@ const hu = {
   'wizard.genPhase4': 'Séf felülvizsgálat...',
   'wizard.genPhase5': 'Utolsó simítások...',
   'wizard.genSubtext': 'Valós receptek alapján, a megadott alapanyagokból',
+
+  // Upload own plan
+  'wizard.uploadOwnPlan': 'Van már étrendem →',
+
+  // Upload progress phases (unified loader)
+  'upload.phase.reading': 'Fájl beolvasása...',
+  'upload.phase.parsing': 'AI elemzés folyamatban...',
+  'upload.phase.foods': 'Ételek felismerése...',
+  'upload.phase.meals': 'Menük összeállítása...',
+  'upload.phase.finishing': 'Utolsó simítások...',
+  'upload.phase.done': 'Kész!',
+  'upload.subtext': 'Dietetikus étrendet dolgozzuk fel',
 } as const;
 
 export default hu;

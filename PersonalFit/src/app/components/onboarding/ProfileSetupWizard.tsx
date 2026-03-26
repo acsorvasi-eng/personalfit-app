@@ -49,6 +49,7 @@ import { callChefReview } from './callChefReview';
 import { useGeolocation } from '../../hooks/useGeolocation';
 import { useNearbyStores, buildStoreMapUrl, type NearbyStore } from '../../hooks/useNearbyStores';
 import type { FoodCategoryId } from '../../data/chainCatalog';
+import { DataUploadSheet } from '../DataUploadSheet';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -528,6 +529,9 @@ export function ProfileSetupWizard() {
   // Nearby stores (geolocation + Google Places)
   const geo = useGeolocation();
   const { stores: nearbyStores, getStoresForFood } = useNearbyStores(geo.latitude, geo.longitude);
+
+  // PDF upload state (dietician plan)
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
 
   // Step 1: Personal
   const [gender, setGender] = useState<Gender>('male');
@@ -1125,10 +1129,7 @@ export function ProfileSetupWizard() {
               {/* Upload own plan option — show on food style step */}
               {step === 1 && (
                 <button
-                  onClick={() => {
-                    // Navigate to menu and let user upload from there
-                    navigate('/menu', { replace: true });
-                  }}
+                  onClick={() => setShowUploadSheet(true)}
                   className="w-full text-center text-sm text-gray-500 mt-2 py-2"
                 >
                   {t('wizard.uploadOwnPlan') || 'Van már étrendem →'}
@@ -1151,6 +1152,43 @@ export function ProfileSetupWizard() {
           )}
         </div>
       )}
+
+      {/* DataUploadSheet — dietician plan upload */}
+      <DataUploadSheet
+        open={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onComplete={async () => {
+          // Dietician plan uploaded successfully — save basic profile and skip AI generation
+          setShowUploadSheet(false);
+
+          // Save profile with current wizard values (even partial)
+          const mealSettings = getDefaultMealSettings();
+          mealSettings.mealCount = mealCount;
+          await saveUserProfile({
+            name: user?.name ?? '',
+            gender,
+            age,
+            weight,
+            height,
+            goal,
+            activityLevel: activity,
+            calorieTarget: dailyTarget,
+            waterGoalMl: Math.round(waterLiters * 1000),
+            wakeTime,
+            bedtime,
+            sleepCycles: selectedCycles,
+            dietaryPreferences: 'omnivore',
+            mealSettings,
+          });
+          await saveMealSettings(mealSettings);
+          await setSetting('planSource', 'dietician_upload');
+
+          // Mark onboarding as complete
+          setHasPlanSetup(true);
+          setHasCompletedFullFlow(true);
+          navigate('/menu', { replace: true });
+        }}
+      />
     </div>
   );
 }

@@ -33,7 +33,7 @@ import { DSMButton } from './dsm';
 import { useLanguage } from '../contexts/LanguageContext';
 import { MergeConflictDialog } from './MergeConflictDialog';
 import { MealIntervals } from '../features/menu/components/MealIntervals';
-import { ImportProgressUI } from './ImportProgressUI';
+import SharedPremiumLoader, { getPhaseText } from './PremiumLoader';
 import * as NutritionPlanService from '../backend/services/NutritionPlanService';
 import * as FoodCatalogService from '../backend/services/FoodCatalogService';
 import { showToast } from '../shared/components/Toast';
@@ -62,6 +62,19 @@ const ACCEPTED_TYPES = [
   'image/*',
 ].join(',');
 
+
+// ═══════════════════════════════════════════════════════════════
+// Upload phase labels for SharedPremiumLoader
+// ═══════════════════════════════════════════════════════════════
+
+const UPLOAD_PHASES = [
+  { threshold: 0,  key: 'upload.phase.reading' },
+  { threshold: 15, key: 'upload.phase.parsing' },
+  { threshold: 35, key: 'upload.phase.foods' },
+  { threshold: 55, key: 'upload.phase.meals' },
+  { threshold: 75, key: 'upload.phase.finishing' },
+  { threshold: 90, key: 'upload.phase.done' },
+];
 
 // ═══════════════════════════════════════════════════════════════
 // COMPONENT
@@ -354,20 +367,40 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
           </motion.div>
 
           {showImportProgress && (
-            <ImportProgressUI
-              isLoading={upload.isLoading}
-              stats={upload.importStats}
-              mode={strategy === 'foodsOnly' ? 'quick' : 'full'}
-              onContinue={() => {
-                setShowImportProgress(false);
-                if (strategy === 'foodsOnly') {
-                  // Gyors mód: lépjünk az ételek fülre.
-                  window.location.assign('/foods');
-                } else {
-                  handleDone();
-                }
-              }}
-            />
+            <div className="fixed inset-0 z-[300] bg-white flex flex-col items-center justify-center">
+              <SharedPremiumLoader
+                progress={upload.progress ?? 0}
+                phaseText={getPhaseText(upload.progress ?? 0, UPLOAD_PHASES, t)}
+                subtext={t('upload.subtext') || 'A dietetikus étrendet feldolgozzuk...'}
+                fullScreen={false}
+              />
+              {upload.step === 'complete' && (
+                <button
+                  onClick={() => {
+                    setShowImportProgress(false);
+                    if (strategy === 'foodsOnly') {
+                      window.location.assign('/foods');
+                    } else {
+                      handleDone();
+                    }
+                  }}
+                  className="mt-6 px-8 py-3 bg-primary text-white font-semibold rounded-2xl text-base"
+                >
+                  {t('common.continue') || 'Tovább'}
+                </button>
+              )}
+              {upload.step === 'error' && (
+                <div className="mt-6 text-center px-6">
+                  <p className="text-sm text-red-500 mb-3">{upload.error || 'Hiba történt'}</p>
+                  <button
+                    onClick={() => setShowImportProgress(false)}
+                    className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-2xl text-sm"
+                  >
+                    {t('common.back') || 'Vissza'}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {showMergeDialog && (

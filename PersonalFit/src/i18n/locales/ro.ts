@@ -330,6 +330,18 @@ const ro: LocalePartial = {
   'wizard.genPhase4': 'Revizuire de chef...',
   'wizard.genPhase5': 'Ultimele retușuri...',
   'wizard.genSubtext': 'Pe baza rețetelor reale, din ingredientele tale',
+
+  // Upload own plan
+  'wizard.uploadOwnPlan': 'Am deja un plan alimentar →',
+
+  // Upload progress phases (unified loader)
+  'upload.phase.reading': 'Citire fișier...',
+  'upload.phase.parsing': 'Analiză AI în curs...',
+  'upload.phase.foods': 'Recunoaștere alimente...',
+  'upload.phase.meals': 'Compunere meniuri...',
+  'upload.phase.finishing': 'Ultimele retușuri...',
+  'upload.phase.done': 'Gata!',
+  'upload.subtext': 'Procesăm planul alimentar de la dietetician',
 };
 
 export default ro;

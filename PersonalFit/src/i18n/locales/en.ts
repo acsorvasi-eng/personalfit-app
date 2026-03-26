@@ -330,6 +330,18 @@ const en: LocalePartial = {
   'wizard.genPhase4': 'Chef review...',
   'wizard.genPhase5': 'Final touches...',
   'wizard.genSubtext': 'Based on real recipes, from your ingredients',
+
+  // Upload own plan
+  'wizard.uploadOwnPlan': 'I already have a meal plan →',
+
+  // Upload progress phases (unified loader)
+  'upload.phase.reading': 'Reading file...',
+  'upload.phase.parsing': 'AI analysis in progress...',
+  'upload.phase.foods': 'Recognizing foods...',
+  'upload.phase.meals': 'Building menus...',
+  'upload.phase.finishing': 'Final touches...',
+  'upload.phase.done': 'Done!',
+  'upload.subtext': 'Processing your dietician meal plan',
 };
 
 export default en;

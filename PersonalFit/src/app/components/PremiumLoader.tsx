@@ -144,7 +144,7 @@ export default function PremiumLoader({ progress, phaseText, subtext, fullScreen
       </div>
 
       {/* Phase text */}
-      <div className="mt-5 text-center min-h-[48px]">
+      <div className="mt-5 text-center min-h-[48px] px-6 max-w-sm">
         <AnimatePresence mode="wait">
           <motion.p
             key={phaseText}
@@ -168,8 +168,8 @@ export default function PremiumLoader({ progress, phaseText, subtext, fullScreen
 function FullScreenWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="fixed inset-0 z-[300] bg-white flex flex-col items-center justify-center"
-      style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}
+      className="fixed inset-0 z-[300] bg-white flex flex-col items-center justify-center px-6"
+      style={{ paddingTop: 'env(safe-area-inset-top, 20px)', paddingBottom: 'env(safe-area-inset-bottom, 20px)' }}
     >
       {children}
     </div>
