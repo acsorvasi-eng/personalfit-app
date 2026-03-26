@@ -100,7 +100,7 @@ export function PageHeader({
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.875rem", color: "rgba(255,255,255,0.8)" }}>{subtitle}</p>
           )}
         </div>
-        {action != null && <div style={{ flexShrink: 0 }}>{action}</div>}
+        {action != null && <div style={{ flexShrink: 0, marginRight: onClose ? '2.5rem' : 0 }}>{action}</div>}
       </div>
       {stats != null && stats.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(stats.length, 4)}, 1fr)`, gap: "0.5rem", marginTop: "0.75rem" }}>
