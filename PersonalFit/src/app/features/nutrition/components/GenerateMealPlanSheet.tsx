@@ -548,6 +548,18 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       }
       const plan = await NutritionPlanSvc.importFromAIParse(planToSave, label);
       await NutritionPlanSvc.activatePlan(plan.id);
+
+      // Fire-and-forget cloud sync for cross-device access
+      if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {
+        NutritionPlanSvc.exportActivePlan().then(exported => {
+          if (exported) {
+            import('../../../services/userFirestoreService').then(({ syncPlanToCloud }) => {
+              syncPlanToCloud(user.id, exported).catch(() => {});
+            });
+          }
+        }).catch(() => {});
+      }
+
       setStep("done");
       toast.success(t('generatePlan.dietSaved'));
       setTimeout(() => { onSaved(); handleClose(); }, 1400);

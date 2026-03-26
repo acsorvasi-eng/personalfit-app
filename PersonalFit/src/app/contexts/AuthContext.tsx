@@ -26,6 +26,17 @@ import {
   cancelSubscription as cancelSub,
 } from '../services/paymentService';
 import { getSetting, setSetting } from '../backend/services/SettingsService';
+import { getUserProfile, saveUserProfile } from '../backend/services/UserProfileService';
+import { getActivePlan } from '../backend/services/NutritionPlanService';
+import {
+  loadProfileFromCloud,
+  loadSettingsFromCloud,
+  loadPlanSummaryFromCloud,
+  syncProfileToCloud,
+  syncSettingsToCloud,
+  syncPlanSummaryToCloud,
+  type PlanSummary,
+} from '../services/userFirestoreService';
 
 interface AuthContextType {
   // User state
@@ -159,6 +170,129 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       stopLoading();
     });
   }, []);
+
+  // ─── Cross-device sync: pull from cloud on login, push to cloud ───
+  useEffect(() => {
+    if (!user || isLoading) return;
+    // Only sync for real authenticated users (not local/demo)
+    if (user.provider === 'local' || user.provider === 'demo') return;
+
+    const uid = user.id;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // 1. Profile sync
+        const localProfile = await getUserProfile();
+        const localIsEmpty = !localProfile.name && !localProfile.weight && !localProfile.age;
+
+        if (localIsEmpty) {
+          // New device — try importing from cloud
+          const cloudProfile = await loadProfileFromCloud(uid);
+          if (cloudProfile && !cancelled) {
+            // Strip the 'id' field — local always uses 'current'
+            const { id: _ignore, ...rest } = cloudProfile;
+            await saveUserProfile(rest);
+            console.log('[CloudSync] Imported profile from cloud');
+          }
+        } else {
+          // Local has data — push to cloud in background
+          syncProfileToCloud(uid, localProfile).catch(() => {});
+        }
+
+        // 2. Settings sync
+        const SYNC_KEYS = [
+          'language', 'theme', 'hasCompletedOnboarding', 'hasCompletedFullFlow',
+          'hasPlanSetup', 'userSports',
+        ];
+
+        const localSettings: Record<string, string> = {};
+        let localSettingsEmpty = true;
+        for (const key of SYNC_KEYS) {
+          const val = await getSetting(key);
+          if (val) {
+            localSettings[key] = val;
+            localSettingsEmpty = false;
+          }
+        }
+
+        if (localSettingsEmpty) {
+          const cloudSettings = await loadSettingsFromCloud(uid);
+          if (cloudSettings && !cancelled) {
+            for (const [key, val] of Object.entries(cloudSettings)) {
+              if (val) await setSetting(key, val);
+            }
+            // Update React state from restored settings
+            if (cloudSettings.hasCompletedFullFlow === 'true') setHasCompletedFullFlowState(true);
+            if (cloudSettings.hasPlanSetup === 'true') setHasPlanSetup(true);
+            console.log('[CloudSync] Imported settings from cloud');
+          }
+        } else {
+          syncSettingsToCloud(uid, localSettings).catch(() => {});
+        }
+
+        // 3. Plan summary sync
+        const activePlan = await getActivePlan();
+        if (activePlan) {
+          const localProfile2 = await getUserProfile();
+          const summary: PlanSummary = {
+            planName: activePlan.label,
+            createdAt: activePlan.created_at,
+            isActive: true,
+            calorieTarget: localProfile2.calorieTarget ?? null,
+            mealCount: localProfile2.mealSettings?.mealCount ?? null,
+          };
+          syncPlanSummaryToCloud(uid, summary).catch(() => {});
+        } else {
+          // No local plan — check if cloud has one (informational)
+          const cloudSummary = await loadPlanSummaryFromCloud(uid);
+          if (cloudSummary && !cancelled) {
+            console.log('[CloudSync] Cloud has plan summary:', cloudSummary.planName, '— re-generate on this device if needed');
+          }
+        }
+      } catch (err) {
+        console.warn('[CloudSync] Sync failed (non-fatal):', err);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, isLoading]);
+
+  // ─── Cross-device plan sync: restore from cloud on login ─────
+  // Runs when user becomes authenticated. If no local plan exists,
+  // tries to load one from Firestore and import it locally.
+  useEffect(() => {
+    if (!user || user.provider === 'local' || user.provider === 'demo') return;
+    if (isLoading) return; // wait for init to finish
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getActivePlan, importFromAIParse, activatePlan } =
+          await import('../backend/services/NutritionPlanService');
+        const localPlan = await getActivePlan();
+        if (localPlan || cancelled) return; // already have a plan locally
+
+        const { loadPlanFromCloud } = await import('../services/userFirestoreService');
+        const cloudData = await loadPlanFromCloud(user.id);
+        if (!cloudData?.parsed || cancelled) return;
+
+        console.log('[AuthContext] No local plan found — restoring from cloud');
+        const plan = await importFromAIParse(
+          cloudData.parsed,
+          cloudData.planMeta?.label || 'Cloud sync plan',
+        );
+        await activatePlan(plan.id);
+        setHasPlanSetup(true);
+        setSetting('hasPlanSetup', 'true').catch(() => {});
+        console.log('[AuthContext] Cloud plan restored, id:', plan.id);
+      } catch (err) {
+        console.warn('[AuthContext] Cloud plan restore failed (non-fatal):', err);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setHasCompletedFullFlow = useCallback((v: boolean) => {
     setHasCompletedFullFlowState(v);

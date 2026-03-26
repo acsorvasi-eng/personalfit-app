@@ -869,11 +869,22 @@ export function ProfileSetupWizard() {
               console.warn('[ProfileSetup] Chef review skipped (timeout or error)');
             }
 
-            const { importFromAIParse, activatePlan } = await import('../../backend/services/NutritionPlanService');
+            const { importFromAIParse, activatePlan, exportActivePlan } = await import('../../backend/services/NutritionPlanService');
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
             const plan = await importFromAIParse(improvedPlan as any, label);
             await activatePlan(plan.id);
             console.log('[ProfileSetup] Nutrition plan imported and activated OK, id:', plan.id);
+
+            // Fire-and-forget cloud sync for cross-device access
+            if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {
+              exportActivePlan().then(exported => {
+                if (exported) {
+                  import('../../services/userFirestoreService').then(({ syncPlanToCloud }) => {
+                    syncPlanToCloud(user.id, exported).catch(() => {});
+                  });
+                }
+              }).catch(() => {});
+            }
           } else {
             console.warn('[ProfileSetup] API returned ok but no nutritionPlan key:', data);
           }

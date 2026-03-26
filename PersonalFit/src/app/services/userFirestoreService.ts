@@ -181,3 +181,149 @@ export async function upgradeToPro(uid: string): Promise<void> {
     console.warn('[userFirestore] upgradeToPro failed:', err);
   }
 }
+
+// ─── Cross-device sync: Profile ─────────────────────────────────
+
+/**
+ * Save the full local profile to Firestore under users/{uid}.profile
+ * Fire-and-forget — never blocks the UI.
+ */
+export async function syncProfileToCloud(uid: string, profile: any): Promise<void> {
+  try {
+    const ref = doc(db, 'users', uid);
+    await setDoc(ref, {
+      profile,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (err) {
+    console.warn('[userFirestore] syncProfileToCloud failed:', err);
+  }
+}
+
+/**
+ * Load profile from Firestore (returns null if not found or on error).
+ */
+export async function loadProfileFromCloud(uid: string): Promise<any | null> {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return null;
+    return snap.data()?.profile ?? null;
+  } catch (err) {
+    console.warn('[userFirestore] loadProfileFromCloud failed:', err);
+    return null;
+  }
+}
+
+// ─── Cross-device sync: Settings ────────────────────────────────
+
+/**
+ * Save key settings to Firestore under users/{uid}.settings
+ */
+export async function syncSettingsToCloud(uid: string, settings: Record<string, string>): Promise<void> {
+  try {
+    const ref = doc(db, 'users', uid);
+    await setDoc(ref, {
+      settings,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (err) {
+    console.warn('[userFirestore] syncSettingsToCloud failed:', err);
+  }
+}
+
+/**
+ * Load settings from Firestore (returns null if not found or on error).
+ */
+export async function loadSettingsFromCloud(uid: string): Promise<Record<string, string> | null> {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return null;
+    return snap.data()?.settings ?? null;
+  } catch (err) {
+    console.warn('[userFirestore] loadSettingsFromCloud failed:', err);
+    return null;
+  }
+}
+
+// ─── Cross-device sync: Plan summary ────────────────────────────
+
+export interface PlanSummary {
+  planName: string;
+  createdAt: string;
+  isActive: boolean;
+  calorieTarget: number | null;
+  mealCount: number | null;
+}
+
+/**
+ * Save nutrition plan summary (metadata only, not full meals) to Firestore.
+ */
+export async function syncPlanSummaryToCloud(uid: string, summary: PlanSummary): Promise<void> {
+  try {
+    const ref = doc(db, 'users', uid);
+    await setDoc(ref, {
+      planSummary: summary,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (err) {
+    console.warn('[userFirestore] syncPlanSummaryToCloud failed:', err);
+  }
+}
+
+/**
+ * Load plan summary from Firestore.
+ */
+export async function loadPlanSummaryFromCloud(uid: string): Promise<PlanSummary | null> {
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) return null;
+    return snap.data()?.planSummary ?? null;
+  } catch (err) {
+    console.warn('[userFirestore] loadPlanSummaryFromCloud failed:', err);
+    return null;
+  }
+}
+
+// ─── Cross-device sync: Full Nutrition Plan ─────────────────────
+
+/**
+ * Save the active nutrition plan (full data) to Firestore.
+ * Stored as a single document under users/{uid}/nutrition_plans/active.
+ *
+ * The planData should be the output of NutritionPlanService.exportActivePlan(),
+ * which uses the same AIParsedNutritionPlan format that importFromAIParse accepts.
+ *
+ * Fire-and-forget — never blocks the UI.
+ */
+export async function syncPlanToCloud(uid: string, planData: any): Promise<void> {
+  try {
+    const ref = doc(db, 'users', uid, 'nutrition_plans', 'active');
+    await setDoc(ref, {
+      ...planData,
+      syncedAt: new Date().toISOString(),
+    });
+    console.log('[userFirestore] Plan synced to cloud');
+  } catch (err) {
+    console.warn('[userFirestore] syncPlanToCloud failed:', err);
+  }
+}
+
+/**
+ * Load the full nutrition plan from Firestore.
+ * Returns the plan data in a format compatible with importFromAIParse,
+ * or null if no plan exists or on error.
+ */
+export async function loadPlanFromCloud(uid: string): Promise<any | null> {
+  try {
+    const ref = doc(db, 'users', uid, 'nutrition_plans', 'active');
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    // Strip Firestore metadata field
+    const { syncedAt, ...planData } = data;
+    return planData;
+  } catch (err) {
+    console.warn('[userFirestore] loadPlanFromCloud failed:', err);
+    return null;
+  }
+}

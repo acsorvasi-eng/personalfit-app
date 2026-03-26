@@ -1011,3 +1011,107 @@ function isValidIngredientName(name: string): boolean {
 
   return true;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT ACTIVE PLAN (for cloud sync)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Export the active plan in a format suitable for cloud storage.
+ * Returns the plan as an AIParsedNutritionPlan-compatible JSON object
+ * so that `importFromAIParse` can consume it on another device.
+ *
+ * Returns null if no active plan exists.
+ */
+export async function exportActivePlan(): Promise<{
+  planMeta: {
+    label: string;
+    source: string;
+    total_weeks: number;
+    created_at: string;
+  };
+  parsed: AIParsedNutritionPlan;
+} | null> {
+  const plan = await getActivePlan();
+  if (!plan) return null;
+
+  const db = await getDB();
+  const days = await getMealDaysForPlan(plan.id);
+
+  // Group days by week
+  const weekMap = new Map<number, AIParsedDay[]>();
+
+  for (const day of days) {
+    const meals = await db.getAllFromIndex<MealEntity>('meals', 'by-meal-day', day.id);
+    // Sort meals by sort_order
+    meals.sort((a, b) => a.sort_order - b.sort_order);
+
+    const parsedMeals: AIParsedMeal[] = [];
+
+    for (const meal of meals) {
+      const items = await db.getAllFromIndex<MealItemEntity>('meal_items', 'by-meal', meal.id);
+
+      const ingredients = items.map(item => ({
+        name: item.food_name,
+        quantity_grams: item.quantity_grams,
+        unit: item.unit,
+        // Store calculated macros per 100g so importFromAIParse can recreate foods
+        estimated_calories_per_100g: item.quantity_grams > 0
+          ? Math.round((item.calculated_calories / item.quantity_grams) * 100)
+          : 0,
+        estimated_protein_per_100g: item.quantity_grams > 0
+          ? Math.round((item.calculated_protein / item.quantity_grams) * 1000) / 10
+          : 0,
+        estimated_carbs_per_100g: item.quantity_grams > 0
+          ? Math.round((item.calculated_carbs / item.quantity_grams) * 1000) / 10
+          : 0,
+        estimated_fat_per_100g: item.quantity_grams > 0
+          ? Math.round((item.calculated_fat / item.quantity_grams) * 1000) / 10
+          : 0,
+      }));
+
+      parsedMeals.push({
+        meal_type: meal.meal_type,
+        name: meal.name,
+        ingredients,
+        total_calories: meal.total_calories,
+        total_protein: meal.total_protein,
+        total_carbs: meal.total_carbs,
+        total_fat: meal.total_fat,
+      });
+    }
+
+    const parsedDay: AIParsedDay = {
+      week: day.week,
+      day: day.day,
+      day_label: day.day_label,
+      is_training_day: day.is_training_day,
+      meals: parsedMeals,
+    };
+
+    if (!weekMap.has(day.week)) weekMap.set(day.week, []);
+    weekMap.get(day.week)!.push(parsedDay);
+  }
+
+  // Sort weeks and days within each week
+  const sortedWeekNums = Array.from(weekMap.keys()).sort((a, b) => a - b);
+  const weeks = sortedWeekNums.map(w => {
+    const wDays = weekMap.get(w)!;
+    wDays.sort((a, b) => a.day - b.day);
+    return wDays;
+  });
+
+  return {
+    planMeta: {
+      label: plan.label,
+      source: plan.source,
+      total_weeks: plan.total_weeks,
+      created_at: plan.created_at,
+    },
+    parsed: {
+      weeks,
+      detected_weeks: sortedWeekNums.length,
+      detected_days_per_week: Math.max(...weeks.map(w => w.length), 0),
+    },
+  };
+}

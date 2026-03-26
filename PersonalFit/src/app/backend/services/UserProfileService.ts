@@ -1,4 +1,6 @@
 import { getDB } from '../db';
+import { auth } from '../../../firebase';
+import { syncProfileToCloud } from '../../services/userFirestoreService';
 
 /** Single meal window: name + start/end time as "HH:MM" */
 export interface MealWindow {
@@ -133,6 +135,17 @@ export async function saveUserProfile(partial: Partial<StoredUserProfile>): Prom
   };
 
   await db.put('user_profile', updated);
+
+  // Fire-and-forget cloud sync for authenticated users
+  try {
+    const uid = auth?.currentUser?.uid;
+    if (uid) {
+      syncProfileToCloud(uid, updated).catch(() => {});
+    }
+  } catch {
+    // ignore — offline or demo mode
+  }
+
   return updated;
 }
 
