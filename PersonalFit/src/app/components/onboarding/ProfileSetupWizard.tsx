@@ -46,6 +46,9 @@ import { getMET } from '../../utils/metHelpers';
 import { FoodStyle, buildIngredientSelection } from '../../utils/buildIngredientSelection';
 import { StepFoodStyle } from './StepFoodStyle';
 import { callChefReview } from './callChefReview';
+import { useGeolocation } from '../../hooks/useGeolocation';
+import { useNearbyStores, buildStoreMapUrl, type NearbyStore } from '../../hooks/useNearbyStores';
+import type { FoodCategoryId } from '../../data/chainCatalog';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -138,6 +141,19 @@ const SEED_FOODS: SeedFood[] = [
   { id: 'white_beans',     category: 'protein', emoji: '🫘', vegetarian: true,  calories_per_100g: 127, protein_per_100g: 8.7,  carbs_per_100g: 22,   fat_per_100g: 0.5, names: { hu: 'Fehér bab',      en: 'White beans',     ro: 'Fasole albă'     } },
   { id: 'egg_white',       category: 'protein', emoji: '🥚', vegetarian: true,  calories_per_100g: 52,  protein_per_100g: 11,   carbs_per_100g: 0.7,  fat_per_100g: 0.2, names: { hu: 'Tojásfehérje',  en: 'Egg white',       ro: 'Albuș de ou'     }, allergens: ['egg']      },
   { id: 'sardines',        category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 208, protein_per_100g: 25,   carbs_per_100g: 0,    fat_per_100g: 11,  names: { hu: 'Szardínia',      en: 'Sardines',        ro: 'Sardine'         }, allergens: ['fish']     },
+  { id: 'ground_pork',     category: 'protein', emoji: '🥩', vegetarian: false, calories_per_100g: 263, protein_per_100g: 17,   carbs_per_100g: 0,    fat_per_100g: 21,  names: { hu: 'Darált sertés',    en: 'Ground pork',     ro: 'Carne tocată de porc'  } },
+  { id: 'ground_beef',     category: 'protein', emoji: '🥩', vegetarian: false, calories_per_100g: 254, protein_per_100g: 17,   carbs_per_100g: 0,    fat_per_100g: 20,  names: { hu: 'Darált marha',     en: 'Ground beef',     ro: 'Carne tocată de vită'  } },
+  { id: 'chicken_liver',   category: 'protein', emoji: '🫀', vegetarian: false, calories_per_100g: 119, protein_per_100g: 17,   carbs_per_100g: 0.7,  fat_per_100g: 5,   names: { hu: 'Csirkemáj',        en: 'Chicken liver',   ro: 'Ficat de pui'          } },
+  { id: 'duck_breast',     category: 'protein', emoji: '🦆', vegetarian: false, calories_per_100g: 201, protein_per_100g: 23,   carbs_per_100g: 0,    fat_per_100g: 11,  names: { hu: 'Kacsamell',        en: 'Duck breast',     ro: 'Piept de rață'         } },
+  { id: 'ham',             category: 'protein', emoji: '🍖', vegetarian: false, calories_per_100g: 145, protein_per_100g: 21,   carbs_per_100g: 1.5,  fat_per_100g: 6,   names: { hu: 'Sonka',            en: 'Ham',             ro: 'Șuncă'                 } },
+  { id: 'bacon',           category: 'protein', emoji: '🥓', vegetarian: false, calories_per_100g: 541, protein_per_100g: 37,   carbs_per_100g: 1.4,  fat_per_100g: 42,  names: { hu: 'Szalonna',         en: 'Bacon',           ro: 'Slănină'               } },
+  { id: 'sausage',         category: 'protein', emoji: '🌭', vegetarian: false, calories_per_100g: 301, protein_per_100g: 12,   carbs_per_100g: 2,    fat_per_100g: 27,  names: { hu: 'Kolbász',          en: 'Sausage',         ro: 'Cârnați'               } },
+  { id: 'canned_tuna',     category: 'protein', emoji: '🥫', vegetarian: false, calories_per_100g: 116, protein_per_100g: 26,   carbs_per_100g: 0,    fat_per_100g: 1,   names: { hu: 'Tonhal konzerv',   en: 'Canned tuna',     ro: 'Ton conservă'          }, allergens: ['fish'] },
+  { id: 'trout',           category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 141, protein_per_100g: 20,   carbs_per_100g: 0,    fat_per_100g: 6,   names: { hu: 'Pisztráng',        en: 'Trout',           ro: 'Păstrăv'               }, allergens: ['fish'] },
+  { id: 'carp',            category: 'protein', emoji: '🐟', vegetarian: false, calories_per_100g: 127, protein_per_100g: 18,   carbs_per_100g: 0,    fat_per_100g: 6,   names: { hu: 'Ponty',            en: 'Carp',            ro: 'Crap'                  }, allergens: ['fish'] },
+  { id: 'rabbit',          category: 'protein', emoji: '🐇', vegetarian: false, calories_per_100g: 173, protein_per_100g: 33,   carbs_per_100g: 0,    fat_per_100g: 4,   names: { hu: 'Nyúl',             en: 'Rabbit',          ro: 'Iepure'                } },
+  { id: 'turkey_leg',      category: 'protein', emoji: '🦃', vegetarian: false, calories_per_100g: 208, protein_per_100g: 28,   carbs_per_100g: 0,    fat_per_100g: 10,  names: { hu: 'Pulykacomb',       en: 'Turkey leg',      ro: 'Pulpă de curcan'       } },
+  { id: 'chicken_wing',    category: 'protein', emoji: '🍗', vegetarian: false, calories_per_100g: 203, protein_per_100g: 30,   carbs_per_100g: 0,    fat_per_100g: 8,   names: { hu: 'Csirkeszárny',     en: 'Chicken wing',    ro: 'Aripioare de pui'      } },
   // ── Carbs ─────────────────────────────────────────────────────
   { id: 'oats',            category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 389, protein_per_100g: 17,   carbs_per_100g: 66,   fat_per_100g: 7,   names: { hu: 'Zab',                    en: 'Oats',                  ro: 'Ovăz'              }, allergens: ['gluten'] },
   { id: 'rice',            category: 'carb',    emoji: '🍚', vegetarian: true,  calories_per_100g: 130, protein_per_100g: 2.7,  carbs_per_100g: 28,   fat_per_100g: 0.3, names: { hu: 'Rizs',                   en: 'Rice',                  ro: 'Orez'              } },
@@ -154,6 +170,15 @@ const SEED_FOODS: SeedFood[] = [
   { id: 'barley',          category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 123, protein_per_100g: 2.3,  carbs_per_100g: 28,   fat_per_100g: 0.4, names: { hu: 'Árpa',                   en: 'Barley',                ro: 'Orz'               }, allergens: ['gluten'] },
   { id: 'tortilla',        category: 'carb',    emoji: '🫓', vegetarian: true,  calories_per_100g: 218, protein_per_100g: 6,    carbs_per_100g: 36,   fat_per_100g: 5.5, names: { hu: 'Tortilla',               en: 'Tortilla',              ro: 'Tortilla'          }, allergens: ['gluten'] },
   { id: 'oatmeal',         category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 379, protein_per_100g: 13,   carbs_per_100g: 68,   fat_per_100g: 6.5, names: { hu: 'Zabpehely',              en: 'Oatmeal',               ro: 'Fulgi de ovăz'     }, allergens: ['gluten'] },
+  { id: 'polenta',         category: 'carb',    emoji: '🌽', vegetarian: true,  calories_per_100g: 85,  protein_per_100g: 1.6,  carbs_per_100g: 19,   fat_per_100g: 0.3, names: { hu: 'Puliszka / polenta',     en: 'Polenta',               ro: 'Mămăligă'          } },
+  { id: 'couscous',        category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 176, protein_per_100g: 6,    carbs_per_100g: 36,   fat_per_100g: 0.3, names: { hu: 'Kuszkusz',               en: 'Couscous',              ro: 'Cușcuș'            }, allergens: ['gluten'] },
+  { id: 'semolina',        category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 360, protein_per_100g: 13,   carbs_per_100g: 73,   fat_per_100g: 1.1, names: { hu: 'Gríz / búzadara',       en: 'Semolina',              ro: 'Griș'              }, allergens: ['gluten'] },
+  { id: 'millet',          category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 119, protein_per_100g: 3.5,  carbs_per_100g: 23,   fat_per_100g: 1,   names: { hu: 'Köles',                  en: 'Millet',                ro: 'Mei'               } },
+  { id: 'spelt',           category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 338, protein_per_100g: 15,   carbs_per_100g: 70,   fat_per_100g: 2.4, names: { hu: 'Tönkölybúza',            en: 'Spelt',                 ro: 'Alac'              }, allergens: ['gluten'] },
+  { id: 'rye_bread',       category: 'carb',    emoji: '🍞', vegetarian: true,  calories_per_100g: 259, protein_per_100g: 8.5,  carbs_per_100g: 48,   fat_per_100g: 3.3, names: { hu: 'Rozskenyér',             en: 'Rye bread',             ro: 'Pâine de secară'   }, allergens: ['gluten'] },
+  { id: 'rice_cakes',      category: 'carb',    emoji: '🍘', vegetarian: true,  calories_per_100g: 387, protein_per_100g: 8,    carbs_per_100g: 81,   fat_per_100g: 2.8, names: { hu: 'Puffasztott rizs',       en: 'Rice cakes',            ro: 'Expandat de orez'  } },
+  { id: 'flour',           category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 364, protein_per_100g: 10,   carbs_per_100g: 76,   fat_per_100g: 1,   names: { hu: 'Liszt',                  en: 'Flour',                 ro: 'Făină'             }, allergens: ['gluten'] },
+  { id: 'bulgur',          category: 'carb',    emoji: '🌾', vegetarian: true,  calories_per_100g: 83,  protein_per_100g: 3.1,  carbs_per_100g: 19,   fat_per_100g: 0.2, names: { hu: 'Bulgur',                 en: 'Bulgur',                ro: 'Bulgur'            }, allergens: ['gluten'] },
   // ── Fat ───────────────────────────────────────────────────────
   { id: 'avocado',         category: 'fat',     emoji: '🥑', vegetarian: true,  calories_per_100g: 160, protein_per_100g: 2,    carbs_per_100g: 9,    fat_per_100g: 15,  names: { hu: 'Avokádó',     en: 'Avocado',         ro: 'Avocado'             } },
   { id: 'walnut',          category: 'fat',     emoji: '🌰', vegetarian: true,  calories_per_100g: 654, protein_per_100g: 15,   carbs_per_100g: 14,   fat_per_100g: 65,  names: { hu: 'Dió',         en: 'Walnut',          ro: 'Nuci'                }, allergens: ['nuts'] },
@@ -167,6 +192,12 @@ const SEED_FOODS: SeedFood[] = [
   { id: 'chia_seeds',      category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 486, protein_per_100g: 17,   carbs_per_100g: 42,   fat_per_100g: 31,  names: { hu: 'Chia mag',    en: 'Chia seeds',      ro: 'Semințe de chia'     } },
   { id: 'flaxseed',        category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 534, protein_per_100g: 18,   carbs_per_100g: 29,   fat_per_100g: 42,  names: { hu: 'Lenmag',      en: 'Flaxseed',        ro: 'Semințe de in'       } },
   { id: 'pumpkin_seeds',   category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 559, protein_per_100g: 30,   carbs_per_100g: 11,   fat_per_100g: 49,  names: { hu: 'Tök mag',     en: 'Pumpkin seeds',   ro: 'Semințe de dovleac'  } },
+  { id: 'sunflower_seeds', category: 'fat',     emoji: '🌻', vegetarian: true,  calories_per_100g: 584, protein_per_100g: 21,   carbs_per_100g: 20,   fat_per_100g: 51,  names: { hu: 'Napraforgó mag', en: 'Sunflower seeds', ro: 'Semințe de floarea-soarelui' } },
+  { id: 'sunflower_oil',  category: 'fat',     emoji: '🌻', vegetarian: true,  calories_per_100g: 884, protein_per_100g: 0,    carbs_per_100g: 0,    fat_per_100g: 100, names: { hu: 'Napraforgó olaj', en: 'Sunflower oil',  ro: 'Ulei de floarea-soarelui'    } },
+  { id: 'sesame_seeds',   category: 'fat',     emoji: '🌱', vegetarian: true,  calories_per_100g: 573, protein_per_100g: 18,   carbs_per_100g: 23,   fat_per_100g: 50,  names: { hu: 'Szezámmag',    en: 'Sesame seeds',    ro: 'Semințe de susan'    } },
+  { id: 'hazelnut',       category: 'fat',     emoji: '🌰', vegetarian: true,  calories_per_100g: 628, protein_per_100g: 15,   carbs_per_100g: 17,   fat_per_100g: 61,  names: { hu: 'Mogyoró',      en: 'Hazelnut',        ro: 'Alune de pădure'     }, allergens: ['nuts'] },
+  { id: 'tahini',         category: 'fat',     emoji: '🫘', vegetarian: true,  calories_per_100g: 595, protein_per_100g: 17,   carbs_per_100g: 22,   fat_per_100g: 54,  names: { hu: 'Tahini',       en: 'Tahini',          ro: 'Tahini'              } },
+  { id: 'butter_ghee',    category: 'fat',     emoji: '🧈', vegetarian: true,  calories_per_100g: 900, protein_per_100g: 0,    carbs_per_100g: 0,    fat_per_100g: 100, names: { hu: 'Ghí / tisztított vaj', en: 'Ghee',      ro: 'Unt clarificat'      }, allergens: ['lactose'] },
   // ── Dairy ─────────────────────────────────────────────────────
   { id: 'greek_yogurt',    category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 59,  protein_per_100g: 10,   carbs_per_100g: 3.6,  fat_per_100g: 0.4, names: { hu: 'Görög joghurt', en: 'Greek yogurt',   ro: 'Iaurt grecesc' }, allergens: ['lactose'] },
   { id: 'yogurt',          category: 'dairy',   emoji: '🥛', vegetarian: true,  calories_per_100g: 61,  protein_per_100g: 3.5,  carbs_per_100g: 4.7,  fat_per_100g: 3.3, names: { hu: 'Joghurt',      en: 'Yogurt',         ro: 'Iaurt'         }, allergens: ['lactose'] },
@@ -199,6 +230,20 @@ const SEED_FOODS: SeedFood[] = [
   { id: 'mushroom',        category: 'vegetable', emoji: '🍄', vegetarian: true, calories_per_100g: 22,  protein_per_100g: 3.1,  carbs_per_100g: 3.3,  fat_per_100g: 0.3, names: { hu: 'Gomba',       en: 'Mushroom',         ro: 'Ciuperci'       } },
   { id: 'artichoke',       category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 47,  protein_per_100g: 3.3,  carbs_per_100g: 11,   fat_per_100g: 0.2, names: { hu: 'Articsóka',   en: 'Artichoke',        ro: 'Anghinare'      } },
   { id: 'asparagus',       category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 20,  protein_per_100g: 2.2,  carbs_per_100g: 3.9,  fat_per_100g: 0.1, names: { hu: 'Spárga',      en: 'Asparagus',        ro: 'Sparanghel'     } },
+  { id: 'cabbage',         category: 'vegetable', emoji: '🥬', vegetarian: true, calories_per_100g: 25,  protein_per_100g: 1.3,  carbs_per_100g: 6,    fat_per_100g: 0.1, names: { hu: 'Káposzta',    en: 'Cabbage',          ro: 'Varză'          } },
+  { id: 'red_cabbage',     category: 'vegetable', emoji: '🥬', vegetarian: true, calories_per_100g: 31,  protein_per_100g: 1.4,  carbs_per_100g: 7,    fat_per_100g: 0.2, names: { hu: 'Lilakáposzta', en: 'Red cabbage',     ro: 'Varză roșie'    } },
+  { id: 'leek',            category: 'vegetable', emoji: '🧅', vegetarian: true, calories_per_100g: 61,  protein_per_100g: 1.5,  carbs_per_100g: 14,   fat_per_100g: 0.3, names: { hu: 'Póréhagyma',  en: 'Leek',             ro: 'Praz'           } },
+  { id: 'celery',          category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 42,  protein_per_100g: 1.5,  carbs_per_100g: 9,    fat_per_100g: 0.3, names: { hu: 'Zeller',      en: 'Celery root',      ro: 'Țelină'         } },
+  { id: 'parsley_root',    category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 55,  protein_per_100g: 2.3,  carbs_per_100g: 12,   fat_per_100g: 0.6, names: { hu: 'Petrezselyem gyökér', en: 'Parsley root', ro: 'Rădăcină de pătrunjel' } },
+  { id: 'radish',          category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 16,  protein_per_100g: 0.7,  carbs_per_100g: 3.4,  fat_per_100g: 0.1, names: { hu: 'Retek',       en: 'Radish',           ro: 'Ridiche'        } },
+  { id: 'pumpkin',         category: 'vegetable', emoji: '🎃', vegetarian: true, calories_per_100g: 26,  protein_per_100g: 1,    carbs_per_100g: 7,    fat_per_100g: 0.1, names: { hu: 'Sütőtök',     en: 'Pumpkin',          ro: 'Dovleac'        } },
+  { id: 'kohlrabi',        category: 'vegetable', emoji: '🥬', vegetarian: true, calories_per_100g: 27,  protein_per_100g: 1.7,  carbs_per_100g: 6,    fat_per_100g: 0.1, names: { hu: 'Karalábé',    en: 'Kohlrabi',         ro: 'Gulie'          } },
+  { id: 'green_onion',     category: 'vegetable', emoji: '🧅', vegetarian: true, calories_per_100g: 32,  protein_per_100g: 1.8,  carbs_per_100g: 7,    fat_per_100g: 0.2, names: { hu: 'Újhagyma',    en: 'Green onion',      ro: 'Ceapă verde'    } },
+  { id: 'turnip',          category: 'vegetable', emoji: '🌿', vegetarian: true, calories_per_100g: 28,  protein_per_100g: 0.9,  carbs_per_100g: 6,    fat_per_100g: 0.1, names: { hu: 'Fehérrépa',   en: 'Turnip',           ro: 'Nap'            } },
+  { id: 'hot_pepper',      category: 'vegetable', emoji: '🌶️', vegetarian: true, calories_per_100g: 40,  protein_per_100g: 1.9,  carbs_per_100g: 9,    fat_per_100g: 0.4, names: { hu: 'Erős paprika', en: 'Hot pepper',      ro: 'Ardei iute'     } },
+  { id: 'corn_canned',     category: 'vegetable', emoji: '🌽', vegetarian: true, calories_per_100g: 64,  protein_per_100g: 2.3,  carbs_per_100g: 14,   fat_per_100g: 0.5, names: { hu: 'Kukorica konzerv', en: 'Canned corn',  ro: 'Porumb conservă'} },
+  { id: 'pickled_cucumber', category: 'vegetable', emoji: '🥒', vegetarian: true, calories_per_100g: 11, protein_per_100g: 0.3,  carbs_per_100g: 2.3,  fat_per_100g: 0.2, names: { hu: 'Kovászos uborka', en: 'Pickled cucumber', ro: 'Castraveți murați' } },
+  { id: 'sauerkraut',      category: 'vegetable', emoji: '🥬', vegetarian: true, calories_per_100g: 19,  protein_per_100g: 0.9,  carbs_per_100g: 4.3,  fat_per_100g: 0.1, names: { hu: 'Savanyú káposzta', en: 'Sauerkraut',   ro: 'Varză murată'   } },
   // ── Fruit ─────────────────────────────────────────────────────
   { id: 'apple',           category: 'fruit',   emoji: '🍎', vegetarian: true, calories_per_100g: 52,  protein_per_100g: 0.3,  carbs_per_100g: 14,   fat_per_100g: 0.2, names: { hu: 'Alma',         en: 'Apple',       ro: 'Măr'          } },
   { id: 'banana',          category: 'fruit',   emoji: '🍌', vegetarian: true, calories_per_100g: 89,  protein_per_100g: 1.1,  carbs_per_100g: 23,   fat_per_100g: 0.3, names: { hu: 'Banán',        en: 'Banana',      ro: 'Banană'       } },
@@ -216,6 +261,16 @@ const SEED_FOODS: SeedFood[] = [
   { id: 'grapefruit',      category: 'fruit',   emoji: '🍊', vegetarian: true, calories_per_100g: 42,  protein_per_100g: 0.8,  carbs_per_100g: 11,   fat_per_100g: 0.1, names: { hu: 'Grapefruit',   en: 'Grapefruit',  ro: 'Grapefruit'   } },
   { id: 'lemon',           category: 'fruit',   emoji: '🍋', vegetarian: true, calories_per_100g: 29,  protein_per_100g: 1.1,  carbs_per_100g: 9,    fat_per_100g: 0.3, names: { hu: 'Citrom',       en: 'Lemon',       ro: 'Lămâie'       } },
   { id: 'raspberry',       category: 'fruit',   emoji: '🫐', vegetarian: true, calories_per_100g: 52,  protein_per_100g: 1.2,  carbs_per_100g: 12,   fat_per_100g: 0.7, names: { hu: 'Málna',        en: 'Raspberry',   ro: 'Zmeură'       } },
+  { id: 'plum',            category: 'fruit',   emoji: '🟣', vegetarian: true, calories_per_100g: 46,  protein_per_100g: 0.7,  carbs_per_100g: 11,   fat_per_100g: 0.3, names: { hu: 'Szilva',       en: 'Plum',        ro: 'Prună'        } },
+  { id: 'apricot',         category: 'fruit',   emoji: '🍑', vegetarian: true, calories_per_100g: 48,  protein_per_100g: 1.4,  carbs_per_100g: 11,   fat_per_100g: 0.4, names: { hu: 'Sárgabarack',  en: 'Apricot',     ro: 'Caisă'        } },
+  { id: 'melon',           category: 'fruit',   emoji: '🍈', vegetarian: true, calories_per_100g: 34,  protein_per_100g: 0.8,  carbs_per_100g: 8,    fat_per_100g: 0.2, names: { hu: 'Sárgadinnye',  en: 'Melon',       ro: 'Pepene galben'} },
+  { id: 'fig',             category: 'fruit',   emoji: '🟤', vegetarian: true, calories_per_100g: 74,  protein_per_100g: 0.8,  carbs_per_100g: 19,   fat_per_100g: 0.3, names: { hu: 'Füge',         en: 'Fig',         ro: 'Smochină'     } },
+  { id: 'pomegranate',     category: 'fruit',   emoji: '🔴', vegetarian: true, calories_per_100g: 83,  protein_per_100g: 1.7,  carbs_per_100g: 19,   fat_per_100g: 1.2, names: { hu: 'Gránátalma',   en: 'Pomegranate', ro: 'Rodie'        } },
+  { id: 'blackberry',      category: 'fruit',   emoji: '🫐', vegetarian: true, calories_per_100g: 43,  protein_per_100g: 1.4,  carbs_per_100g: 10,   fat_per_100g: 0.5, names: { hu: 'Szeder',       en: 'Blackberry',  ro: 'Mure'         } },
+  { id: 'sour_cherry',     category: 'fruit',   emoji: '🍒', vegetarian: true, calories_per_100g: 50,  protein_per_100g: 1,    carbs_per_100g: 12,   fat_per_100g: 0.3, names: { hu: 'Meggy',        en: 'Sour cherry', ro: 'Vișină'       } },
+  { id: 'quince',          category: 'fruit',   emoji: '🍐', vegetarian: true, calories_per_100g: 57,  protein_per_100g: 0.4,  carbs_per_100g: 15,   fat_per_100g: 0.1, names: { hu: 'Birsalma',     en: 'Quince',      ro: 'Gutuie'       } },
+  { id: 'dried_dates',     category: 'fruit',   emoji: '🟤', vegetarian: true, calories_per_100g: 277, protein_per_100g: 1.8,  carbs_per_100g: 75,   fat_per_100g: 0.2, names: { hu: 'Datolya',      en: 'Dates',       ro: 'Curmale'      } },
+  { id: 'cranberry',       category: 'fruit',   emoji: '🔴', vegetarian: true, calories_per_100g: 46,  protein_per_100g: 0.4,  carbs_per_100g: 12,   fat_per_100g: 0.1, names: { hu: 'Tőzegáfonya',  en: 'Cranberry',   ro: 'Merișoare'    } },
 ];
 
 const FOOD_CATEGORY_TABS = ['all', 'protein', 'carb', 'fat', 'dairy', 'vegetable', 'fruit'] as const;
@@ -392,6 +447,7 @@ const slideVariants = {
 // ─────────────────────────────────────────────────────────────────
 
 const LEGACY_FOODS_STEP = 99;
+const GENERATING_STEP = 98;
 
 interface SportDef { id: string; emoji: string; names: { hu: string; en: string; ro: string } }
 interface SportCategory { key: string; sports: SportDef[] }
@@ -468,6 +524,10 @@ export function ProfileSetupWizard() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Nearby stores (geolocation + Google Places)
+  const geo = useGeolocation();
+  const { stores: nearbyStores, getStoresForFood } = useNearbyStores(geo.latitude, geo.longitude);
 
   // Step 1: Personal
   const [gender, setGender] = useState<Gender>('male');
@@ -721,7 +781,7 @@ export function ProfileSetupWizard() {
     }
 
     setIsGenerating(true);
-    setStep(99); // Switch to full-screen loading animation
+    setStep(GENERATING_STEP); // Switch to full-screen loading animation
     try {
       const mealModelMap: Record<number, string> = { 2: '2meals', 4: '4meals', 5: '5meals' };
       const effectiveMealModel = mealModel ?? mealModelMap[mealCount]; // IF model takes priority
@@ -954,7 +1014,7 @@ export function ProfileSetupWizard() {
     return () => { intervals.forEach(clearInterval); timeouts.forEach(clearTimeout); };
   }, [step]);
 
-  if (step === 99) {
+  if (step === GENERATING_STEP) {
     const WIZARD_PHASES = [
       { threshold: 0,  key: 'wizard.genPhase1' },
       { threshold: 12, key: 'wizard.genPhase2' },
@@ -1032,6 +1092,7 @@ export function ProfileSetupWizard() {
                   lookupStatus={lookupStatus} lookupResults={lookupResults}
                   onLookupFood={handleLookupFood} onAddResult={addLookupResult}
                   selectAllVisible={selectAllVisible} deselectAll={deselectAll}
+                  getStoresForFood={getStoresForFood}
                 />
                 <button
                   onClick={() => { setUsedLegacyFoodPicker(true); setStep(2); }}
@@ -1444,7 +1505,7 @@ function StepCriteria({
 // Step 2: Foods
 // ─────────────────────────────────────────────────────────────────
 
-function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, selectAllVisible, deselectAll }: {
+function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoods, toggleFood, visibleFoods, lookupStatus, lookupResults, onLookupFood, onAddResult, selectAllVisible, deselectAll, getStoresForFood }: {
   foodTab: FoodTabType; setFoodTab: (v: FoodTabType) => void;
   foodSearch: string; setFoodSearch: (v: string) => void;
   selectedFoods: Set<string>; toggleFood: (id: string) => void;
@@ -1455,6 +1516,7 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
   onAddResult: (r: ProductResult) => void;
   selectAllVisible: () => void;
   deselectAll: () => void;
+  getStoresForFood?: (foodId: string, foodCategory: FoodCategoryId) => NearbyStore[];
 }) {
   const { t, language } = useLanguage();
   const CAT_LABELS: Record<FoodTabType, string> = {
@@ -1578,6 +1640,8 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
         )}
         {visibleFoods.map(food => {
           const selected = selectedFoods.has(food.id);
+          const foodStores = getStoresForFood?.(food.id, food.category as FoodCategoryId) ?? [];
+          const topStores = foodStores.slice(0, 2);
           return (
             <button
               key={food.id}
@@ -1594,6 +1658,11 @@ function StepFoods({ foodTab, setFoodTab, foodSearch, setFoodSearch, selectedFoo
                   {food.names[language]}
                 </p>
                 <p className="text-2xs text-gray-400">{food.calories_per_100g} kcal/100g</p>
+                {topStores.length > 0 && (
+                  <p className="text-2xs text-teal-600 truncate mt-0.5">
+                    📍 {topStores.map(s => s.distanceKm > 0 ? `${s.chainProfile.displayName} ${s.distanceKm.toFixed(1)}km` : s.chainProfile.displayName).join(' · ')}
+                  </p>
+                )}
               </div>
               {selected && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
             </button>

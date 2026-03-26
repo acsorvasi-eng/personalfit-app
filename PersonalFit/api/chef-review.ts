@@ -69,6 +69,7 @@ export default async function handler(req: any, res: any) {
     if (type === 'recipe') return handleRecipe(req, res);
     if (type === 'menu')   return handleMenu(req, res);
     if (type === 'find-restaurants') return handleFindRestaurants(req, res);
+    if (type === 'find-stores') return handleFindStores(req, res);
 
     // Default: seasonal review (original chef-review behaviour)
     const {
@@ -311,6 +312,57 @@ async function handleFindRestaurants(req: any, res: any) {
   } catch (err: any) {
     console.error('[chef-review/find-restaurants] Error:', err.message);
     return res.status(200).json({ restaurants: [], fallback: true });
+  }
+}
+
+// ─── Nearby grocery stores handler ──────────────────────────────────────────
+
+const GROCERY_CHAINS = ['Kaufland', 'Lidl', 'Penny', 'Aldi', 'SPAR', 'Tesco', 'Mega Image', 'Carrefour', 'Auchan', 'Profi', 'Cora', 'Coop'];
+
+async function handleFindStores(req: any, res: any) {
+  const { lat, lng, radius = 10000 } = req.body || {};
+
+  if (lat == null || lng == null) {
+    return res.status(400).json({ error: 'lat, lng are required' });
+  }
+
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+  if (!apiKey) {
+    console.log('[chef-review/find-stores] No GOOGLE_PLACES_API_KEY — returning fallback');
+    return res.status(200).json({ stores: [], fallback: true });
+  }
+
+  try {
+    // Search for supermarkets near the user
+    const query = encodeURIComponent('supermarket grocery store');
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&type=supermarket&key=${apiKey}`;
+
+    console.log(`[chef-review/find-stores] Searching stores near ${lat},${lng} radius=${radius}`);
+
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      console.error(`[chef-review/find-stores] Google Places HTTP ${resp.status}`);
+      return res.status(200).json({ stores: [], fallback: true });
+    }
+
+    const data = await resp.json();
+    const results = (data.results ?? []).slice(0, 20);
+
+    const stores = results.map((place: any) => ({
+      name: place.name ?? '',
+      address: place.formatted_address ?? '',
+      placeId: place.place_id ?? '',
+      lat: place.geometry?.location?.lat ?? null,
+      lng: place.geometry?.location?.lng ?? null,
+      openNow: place.opening_hours?.open_now ?? null,
+    }));
+
+    console.log(`[chef-review/find-stores] Found ${stores.length} stores`);
+    return res.status(200).json({ stores, fallback: false });
+  } catch (err: any) {
+    console.error('[chef-review/find-stores] Error:', err.message);
+    return res.status(200).json({ stores: [], fallback: true });
   }
 }
 

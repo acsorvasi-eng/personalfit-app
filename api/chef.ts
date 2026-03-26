@@ -205,6 +205,55 @@ export default async function handler(req: any, res: any) {
 
   if (type === 'recipe') return handleRecipe(req.body, res);
   if (type === 'menu') return handleMenu(req.body, res);
+  if (type === 'find-stores') return handleFindStores(req.body, res);
 
-  return res.status(400).json({ error: 'Missing or invalid type. Use "recipe" or "menu".' });
+  return res.status(400).json({ error: 'Missing or invalid type. Use "recipe", "menu", or "find-stores".' });
+}
+
+// ─── Nearby grocery stores (Google Places Nearby Search) ────────────────────
+
+async function handleFindStores(body: any, res: any) {
+  const { lat, lng, radius = 10000 } = body || {};
+
+  if (lat == null || lng == null) {
+    return res.status(400).json({ error: 'lat, lng are required' });
+  }
+
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+  if (!apiKey) {
+    console.log('[chef/find-stores] No GOOGLE_PLACES_API_KEY — returning fallback');
+    return res.status(200).json({ stores: [], fallback: true });
+  }
+
+  try {
+    const query = encodeURIComponent('supermarket grocery store');
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&type=supermarket&key=${apiKey}`;
+
+    console.log(`[chef/find-stores] Searching stores near ${lat},${lng} radius=${radius}`);
+
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      console.error(`[chef/find-stores] Google Places HTTP ${resp.status}`);
+      return res.status(200).json({ stores: [], fallback: true });
+    }
+
+    const data = await resp.json();
+    const results = (data.results ?? []).slice(0, 20);
+
+    const stores = results.map((place: any) => ({
+      name: place.name ?? '',
+      address: place.formatted_address ?? '',
+      placeId: place.place_id ?? '',
+      lat: place.geometry?.location?.lat ?? null,
+      lng: place.geometry?.location?.lng ?? null,
+      openNow: place.opening_hours?.open_now ?? null,
+    }));
+
+    console.log(`[chef/find-stores] Found ${stores.length} stores`);
+    return res.status(200).json({ stores, fallback: false });
+  } catch (err: any) {
+    console.error('[chef/find-stores] Error:', err.message);
+    return res.status(200).json({ stores: [], fallback: true });
+  }
 }
