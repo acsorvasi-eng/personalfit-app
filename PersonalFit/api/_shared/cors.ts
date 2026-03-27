@@ -4,8 +4,10 @@
 
 const ALLOWED_ORIGINS = [
   'https://personalfit-app.vercel.app',
-  'capacitor://localhost',
-  'http://localhost:5173',
+  'capacitor://localhost',   // Capacitor iOS
+  'https://localhost',       // Capacitor Android
+  'ionic://localhost',       // Ionic WebView fallback
+  'http://localhost:5173',   // Vite dev server
   'http://localhost:3000',
   'http://localhost:3001',
 ];
