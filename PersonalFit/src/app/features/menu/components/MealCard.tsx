@@ -10,7 +10,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Check, Clock, X, ChevronLeft } from 'lucide-react';
+import { Check, Clock, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { hapticFeedback } from '@/lib/haptics';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -223,8 +223,6 @@ function MealDetailOverlay({
   onRecipeOpen: (tab: 'home' | 'restaurant') => void;
 }) {
   const { t, language } = useLanguage();
-  const [showRecipeSheet, setShowRecipeSheet] = useState(false);
-  const [recipeSheetTab, setRecipeSheetTab] = useState<'home' | 'restaurant'>('home');
   const totalKcal = parseInt(meal.calories?.replace(/[^0-9]/g, '') || '0') || 0;
   const details = meal.ingredientDetails as Array<{ name: string; quantity: string; calories: number; protein: number; carbs: number; fat: number }> | undefined;
   const mealProtein = meal.totalProtein ?? Math.round((totalKcal * 0.30) / 4);
@@ -306,17 +304,17 @@ function MealDetailOverlay({
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons — directly open RecipeOverlay */}
       {canShowRecipe && (
-        <div className="px-5 mt-5 flex gap-3 pb-6">
+        <div className="px-5 mt-5 flex gap-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}>
           <button
-            onClick={() => { setRecipeSheetTab('home'); setShowRecipeSheet(true); }}
+            onClick={() => { onClose(); setTimeout(() => onRecipeOpen('home'), 150); }}
             className="flex-1 h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
           >
             🍳 {t('menu.recipeBtn')}
           </button>
           <button
-            onClick={() => { setRecipeSheetTab('restaurant'); setShowRecipeSheet(true); }}
+            onClick={() => { onClose(); setTimeout(() => onRecipeOpen('restaurant'), 150); }}
             className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
           >
             🛵 {t('menu.orderBtn')}
@@ -324,102 +322,11 @@ function MealDetailOverlay({
         </div>
       )}
 
-      <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
-
-      {/* Recipe bottom sheet — slides up OVER the detail page */}
-      <AnimatePresence>
-        {showRecipeSheet && (
-          <RecipeBottomSheet
-            onClose={() => setShowRecipeSheet(false)}
-            onFullOpen={() => {
-              setShowRecipeSheet(false);
-              onRecipeOpen(recipeSheetTab);
-            }}
-            tab={recipeSheetTab}
-            mealName={meal.name}
-          />
-        )}
-      </AnimatePresence>
+      {!canShowRecipe && <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />}
     </motion.div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Recipe bottom sheet (slides up over detail page, drag to dismiss)
-// ═══════════════════════════════════════════════════════════════
-
-function RecipeBottomSheet({ onClose, onFullOpen, tab, mealName }: {
-  onClose: () => void;
-  onFullOpen: () => void;
-  tab: 'home' | 'restaurant';
-  mealName: string;
-}) {
-  const { t } = useLanguage();
-  const sheetY = useMotionValue(0);
-
-  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
-    if (info.offset.y > 120 || info.velocity.y > 400) {
-      onClose();
-    }
-  }, [onClose]);
-
-  return (
-    <>
-      {/* Backdrop */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black"
-        style={{ zIndex: 10000 }}
-        onClick={onClose}
-      />
-
-      {/* Sheet */}
-      <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-        style={{ y: sheetY, zIndex: 10001 }}
-        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl"
-      >
-        <div className="max-h-[75vh] overflow-y-auto">
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white rounded-t-3xl z-10">
-            <div className="w-10 h-1 rounded-full bg-gray-300" />
-          </div>
-
-          <div className="px-5 pb-3">
-            <h3 className="font-bold text-lg text-foreground">
-              {tab === 'home' ? `🍳 ${t('menu.recipeBtn')}` : `🛵 ${t('menu.orderBtn')}`}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">{mealName}</p>
-          </div>
-
-          {/* Placeholder — this will open the full RecipeOverlay */}
-          <div className="px-5 pb-6">
-            <button
-              onClick={onFullOpen}
-              className="w-full h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
-            >
-              {tab === 'home'
-                ? `🍳 ${t('recipe.showFullRecipe') || 'Teljes recept megnyitása'}`
-                : `🛵 ${t('recipe.showRestaurants') || 'Éttermek és napi menük'}`
-              }
-            </button>
-          </div>
-
-          <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
-        </div>
-      </motion.div>
-    </>
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════
 // Macro card
