@@ -15,7 +15,7 @@ import { Layout } from "./shared/layouts/Layout";
 import { NotFound } from "./components/NotFound";
 
 // Onboarding flow screens (small — kept eagerly loaded)
-import { AnimatedIntro } from "./components/onboarding/AnimatedIntro";
+import { OnboardingScreen } from "./components/onboarding/OnboardingScreen";
 import { LoginScreen } from "./components/onboarding/LoginScreen";
 import { TermsScreen } from "./components/onboarding/TermsScreen";
 import { SubscriptionScreen } from "./components/onboarding/SubscriptionScreen";
@@ -121,7 +121,7 @@ export const router = createBrowserRouter([
         path: "splash",
         element: (
           <OnboardingGuard>
-            <AnimatedIntro />
+            <OnboardingScreen />
           </OnboardingGuard>
         ),
       },
