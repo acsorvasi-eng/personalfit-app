@@ -504,6 +504,8 @@ const hu = {
   'fasting.reason.lent': 'Nagyböjt',
   'fasting.reason.adventFriday': 'Adventi péntek',
   'fasting.reason.customDay': 'Egyéni böjti nap',
+  'fasting.noAnimalProducts': 'Állati eredetű termékek nélkül',
+  'fasting.regenerate': 'Újragenerálás',
   'fasting.dayNames.mon': 'H',
   'fasting.dayNames.tue': 'K',
   'fasting.dayNames.wed': 'Sze',

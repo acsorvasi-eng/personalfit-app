@@ -431,6 +431,8 @@ const ro: LocalePartial = {
   'fasting.reason.lent': 'Postul Mare',
   'fasting.reason.adventFriday': 'Vineri din Advent',
   'fasting.reason.customDay': 'Zi de post personalizată',
+  'fasting.noAnimalProducts': 'Fără produse de origine animală',
+  'fasting.regenerate': 'Regenerare',
   'fasting.dayNames.mon': 'L',
   'fasting.dayNames.tue': 'Ma',
   'fasting.dayNames.wed': 'Mi',

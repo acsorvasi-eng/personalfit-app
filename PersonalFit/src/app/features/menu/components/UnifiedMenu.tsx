@@ -1649,6 +1649,29 @@ export function UnifiedMenu() {
               </div>
             )}
 
+            {/* ── Fasting day banner with regenerate button ── */}
+            {dayMeals?.isFastingDay && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-2"
+              >
+                <span className="text-xl">🕯️</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-amber-900">
+                    {t(dayMeals.fastingReason || 'fasting.reason.lent')}
+                  </p>
+                  <p className="text-xs text-amber-700">{t('fasting.noAnimalProducts')}</p>
+                </div>
+                <button
+                  onClick={() => setGenerateSheetOpen(true)}
+                  className="shrink-0 bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl active:scale-95 transition-transform"
+                >
+                  {t('fasting.regenerate')}
+                </button>
+              </motion.div>
+            )}
+
             {/* ── 3. Meal Cards ── */}
             <div className="space-y-3">
               {mealSlots.map((slot, slotIdx) => {
