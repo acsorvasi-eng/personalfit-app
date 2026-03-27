@@ -237,6 +237,139 @@ function norm(s: string): string {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
+// ─── Meal name validation & anti-hallucination ───────────────
+
+/** Words that indicate non-food animals — reject any meal name containing these */
+const FORBIDDEN_WORDS = [
+  'hüllő', 'kígyó', 'béka', 'rovar', 'bogár', 'pók', 'féreg', 'giliszta',
+  'hullő', 'hullo', 'reptile', 'snake', 'frog', 'insect', 'spider', 'worm',
+];
+
+/** English-to-Hungarian food word map for translation */
+const ENGLISH_TO_HUNGARIAN: Record<string, string> = {
+  'oatmeal': 'zabkása', 'buckwheat': 'hajdina', 'grilled': 'grillezett',
+  'baked': 'sült', 'roasted': 'sült', 'chicken': 'csirke', 'pork': 'sertés',
+  'beef': 'marha', 'salad': 'saláta', 'soup': 'leves', 'rice': 'rizs',
+  'lentil': 'lencse', 'egg': 'tojás', 'eggs': 'tojás', 'honey': 'méz',
+  'banana': 'banán', 'with': '', 'and': 'és', 'noodles': 'tészta',
+  'goulash': 'gulyás', 'pancake': 'palacsinta', 'pancakes': 'palacsinta',
+  'yogurt': 'joghurt', 'cottage cheese': 'túró', 'broccoli': 'brokkoli',
+  'spinach': 'spenót', 'mushroom': 'gomba', 'mushrooms': 'gomba',
+  'pepper': 'paprika', 'tomato': 'paradicsom', 'potato': 'krumpli',
+  'potatoes': 'krumpli', 'bread': 'kenyér', 'toast': 'pirítós',
+  'smoothie': 'turmix', 'wrap': 'tekercs', 'steak': 'steak',
+  'fish': 'hal', 'salmon': 'lazac', 'tuna': 'tonhal', 'turkey': 'pulyka',
+  'cheese': 'sajt', 'cream': 'krémes', 'fried': 'sült', 'boiled': 'főtt',
+  'steamed': 'párolt', 'vegetables': 'zöldségek', 'vegetable': 'zöldség',
+  'onion': 'hagyma', 'garlic': 'fokhagyma', 'butter': 'vaj',
+  'olive oil': 'olívaolaj', 'lemon': 'citrom', 'apple': 'alma',
+  'berry': 'bogyó', 'berries': 'bogyós gyümölcs', 'walnut': 'dió',
+  'almond': 'mandula', 'oat': 'zab', 'oats': 'zabpehely',
+  'bowl': 'tál', 'plate': 'tányér', 'stuffed': 'töltött',
+};
+
+/** Common English food words — if ALL words in a name match these, it's likely English */
+const ENGLISH_FOOD_WORDS = new Set([
+  'grilled', 'baked', 'roasted', 'fried', 'boiled', 'steamed', 'sauteed', 'braised',
+  'with', 'and', 'on', 'in', 'the', 'a', 'of',
+  'chicken', 'pork', 'beef', 'turkey', 'fish', 'salmon', 'tuna', 'shrimp',
+  'salad', 'soup', 'stew', 'bowl', 'plate', 'wrap', 'sandwich',
+  'rice', 'pasta', 'noodles', 'bread', 'toast', 'oatmeal', 'buckwheat', 'quinoa',
+  'egg', 'eggs', 'cheese', 'yogurt', 'cream', 'butter', 'milk',
+  'tomato', 'potato', 'onion', 'garlic', 'pepper', 'mushroom', 'mushrooms',
+  'broccoli', 'spinach', 'carrot', 'cabbage', 'beans', 'lentil', 'lentils',
+  'apple', 'banana', 'berry', 'berries', 'lemon', 'orange',
+  'honey', 'sugar', 'salt', 'oil', 'olive',
+  'smoothie', 'pancake', 'pancakes', 'steak', 'fillet', 'breast',
+  'stuffed', 'vegetable', 'vegetables', 'fresh', 'mixed', 'light', 'hearty',
+]);
+
+/**
+ * Validate and fix a meal name (and optionally description) to prevent hallucinations.
+ * - Rejects names containing forbidden animal words
+ * - Translates English meal names to Hungarian when language is "hu"
+ */
+function validateMealText(text: string, language: string): string {
+  if (!text) return text;
+
+  // Check for forbidden words (non-food animals)
+  const lower = text.toLowerCase();
+  for (const word of FORBIDDEN_WORDS) {
+    if (lower.includes(word)) {
+      // Replace the entire name — it's hallucinated
+      return '';
+    }
+  }
+
+  // If language is Hungarian, check if text is in English and translate
+  if (language === 'hu') {
+    const words = text.toLowerCase().replace(/[,.\-()]/g, ' ').split(/\s+/).filter(w => w.length > 0);
+    const englishWordCount = words.filter(w => ENGLISH_FOOD_WORDS.has(w)).length;
+
+    // If most words are English food words, translate
+    if (words.length > 0 && englishWordCount / words.length >= 0.6) {
+      // Try to translate word by word
+      // First handle multi-word phrases
+      let translated = text.toLowerCase();
+      const multiWordKeys = Object.keys(ENGLISH_TO_HUNGARIAN)
+        .filter(k => k.includes(' '))
+        .sort((a, b) => b.length - a.length);
+      for (const phrase of multiWordKeys) {
+        if (translated.includes(phrase)) {
+          translated = translated.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), ENGLISH_TO_HUNGARIAN[phrase]);
+        }
+      }
+      // Then single words
+      const singleWordKeys = Object.keys(ENGLISH_TO_HUNGARIAN).filter(k => !k.includes(' '));
+      for (const word of singleWordKeys) {
+        translated = translated.replace(new RegExp(`\\b${word}\\b`, 'gi'), ENGLISH_TO_HUNGARIAN[word]);
+      }
+      // Clean up: remove empty strings from "with" translation, capitalize first letter
+      translated = translated.replace(/\s{2,}/g, ' ').trim();
+      translated = translated.charAt(0).toUpperCase() + translated.slice(1);
+      return translated;
+    }
+  }
+
+  return text;
+}
+
+/**
+ * Apply hallucination validation to all meals in the parsed response.
+ * Fixes names and descriptions in-place.
+ */
+function validateAllMealNames(parsed: { days?: any[] }, language: string): void {
+  if (!parsed?.days) return;
+  for (const day of parsed.days) {
+    if (!day.meals) continue;
+    for (const meal of day.meals) {
+      if (meal.name) {
+        const validated = validateMealText(meal.name, language);
+        if (validated === '') {
+          // Name was rejected (hallucinated) — build from ingredients
+          const ingNames = (meal.ingredients ?? [])
+            .slice(0, 3)
+            .map((i: any) => i.name)
+            .filter((n: string) => n);
+          meal.name = ingNames.length > 0
+            ? ingNames.slice(0, -1).join(', ') + (ingNames.length > 1 ? ' és ' : '') + ingNames[ingNames.length - 1]
+            : 'Étkezés';
+        } else {
+          meal.name = validated;
+        }
+      }
+      if (meal.description) {
+        const validatedDesc = validateMealText(meal.description, language);
+        if (validatedDesc === '') {
+          meal.description = '';
+        } else {
+          meal.description = validatedDesc;
+        }
+      }
+    }
+  }
+}
+
 // ─── Robust JSON extraction ───────────────────────────────────
 function extractJSON(text: string): any {
   const s = text.trim()
@@ -498,6 +631,9 @@ KÖTELEZŐ SZABÁLYOK:
 8. Minden ingredient "g" értéke reális adag legyen (pl. csirkemell 150-200g, rizs 80-120g, zöldség 100-200g, olaj 10-15g)
 9. is_training_day értékét állítsd helyesen minden napra
 10. Válaszolj KIZÁRÓLAG nyers JSON-nel, semmi más szöveg
+11. TILOS kitalált, nem létező ételneveket használni! Csak olyan ételneveket adj, amelyek léteznek a magyar/román/nemzetközi konyhában. TILTOTT szavak ételnevekben: "hüllő", "kígyó", "béka", "rovar", "bogár", "pók", "féreg", "giliszta". Pl. "Sülthüllő" NEM LÉTEZŐ ÉTEL!
+12. Ha a nyelv magyar, MINDEN ételnév és leírás KIZÁRÓLAG MAGYARUL legyen. Soha ne használj angol szavakat! Példák: "Buckwheat" helyett "Hajdina", "Oatmeal" helyett "Zabkása", "Grilled pork" helyett "Grillezett sertés", "Chicken breast" helyett "Csirkemell", "Cottage cheese" helyett "Túró".
+13. TILOS értelmetlen összetett szavakat gyártani. Minden ételnévnek kereshető, valódi ételnek kell lennie, amit egy magyar/román szakácskönyvben vagy étlapon megtalálsz.
 
 SÉMA (minden mezőt töltsd ki!):
 {"days":[{"day":1,"day_label":"Hétfő","is_training_day":false,"meals":[{"meal_type":"breakfast","name":"Zabkása pirított dióval és áfonyával","description":"Krémes zabkása friss áfonyával és ropogós dióval","total_calories":420,"total_protein":14,"total_carbs":58,"total_fat":16,"ingredients":[{"name":"zabpehely","g":80,"calories":300,"protein":10,"carbs":52,"fat":7},{"name":"dió","g":20,"calories":130,"protein":3,"carbs":3,"fat":13},{"name":"áfonya","g":50,"calories":28,"protein":0.4,"carbs":7,"fat":0.2}]}]}]}
@@ -528,6 +664,9 @@ Generáld le mind a ${clampedDays} napot TELJESEN, minden mezővel kitöltve:`;
     if (!parsed?.days?.length) {
       throw new Error(`Nem sikerült étrendet generálni. ${lastErr}`);
     }
+
+    // Anti-hallucination: validate all meal names and descriptions
+    validateAllMealNames(parsed, lang);
 
     // Validate and enrich every day/meal with complete data
     function enrich(ing: any) {
