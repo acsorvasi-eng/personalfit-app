@@ -22,7 +22,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.unsplash.com https://*.googleapis.com https://images.unsplash.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://personalfit-app.vercel.app https://api.stripe.com; font-src 'self' data:; frame-src https://accounts.google.com https://checkout.stripe.com https://js.stripe.com"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.gstatic.com https://www.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.unsplash.com https://*.googleapis.com https://images.unsplash.com https://lh3.googleusercontent.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com wss://*.firebaseio.com https://personalfit-app.vercel.app https://api.stripe.com https://firebaseinstallations.googleapis.com https://www.google.com https://recaptchaenterprise.googleapis.com; font-src 'self' data:; frame-src https://accounts.google.com https://*.firebaseapp.com https://checkout.stripe.com https://js.stripe.com https://www.google.com https://recaptchaenterprise.googleapis.com"
         }
       ]
     }
