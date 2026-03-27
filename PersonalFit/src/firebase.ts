@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence } from "firebase/auth";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD6Coh3mrokyWQ-AV6rP1rx1nbVfMQai5I",
@@ -24,6 +25,14 @@ let auth: ReturnType<typeof getAuth>;
 try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+
+  // App Check — protects Firestore/Auth from unauthorized access
+  if (typeof window !== 'undefined' && !isNative) {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaEnterpriseProvider('6Lfpb5osAAAAAEgIWqNyt9ZcAKokIQKSlbi0E_xK'),
+      isTokenAutoRefreshEnabled: true,
+    });
+  }
 
   // Capacitor WebView needs explicit persistence — getAuth() default fails silently
   if (isNative) {
