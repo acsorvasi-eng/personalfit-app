@@ -229,110 +229,130 @@ function MealDetailOverlay({
   const mealCarbs = meal.totalCarbs ?? Math.round((totalKcal * 0.40) / 4);
   const mealFat = meal.totalFat ?? Math.round((totalKcal * 0.30) / 9);
   const canShowRecipe = mealType === 'lunch' || mealType === 'dinner' || mealType === 'breakfast';
-  const vis = MEAL_VISUALS[mealType] || MEAL_VISUALS.lunch;
+
+  // Drag to dismiss
+  const sheetY = useMotionValue(0);
+  const bgOpacity = useTransform(sheetY, [0, 400], [0.5, 0]);
+
+  const handleSheetDragEnd = useCallback((_: any, info: PanInfo) => {
+    if (info.offset.y > 150 || info.velocity.y > 500) {
+      onClose();
+    }
+  }, [onClose]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: '100%' }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: '100%' }}
-      transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-      className="fixed inset-0 bg-white overflow-y-auto"
-      style={{ zIndex: 9999, paddingTop: 'env(safe-area-inset-top, 20px)' }}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3">
-        <button onClick={onClose} className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200 transition-colors">
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h2 className="font-bold text-lg text-foreground">{title}</h2>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <Clock className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-sm text-gray-400">{time}</span>
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0"
+        style={{ zIndex: 9998, backgroundColor: 'rgba(0,0,0,0.5)', opacity: bgOpacity }}
+        onClick={onClose}
+      />
+
+      {/* Bottom sheet */}
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleSheetDragEnd}
+        style={{ y: sheetY, zIndex: 9999 }}
+        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl overflow-hidden"
+        // Max height: 92% of screen
+      >
+        <div className="max-h-[92vh] overflow-y-auto">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white z-10">
+            <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
-        </div>
-        <div className={`w-10 h-10 rounded-xl ${vis.bg} flex items-center justify-center text-xl`}>
-          {vis.emoji}
-        </div>
-      </div>
 
-      {/* Hero image — large */}
-      <div className="px-5 py-3">
-        <div className="rounded-2xl overflow-hidden shadow-lg" style={{ height: 200 }}>
-          <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji={vis.emoji} className="w-full h-full" />
-        </div>
-      </div>
+          {/* Hero image */}
+          <div className="px-5 pb-3">
+            <div className="rounded-2xl overflow-hidden shadow-lg" style={{ height: 200 }}>
+              <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji="🍽️" className="w-full h-full" />
+            </div>
+          </div>
 
-      {/* Meal name */}
-      <div className="px-5 mt-2">
-        <h3 className="text-xl font-bold text-foreground">{meal.name}</h3>
-      </div>
+          {/* Meal name + time */}
+          <div className="px-5">
+            <h3 className="text-xl font-bold text-foreground">{meal.name}</h3>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-sm text-gray-400">{title} · {time}</span>
+            </div>
+          </div>
 
-      {/* Macro cards row — kalória first (biggest) */}
-      <div className="px-5 mt-4">
-        <div className="grid grid-cols-4 gap-2">
-          <MacroCard value={`${totalKcal}`} unit="kcal" emoji="🔥" primary />
-          <MacroCard value={`${mealProtein}`} unit="g" emoji="🍖" />
-          <MacroCard value={`${mealCarbs}`} unit="g" emoji="🌾" />
-          <MacroCard value={`${mealFat}`} unit="g" emoji="🫒" />
-        </div>
-      </div>
+          {/* Macro cards */}
+          <div className="px-5 mt-4">
+            <div className="grid grid-cols-4 gap-2">
+              <MacroCard value={`${totalKcal}`} unit="kcal" emoji="🔥" primary />
+              <MacroCard value={`${mealProtein}`} unit="g" emoji="🍖" />
+              <MacroCard value={`${mealCarbs}`} unit="g" emoji="🌾" />
+              <MacroCard value={`${mealFat}`} unit="g" emoji="🫒" />
+            </div>
+          </div>
 
-      {/* Ingredients */}
-      {details && details.length > 0 && (
-        <div className="px-5 mt-5">
-          <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients') || 'Összetevők'}</h4>
-          <div className="space-y-2">
-            {details.map((ing, idx) => (
-              <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing.name, language)}</p>
-                  {ing.quantity && <p className="text-sm text-gray-400">{ing.quantity}</p>}
-                </div>
-                <span className="text-sm font-bold text-primary flex-shrink-0 ml-2">{Math.round(ing.calories)} kcal</span>
+          {/* Ingredients */}
+          {details && details.length > 0 && (
+            <div className="px-5 mt-5">
+              <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients')}</h4>
+              <div className="space-y-2">
+                {details.map((ing, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing.name, language)}</p>
+                      {ing.quantity && <p className="text-sm text-gray-400">{ing.quantity}</p>}
+                    </div>
+                    <span className="text-sm font-bold text-primary flex-shrink-0 ml-2">{Math.round(ing.calories)} kcal</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* Fallback: plain ingredient list */}
-      {(!details || details.length === 0) && meal.ingredients && meal.ingredients.length > 0 && (
-        <div className="px-5 mt-5">
-          <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients') || 'Összetevők'}</h4>
-          <div className="space-y-2">
-            {meal.ingredients.map((ing, idx) => (
-              <div key={idx} className="flex items-center bg-gray-50 rounded-xl px-4 py-3">
-                <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing, language)}</p>
+          {/* Fallback: plain ingredient list */}
+          {(!details || details.length === 0) && meal.ingredients && meal.ingredients.length > 0 && (
+            <div className="px-5 mt-5">
+              <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients')}</h4>
+              <div className="space-y-2">
+                {meal.ingredients.map((ing, idx) => (
+                  <div key={idx} className="flex items-center bg-gray-50 rounded-xl px-4 py-3">
+                    <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing, language)}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* Action buttons — fixed at bottom */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-5 pt-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 0.75rem)' }}>
-        <div className="flex gap-3">
+          {/* Action buttons */}
           {canShowRecipe && (
-            <>
+            <div className="px-5 mt-5 flex gap-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}>
               <button
                 onClick={() => { onClose(); setTimeout(() => onRecipeOpen('home'), 200); }}
                 className="flex-1 h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
               >
-                🍳 {t('menu.recipeBtn') || 'Recept'}
+                🍳 {t('menu.recipeBtn')}
               </button>
               <button
                 onClick={() => { onClose(); setTimeout(() => onRecipeOpen('restaurant'), 200); }}
                 className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
               >
-                🛵 {t('menu.orderBtn') || 'Rendelés'}
+                🛵 {t('menu.orderBtn')}
               </button>
-            </>
+            </div>
           )}
+
+          {/* Bottom padding if no buttons */}
+          {!canShowRecipe && <div className="h-[max(1.5rem,env(safe-area-inset-bottom))]" />}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
 
