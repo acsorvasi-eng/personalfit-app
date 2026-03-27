@@ -1186,7 +1186,7 @@ export function ProfileSetupWizard() {
           // Mark onboarding as complete
           setHasPlanSetup(true);
           setHasCompletedFullFlow(true);
-          navigate('/menu', { replace: true });
+          navigate('/', { replace: true });
         }}
       />
     </div>
