@@ -321,7 +321,7 @@ function MealDetailOverlay({
             🍳 {t('menu.recipeBtn')}
           </button>
           <button
-            onClick={() => setRecipeSheet('restaurant')}
+            onClick={() => { onClose(); setTimeout(() => onRecipeOpen('restaurant'), 150); }}
             className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
           >
             🛵 {t('menu.orderBtn')}
