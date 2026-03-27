@@ -119,6 +119,32 @@ const COOKING_VERB_PREFIXES = [
 /** Phrases that are a single ingredient (do not split). */
 const SINGLE_INGREDIENT_PHRASES = new Set([
   'édes burgonya', 'édesburgonya', 'edes burgonya', 'edesburgonya',
+  'tojásfehérje', 'tojasfeherje', 'fehérjepor', 'feherjepor',
+  'édesburgonya', 'napraforgóolaj', 'napraforgoolaj',
+  'kókuszolaj', 'kokuszolaj', 'szezámolaj', 'szezamolaj',
+]);
+
+/** Known standalone Hungarian food words for compound splitting */
+const FOOD_WORDS = new Set([
+  'brokkoli', 'olívaolaj', 'olivaolaj', 'rizs', 'tojás', 'tojas',
+  'csirkemell', 'lazac', 'cukkini', 'paradicsom', 'hagyma', 'paprika',
+  'krumpli', 'burgonya', 'lencse', 'bab', 'zab', 'túró', 'turo',
+  'sajt', 'tej', 'vaj', 'alma', 'banán', 'banan', 'avokádó', 'avokado',
+  'dió', 'dio', 'mandula', 'mogyoró', 'mogyoro', 'spenót', 'spenot',
+  'gomba', 'zabpehely', 'csirke', 'pulyka', 'pulykamell', 'sonka',
+  'tonhal', 'garnéla', 'garnela', 'karfiol', 'káposzta', 'kaposzta',
+  'répa', 'repa', 'cékla', 'cekla', 'saláta', 'salata', 'uborka',
+  'padlizsán', 'padlizsan', 'spárga', 'sparga', 'petrezselyem',
+  'kapor', 'bazsalikom', 'rozmaring', 'fahéj', 'fahej',
+  'gyömbér', 'gyomber', 'kurkuma', 'chili',
+  'lenmag', 'chia', 'quinoa', 'kuszkusz', 'bulgur', 'hajdina',
+  'joghurt', 'kefir', 'tejföl', 'tejfol', 'tejszín', 'tejszin',
+  'mák', 'mak', 'szezám', 'szezam', 'tökmag', 'tokmag',
+  'kesudió', 'kesudio', 'áfonya', 'afonya', 'eper', 'málna', 'malna',
+  'szeder', 'szilva', 'barack', 'körte', 'korte', 'narancs',
+  'citrom', 'kiwi', 'mangó', 'mango', 'tészta', 'teszta',
+  'kenyér', 'kenyer', 'pirítós', 'piritos', 'müzli', 'muzli',
+  'granola', 'olaj', 'méz', 'mez', 'csicseriborsó', 'csicseriborso',
 ]);
 
 /** Hungarian adjective forms → base ingredient name (singular). */
@@ -217,6 +243,28 @@ export function splitHungarianCompoundDish(raw: string): string[] {
       out.push(second.charAt(0).toUpperCase() + second.slice(1));
       out.push(baseFromAdj.charAt(0).toUpperCase() + baseFromAdj.slice(1));
       return out.length ? out.reverse() : [trimmed];
+    }
+  }
+
+  // "X olívaolaj" / "X rizzsel" patterns: split known food words joined by space
+  if (words.length >= 2) {
+    const matchedFoods: string[] = [];
+    for (const w of words) {
+      if (FOOD_WORDS.has(w)) {
+        matchedFoods.push(w.charAt(0).toUpperCase() + w.slice(1));
+      }
+    }
+    // If 2+ words are known food words, split them
+    if (matchedFoods.length >= 2 && matchedFoods.length === words.length) {
+      return matchedFoods;
+    }
+  }
+
+  // "Xfőzelék" where X was not matched earlier (short X): treat as single ingredient base
+  if (/főzelék$/i.test(rest) || /fozelek$/i.test(rest)) {
+    const base = rest.replace(/főzelék$/i, '').replace(/fozelek$/i, '').trim();
+    if (base.length >= 3) {
+      return [base.charAt(0).toUpperCase() + base.slice(1)];
     }
   }
 

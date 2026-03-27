@@ -499,6 +499,33 @@ function getAtomicIngredientNames(rawName: string): string[] {
   return result;
 }
 
+/** Meal type labels that should NOT be used as dish names */
+const IMPORT_MEAL_TYPE_LABELS = new Set([
+  'reggeli', 'ebéd', 'ebed', 'vacsora', 'snack', 'tízórai',
+  'uzsonna', 'breakfast', 'lunch', 'dinner', 'edzés utáni',
+]);
+
+/** Ensure a meal has a real dish name, not just a meal type label */
+function repairMealName(mealData: AIParsedMeal): string {
+  const name = mealData.name || '';
+  if (name && !IMPORT_MEAL_TYPE_LABELS.has(name.toLowerCase().trim())) {
+    return name;
+  }
+  // Generate name from ingredient names
+  const ingNames = mealData.ingredients
+    .slice(0, 3)
+    .map(i => i.name)
+    .filter(n => n && n.length > 1);
+  if (ingNames.length > 0) {
+    return ingNames.join(', ');
+  }
+  const fallbacks: Record<string, string> = {
+    breakfast: 'Reggeli tál', lunch: 'Ebéd menü',
+    dinner: 'Vacsora tál', snack: 'Snack',
+  };
+  return fallbacks[mealData.meal_type] || mealData.meal_type;
+}
+
 /**
  * Import from AI parse results — v2 (robust).
  *
@@ -650,7 +677,7 @@ export async function importFromAIParse(
           meal_day_id: mealDay.id,
           nutrition_plan_id: plan.id,
           meal_type: mealData.meal_type,
-          name: mealData.name,
+          name: repairMealName(mealData),
           description: '',
           is_primary: true,
           sort_order: mealIdx,
@@ -790,7 +817,7 @@ async function appendToPlanInternal(
           meal_day_id: mealDay.id,
           nutrition_plan_id: plan.id,
           meal_type: mealData.meal_type,
-          name: mealData.name,
+          name: repairMealName(mealData),
           description: '',
           is_primary: true,
           sort_order: mealIdx,
@@ -991,6 +1018,24 @@ function isValidIngredientName(name: string): boolean {
   const lower = n.toLowerCase();
   for (const token of PDF_TOKENS) {
     if (lower.includes(token)) return false;
+  }
+
+  // ── Kategória / makró nevek elutasítása — ezek NEM ételek ──
+  const CATEGORY_REJECT = new Set([
+    'szénhidrát', 'szenhydrat', 'szénhidr', 'fehérje', 'feherje', 'fehérj',
+    'zsír', 'zsir', 'zöldség', 'zoldseg', 'gyümölcs', 'gyumolcs',
+    'gabona', 'kalória', 'kaloria', 'kalóri', 'vitamin',
+    'ásványi', 'asvanyi', 'makró', 'makro', 'mikró', 'mikro',
+    'rost', 'cukor', 'összes', 'osszes', 'összesen', 'osszesen',
+    'napi', 'heti', 'protein', 'carbs', 'fat', 'fiber',
+    'napi összesen', 'napi osszesen',
+  ]);
+  if (CATEGORY_REJECT.has(lower)) return false;
+
+  // Reject truncated category labels (e.g. "Szénhidr" prefix of "Szénhidrát")
+  const TRUNCATION_SOURCES = ['szénhidrát', 'fehérje', 'kalória', 'ásványi', 'vitamin', 'összesen'];
+  for (const full of TRUNCATION_SOURCES) {
+    if (lower !== full && full.startsWith(lower) && lower.length >= 4) return false;
   }
 
   // Legalább egy latin/HU betű

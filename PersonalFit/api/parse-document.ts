@@ -186,10 +186,12 @@ OUTPUT 1 — ingredients:
 - ALL names MUST be in Hungarian. If the source uses English names (e.g. "walnut", "potato", "broccoli", "avocado", "zucchini"), translate to the correct Hungarian base ingredient (e.g. "dió", "krumpli", "brokkoli", "avokádó", "cukkini").
 - Include meats, fish, vegetables, fruits, dairy, grains, nuts, seeds, legumes, oils, and other real foods. Do NOT skip anything that looks like an ingredient.
 - Do NOT combine ingredients into one token: "cukkini-paradicsom" is WRONG. Instead extract them as two separate ingredients: "cukkini" and "paradicsom".
+- SOHA ne adj vissza kategória neveket mint alapanyag (NEM étel: Szénhidrát, Fehérje, Zsír, Zöldség, Gyümölcs, Kalória, Gabona, Rost, Vitamin, Ásványi anyag). Minden alapanyag KONKRÉT élelmiszer legyen (pl. brokkoli, csirkemell, rizs).
+- SOHA ne adj vissza két alapanyagot egy stringben egybeírva. "Brokkoli olívaolaj" HIBÁS — két külön elem legyen: "brokkoli" és "olívaolaj".
 - Each name must be a single base food, max 25 characters.
 
 GOOD: "tojás", "csirkemell", "lazac", "avokádó", "zab", "túró", "brokkoli", "dió", "banán", "olívaolaj", "kesudió"
-BAD: "3 tojás", "180g lazac", "Protein + egészséges zsír", "Napi összesen", any string with φ ~ } { < > * =
+BAD: "3 tojás", "180g lazac", "Protein + egészséges zsír", "Napi összesen", "Szénhidrát", "Fehérje", "Zsír", "Zöldség", "Brokkoli olívaolaj", any string with φ ~ } { < > * =
 
 OUTPUT 2 — plan:
 - A JSON array of exactly 30 days. Each day:
@@ -237,6 +239,71 @@ ${cleanedText.substring(0, 45000)}`;
  * REQUIREMENT 1 filter: atomic names only; split compounds, strip labels/measurements,
  * accent-insensitive dedup, max ~60–80 unique clean Hungarian ingredients.
  */
+
+/** Category/macro labels that are NOT food — must be rejected */
+const CATEGORY_BLOCKLIST = new Set([
+  'szénhidrát', 'szenhydrat', 'szénhidr', 'fehérje', 'feherje', 'fehérj',
+  'zsír', 'zsir', 'zöldség', 'zoldseg', 'gyümölcs', 'gyumolcs',
+  'gabona', 'kalória', 'kaloria', 'kalóri', 'vitamin',
+  'ásványi', 'asvanyi', 'ásvány', 'makró', 'makro', 'mikró', 'mikro',
+  'rost', 'cukor', 'összes', 'osszes', 'összesen', 'osszesen',
+  'napi', 'heti', 'protein', 'carbs', 'fat', 'fiber',
+  'napi összesen', 'napi osszesen', 'reggeli', 'ebéd', 'ebed',
+  'vacsora', 'snack', 'edzés utáni', 'edzes utani',
+]);
+
+/** Known standalone Hungarian food words for compound splitting */
+const KNOWN_FOOD_WORDS = new Set([
+  'brokkoli', 'olívaolaj', 'olivaolaj', 'rizs', 'tojás', 'tojas',
+  'csirkemell', 'lazac', 'cukkini', 'paradicsom', 'hagyma', 'paprika',
+  'krumpli', 'burgonya', 'lencse', 'bab', 'zab', 'túró', 'turo',
+  'sajt', 'tej', 'vaj', 'alma', 'banán', 'banan', 'avokádó', 'avokado',
+  'dió', 'dio', 'mandula', 'mogyoró', 'mogyoro', 'spenót', 'spenot',
+  'gomba', 'zabpehely', 'csirke', 'pulyka', 'pulykamell', 'sonka',
+  'tonhal', 'garnéla', 'garnela', 'karfiol', 'káposzta', 'kaposzta',
+  'répa', 'repa', 'cékla', 'cekla', 'saláta', 'salata', 'uborka',
+  'padlizsán', 'padlizsan', 'articsóka', 'articsoka', 'spárga', 'sparga',
+  'petrezselyem', 'kapor', 'bazsalikom', 'rozmaring', 'kakukkfű', 'kakukkfu',
+  'fahéj', 'fahej', 'gyömbér', 'gyomber', 'kurkuma', 'chili',
+  'kókuszolaj', 'kokuszolaj', 'szezámolaj', 'szezamolaj', 'napraforgóolaj',
+  'lenmag', 'chia', 'quinoa', 'kuszkusz', 'bulgur', 'hajdina',
+  'joghurt', 'kefir', 'tejföl', 'tejfol', 'tejszín', 'tejszin',
+  'mák', 'mak', 'szezám', 'szezam', 'tökmag', 'tokmag',
+  'napraforgómag', 'napraforgomag', 'kesudió', 'kesudio',
+  'áfonya', 'afonya', 'eper', 'málna', 'malna', 'szeder', 'szilva',
+  'barack', 'őszibarack', 'oszibarack', 'körte', 'korte', 'narancs',
+  'citrom', 'grapefruit', 'kiwi', 'mangó', 'mango', 'ananász', 'ananasz',
+  'tojásfehérje', 'tojasfeherje', 'fehérjepor', 'feherjepor',
+  'édesburgonya', 'edesburgonya', 'batáta', 'batata',
+  'tészta', 'teszta', 'kenyér', 'kenyer', 'pirítós', 'piritos',
+  'müzli', 'muzli', 'granola', 'zabkása',
+]);
+
+/**
+ * Split compound ingredients where 2+ known food words are joined by space.
+ * E.g. "Brokkoli olívaolaj" → ["brokkoli", "olívaolaj"]
+ */
+function splitCompoundFoodWords(name: string): string[] {
+  const lower = name.toLowerCase().trim();
+  const words = lower.split(/\s+/);
+
+  if (words.length < 2) return [name];
+
+  // Check if all words are known food words
+  const allKnown = words.every(w => KNOWN_FOOD_WORDS.has(w));
+  if (allKnown && words.length >= 2) {
+    return words.map(w => w.charAt(0).toUpperCase() + w.slice(1));
+  }
+
+  // Check if at least 2 words are known foods (with some non-food words mixed in)
+  const knownWords = words.filter(w => KNOWN_FOOD_WORDS.has(w));
+  if (knownWords.length >= 2 && knownWords.length === words.length) {
+    return knownWords.map(w => w.charAt(0).toUpperCase() + w.slice(1));
+  }
+
+  return [name];
+}
+
 function filterCleanIngredients(names: string[]): string[] {
   const forbidden = /[φ~{}\[\]<>*=]/;
   const categoryWords = [
@@ -266,14 +333,34 @@ function filterCleanIngredients(names: string[]): string[] {
     let base = s.replace(/^\d+[.,]?\d*\s*[a-zA-ZáéíóöőúüűÁÉÍÓÖŐÚÜŰ]*\s+/, '').trim();
     if (!base) continue;
 
-    // Split on commas, slashes, plus and dashes into candidate tokens
-    const parts = base
-      .split(/[,/+\-]/)
-      .map(p => p.trim())
-      .filter(p => p.length > 0 && p.length <= 40);
+    // Reject category/macro labels immediately (before any splitting)
+    if (CATEGORY_BLOCKLIST.has(base.toLowerCase())) continue;
 
-    for (let part of parts) {
+    // Reject truncated category labels (e.g. "Szénhidr" — ends abruptly)
+    const lowerBase = base.toLowerCase();
+    const isTruncated = [...CATEGORY_BLOCKLIST].some(cat =>
+      cat.length > lowerBase.length && cat.startsWith(lowerBase) && lowerBase.length >= 4
+    );
+    if (isTruncated) continue;
+
+    // Try splitting compound food words first (e.g. "Brokkoli olívaolaj" → two items)
+    const compoundSplit = splitCompoundFoodWords(base);
+
+    // Also split on commas, slashes, plus and dashes
+    const allParts: string[] = [];
+    for (const cs of compoundSplit) {
+      const parts = cs
+        .split(/[,/+\-]/)
+        .map(p => p.trim())
+        .filter(p => p.length > 0 && p.length <= 40);
+      allParts.push(...parts);
+    }
+
+    for (let part of allParts) {
       let n = part.toLowerCase();
+
+      // Reject category/macro labels at the part level
+      if (CATEGORY_BLOCKLIST.has(n)) continue;
 
       // Remove category words
       for (const w of categoryWords) {
@@ -288,6 +375,9 @@ function filterCleanIngredients(names: string[]): string[] {
       // Collapse whitespace
       n = n.replace(/\s+/g, ' ').trim();
       if (!n) continue;
+
+      // Reject again after stripping (may have become a category word)
+      if (CATEGORY_BLOCKLIST.has(n)) continue;
 
       // Length and label checks
       if (n.length < 2 || n.length > 25) continue;
@@ -378,9 +468,23 @@ function convert30DayPlanToWeeks(plan: any[]): any[][] {
         };
       });
 
+      // Derive a proper dish name from items if the LLM only returned a meal type label
+      const MEAL_TYPE_LABELS = new Set([
+        'reggeli', 'ebéd', 'ebed', 'vacsora', 'snack', 'tízórai', 'uzsonna',
+        'breakfast', 'lunch', 'dinner', 'edzés utáni', 'edzes utani',
+      ]);
+      let mealName = m?.name || '';
+      if (!mealName || MEAL_TYPE_LABELS.has(mealName.toLowerCase())) {
+        // Generate name from first 2-3 ingredient names
+        const ingNames = ingredients.slice(0, 3).map((ig: any) => ig.name).filter(Boolean);
+        mealName = ingNames.length > 0
+          ? ingNames.join(', ')
+          : (type === 'breakfast' ? 'Reggeli tál' : type === 'lunch' ? 'Ebéd tál' : 'Vacsora tál');
+      }
+
       return {
         meal_type: type,
-        name: m?.name || 'Ebéd',
+        name: mealName,
         ingredients,
       };
     });

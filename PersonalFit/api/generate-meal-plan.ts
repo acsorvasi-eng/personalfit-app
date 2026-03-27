@@ -26,6 +26,13 @@ interface ValidatedMeal {
   }>;
 }
 
+/** Meal type labels that should NOT be used as dish names */
+const MEAL_TYPE_LABELS = new Set([
+  'reggeli', 'ebéd', 'ebed', 'vacsora', 'snack', 'tízórai', 'tizorai',
+  'uzsonna', 'breakfast', 'lunch', 'dinner',
+  'edzés utáni', 'edzes utani', 'mic dejun', 'prânz', 'cină',
+]);
+
 function validateAndRepairMeal(meal: any, mealType: string): ValidatedMeal {
   const ingredients = (meal.ingredients ?? []).map((ing: any) => ({
     name: ing.name ?? 'Ismeretlen',
@@ -41,9 +48,30 @@ function validateAndRepairMeal(meal: any, mealType: string): ValidatedMeal {
   const totalCarbs = Number(meal.total_carbs) || ingredients.reduce((s: number, i: any) => s + i.carbs, 0);
   const totalFat = Number(meal.total_fat) || ingredients.reduce((s: number, i: any) => s + i.fat, 0);
 
+  // Fix: if the name is just a meal type label, generate a real name from ingredients
+  let name = meal.name ?? '';
+  if (!name || MEAL_TYPE_LABELS.has(name.toLowerCase().trim())) {
+    const ingNames = ingredients.slice(0, 3).map((i: any) => i.name).filter((n: string) => n && n !== 'Ismeretlen');
+    if (ingNames.length > 0) {
+      // Create a descriptive name from main ingredients
+      name = ingNames.length === 1
+        ? ingNames[0]
+        : ingNames.slice(0, -1).join(', ') + ' és ' + ingNames[ingNames.length - 1];
+    } else {
+      // Last resort: use a generic but descriptive fallback
+      const fallbacks: Record<string, string> = {
+        breakfast: 'Reggeli tál',
+        lunch: 'Ebéd menü',
+        dinner: 'Vacsora tál',
+        snack: 'Snack',
+      };
+      name = fallbacks[mealType] || `${mealType} menü`;
+    }
+  }
+
   return {
     meal_type: meal.meal_type ?? mealType,
-    name: meal.name ?? `${mealType} meal`,
+    name,
     description: meal.description ?? '',
     total_calories: Math.round(totalCal),
     total_protein: Math.round(totalProtein),
@@ -459,6 +487,8 @@ KÖTELEZŐ SZABÁLYOK:
 3. Minden ingredient-nél KÖTELEZŐ: name, g (grammban), calories, protein, carbs, fat (az adott grammra kiszámolva, NEM 100g-ra)
 4. A "description" mező: 1 rövid mondat az ételről (pl. "Krémes zabkása friss áfonyával és ropogós dióval")
 5. VALÓDI, vonzó étlapszerű nevek — KIZÁRÓLAG létező ételek. TILOS kitalált neveket generálni.
+   A "name" mező SOHA NEM lehet csak a meal_type (pl. "Reggeli", "Ebéd", "Vacsora", "Snack"). Mindig KONKRÉT ételnév legyen (pl. "Zabkása dióval és banánnal", "Csirkepaprikás galuskával", "Grillezett lazac párolt zöldséggel").
+   Ha a "name" mező megegyezik a "meal_type" értékkel, az HIBÁS.
 6. VÁLTOZATOSSÁG: Ugyanaz az étel NE ismétlődjön a ${clampedDays} napon belül. Minden napnak más reggelije, ebédje, vacsorája legyen.
 7. REÁLIS ADAGOK: reggeli 250-450 kcal, ebéd 500-800 kcal, vacsora 400-600 kcal, snack 100-200 kcal. Az adagoknak össze kell adódniuk a napi célkalóriára (±5%).
 8. Minden ingredient "g" értéke reális adag legyen (pl. csirkemell 150-200g, rizs 80-120g, zöldség 100-200g, olaj 10-15g)

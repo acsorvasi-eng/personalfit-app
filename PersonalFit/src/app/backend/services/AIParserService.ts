@@ -229,6 +229,31 @@ export function isCleanFoodName(name: string): boolean {
   if (!name || name.length < 2) return false;
   if (name.length > 120) return false;
 
+  // ── KEMÉNY SZABÁLY 0: Kategória / makró nevek elutasítása ──
+  // These are nutritional category labels, NOT food items
+  const CATEGORY_BLOCKLIST = new Set([
+    'szénhidrát', 'szenhydrat', 'szénhidr', 'feherje', 'fehérje', 'fehérj',
+    'zsír', 'zsir', 'zöldség', 'zoldseg', 'gyümölcs', 'gyumolcs',
+    'gabona', 'kalória', 'kaloria', 'kalóri', 'vitamin',
+    'ásványi', 'asvanyi', 'ásvány', 'makró', 'makro', 'mikró', 'mikro',
+    'rost', 'cukor', 'összes', 'osszes', 'összesen', 'osszesen',
+    'napi', 'heti', 'protein', 'carbs', 'fat', 'fiber',
+    'napi összesen', 'napi osszesen',
+  ]);
+  const lower = name.toLowerCase().trim();
+  if (CATEGORY_BLOCKLIST.has(lower)) return false;
+
+  // Reject truncated category labels: if the name is a prefix of a known category word
+  // E.g. "Szénhidr" is a truncated "Szénhidrát", "Fehérj" is a truncated "Fehérje"
+  const TRUNCATION_SOURCES = [
+    'szénhidrát', 'fehérje', 'kalória', 'ásványi', 'vitamin', 'összesen',
+  ];
+  for (const full of TRUNCATION_SOURCES) {
+    if (lower !== full && full.startsWith(lower) && lower.length >= 4) {
+      return false;
+    }
+  }
+
   // Kötelező: legalább 1 latin vagy HU/RO betű
   if (!/[a-záéíóöőúüűăâîșțA-ZÁÉÍÓÖŐÚÜŰĂÂÎȘȚ]/.test(name)) return false;
 
