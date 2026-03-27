@@ -417,6 +417,16 @@ const hu = {
   'upload.subtext': 'Dietetikus étrendet dolgozzuk fel',
 
   // Daily menus in RecipeOverlay
+  // MealCard detail page
+  'menu.kcalLabel': 'kcal',
+  'menu.proteinLabel': 'Fehérje',
+  'menu.carbsLabel': 'Szénhidrát',
+  'menu.fatLabel': 'Zsír',
+  'menu.ingredients': 'Összetevők',
+  'menu.recipeBtn': 'Recept',
+  'menu.orderBtn': 'Rendelés',
+  'menu.swapMeal': 'Mást eszek',
+
   'recipe.loadingDailyMenus': 'Napi menük keresése...',
   'recipe.dailyMenusTitle': 'Napi menük a közeledben',
   'recipe.viewMenu': 'Menü megtekintése',

@@ -344,6 +344,16 @@ const ro: LocalePartial = {
   'upload.subtext': 'Procesăm planul alimentar de la dietetician',
 
   // Daily menus in RecipeOverlay
+  // MealCard detail page
+  'menu.kcalLabel': 'kcal',
+  'menu.proteinLabel': 'Proteine',
+  'menu.carbsLabel': 'Carbohidrați',
+  'menu.fatLabel': 'Grăsimi',
+  'menu.ingredients': 'Ingrediente',
+  'menu.recipeBtn': 'Rețetă',
+  'menu.orderBtn': 'Comandă',
+  'menu.swapMeal': 'Altceva',
+
   'recipe.loadingDailyMenus': 'Căutare meniuri zilnice...',
   'recipe.dailyMenusTitle': 'Meniuri zilnice lângă tine',
   'recipe.viewMenu': 'Vezi meniul',

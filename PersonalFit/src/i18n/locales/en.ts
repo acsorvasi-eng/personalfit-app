@@ -344,6 +344,16 @@ const en: LocalePartial = {
   'upload.subtext': 'Processing your dietician meal plan',
 
   // Daily menus in RecipeOverlay
+  // MealCard detail page
+  'menu.kcalLabel': 'kcal',
+  'menu.proteinLabel': 'Protein',
+  'menu.carbsLabel': 'Carbs',
+  'menu.fatLabel': 'Fat',
+  'menu.ingredients': 'Ingredients',
+  'menu.recipeBtn': 'Recipe',
+  'menu.orderBtn': 'Order',
+  'menu.swapMeal': 'Swap meal',
+
   'recipe.loadingDailyMenus': 'Searching daily menus...',
   'recipe.dailyMenusTitle': 'Daily menus near you',
   'recipe.viewMenu': 'View menu',

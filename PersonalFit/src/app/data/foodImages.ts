@@ -15,8 +15,10 @@ interface FoodImageEntry {
 
 const FOOD_IMAGES: FoodImageEntry[] = [
   // ── Breakfast items ──
-  { keywords: ['köles', 'koles', 'millet porridge'],
-    url: 'https://images.unsplash.com/photo-1495214783159-3503fd1b572d?w=400&h=300&fit=crop&auto=format', emoji: '🥣' },
+  { keywords: ['köles-kása', 'koles-kasa', 'köles kása', 'köleskása', 'millet porridge'],
+    url: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop&auto=format', emoji: '🥣' },
+  { keywords: ['köles', 'koles', 'millet'],
+    url: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&h=300&fit=crop&auto=format', emoji: '🌾' },
   { keywords: ['kása', 'kasa', 'porridge', 'oatmeal', 'zabkása', 'zabpehely', 'terci'],
     url: 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=400&h=300&fit=crop&auto=format', emoji: '🥣' },
   { keywords: ['tojás', 'tojas', 'egg', 'rántotta', 'rantotta', 'scrambled', 'omlett', 'ou'],
@@ -129,14 +131,20 @@ export function findFoodImage(name: string): { url: string | null; emoji: string
 
   const lower = stripAccents(name.toLowerCase());
 
-  // Try exact keyword match first
+  // Find the longest matching keyword (most specific wins)
+  let bestMatch: FoodImageEntry | null = null;
+  let bestLen = 0;
+
   for (const entry of FOOD_IMAGES) {
     for (const kw of entry.keywords) {
-      if (lower.includes(stripAccents(kw))) {
-        return { url: entry.url, emoji: entry.emoji };
+      const kwNorm = stripAccents(kw);
+      if (lower.includes(kwNorm) && kwNorm.length > bestLen) {
+        bestMatch = entry;
+        bestLen = kwNorm.length;
       }
     }
   }
 
+  if (bestMatch) return { url: bestMatch.url, emoji: bestMatch.emoji };
   return { url: null, emoji: '🍽️' };
 }

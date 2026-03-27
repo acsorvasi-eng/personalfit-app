@@ -267,18 +267,15 @@ function MealDetailOverlay({
       {/* Meal name */}
       <div className="px-5 mt-2">
         <h3 className="text-xl font-bold text-foreground">{meal.name}</h3>
-        {meal.description && (
-          <p className="text-sm text-gray-500 mt-1 italic">{meal.description}</p>
-        )}
       </div>
 
       {/* Macro cards row — kalória first (biggest) */}
       <div className="px-5 mt-4">
         <div className="grid grid-cols-4 gap-2">
-          <MacroCard label={t('menu.kcalLabel') || 'Kalória'} value={`${totalKcal}`} unit="kcal" emoji="🔥" primary />
-          <MacroCard label={t('menu.proteinLabel') || 'Fehérje'} value={`${mealProtein}`} unit="g" emoji="🍖" />
-          <MacroCard label={t('menu.carbsLabel') || 'Szénhidrát'} value={`${mealCarbs}`} unit="g" emoji="🌾" />
-          <MacroCard label={t('menu.fatLabel') || 'Zsír'} value={`${mealFat}`} unit="g" emoji="🫒" />
+          <MacroCard value={`${totalKcal}`} unit="kcal" emoji="🔥" primary />
+          <MacroCard value={`${mealProtein}`} unit="g" emoji="🍖" />
+          <MacroCard value={`${mealCarbs}`} unit="g" emoji="🌾" />
+          <MacroCard value={`${mealFat}`} unit="g" emoji="🫒" />
         </div>
       </div>
 
@@ -343,8 +340,8 @@ function MealDetailOverlay({
 // Macro card
 // ═══════════════════════════════════════════════════════════════
 
-function MacroCard({ label, value, unit, emoji, primary }: {
-  label: string; value: string; unit: string; emoji: string; primary?: boolean;
+function MacroCard({ value, unit, emoji, primary }: {
+  value: string; unit: string; emoji: string; primary?: boolean;
 }) {
   return (
     <div className={`rounded-xl p-2.5 text-center ${primary ? 'bg-primary/10 border border-primary/20' : 'bg-gray-50 border border-gray-100'}`}>
@@ -352,7 +349,6 @@ function MacroCard({ label, value, unit, emoji, primary }: {
       <p className={`text-base font-bold mt-0.5 ${primary ? 'text-primary' : 'text-foreground'}`}>
         {value}<span className="text-sm font-normal text-gray-400 ml-0.5">{unit}</span>
       </p>
-      <p className="text-sm text-gray-500">{label}</p>
     </div>
   );
 }
