@@ -148,6 +148,7 @@ export function MealCard({
               foodName={mealName || title}
               size="md"
               fallbackEmoji={vis.emoji}
+              mealType={mealType}
             />
           </div>
 
@@ -279,7 +280,7 @@ function MealDetailOverlay({
       {/* Hero image */}
       <div className="px-5 pb-3">
         <div className="rounded-2xl overflow-hidden shadow-lg" style={{ height: 200 }}>
-          <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji="🍽️" className="w-full h-full" />
+          <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji="🍽️" className="w-full h-full" mealType={mealType} />
         </div>
       </div>
 

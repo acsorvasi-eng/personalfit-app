@@ -7,6 +7,67 @@ import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
 
+// ─── Validation helpers ──────────────────────────────────────
+interface ValidatedMeal {
+  meal_type: string;
+  name: string;
+  description: string;
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fat: number;
+  ingredients: Array<{
+    name: string;
+    g: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }>;
+}
+
+function validateAndRepairMeal(meal: any, mealType: string): ValidatedMeal {
+  const ingredients = (meal.ingredients ?? []).map((ing: any) => ({
+    name: ing.name ?? 'Ismeretlen',
+    g: Math.max(1, Number(ing.g ?? ing.quantity_grams ?? 100)),
+    calories: Math.max(0, Number(ing.calories ?? 0)),
+    protein: Math.max(0, Number(ing.protein ?? 0)),
+    carbs: Math.max(0, Number(ing.carbs ?? 0)),
+    fat: Math.max(0, Number(ing.fat ?? 0)),
+  }));
+
+  const totalCal = Number(meal.total_calories) || ingredients.reduce((s: number, i: any) => s + i.calories, 0) || 300;
+  const totalProtein = Number(meal.total_protein) || ingredients.reduce((s: number, i: any) => s + i.protein, 0);
+  const totalCarbs = Number(meal.total_carbs) || ingredients.reduce((s: number, i: any) => s + i.carbs, 0);
+  const totalFat = Number(meal.total_fat) || ingredients.reduce((s: number, i: any) => s + i.fat, 0);
+
+  return {
+    meal_type: meal.meal_type ?? mealType,
+    name: meal.name ?? `${mealType} meal`,
+    description: meal.description ?? '',
+    total_calories: Math.round(totalCal),
+    total_protein: Math.round(totalProtein),
+    total_carbs: Math.round(totalCarbs),
+    total_fat: Math.round(totalFat),
+    ingredients,
+  };
+}
+
+function validateDay(day: any, dayIndex: number, mealTypes: string[], dayNames: string[]): any {
+  const meals = mealTypes.map((mt, mi) => {
+    const found = (day.meals ?? []).find((m: any) => m.meal_type === mt) ?? (day.meals ?? [])[mi];
+    if (!found) return { meal_type: mt, name: '', description: '', total_calories: 0, total_protein: 0, total_carbs: 0, total_fat: 0, ingredients: [] };
+    return validateAndRepairMeal(found, mt);
+  });
+
+  return {
+    day: dayIndex + 1,
+    day_label: day.day_label ?? dayNames[dayIndex % 7],
+    is_training_day: day.is_training_day ?? false,
+    meals,
+  };
+}
+
 function resolveApiKey(): string | undefined {
   if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
   try {
@@ -53,28 +114,54 @@ const DAY_NAMES: Record<string, string[]> = {
 const CUISINE: Record<string, { intro: string; style: string }> = {
   hu: {
     intro: 'Te egy magyarországi és erdélyi konyhában jártas dietetikus és séf vagy.',
-    style: `Magyar és erdélyi recepteket használj valódi gasztronómiai nevekkel (csirkepaprikás galuskával, halászlé, erdélyi rakott krumpli, pörkölt, zabkása gyümölccsel stb.). TILOS semmitmondó neveket használni mint "Csirke rizzsel".
+    style: `Magyar és erdélyi recepteket használj valódi gasztronómiai nevekkel. TILOS semmitmondó neveket használni mint "Csirke rizzsel".
+
 KRITIKUS SZABÁLY AZ ÉTELNEVEKHEZ:
 - KIZÁRÓLAG valódi, közismert ételneveket használj. SOHA ne találj ki nem létező ételneveket.
-- Minden ételnévnek egy valódi, felismerhető ételnek kell lennie, amit egy magyar szakácskönyvben vagy étteremben megtalálnál.
-- NE kombinálj véletlenszerű szavakat ételnevek létrehozásához. Pl. "Sülthüllő" NEM létező étel — ilyet TILOS generálni.
-- Használj hagyományos magyar/közép-európai ételeket: gulyás, pörkölt, töltött káposzta, lecsó, túrós csusza, lángos, paprikás csirke, meggyleves, somlói galuska stb.`,
+- NE kombinálj véletlenszerű szavakat ételnevek létrehozásához. Pl. "Sülthüllő" NEM létező étel.
+- Példa reggeli ételek: zabkása gyümölccsel, túrós palacsinta, rántotta pirítóssal, müzli joghurttal, tojásos szendvics, bundás kenyér
+- Példa ebéd ételek: gulyásleves, csirkepaprikás galuskával, halászlé, pörkölt nokedlivel, töltött káposzta, rakott krumpli, lecsó, túrós csusza, paradicsomos húsgombóc spagettivel
+- Példa vacsora ételek: sült csirkemell salátával, lazac párolt zöldséggel, gomba krémleves, lencsefőzelék, zöldséges rizottó, grillezett pulykamell
+
+ÉTKEZÉSI STRUKTÚRA:
+- Reggeli: könnyű, energiadús (zabkása, tojás, joghurt, gyümölcs, toast)
+- Ebéd: a nap fő étkezése, tartalmas (leves + főétel VAGY tartalmas egytálétel)
+- Vacsora: közepes, könnyen emészthető (sült hús salátával, leves, könnyű tészta)
+- Snack: kis kalória (gyümölcs, joghurt, dió, zöldség)`,
   },
   ro: {
     intro: 'Ești un nutriționist și expert culinar în bucătăria română și transilvăneană.',
-    style: `Folosește rețete autentice românești cu denumiri gastronomice reale (ciorbă de pui, mămăligă cu brânză, papricaș cu găluște etc.).
+    style: `Folosește rețete autentice românești cu denumiri gastronomice reale. NU inventa denumiri fictive.
+
 REGULĂ CRITICĂ PENTRU DENUMIRILE PREPARATELOR:
-- Folosește NUMAI denumiri de preparate reale, cunoscute. NU inventa denumiri fictive de mâncăruri.
-- Fiecare denumire trebuie să fie un preparat real, recunoscut din bucătăria românească, transilvăneană sau internațională.
-- NU combina cuvinte aleatorii pentru a crea denumiri de preparate. Fiecare preparat trebuie să existe într-o carte de bucate sau pe un meniu de restaurant real.`,
+- Folosește NUMAI denumiri de preparate reale, cunoscute.
+- NU combina cuvinte aleatorii pentru a crea denumiri de preparate.
+- Exemple mic dejun: ovăz cu fructe, omletă cu legume, iaurt cu granola, pâine prăjită cu ou, clătite cu brânză
+- Exemple prânz: ciorbă de burtă, sarmale cu mămăligă, papricaș cu găluște, tocană de porc, mici cu muștar, ciorbă de perișoare, pilaf de pui
+- Exemple cină: piept de pui la grătar cu salată, somon cu legume la abur, supă cremă de ciuperci, paste cu sos de roșii, salată cu ton
+
+STRUCTURA MESELOR:
+- Mic dejun: ușor, energizant (ovăz, ouă, iaurt, fructe)
+- Prânz: masa principală a zilei, consistentă (ciorbă + fel principal SAU preparat consistent)
+- Cină: moderată, ușor digerabilă (carne la grătar cu salată, supă, paste ușoare)
+- Gustare: puține calorii (fructe, iaurt, nuci, legume)`,
   },
   en: {
     intro: 'You are a nutritionist and culinary expert specializing in Central European cuisine.',
-    style: `Use authentic recipes with proper gastronomic names (Chicken Paprikash with dumplings, Hungarian Goulash, etc.). Never use bland names like "Chicken with rice".
+    style: `Use authentic recipes with proper gastronomic names. Never use bland names like "Chicken with rice".
+
 CRITICAL RULE FOR DISH NAMES:
-- ONLY use real, commonly known dishes and ingredients. Never invent fictional food names.
-- Every dish name must be a real, recognizable dish from the target cuisine (Hungarian, Romanian, or international).
-- Do NOT combine random words to create food names. Each dish should be something you could find in a real cookbook or restaurant menu.`,
+- ONLY use real, commonly known dishes. Never invent fictional food names.
+- Do NOT combine random words to create food names.
+- Example breakfasts: oatmeal with berries, scrambled eggs on toast, Greek yogurt with granola, avocado toast, cottage cheese pancakes
+- Example lunches: Hungarian goulash, chicken paprikash with dumplings, stuffed cabbage rolls, beef stew with egg noodles, lentil soup, Greek salad with grilled chicken
+- Example dinners: grilled salmon with steamed vegetables, mushroom cream soup, turkey breast with roasted vegetables, pasta bolognese, tuna salad
+
+MEAL STRUCTURE:
+- Breakfast: light, energizing (oatmeal, eggs, yogurt, fruit, toast)
+- Lunch: main meal of the day, hearty (soup + main OR substantial one-dish meal)
+- Dinner: moderate, easily digestible (grilled protein with salad, soup, light pasta)
+- Snack: low calorie (fruit, yogurt, nuts, vegetables)`,
   },
 };
 
@@ -149,6 +236,88 @@ function extractJSON(text: string): any {
   return null;
 }
 
+// ─── Fasting helpers (server-side, mirrors FastingCalendarService) ──
+
+type Religion = 'orthodox' | 'catholic' | 'protestant' | 'custom';
+type FastingInfo = { isFasting: boolean; restrictions: string[]; reasonKey: string };
+
+function orthodoxEasterDate(year: number): Date {
+  const a = year % 4, b = year % 7, c = year % 19;
+  const d = (19 * c + 15) % 30;
+  const e = (2 * a + 4 * b - d + 34) % 7;
+  const month = Math.floor((d + e + 114) / 31);
+  const day = ((d + e + 114) % 31) + 1;
+  const julian = new Date(year, month - 1, day);
+  julian.setDate(julian.getDate() + 13);
+  return julian;
+}
+
+function catholicEasterDate(year: number): Date {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function addD(d: Date, n: number): Date { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function inRange(date: Date, s: Date, e: Date): boolean {
+  const dt = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  return dt >= new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime()
+      && dt <= new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime();
+}
+function isoWd(d: Date): number { return (d.getDay() + 6) % 7; }
+function sameD(a: Date, b: Date): boolean { return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }
+
+function checkFasting(date: Date, religion: Religion, customDays: number[]): FastingInfo {
+  const year = date.getFullYear(), wd = isoWd(date);
+  const noAnimal = ['meat','dairy','eggs'];
+  if (religion === 'orthodox') {
+    const easter = orthodoxEasterDate(year);
+    if (inRange(date, addD(easter,-48), addD(easter,-1))) return { isFasting:true, restrictions:noAnimal, reasonKey:'greatLent' };
+    if (inRange(date, new Date(year,10,15), new Date(year,11,24))) return { isFasting:true, restrictions:noAnimal, reasonKey:'nativityFast' };
+    if (inRange(date, new Date(year,7,1), new Date(year,7,14))) return { isFasting:true, restrictions:noAnimal, reasonKey:'dormitionFast' };
+    const apostlesStart = addD(addD(easter,57),1), apostlesEnd = new Date(year,5,28);
+    if (inRange(date, apostlesStart, apostlesEnd)) return { isFasting:true, restrictions:noAnimal, reasonKey:'apostlesFast' };
+    if (wd===2||wd===4) return { isFasting:true, restrictions:noAnimal, reasonKey:'wedFri' };
+  } else if (religion === 'catholic') {
+    const easter = catholicEasterDate(year);
+    const ash = addD(easter,-46);
+    if (sameD(date,ash)) return { isFasting:true, restrictions:['meat'], reasonKey:'ashWednesday' };
+    if (sameD(date,addD(easter,-2))) return { isFasting:true, restrictions:['meat'], reasonKey:'goodFriday' };
+    if (wd===4 && inRange(date,ash,addD(easter,-1))) return { isFasting:true, restrictions:['meat'], reasonKey:'lentenFriday' };
+  } else if (religion === 'custom' || religion === 'protestant') {
+    if (customDays.includes(wd)) return { isFasting:true, restrictions:noAnimal, reasonKey:'customDay' };
+  }
+  return { isFasting:false, restrictions:[], reasonKey:'' };
+}
+
+function buildFastingPromptBlock(fastingDays: Map<number, FastingInfo>, dayNames: string[], lang: string): string {
+  if (fastingDays.size === 0) return '';
+  const labels: Record<string, Record<string, string>> = {
+    hu: { meat: 'hús', dairy: 'tejtermékek', eggs: 'tojás' },
+    ro: { meat: 'carne', dairy: 'lactate', eggs: 'ouă' },
+    en: { meat: 'meat', dairy: 'dairy', eggs: 'eggs' },
+  };
+  const l = labels[lang] || labels.en;
+  const lines: string[] = [];
+  for (const [dayIdx, info] of fastingDays) {
+    const restricted = info.restrictions.map(r => l[r] || r).join(', ');
+    lines.push(`- ${dayNames[dayIdx]}: BÖJTI NAP — tilos: ${restricted}. Csak növényi ételeket készíts.`);
+  }
+  const header: Record<string, string> = {
+    hu: 'VALLÁSI BÖJT — az alábbi napokon speciális étrendi korlátozások érvényesek:',
+    ro: 'POST RELIGIOS — în zilele următoare se aplică restricții alimentare speciale:',
+    en: 'RELIGIOUS FASTING — the following days have dietary restrictions:',
+  };
+  return `\n${header[lang] || header.en}\n${lines.join('\n')}\n`;
+}
+
 // ─── Handler ──────────────────────────────────────────────────
 export default async function handler(req: any, res: any) {
   if (handleCors(req, res)) return;
@@ -188,6 +357,7 @@ export default async function handler(req: any, res: any) {
       mealCount,
       trainingDays = [],
       goal = 'maintain',
+      fasting,
     }: {
       ingredients?: Ingredient[];
       dailyCalorieTarget?: number;
@@ -197,6 +367,7 @@ export default async function handler(req: any, res: any) {
       mealCount?: number;
       trainingDays?: number[];
       goal?: string;
+      fasting?: { enabled: boolean; religion: Religion; customDays: number[] };
     } = req.body || {};
 
     // Re-enabled calorie validation
@@ -258,27 +429,46 @@ ${goal === 'loss'
     if (userProfile?.goal)                  userLines.push(`Cél: ${userProfile.goal}`);
     const userBlock = userLines.length ? `FELHASZNÁLÓI PROFIL:\n${userLines.join('\n')}\n\n` : '';
 
+    // Fasting day computation for the 7-day base week
+    const fastingMap = new Map<number, FastingInfo>(); // dayIdx (0-6) → info
+    if (fasting?.enabled && fasting.religion) {
+      const today = new Date();
+      // Find next Monday as the start of the generated week
+      const todayWd = isoWd(today);
+      const startDate = addD(today, -todayWd); // go back to Monday of this week
+      for (let i = 0; i < clampedDays; i++) {
+        const d = addD(startDate, i);
+        const info = checkFasting(d, fasting.religion, fasting.customDays || []);
+        if (info.isFasting) fastingMap.set(i, info);
+      }
+    }
+    const fastingBlock = buildFastingPromptBlock(fastingMap, dayNames, lang);
+
     const prompt = `${userBlock}${intro}
 ${style}
-${carbCycleBlock}
+${carbCycleBlock}${fastingBlock}
 ALAPANYAGOK (név, kcal/100g, protein, szénhidrát, zsír):
 ${ingList}
 
-FELADAT: Generálj ${clampedDays} napos étrendet. Napok: ${dayLabels}
+FELADAT: Generálj ${clampedDays} napos TELJES étrendet. Napok: ${dayLabels}
 Napi célkalória: ${dailyCalorieTarget} kcal. Étkezések: ${mealTypes.join(', ')} (${calBlock})
 
-SZABÁLYOK:
+KÖTELEZŐ SZABÁLYOK:
 1. CSAK a megadott alapanyagokat használd
-2. Minden ételnél adj meg egy VALÓDI, vonzó étlapszerű nevet — KIZÁRÓLAG létező, közismert ételek neveit használd. TILOS kitalált, értelmetlen ételneveket generálni (pl. "Sülthüllő" NEM étel). Minden névnek olyannak kell lennie, amit egy valódi étterem étlapján vagy szakácskönyvben megtalálnál.
-3. Változatos ételek napról napra — ne ismételj egymás után
-4. ingredients.g = gramm mennyiség az adott étkezésben
-5. is_training_day értékét állítsd helyesen minden napra
-6. Válaszolj KIZÁRÓLAG nyers JSON-nel, semmi más szöveg
+2. Minden ételnél KÖTELEZŐ mezők: name, description, meal_type, total_calories, total_protein, total_carbs, total_fat, ingredients[]
+3. Minden ingredient-nél KÖTELEZŐ: name, g (grammban), calories, protein, carbs, fat (az adott grammra kiszámolva, NEM 100g-ra)
+4. A "description" mező: 1 rövid mondat az ételről (pl. "Krémes zabkása friss áfonyával és ropogós dióval")
+5. VALÓDI, vonzó étlapszerű nevek — KIZÁRÓLAG létező ételek. TILOS kitalált neveket generálni.
+6. VÁLTOZATOSSÁG: Ugyanaz az étel NE ismétlődjön a ${clampedDays} napon belül. Minden napnak más reggelije, ebédje, vacsorája legyen.
+7. REÁLIS ADAGOK: reggeli 250-450 kcal, ebéd 500-800 kcal, vacsora 400-600 kcal, snack 100-200 kcal. Az adagoknak össze kell adódniuk a napi célkalóriára (±5%).
+8. Minden ingredient "g" értéke reális adag legyen (pl. csirkemell 150-200g, rizs 80-120g, zöldség 100-200g, olaj 10-15g)
+9. is_training_day értékét állítsd helyesen minden napra
+10. Válaszolj KIZÁRÓLAG nyers JSON-nel, semmi más szöveg
 
-SÉMA:
-{"days":[{"day":1,"day_label":"Hétfő","is_training_day":false,"meals":[{"meal_type":"breakfast","name":"Zabkása pirított dióval","total_calories":483,"ingredients":[{"name":"zab","g":80},{"name":"dió","g":20}]}]}]}
+SÉMA (minden mezőt töltsd ki!):
+{"days":[{"day":1,"day_label":"Hétfő","is_training_day":false,"meals":[{"meal_type":"breakfast","name":"Zabkása pirított dióval és áfonyával","description":"Krémes zabkása friss áfonyával és ropogós dióval","total_calories":420,"total_protein":14,"total_carbs":58,"total_fat":16,"ingredients":[{"name":"zabpehely","g":80,"calories":300,"protein":10,"carbs":52,"fat":7},{"name":"dió","g":20,"calories":130,"protein":3,"carbs":3,"fat":13},{"name":"áfonya","g":50,"calories":28,"protein":0.4,"carbs":7,"fat":0.2}]}]}]}
 
-Generáld le mind a ${clampedDays} napot:`;
+Generáld le mind a ${clampedDays} napot TELJESEN, minden mezővel kitöltve:`;
 
     let parsed: { days?: any[] } | null = null;
     let lastErr = '';
@@ -287,7 +477,7 @@ Generáld le mind a ${clampedDays} napot:`;
       try {
         const msg = await getClient().messages.create({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 6144,
+          max_tokens: 8192,
           messages: [{ role: 'user', content: prompt }],
         });
         const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
@@ -305,43 +495,75 @@ Generáld le mind a ${clampedDays} napot:`;
       throw new Error(`Nem sikerült étrendet generálni. ${lastErr}`);
     }
 
-    // Enrich with macro data from our ingredient map
+    // Validate and enrich every day/meal with complete data
     function enrich(ing: any) {
       const found = ingMap.get(norm(ing.name || ''));
+      const grams = Math.max(1, Number(ing.g ?? ing.quantity_grams ?? 100));
+      // Use AI-provided per-serving values if available, else compute from per-100g data
+      const factor = grams / 100;
       return {
         name: ing.name,
-        quantity_grams: ing.g ?? ing.quantity_grams ?? 100,
+        quantity_grams: grams,
         unit: 'g',
-        estimated_calories_per_100g: found?.calories_per_100g ?? 100,
-        estimated_protein_per_100g: found?.protein_per_100g ?? 5,
-        estimated_carbs_per_100g: found?.carbs_per_100g ?? 10,
-        estimated_fat_per_100g: found?.fat_per_100g ?? 3,
+        calories: Math.round(Number(ing.calories) || (found ? found.calories_per_100g * factor : 100)),
+        protein: Math.round(Number(ing.protein) || (found ? found.protein_per_100g * factor : 5)),
+        carbs: Math.round(Number(ing.carbs) || (found ? found.carbs_per_100g * factor : 10)),
+        fat: Math.round(Number(ing.fat) || (found ? found.fat_per_100g * factor : 3)),
+        estimated_calories_per_100g: found?.calories_per_100g ?? Math.round((Number(ing.calories) || 100) / factor),
+        estimated_protein_per_100g: found?.protein_per_100g ?? Math.round((Number(ing.protein) || 5) / factor),
+        estimated_carbs_per_100g: found?.carbs_per_100g ?? Math.round((Number(ing.carbs) || 10) / factor),
+        estimated_fat_per_100g: found?.fat_per_100g ?? Math.round((Number(ing.fat) || 3) / factor),
       };
     }
 
-    const baseWeek = parsed.days.slice(0, 7).map((d: any, i: number) => ({
-      day_label: d.day_label ?? dayNames[i % 7],
-      is_training_day: d.is_training_day ?? false,
-      meals: (d.meals ?? []).map((m: any) => ({
-        meal_type: m.meal_type,
-        name: m.name,
-        total_calories: m.total_calories,
-        ingredients: (m.ingredients ?? []).map(enrich),
-      })),
-    }));
+    const validatedDays = parsed.days.slice(0, 7).map((d: any, i: number) => {
+      const validated = validateDay(d, i, mealTypes, dayNames);
+      return {
+        day_label: validated.day_label,
+        is_training_day: validated.is_training_day,
+        meals: validated.meals.map((m: any) => ({
+          meal_type: m.meal_type,
+          name: m.name,
+          description: m.description || '',
+          total_calories: m.total_calories,
+          total_protein: m.total_protein,
+          total_carbs: m.total_carbs,
+          total_fat: m.total_fat,
+          ingredients: (m.ingredients ?? []).map((rawIng: any) => enrich(rawIng)),
+        })),
+      };
+    });
+
+    const baseWeek = validatedDays;
 
     // Expand to 30 days (rotate the 7-day pattern)
     const TOTAL_DAYS = 30;
     const trainingDaySet = new Set(trainingDays);
+    // Compute fasting for all 30 days based on actual calendar dates
+    const today30 = new Date();
+    const todayWd30 = isoWd(today30);
+    const weekStart30 = addD(today30, -todayWd30); // Monday of current week
+
     const allDays = Array.from({ length: TOTAL_DAYS }, (_, i) => {
       const base = baseWeek[i % baseWeek.length];
       const weekdayIdx = i % 7; // 0=Mon … 6=Sun
+      // Check fasting for the actual calendar date
+      let is_fasting_day = false;
+      let fasting_reason = '';
+      if (fasting?.enabled && fasting.religion) {
+        const calDate = addD(weekStart30, i);
+        const fi = checkFasting(calDate, fasting.religion, fasting.customDays || []);
+        is_fasting_day = fi.isFasting;
+        fasting_reason = fi.reasonKey ? `fasting.reason.${fi.reasonKey}` : '';
+      }
       return {
         ...base,
         week: Math.floor(i / 7) + 1,
         day: i + 1,
         day_label: dayNames[weekdayIdx],
         is_training_day: trainingDaySet.has(weekdayIdx),
+        is_fasting_day,
+        fasting_reason,
       };
     });
 

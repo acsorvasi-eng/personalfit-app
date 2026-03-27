@@ -245,6 +245,8 @@ export async function createMealDay(input: {
   day: number;
   day_label: string;
   is_training_day: boolean;
+  is_fasting_day?: boolean;
+  fasting_reason?: string;
 }): Promise<MealDayEntity> {
   const db = await getDB();
   const entity: MealDayEntity = {
@@ -254,6 +256,8 @@ export async function createMealDay(input: {
     day: input.day,
     day_label: input.day_label,
     is_training_day: input.is_training_day,
+    is_fasting_day: input.is_fasting_day ?? false,
+    fasting_reason: input.fasting_reason ?? '',
     total_calories: 0,
     total_protein: 0,
     total_carbs: 0,
@@ -635,6 +639,8 @@ export async function importFromAIParse(
         day: dayData.day,
         day_label: dayData.day_label,
         is_training_day: dayData.is_training_day,
+        is_fasting_day: (dayData as any).is_fasting_day ?? false,
+        fasting_reason: (dayData as any).fasting_reason ?? '',
       });
       stats.totalDays++;
 
@@ -773,6 +779,8 @@ async function appendToPlanInternal(
         day: dayData.day,
         day_label: dayData.day_label,
         is_training_day: dayData.is_training_day,
+        is_fasting_day: (dayData as any).is_fasting_day ?? false,
+        fasting_reason: (dayData as any).fasting_reason ?? '',
       });
       stats.totalDays++;
 

@@ -93,6 +93,8 @@ export interface MealDayEntity {
   day: number;             // 1-7 (Mon-Sun)
   day_label: string;       // "Edzesnap" | "Pihenonap"
   is_training_day: boolean;
+  is_fasting_day?: boolean;
+  fasting_reason?: string; // i18n key (e.g. 'fasting.reason.greatLent')
   total_calories: number;
   total_protein: number;
   total_carbs: number;
@@ -333,6 +335,8 @@ export interface AIParsedDay {
   day: number;
   day_label: string;
   is_training_day: boolean;
+  is_fasting_day?: boolean;
+  fasting_reason?: string;
   meals: AIParsedMeal[];
 }
 

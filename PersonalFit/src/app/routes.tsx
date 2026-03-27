@@ -1,7 +1,7 @@
 /**
  * Application Routes
  * Defines the complete routing structure including:
- * - Onboarding flow: splash → onboarding → login → terms → subscription
+ * - Onboarding flow: splash (animated intro) → login → terms → subscription
  * - Main app with bottom navigation: menu, foods, shopping, workout, profile
  * - Special routes: log-meal, body-vision
  *
@@ -12,11 +12,10 @@ import { lazy, Suspense, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
 import { Layout } from "./shared/layouts/Layout";
-import { SplashScreen } from "./components/SplashScreen";
 import { NotFound } from "./components/NotFound";
 
 // Onboarding flow screens (small — kept eagerly loaded)
-import { OnboardingScreen } from "./components/onboarding/OnboardingScreen";
+import { AnimatedIntro } from "./components/onboarding/AnimatedIntro";
 import { LoginScreen } from "./components/onboarding/LoginScreen";
 import { TermsScreen } from "./components/onboarding/TermsScreen";
 import { SubscriptionScreen } from "./components/onboarding/SubscriptionScreen";
@@ -122,15 +121,7 @@ export const router = createBrowserRouter([
         path: "splash",
         element: (
           <OnboardingGuard>
-            <SplashScreen />
-          </OnboardingGuard>
-        ),
-      },
-      {
-        path: "onboarding",
-        element: (
-          <OnboardingGuard>
-            <OnboardingScreen />
+            <AnimatedIntro />
           </OnboardingGuard>
         ),
       },

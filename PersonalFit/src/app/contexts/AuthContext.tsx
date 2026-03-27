@@ -370,10 +370,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * authenticated users back to /, creating an infinite replaceState loop.
    */
   const getNextRoute = useCallback((): string => {
-    // Unauthenticated flow: splash → onboarding → login
+    // Unauthenticated flow: animated intro → login
     if (!user) {
-      if (!hasSeenSplash) return '/splash';
-      if (!onboardingCompleted) return '/onboarding';
+      if (!hasSeenSplash || !onboardingCompleted) return '/splash';
       return '/login';
     }
     // Authenticated: send to home if setup is done, else wizard

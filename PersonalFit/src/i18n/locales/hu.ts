@@ -246,6 +246,14 @@ const hu = {
 
   'splash.appSubtitle': 'Személyre szabott étrend, amit tényleg betartasz.',
 
+  'intro.panel1.title': 'Személyre szabott étkezés',
+  'intro.panel1.subtitle': 'Helyi ételek, a te szokásaid szerint',
+  'intro.panel2.title': 'AI-alapú tervezés',
+  'intro.panel2.subtitle': 'Okos étrend, ami alkalmazkodik hozzád',
+  'intro.panel3.title': 'Egészséges életmód',
+  'intro.panel3.subtitle': 'Egyensúly minden napra',
+  'intro.startButton': 'Kezdjük!',
+
   'generate.limitUsed': '{used} / {limit} generálás felhasználva',
   'generate.limitReached': 'Elérted a havi limitet.',
   'generate.limitResetsAt': 'Következő lehetőség: {date}',
@@ -470,6 +478,38 @@ const hu = {
   'default.noAllergies': 'Nincs',
   'default.noDietaryPref': 'Nincs megkötés',
   'default.activityMedium': 'Közepes',
+
+  // Religious fasting
+  'fasting.sectionTitle': 'Vallási böjt',
+  'fasting.enabled': 'Vallási böjt',
+  'fasting.enabledSubtitle': 'Böjti napok automatikus figyelembevétele az étrendben',
+  'fasting.religion': 'Vallás',
+  'fasting.religion.orthodox': 'Ortodox',
+  'fasting.religion.catholic': 'Katolikus',
+  'fasting.religion.protestant': 'Protestáns',
+  'fasting.religion.custom': 'Egyéni',
+  'fasting.customDays': 'Böjti napok',
+  'fasting.customDaysHint': 'Válaszd ki a hét azon napjait, amelyeken böjtölsz',
+  'fasting.upcomingTitle': 'Következő böjti napok',
+  'fasting.noUpcoming': 'Nincs közelgő böjti nap',
+  'fasting.indicator': 'Böjt',
+  'fasting.reason.greatLent': 'Nagyböjt',
+  'fasting.reason.nativityFast': 'Karácsonyi böjt',
+  'fasting.reason.dormitionFast': 'Nagyboldogasszony böjtje',
+  'fasting.reason.apostlesFast': 'Apostolok böjtje',
+  'fasting.reason.wedFri': 'Szerdai és pénteki böjt',
+  'fasting.reason.ashWednesday': 'Hamvazószerda',
+  'fasting.reason.goodFriday': 'Nagypéntek',
+  'fasting.reason.lentenFriday': 'Nagyböjti péntek',
+  'fasting.reason.customDay': 'Egyéni böjti nap',
+  'fasting.dayNames.mon': 'H',
+  'fasting.dayNames.tue': 'K',
+  'fasting.dayNames.wed': 'Sze',
+  'fasting.dayNames.thu': 'Cs',
+  'fasting.dayNames.fri': 'P',
+  'fasting.dayNames.sat': 'Szo',
+  'fasting.dayNames.sun': 'V',
+  'fasting.protestantNote': 'A protestáns egyházakban nincs kötelező böjt, de egyéni böjti napokat megadhatsz.',
 } as const;
 
 export default hu;

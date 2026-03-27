@@ -173,6 +173,14 @@ const en: LocalePartial = {
 
   'splash.appSubtitle': 'Personalized nutrition you actually stick to.',
 
+  'intro.panel1.title': 'Personalized meals',
+  'intro.panel1.subtitle': 'Local foods, tailored to your habits',
+  'intro.panel2.title': 'AI-powered planning',
+  'intro.panel2.subtitle': 'Smart nutrition that adapts to you',
+  'intro.panel3.title': 'Healthy lifestyle',
+  'intro.panel3.subtitle': 'Balance for every day',
+  'intro.startButton': "Let's start!",
+
   'generate.limitUsed': '{used} / {limit} generations used',
   'generate.limitReached': 'You have reached your monthly limit.',
   'generate.limitResetsAt': 'Next available: {date}',
@@ -397,6 +405,38 @@ const en: LocalePartial = {
   'default.noAllergies': 'None',
   'default.noDietaryPref': 'No restrictions',
   'default.activityMedium': 'Medium',
+
+  // Religious fasting
+  'fasting.sectionTitle': 'Religious Fasting',
+  'fasting.enabled': 'Religious Fasting',
+  'fasting.enabledSubtitle': 'Automatically adjust meal plans on fasting days',
+  'fasting.religion': 'Religion',
+  'fasting.religion.orthodox': 'Orthodox',
+  'fasting.religion.catholic': 'Catholic',
+  'fasting.religion.protestant': 'Protestant',
+  'fasting.religion.custom': 'Custom',
+  'fasting.customDays': 'Fasting days',
+  'fasting.customDaysHint': 'Select weekdays when you fast',
+  'fasting.upcomingTitle': 'Upcoming fasting days',
+  'fasting.noUpcoming': 'No upcoming fasting days',
+  'fasting.indicator': 'Fasting',
+  'fasting.reason.greatLent': 'Great Lent',
+  'fasting.reason.nativityFast': 'Nativity Fast',
+  'fasting.reason.dormitionFast': 'Dormition Fast',
+  'fasting.reason.apostlesFast': 'Apostles\' Fast',
+  'fasting.reason.wedFri': 'Wednesday & Friday fast',
+  'fasting.reason.ashWednesday': 'Ash Wednesday',
+  'fasting.reason.goodFriday': 'Good Friday',
+  'fasting.reason.lentenFriday': 'Lenten Friday',
+  'fasting.reason.customDay': 'Custom fasting day',
+  'fasting.dayNames.mon': 'Mon',
+  'fasting.dayNames.tue': 'Tue',
+  'fasting.dayNames.wed': 'Wed',
+  'fasting.dayNames.thu': 'Thu',
+  'fasting.dayNames.fri': 'Fri',
+  'fasting.dayNames.sat': 'Sat',
+  'fasting.dayNames.sun': 'Sun',
+  'fasting.protestantNote': 'Protestant churches have no mandatory fasting, but you can set custom fasting days.',
 };
 
 export default en;

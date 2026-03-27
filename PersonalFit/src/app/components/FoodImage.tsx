@@ -12,16 +12,18 @@ interface FoodImageProps {
   fallbackEmoji?: string;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  /** Optional meal type for better fallback images (breakfast, lunch, dinner, snack) */
+  mealType?: string;
 }
 
 const SIZE_MAP = { sm: 48, md: 80, lg: 200 } as const;
 
-export function FoodImage({ foodName, fallbackEmoji, className = '', size = 'md' }: FoodImageProps) {
+export function FoodImage({ foodName, fallbackEmoji, className = '', size = 'md', mealType }: FoodImageProps) {
   const px = SIZE_MAP[size];
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const match = findFoodImage(foodName);
+  const match = findFoodImage(foodName, mealType);
   const imageUrl = match.url;
   const emoji = fallbackEmoji || match.emoji;
 

@@ -350,6 +350,19 @@ export function DailyMenu() {
           </div>
         )}
 
+        {/* Religious Fasting Day Indicator */}
+        {today?.isFastingDay && (
+          <div className="rounded-xl p-4 flex items-center gap-3 bg-amber-50 border border-amber-200">
+            <span className="text-lg flex-shrink-0">🕯</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">{t('fasting.indicator')}</p>
+              {today.fastingReason && (
+                <p className="text-xs text-amber-600">{t(today.fastingReason as any)}</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Fasting Period Overlay - Only show on today outside eating windows */}
         {isToday && !mealStatus.isInEatingWindow && (
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 border-2 border-indigo-200/50 p-8 shadow-lg">

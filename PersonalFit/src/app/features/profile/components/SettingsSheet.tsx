@@ -19,6 +19,10 @@ import { getMealSettings, getUserProfile } from "../../../backend/services/UserP
 import { changeEmail, changePassword, sendPasswordResetEmail } from "../../../services/authService";
 import { formatHuf, formatUsd, SUBSCRIPTION_PRICE_USD, SUBSCRIPTION_PRICE_HUF } from "../../../utils/currencyConverter";
 import { showToast } from "../../../shared/components/Toast";
+import {
+  getFastingSettings, saveFastingSettings, getFastingDays, checkFastingDay,
+  type FastingSettings, type Religion,
+} from "../../../backend/services/FastingCalendarService";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -79,6 +83,201 @@ function mapAccountError(code: string): string {
     case 'auth/too-many-requests': return 'profile.account.errTooMany';
     default: return 'profile.account.errGeneric';
   }
+}
+
+// ─── Religious Fasting Card ──────────────────────────────────────────
+
+const RELIGIONS: Religion[] = ['orthodox', 'catholic', 'protestant', 'custom'];
+const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+
+function FastingSettingsCard() {
+  const { t } = useLanguage();
+  const [settings, setSettings] = useState<FastingSettings>({ enabled: false, religion: 'orthodox', customDays: [] });
+  const [expanded, setExpanded] = useState(false);
+  const [upcomingDays, setUpcomingDays] = useState<{ date: Date; reasonKey: string }[]>([]);
+
+  useEffect(() => {
+    getFastingSettings().then((s) => {
+      setSettings(s);
+      if (s.enabled) {
+        const days = getFastingDays(new Date(), 30, s).filter(d => d.isFasting);
+        setUpcomingDays(days.slice(0, 5).map(d => ({ date: d.date, reasonKey: d.reasonKey })));
+      }
+    });
+  }, []);
+
+  const updateSettings = async (patch: Partial<FastingSettings>) => {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    await saveFastingSettings(next);
+    hapticFeedback('light');
+    // Recompute upcoming
+    if (next.enabled) {
+      const days = getFastingDays(new Date(), 30, next).filter(d => d.isFasting);
+      setUpcomingDays(days.slice(0, 5).map(d => ({ date: d.date, reasonKey: d.reasonKey })));
+    } else {
+      setUpcomingDays([]);
+    }
+    // Notify other components
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+    showToast(t('toast.saved'));
+  };
+
+  const toggleCustomDay = (dayIdx: number) => {
+    const days = settings.customDays.includes(dayIdx)
+      ? settings.customDays.filter(d => d !== dayIdx)
+      : [...settings.customDays, dayIdx];
+    updateSettings({ customDays: days });
+  };
+
+  const formatDate = (d: Date) => {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${mm}.${dd}`;
+  };
+
+  return (
+    <SettingsCard sectionTitle={t('fasting.sectionTitle')}>
+      {/* Enable toggle */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '1rem', borderBottom: '1px solid #f3f4f6',
+      }}>
+        <div>
+          <div style={{ fontSize: '1rem', fontWeight: 500, color: '#111827' }}>{t('fasting.enabled')}</div>
+          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: 2 }}>{t('fasting.enabledSubtitle')}</div>
+        </div>
+        <button
+          onClick={() => updateSettings({ enabled: !settings.enabled })}
+          style={{
+            background: settings.enabled ? '#0d9488' : '#e5e7eb',
+            borderRadius: 999, width: 44, height: 24, border: 'none',
+            cursor: 'pointer', transition: 'background 0.2s', position: 'relative',
+          }}
+        >
+          <span style={{
+            position: 'absolute', top: 2, left: settings.enabled ? 22 : 2,
+            width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+          }} />
+        </button>
+      </div>
+
+      {settings.enabled && (
+        <>
+          {/* Religion selector */}
+          <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f3f4f6' }}>
+            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 8 }}>{t('fasting.religion')}</div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {RELIGIONS.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => updateSettings({ religion: r })}
+                  style={{
+                    padding: '6px 14px', borderRadius: 20, border: 'none',
+                    background: settings.religion === r ? '#0d9488' : '#f3f4f6',
+                    color: settings.religion === r ? '#fff' : '#374151',
+                    fontSize: '0.875rem', fontWeight: settings.religion === r ? 600 : 400,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {t(`fasting.religion.${r}` as any)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Protestant note */}
+          {settings.religion === 'protestant' && (
+            <div style={{
+              padding: '0.75rem 1rem', borderBottom: '1px solid #f3f4f6',
+              fontSize: '0.875rem', color: '#6b7280', fontStyle: 'italic',
+            }}>
+              {t('fasting.protestantNote')}
+            </div>
+          )}
+
+          {/* Custom weekday picker */}
+          {(settings.religion === 'custom' || settings.religion === 'protestant') && (
+            <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f3f4f6' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 8 }}>{t('fasting.customDaysHint')}</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {WEEKDAY_KEYS.map((key, idx) => (
+                  <button
+                    key={key}
+                    onClick={() => toggleCustomDay(idx)}
+                    style={{
+                      width: 40, height: 40, borderRadius: '50%', border: 'none',
+                      background: settings.customDays.includes(idx) ? '#0d9488' : '#f3f4f6',
+                      color: settings.customDays.includes(idx) ? '#fff' : '#374151',
+                      fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                  >
+                    {t(`fasting.dayNames.${key}` as any)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming fasting days mini-list */}
+          {upcomingDays.length > 0 && (
+            <div style={{ padding: '0.75rem 1rem' }}>
+              <div
+                role="button"
+                onClick={() => setExpanded(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
+                  {t('fasting.upcomingTitle')}
+                </div>
+                <ChevronDown style={{
+                  width: 16, height: 16, color: '#9ca3af',
+                  transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                }} />
+              </div>
+              <AnimatePresence initial={false}>
+                {expanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ overflow: 'hidden', marginTop: 8 }}
+                  >
+                    {upcomingDays.map((d, i) => (
+                      <div key={i} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '6px 0', borderTop: i > 0 ? '1px solid #f9fafb' : 'none',
+                      }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: 28, height: 28, borderRadius: '50%', background: '#fef3c7',
+                          fontSize: '0.75rem', flexShrink: 0,
+                        }}>
+                          🕯
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827' }}>
+                            {formatDate(d.date)}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: 8 }}>
+                            {t(d.reasonKey as any)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </>
+      )}
+    </SettingsCard>
+  );
 }
 
 function AccountSettingsCard({ onLogout }: { onLogout: () => void }) {
@@ -384,6 +583,9 @@ export default function SettingsSheet(props: SettingsSheetProps) {
             onBedtimeSelect={handleSleepBedtimeSelect}
           />
         </DSMBottomSheet>
+
+        {/* Section 3b: Religious Fasting */}
+        <FastingSettingsCard />
 
         {/* Section 4: Subscription */}
         <SettingsCard sectionTitle={t('profile.sectionSubscription')}>

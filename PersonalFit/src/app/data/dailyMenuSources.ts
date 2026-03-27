@@ -42,6 +42,11 @@ const RO_SOURCES: DailyMenuSource[] = [
   { id: 'ro_ploiesti_alp', country: 'RO', city: 'ploiesti',    cityLocal: 'Ploiești',     lat: 44.9462, lng: 26.0254, platform: 'azilapranz', url: 'https://azilapranz.ro/ploiesti' },
   { id: 'ro_zalau_alp',    country: 'RO', city: 'zalau',       cityLocal: 'Zalău',        lat: 47.1911, lng: 23.0568, platform: 'azilapranz', url: 'https://azilapranz.ro/zalau' },
   { id: 'ro_oradea_alp',   country: 'RO', city: 'oradea',      cityLocal: 'Oradea',       lat: 47.0465, lng: 21.9189, platform: 'azilapranz', url: 'https://azilapranz.ro/oradea' },
+  { id: 'ro_brasov_alp',   country: 'RO', city: 'brasov',      cityLocal: 'Brașov',       lat: 45.6427, lng: 25.5887, platform: 'azilapranz', url: 'https://azilapranz.ro/brasov' },
+  { id: 'ro_tgmures_alp',  country: 'RO', city: 'targu-mures', cityLocal: 'Târgu Mureș',  lat: 46.5386, lng: 24.5575, platform: 'azilapranz', url: 'https://azilapranz.ro/targu-mures' },
+  { id: 'ro_craiova_alp',  country: 'RO', city: 'craiova',     cityLocal: 'Craiova',      lat: 44.3190, lng: 23.7965, platform: 'azilapranz', url: 'https://azilapranz.ro/craiova' },
+  { id: 'ro_buzau_alp',    country: 'RO', city: 'buzau',       cityLocal: 'Buzău',        lat: 45.1500, lng: 26.8333, platform: 'azilapranz', url: 'https://azilapranz.ro/buzau' },
+  { id: 'ro_baiamare_alp', country: 'RO', city: 'baia-mare',   cityLocal: 'Baia Mare',    lat: 47.6567, lng: 23.5850, platform: 'azilapranz', url: 'https://azilapranz.ro/baia-mare' },
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -71,11 +76,27 @@ const HU_SOURCES: DailyMenuSource[] = [
   { id: 'hu_dunaujvaros_mit',  country: 'HU', city: 'dunaujvaros',    cityLocal: 'Dunaújváros',    lat: 46.9619, lng: 18.9355, platform: 'mitegyek', url: 'https://www.mitegyek.hu/napi-menu/dunaujvaros' },
   { id: 'hu_siofok_mit',       country: 'HU', city: 'siofok',         cityLocal: 'Siófok',         lat: 46.9048, lng: 18.0498, platform: 'mitegyek', url: 'https://www.mitegyek.hu/napi-menu/siofok' },
 
-  // napimenu.eu — Budapest
+  // napimenu.eu — Budapest + major cities
   { id: 'hu_budapest_nme',     country: 'HU', city: 'budapest',       cityLocal: 'Budapest',       lat: 47.4979, lng: 19.0402, platform: 'napimenu', url: 'https://www.napimenu.eu/' },
+  { id: 'hu_debrecen_nme',     country: 'HU', city: 'debrecen',       cityLocal: 'Debrecen',       lat: 47.5316, lng: 21.6273, platform: 'napimenu', url: 'https://www.napimenu.eu/debrecen' },
+  { id: 'hu_szeged_nme',       country: 'HU', city: 'szeged',         cityLocal: 'Szeged',         lat: 46.2530, lng: 20.1414, platform: 'napimenu', url: 'https://www.napimenu.eu/szeged' },
+  { id: 'hu_pecs_nme',         country: 'HU', city: 'pecs',           cityLocal: 'Pécs',           lat: 46.0727, lng: 18.2323, platform: 'napimenu', url: 'https://www.napimenu.eu/pecs' },
+  { id: 'hu_gyor_nme',         country: 'HU', city: 'gyor',           cityLocal: 'Győr',           lat: 47.6875, lng: 17.6504, platform: 'napimenu', url: 'https://www.napimenu.eu/gyor' },
+  { id: 'hu_miskolc_nme',      country: 'HU', city: 'miskolc',        cityLocal: 'Miskolc',        lat: 48.1035, lng: 20.7784, platform: 'napimenu', url: 'https://www.napimenu.eu/miskolc' },
+  { id: 'hu_kecskemet_nme',    country: 'HU', city: 'kecskemet',      cityLocal: 'Kecskemét',      lat: 46.8964, lng: 19.6913, platform: 'napimenu', url: 'https://www.napimenu.eu/kecskemet' },
+  { id: 'hu_szekesfehervar_nme',country:'HU', city: 'szekesfehervar', cityLocal: 'Székesfehérvár', lat: 47.1860, lng: 18.4221, platform: 'napimenu', url: 'https://www.napimenu.eu/szekesfehervar' },
+  { id: 'hu_nyiregyhaza_nme',  country: 'HU', city: 'nyiregyhaza',    cityLocal: 'Nyíregyháza',    lat: 47.9553, lng: 21.7174, platform: 'napimenu', url: 'https://www.napimenu.eu/nyiregyhaza' },
 
-  // hovamenjek.hu — Budapest
-  { id: 'hu_budapest_hmj',     country: 'HU', city: 'budapest',       cityLocal: 'Budapest',       lat: 47.4979, lng: 19.0402, platform: 'hovamenjek', url: 'https://hovamenjek.hu/budapest/napi-menu' },
+  // hovamenjek.hu — Budapest + major cities
+  { id: 'hu_budapest_hmj',     country: 'HU', city: 'budapest',       cityLocal: 'Budapest',       lat: 47.4979, lng: 19.0402, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/budapest' },
+  { id: 'hu_debrecen_hmj',     country: 'HU', city: 'debrecen',       cityLocal: 'Debrecen',       lat: 47.5316, lng: 21.6273, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/debrecen' },
+  { id: 'hu_szeged_hmj',       country: 'HU', city: 'szeged',         cityLocal: 'Szeged',         lat: 46.2530, lng: 20.1414, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/szeged' },
+  { id: 'hu_pecs_hmj',         country: 'HU', city: 'pecs',           cityLocal: 'Pécs',           lat: 46.0727, lng: 18.2323, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/pecs' },
+  { id: 'hu_gyor_hmj',         country: 'HU', city: 'gyor',           cityLocal: 'Győr',           lat: 47.6875, lng: 17.6504, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/gyor' },
+  { id: 'hu_miskolc_hmj',      country: 'HU', city: 'miskolc',        cityLocal: 'Miskolc',        lat: 48.1035, lng: 20.7784, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/miskolc' },
+  { id: 'hu_kecskemet_hmj',    country: 'HU', city: 'kecskemet',      cityLocal: 'Kecskemét',      lat: 46.8964, lng: 19.6913, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/kecskemet' },
+  { id: 'hu_szekesfehervar_hmj',country:'HU', city: 'szekesfehervar', cityLocal: 'Székesfehérvár', lat: 47.1860, lng: 18.4221, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/szekesfehervar' },
+  { id: 'hu_nyiregyhaza_hmj',  country: 'HU', city: 'nyiregyhaza',    cityLocal: 'Nyíregyháza',    lat: 47.9553, lng: 21.7174, platform: 'hovamenjek', url: 'https://www.hovamenjek.hu/napi-menu/nyiregyhaza' },
 ];
 
 // ─────────────────────────────────────────────────────────────────

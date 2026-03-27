@@ -173,6 +173,14 @@ const ro: LocalePartial = {
 
   'splash.appSubtitle': 'Dietă personalizată, pe care chiar o respecți.',
 
+  'intro.panel1.title': 'Mese personalizate',
+  'intro.panel1.subtitle': 'Alimente locale, adaptate obiceiurilor tale',
+  'intro.panel2.title': 'Planificare cu AI',
+  'intro.panel2.subtitle': 'Nutriție inteligentă care se adaptează',
+  'intro.panel3.title': 'Stil de viață sănătos',
+  'intro.panel3.subtitle': 'Echilibru pentru fiecare zi',
+  'intro.startButton': 'Să începem!',
+
   'generate.limitUsed': '{used} / {limit} generări utilizate',
   'generate.limitReached': 'Ai atins limita lunară.',
   'generate.limitResetsAt': 'Disponibil din: {date}',
@@ -397,6 +405,38 @@ const ro: LocalePartial = {
   'default.noAllergies': 'Niciuna',
   'default.noDietaryPref': 'Fără restricții',
   'default.activityMedium': 'Mediu',
+
+  // Religious fasting
+  'fasting.sectionTitle': 'Post religios',
+  'fasting.enabled': 'Post religios',
+  'fasting.enabledSubtitle': 'Includerea automată a zilelor de post în meniu',
+  'fasting.religion': 'Religie',
+  'fasting.religion.orthodox': 'Ortodox',
+  'fasting.religion.catholic': 'Catolic',
+  'fasting.religion.protestant': 'Protestant',
+  'fasting.religion.custom': 'Personalizat',
+  'fasting.customDays': 'Zile de post',
+  'fasting.customDaysHint': 'Alege zilele din săptămână în care postești',
+  'fasting.upcomingTitle': 'Următoarele zile de post',
+  'fasting.noUpcoming': 'Nu sunt zile de post apropiate',
+  'fasting.indicator': 'Post',
+  'fasting.reason.greatLent': 'Postul Mare',
+  'fasting.reason.nativityFast': 'Postul Crăciunului',
+  'fasting.reason.dormitionFast': 'Postul Adormirii Maicii Domnului',
+  'fasting.reason.apostlesFast': 'Postul Sfinților Apostoli',
+  'fasting.reason.wedFri': 'Post de miercuri și vineri',
+  'fasting.reason.ashWednesday': 'Miercurea Cenușii',
+  'fasting.reason.goodFriday': 'Vinerea Mare',
+  'fasting.reason.lentenFriday': 'Vineri din Postul Mare',
+  'fasting.reason.customDay': 'Zi de post personalizată',
+  'fasting.dayNames.mon': 'L',
+  'fasting.dayNames.tue': 'Ma',
+  'fasting.dayNames.wed': 'Mi',
+  'fasting.dayNames.thu': 'J',
+  'fasting.dayNames.fri': 'V',
+  'fasting.dayNames.sat': 'S',
+  'fasting.dayNames.sun': 'D',
+  'fasting.protestantNote': 'Bisericile protestante nu au post obligatoriu, dar poți seta zile de post personalizate.',
 };
 
 export default ro;

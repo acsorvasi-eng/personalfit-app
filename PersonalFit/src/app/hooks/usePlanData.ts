@@ -63,6 +63,8 @@ export interface MealOption {
 export interface DayMeals {
   day: number;
   isTrainingDay: boolean;
+  isFastingDay?: boolean;
+  fastingReason?: string;
   dayLabel: string;
   breakfast: MealOption[];
   lunch: MealOption[];
@@ -191,6 +193,8 @@ async function buildWeekData(
       dayMealsArr.push({
         day: dayEntity.day,
         isTrainingDay: dayEntity.is_training_day,
+        isFastingDay: (dayEntity as any).is_fasting_day ?? false,
+        fastingReason: (dayEntity as any).fasting_reason ?? '',
         dayLabel: dayEntity.day_label,
         breakfast: toOptions(breakfastMeals),
         lunch: toOptions(lunchMeals),

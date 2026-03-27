@@ -27,6 +27,8 @@ export type ChefDay = {
   meals: ChefMeal[];
   weekday_index?: number;           // 0=Mon … 6=Sun
   daily_calorie_target?: number;    // base + burn bonus for this day
+  is_fasting_day?: boolean;         // religious fasting flag
+  fasting_reason?: string;          // i18n key for the fasting reason
 };
 
 export type ChefMealPlan = {

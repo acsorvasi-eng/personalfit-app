@@ -12,6 +12,7 @@ import { useLanguage } from "../../../contexts/LanguageContext";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getUserProfile } from "../../../backend/services/UserProfileService";
 import { getSetting } from "../../../backend/services/SettingsService";
+import { getFastingSettings } from "../../../backend/services/FastingCalendarService";
 import { getMET } from "../../../utils/metHelpers";
 import { callChefReview } from '../../../components/onboarding/callChefReview';
 
@@ -303,6 +304,12 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       }
       setBurnPerDay(computedBurnPerDay);
 
+      // Load fasting settings to pass to the API
+      const fastingSettings = await getFastingSettings();
+      const fastingPayload = fastingSettings.enabled
+        ? { enabled: true, religion: fastingSettings.religion, customDays: fastingSettings.customDays }
+        : undefined;
+
       const resp = await authFetch(`${apiBase}/api/generate-meal-plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -325,6 +332,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
           trainingDays: trainingDayIndices,
           trainingCaloriesPerDay: computedBurnPerDay,
           goal: personal.goal,
+          ...(fastingPayload ? { fasting: fastingPayload } : {}),
         }),
       });
       const responseBody = await resp.json().catch(() => null);
