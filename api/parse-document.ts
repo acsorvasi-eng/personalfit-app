@@ -248,8 +248,8 @@ const CATEGORY_BLOCKLIST = new Set([
   'ásványi', 'asvanyi', 'ásvány', 'makró', 'makro', 'mikró', 'mikro',
   'rost', 'cukor', 'összes', 'osszes', 'összesen', 'osszesen',
   'napi', 'heti', 'protein', 'carbs', 'fat', 'fiber',
-  'napi összesen', 'napi osszesen', 'reggeli', 'ebéd', 'ebed',
-  'vacsora', 'snack', 'edzés utáni', 'edzes utani',
+  'napi összesen', 'napi osszesen',
+  'edzés utáni', 'edzes utani',
 ]);
 
 /** Known standalone Hungarian food words for compound splitting */
@@ -283,22 +283,29 @@ const KNOWN_FOOD_WORDS = new Set([
  * Split compound ingredients where 2+ known food words are joined by space.
  * E.g. "Brokkoli olívaolaj" → ["brokkoli", "olívaolaj"]
  */
+/**
+ * Only split when it's clearly TWO SEPARATE ingredients joined by space,
+ * like "Brokkoli olívaolaj" (two unrelated foods).
+ * Do NOT split things like "barna rizs" (adjective + food) or "csirke rizs" (a dish).
+ */
 function splitCompoundFoodWords(name: string): string[] {
   const lower = name.toLowerCase().trim();
   const words = lower.split(/\s+/);
 
-  if (words.length < 2) return [name];
+  // Only split exactly 2-word combinations where BOTH are known foods
+  // and neither is a common adjective/modifier
+  if (words.length !== 2) return [name];
 
-  // Check if all words are known food words
-  const allKnown = words.every(w => KNOWN_FOOD_WORDS.has(w));
-  if (allKnown && words.length >= 2) {
-    return words.map(w => w.charAt(0).toUpperCase() + w.slice(1));
-  }
+  const MODIFIERS = new Set(['barna', 'fehér', 'feher', 'sült', 'sult', 'főtt', 'fott', 'nyers', 'friss', 'fél', 'fel', 'kis', 'nagy', 'édes', 'edes', 'sós', 'sos', 'teljes', 'kiőrlésű', 'kiorlesu']);
 
-  // Check if at least 2 words are known foods (with some non-food words mixed in)
-  const knownWords = words.filter(w => KNOWN_FOOD_WORDS.has(w));
-  if (knownWords.length >= 2 && knownWords.length === words.length) {
-    return knownWords.map(w => w.charAt(0).toUpperCase() + w.slice(1));
+  const [w1, w2] = words;
+
+  // Don't split if first word is a modifier/adjective
+  if (MODIFIERS.has(w1)) return [name];
+
+  // Only split if both are known food words from different categories
+  if (KNOWN_FOOD_WORDS.has(w1) && KNOWN_FOOD_WORDS.has(w2)) {
+    return [w1.charAt(0).toUpperCase() + w1.slice(1), w2.charAt(0).toUpperCase() + w2.slice(1)];
   }
 
   return [name];
@@ -350,7 +357,7 @@ function filterCleanIngredients(names: string[]): string[] {
     const allParts: string[] = [];
     for (const cs of compoundSplit) {
       const parts = cs
-        .split(/[,/+\-]/)
+        .split(/[,/+]/)
         .map(p => p.trim())
         .filter(p => p.length > 0 && p.length <= 40);
       allParts.push(...parts);
@@ -380,7 +387,7 @@ function filterCleanIngredients(names: string[]): string[] {
       if (CATEGORY_BLOCKLIST.has(n)) continue;
 
       // Length and label checks
-      if (n.length < 2 || n.length > 25) continue;
+      if (n.length < 2 || n.length > 40) continue;
       if (LABEL_PHRASES.some(phrase => n.includes(phrase))) continue;
 
       // Apply simple synonym normalization
