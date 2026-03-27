@@ -172,6 +172,10 @@ const ro: LocalePartial = {
   'upload.error': 'A apărut o eroare',
 
   'splash.appSubtitle': 'Dietă personalizată, pe care chiar o respecți.',
+  'splash.tagline': 'Transformă ce mănânci',
+  'splash.startButton': 'Să începem!',
+  'splash.language': 'Limbă',
+  'splash.chooseLanguage': 'Alege limba',
 
   'intro.panel1.title': 'Mese personalizate',
   'intro.panel1.subtitle': 'Alimente locale, adaptate obiceiurilor tale',

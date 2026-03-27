@@ -15,6 +15,7 @@ import { Layout } from "./shared/layouts/Layout";
 import { NotFound } from "./components/NotFound";
 
 // Onboarding flow screens (small — kept eagerly loaded)
+import { SplashScreen } from "./components/onboarding/SplashScreen";
 import { OnboardingScreen } from "./components/onboarding/OnboardingScreen";
 import { LoginScreen } from "./components/onboarding/LoginScreen";
 import { TermsScreen } from "./components/onboarding/TermsScreen";
@@ -119,6 +120,14 @@ export const router = createBrowserRouter([
       // === Onboarding Flow Routes ===
       {
         path: "splash",
+        element: (
+          <OnboardingGuard>
+            <SplashScreen />
+          </OnboardingGuard>
+        ),
+      },
+      {
+        path: "onboarding",
         element: (
           <OnboardingGuard>
             <OnboardingScreen />

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>frog — Animated Logo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #0f172a;
+    font-family: system-ui, -apple-system, sans-serif;
+    gap: 60px;
+  }
+
+  .logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .label {
+    color: #94a3b8;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ========== V1: BLINKING FROG APP ICON ========== */
+  .v1-wrap {
+    width: 200px;
+    height: 200px;
+  }
+
+  .v1-wrap svg {
+    filter: drop-shadow(0 20px 40px rgba(13, 148, 136, 0.3));
+  }
+
+  /* Blink animation */
+  @keyframes blink {
+    0%, 42%, 46%, 100% { transform: scaleY(1); }
+    44% { transform: scaleY(0.05); }
+  }
+
+  .frog-eye-lid {
+    animation: blink 4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .frog-eye-lid:nth-child(2) {
+    animation-delay: 0.05s;
+  }
+
+  /* Subtle bounce */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .v1-wrap svg {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* ========== V2: PEEK + REVEAL ========== */
+  .v2-wrap {
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 45px;
+    background: #0d9488;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(13, 148, 136, 0.3);
+  }
+
+  @keyframes peekUp {
+    0%, 100% { transform: translateY(30px); }
+    30%, 70% { transform: translateY(0px); }
+  }
+
+  .peek-frog {
+    animation: peekUp 5s ease-in-out infinite;
+  }
+
+  @keyframes peekBlink {
+    0%, 52%, 56%, 100% { transform: scaleY(1); }
+    54% { transform: scaleY(0.05); }
+  }
+
+  .peek-eye {
+    animation: peekBlink 5s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  /* ========== V3: FULL MASCOT WITH WAVE ========== */
+  .v3-wrap {
+    width: 240px;
+    height: 280px;
+  }
+
+  @keyframes wave {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    10% { transform: rotate(14deg); }
+    20% { transform: rotate(-8deg); }
+    30% { transform: rotate(14deg); }
+    40% { transform: rotate(-4deg); }
+    50% { transform: rotate(10deg); }
+  }
+
+  .wave-arm {
+    animation: wave 3s ease-in-out infinite;
+    transform-origin: 280px 240px;
+  }
+
+  @keyframes mascotBlink {
+    0%, 35%, 39%, 70%, 74%, 100% { transform: scaleY(1); }
+    37% { transform: scaleY(0.05); }
+    72% { transform: scaleY(0.05); }
+  }
+
+  .mascot-eye {
+    animation: mascotBlink 4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  @keyframes mascotBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.02); }
+  }
+
+  .v3-wrap svg {
+    animation: mascotBounce 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 15px 30px rgba(13, 148, 136, 0.25));
+  }
+
+  /* ========== V4: WORDMARK REVEAL ========== */
+  .v4-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .v4-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  @keyframes iconPop {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60% { transform: scale(1.1) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .v4-icon svg {
+    animation: iconPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    filter: drop-shadow(0 8px 16px rgba(13, 148, 136, 0.3));
+  }
+
+  .v4-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .v4-text .brand-name {
+    font-size: 48px;
+    font-weight: 800;
+    color: #f0fdfa;
+    letter-spacing: 3px;
+  }
+
+  .v4-text .brand-name span {
+    display: inline-block;
+    animation: letterDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .v4-text .brand-name span:nth-child(1) { animation-delay: 0.6s; }
+  .v4-text .brand-name span:nth-child(2) { animation-delay: 0.7s; }
+  .v4-text .brand-name span:nth-child(3) { animation-delay: 0.8s; }
+  .v4-text .brand-name span:nth-child(4) { animation-delay: 0.9s; }
+
+  @keyframes letterDrop {
+    0% { transform: translateY(-30px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  .v4-text .tagline {
+    font-size: 12px;
+    color: #5eead4;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    animation: fadeIn 0.6s ease both;
+    animation-delay: 1.3s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Continuous gentle eye blink on v4 icon */
+  .v4-eye {
+    animation: blink 4s ease-in-out infinite;
+    animation-delay: 2s;
+    transform-origin: center;
+  }
+
+  /* ========== V5: SPLASH SCREEN ========== */
+  .v5-wrap {
+    width: 300px;
+    height: 500px;
+    border-radius: 40px;
+    background: linear-gradient(160deg, #0d9488, #0f766e, #134e4a);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+  }
+
+  .v5-wrap::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(153, 246, 228, 0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.2); opacity: 1; }
+  }
+
+  .v5-frog {
+    width: 120px;
+    height: 120px;
+    z-index: 1;
+  }
+
+  @keyframes splashPop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .v5-frog svg {
+    animation: splashPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: 0.3s;
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.2));
+  }
+
+  .v5-brand {
+    font-size: 42px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 6px;
+    z-index: 1;
+    animation: fadeIn 0.8s ease both;
+    animation-delay: 0.8s;
+  }
+
+  .v5-tagline {
+    font-size: 11px;
+    color: #99f6e4;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    z-index: 1;
+    animation: fadeIn 0.8s ease both;
+    animation-delay: 1.2s;
+  }
+
+  /* Loading dots */
+  .v5-dots {
+    display: flex;
+    gap: 8px;
+    z-index: 1;
+    margin-top: 40px;
+    animation: fadeIn 0.5s ease both;
+    animation-delay: 1.6s;
+  }
+
+  .v5-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #99f6e4;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+
+  .v5-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .v5-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotPulse {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .splash-eye {
+    animation: mascotBlink 3.5s ease-in-out infinite;
+    animation-delay: 1.5s;
+    transform-origin: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- V1: Blinking App Icon -->
+<div class="logo-container">
+  <div class="label">App Icon — Pislogos</div>
+  <div class="v1-wrap">
+    <svg viewBox="0 0 200 200">
+      <rect width="200" height="200" rx="45" fill="#0d9488"/>
+      <ellipse cx="100" cy="115" rx="55" ry="45" fill="#f0fdfa"/>
+      <circle cx="72" cy="80" r="24" fill="#f0fdfa"/>
+      <circle cx="128" cy="80" r="24" fill="#f0fdfa"/>
+      <g class="frog-eye-lid">
+        <circle cx="72" cy="80" r="11" fill="#134e4a"/>
+        <circle cx="76" cy="76" r="3.5" fill="#f0fdfa"/>
+      </g>
+      <g class="frog-eye-lid">
+        <circle cx="128" cy="80" r="11" fill="#134e4a"/>
+        <circle cx="132" cy="76" r="3.5" fill="#f0fdfa"/>
+      </g>
+      <path d="M 78 120 Q 100 138 122 120" fill="none" stroke="#134e4a" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="70" cy="118" r="7" fill="#99f6e4" opacity="0.5"/>
+      <circle cx="130" cy="118" r="7" fill="#99f6e4" opacity="0.5"/>
+    </svg>
+  </div>
+</div>
+
+<!-- V2: Peek from bottom -->
+<div class="logo-container">
+  <div class="label">Peek — Kukucskalos</div>
+  <div class="v2-wrap">
+    <svg viewBox="0 0 200 200">
+      <g class="peek-frog">
+        <ellipse cx="100" cy="180" rx="70" ry="60" fill="#ccfbf1"/>
+        <circle cx="72" cy="120" r="28" fill="#ccfbf1"/>
+        <circle cx="128" cy="120" r="28" fill="#ccfbf1"/>
+        <g class="peek-eye">
+          <circle cx="72" cy="120" r="13" fill="#134e4a"/>
+          <circle cx="76" cy="116" r="4" fill="#ccfbf1"/>
+        </g>
+        <g class="peek-eye">
+          <circle cx="128" cy="120" r="13" fill="#134e4a"/>
+          <circle cx="132" cy="116" r="4" fill="#ccfbf1"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<!-- V3: Mascot with waving arm -->
+<div class="logo-container">
+  <div class="label">Mascot — Integetos</div>
+  <div class="v3-wrap">
+    <svg viewBox="0 0 400 460">
+      <!-- Body -->
+      <ellipse cx="200" cy="310" rx="85" ry="70" fill="#0d9488"/>
+      <!-- Head -->
+      <ellipse cx="200" cy="220" rx="100" ry="80" fill="#14b8a6"/>
+      <!-- Eye bumps -->
+      <circle cx="150" cy="160" r="42" fill="#14b8a6"/>
+      <circle cx="250" cy="160" r="42" fill="#14b8a6"/>
+      <!-- Eyes -->
+      <ellipse cx="150" cy="158" rx="24" ry="26" fill="white"/>
+      <g class="mascot-eye">
+        <ellipse cx="155" cy="160" rx="12" ry="17" fill="#134e4a"/>
+        <circle cx="160" cy="153" r="5" fill="white"/>
+      </g>
+      <ellipse cx="250" cy="158" rx="24" ry="26" fill="white"/>
+      <g class="mascot-eye">
+        <ellipse cx="255" cy="160" rx="12" ry="17" fill="#134e4a"/>
+        <circle cx="260" cy="153" r="5" fill="white"/>
+      </g>
+      <!-- Smile -->
+      <path d="M 155 245 Q 200 278 245 245" fill="none" stroke="#0f766e" stroke-width="5" stroke-linecap="round"/>
+      <!-- Belly -->
+      <ellipse cx="200" cy="320" rx="55" ry="45" fill="#99f6e4"/>
+      <!-- Left arm (fork) -->
+      <path d="M 118 290 Q 85 300 78 330" fill="none" stroke="#0d9488" stroke-width="16" stroke-linecap="round"/>
+      <line x1="75" y1="323" x2="68" y2="300" stroke="#134e4a" stroke-width="4" stroke-linecap="round"/>
+      <line x1="63" y1="302" x2="64" y2="290" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+      <line x1="68" y1="301" x2="68" y2="289" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+      <line x1="73" y1="301" x2="72" y2="289" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+      <!-- Right arm (waving) -->
+      <g class="wave-arm">
+        <path d="M 282 290 Q 315 275 325 250" fill="none" stroke="#0d9488" stroke-width="16" stroke-linecap="round"/>
+        <circle cx="325" cy="242" r="12" fill="#14b8a6"/>
+      </g>
+      <!-- Feet -->
+      <ellipse cx="160" cy="380" rx="32" ry="13" fill="#0d9488"/>
+      <ellipse cx="240" cy="380" rx="32" ry="13" fill="#0d9488"/>
+    </svg>
+  </div>
+</div>
+
+<!-- V4: Wordmark reveal -->
+<div class="logo-container">
+  <div class="label">Wordmark — Betuk animacio</div>
+  <div class="v4-wrap">
+    <div class="v4-icon">
+      <svg viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="25" fill="#0d9488"/>
+        <ellipse cx="50" cy="58" rx="30" ry="24" fill="#f0fdfa"/>
+        <circle cx="36" cy="40" r="14" fill="#f0fdfa"/>
+        <circle cx="64" cy="40" r="14" fill="#f0fdfa"/>
+        <g class="v4-eye">
+          <circle cx="36" cy="40" r="6" fill="#134e4a"/>
+          <circle cx="38" cy="38" r="2" fill="#f0fdfa"/>
+        </g>
+        <g class="v4-eye">
+          <circle cx="64" cy="40" r="6" fill="#134e4a"/>
+          <circle cx="66" cy="38" r="2" fill="#f0fdfa"/>
+        </g>
+        <path d="M 40 62 Q 50 70 60 62" fill="none" stroke="#134e4a" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="v4-text">
+      <div class="brand-name"><span>f</span><span>r</span><span>o</span><span>g</span></div>
+      <div class="tagline">Transform what you eat</div>
+    </div>
+  </div>
+</div>
+
+<!-- V5: Splash Screen -->
+<div class="logo-container">
+  <div class="label">Splash Screen — App indulas</div>
+  <div class="v5-wrap">
+    <div class="v5-frog">
+      <svg viewBox="0 0 120 120">
+        <ellipse cx="60" cy="70" rx="40" ry="32" fill="#ccfbf1"/>
+        <circle cx="42" cy="45" r="20" fill="#ccfbf1"/>
+        <circle cx="78" cy="45" r="20" fill="#ccfbf1"/>
+        <g class="splash-eye">
+          <circle cx="42" cy="45" r="9" fill="#134e4a"/>
+          <circle cx="45" cy="42" r="3" fill="#ccfbf1"/>
+        </g>
+        <g class="splash-eye">
+          <circle cx="78" cy="45" r="9" fill="#134e4a"/>
+          <circle cx="81" cy="42" r="3" fill="#ccfbf1"/>
+        </g>
+        <path d="M 46 74 Q 60 86 74 74" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="v5-brand">frog</div>
+    <div class="v5-tagline">Transform what you eat</div>
+    <div class="v5-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

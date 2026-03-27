@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Background -->
+  <rect width="400" height="400" rx="80" fill="#f0fdfa"/>
+
+  <!-- Shadow -->
+  <ellipse cx="205" cy="330" rx="90" ry="15" fill="#99f6e4" opacity="0.4"/>
+
+  <!-- Body -->
+  <ellipse cx="200" cy="260" rx="85" ry="70" fill="#0d9488"/>
+
+  <!-- Head -->
+  <ellipse cx="200" cy="185" rx="95" ry="75" fill="#14b8a6"/>
+
+  <!-- Left eye bump -->
+  <circle cx="148" cy="128" r="40" fill="#14b8a6"/>
+  <!-- Right eye bump -->
+  <circle cx="252" cy="128" r="40" fill="#14b8a6"/>
+
+  <!-- Left eye white -->
+  <ellipse cx="148" cy="128" rx="26" ry="28" fill="white"/>
+  <!-- Left pupil -->
+  <ellipse cx="153" cy="128" rx="13" ry="18" fill="#134e4a"/>
+  <!-- Left eye shine -->
+  <circle cx="158" cy="120" r="6" fill="white"/>
+
+  <!-- Right eye white -->
+  <ellipse cx="252" cy="128" rx="26" ry="28" fill="white"/>
+  <!-- Right pupil -->
+  <ellipse cx="257" cy="128" rx="13" ry="18" fill="#134e4a"/>
+  <!-- Right eye shine -->
+  <circle cx="262" cy="120" r="6" fill="white"/>
+
+  <!-- Mouth - big friendly smile -->
+  <path d="M 150 205 Q 200 240 250 205" fill="none" stroke="#0f766e" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Belly -->
+  <ellipse cx="200" cy="270" rx="55" ry="45" fill="#99f6e4"/>
+
+  <!-- Left arm holding fork -->
+  <path d="M 120 240 Q 90 250 85 275" fill="none" stroke="#0d9488" stroke-width="14" stroke-linecap="round"/>
+  <!-- Fork -->
+  <line x1="82" y1="268" x2="75" y2="248" stroke="#134e4a" stroke-width="4" stroke-linecap="round"/>
+  <line x1="70" y1="250" x2="72" y2="240" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+  <line x1="75" y1="249" x2="75" y2="238" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+  <line x1="80" y1="249" x2="79" y2="239" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Right arm waving -->
+  <path d="M 280 240 Q 310 230 320 210" fill="none" stroke="#0d9488" stroke-width="14" stroke-linecap="round"/>
+  <!-- Hand/wave lines -->
+  <line x1="330" y1="200" x2="340" y2="195" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+  <line x1="332" y1="210" x2="343" y2="208" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Feet -->
+  <ellipse cx="160" cy="325" rx="30" ry="12" fill="#0d9488"/>
+  <ellipse cx="240" cy="325" rx="30" ry="12" fill="#0d9488"/>
+</svg>

@@ -245,6 +245,10 @@ const hu = {
   'upload.error': 'Hiba történt',
 
   'splash.appSubtitle': 'Személyre szabott étrend, amit tényleg betartasz.',
+  'splash.tagline': 'Változtasd meg, amit eszel',
+  'splash.startButton': 'Kezdjük!',
+  'splash.language': 'Nyelv',
+  'splash.chooseLanguage': 'Nyelv kiválasztása',
 
   'intro.panel1.title': 'Személyre szabott étkezés',
   'intro.panel1.subtitle': 'Helyi ételek, a te szokásaid szerint',

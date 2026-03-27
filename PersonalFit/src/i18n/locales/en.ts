@@ -172,6 +172,10 @@ const en: LocalePartial = {
   'upload.error': 'An error occurred',
 
   'splash.appSubtitle': 'Personalized nutrition you actually stick to.',
+  'splash.tagline': 'Transform what you eat',
+  'splash.startButton': "Let's start!",
+  'splash.language': 'Language',
+  'splash.chooseLanguage': 'Choose language',
 
   'intro.panel1.title': 'Personalized meals',
   'intro.panel1.subtitle': 'Local foods, tailored to your habits',

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Background -->
+  <rect width="400" height="400" rx="80" fill="#0f172a"/>
+
+  <!-- Frog silhouette - modern/geometric -->
+  <!-- Head -->
+  <ellipse cx="200" cy="225" rx="100" ry="80" fill="#0d9488"/>
+
+  <!-- Left eye socket -->
+  <circle cx="150" cy="165" r="42" fill="#0d9488"/>
+  <!-- Right eye socket -->
+  <circle cx="250" cy="165" r="42" fill="#0d9488"/>
+
+  <!-- Left eye outer -->
+  <circle cx="150" cy="165" r="28" fill="#f0fdfa"/>
+  <!-- Left pupil -->
+  <circle cx="155" cy="163" r="14" fill="#0f172a"/>
+  <!-- Left eye shine -->
+  <circle cx="160" cy="157" r="5" fill="#f0fdfa"/>
+
+  <!-- Right eye outer -->
+  <circle cx="250" cy="165" r="28" fill="#f0fdfa"/>
+  <!-- Right pupil -->
+  <circle cx="255" cy="163" r="14" fill="#0f172a"/>
+  <!-- Right eye shine -->
+  <circle cx="260" cy="157" r="5" fill="#f0fdfa"/>
+
+  <!-- Subtle smile -->
+  <path d="M 165 248 Q 200 272 235 248" fill="none" stroke="#134e4a" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Wordmark -->
+  <text x="200" y="345" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="36" fill="#f0fdfa" letter-spacing="8">frog</text>
+</svg>
