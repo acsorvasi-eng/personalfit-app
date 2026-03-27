@@ -13,6 +13,7 @@
  */
 
 import { Search, X } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface SearchBarProps {
   /** Current search value */
@@ -34,12 +35,14 @@ interface SearchBarProps {
 export function SearchBar({
   value,
   onChange,
-  placeholder = "Keresés...",
+  placeholder,
   autoFocus = false,
   className = "",
   showClear = true,
   variant = "default",
 }: SearchBarProps) {
+  const { t } = useLanguage();
+  const resolvedPlaceholder = placeholder ?? t('searchBar.placeholder');
   const variantClasses = {
     default:
       "bg-gray-50 border border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100",
@@ -50,7 +53,7 @@ export function SearchBar({
   };
 
   return (
-    <div className={`relative group ${className}`} role="search" aria-label="Keresés">
+    <div className={`relative group ${className}`} role="search" aria-label={t('searchBar.ariaLabel')}>
       <div
         className={`flex items-center rounded-xl transition-all ${variantClasses[variant]}`}
       >
@@ -59,16 +62,16 @@ export function SearchBar({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           autoFocus={autoFocus}
-          aria-label={placeholder}
+          aria-label={resolvedPlaceholder}
           className="w-full bg-transparent py-3 pl-3 pr-4 focus:outline-none text-gray-900 placeholder-gray-400"
         />
         {showClear && value && (
           <button
             onClick={() => onChange("")}
             className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors mr-2 flex-shrink-0"
-            aria-label="Keresés törlése"
+            aria-label={t('searchBar.clearAriaLabel')}
           >
             <X className="w-4 h-4 text-gray-500" />
           </button>

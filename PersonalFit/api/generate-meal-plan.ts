@@ -95,6 +95,9 @@ function getMealCalories(model: string | undefined, target: number) {
   switch (model) {
     case '1meal': return { lunch: target };
     case '2meals': return { breakfast: Math.round(target * 0.40), dinner: target - Math.round(target * 0.40) };
+    case 'if16_8':
+    case 'if18_6':
+      return { lunch: Math.round(target * 0.55), dinner: target - Math.round(target * 0.55) };
     case '5meals': return { breakfast: Math.round(target * 0.25), snack1: Math.round(target * 0.10), lunch: Math.round(target * 0.30), snack2: Math.round(target * 0.10), dinner: target - Math.round(target * 0.75) };
     case '4meals': return { breakfast: Math.round(target * 0.25), snack: Math.round(target * 0.10), lunch: Math.round(target * 0.35), dinner: target - Math.round(target * 0.70) };
     default:       return { breakfast: Math.round(target * 0.25), lunch: Math.round(target * 0.40), dinner: target - Math.round(target * 0.65) };
@@ -105,6 +108,9 @@ function getMealTypes(model: string | undefined): string[] {
   switch (model) {
     case '1meal': return ['lunch'];
     case '2meals': return ['breakfast', 'dinner'];
+    case 'if16_8':
+    case 'if18_6':
+      return ['lunch', 'dinner'];
     case '5meals': return ['breakfast', 'snack', 'lunch', 'snack', 'dinner'];
     case '4meals': return ['breakfast', 'snack', 'lunch', 'dinner'];
     default:       return ['breakfast', 'lunch', 'dinner'];

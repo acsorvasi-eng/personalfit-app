@@ -59,13 +59,7 @@ interface DeliverySlot {
 
 type CheckoutStep = "cart" | "address" | "timeslot" | "payment" | "confirmation";
 
-const STEPS: { key: CheckoutStep; label: string; icon: React.ElementType }[] = [
-  { key: "cart", label: "Kosár", icon: ShoppingCart },
-  { key: "address", label: "Szállítás", icon: MapPin },
-  { key: "timeslot", label: "Időpont", icon: Clock },
-  { key: "payment", label: "Fizetés", icon: CreditCard },
-  { key: "confirmation", label: "Kész", icon: CheckCircle2 },
-];
+/* Step labels are resolved via t() inside the component — see localizedSteps */
 
 function generateOrderId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -108,13 +102,13 @@ function generateDeliverySlots(locale: string): DeliverySlot[] {
 export function Checkout() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const storeName = searchParams.get("store") || "Bolt";
   const { consumed, target } = useCalorieTracker();
   const { language, t } = useLanguage();
+  const storeName = searchParams.get("store") || t("checkout.defaultStore");
 
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [cartItems, setCartItems] = useState<ShoppingItem[]>([]);
-  const defaultAddress: DeliveryAddress = { name: "", phone: "+40 ", city: "Marosvásárhely", zip: "", street: "", floor: "", notes: "" };
+  const defaultAddress: DeliveryAddress = { name: "", phone: "+40 ", city: t("checkout.defaultCity"), zip: "", street: "", floor: "", notes: "" };
   const [address, setAddress] = useState<DeliveryAddress>(defaultAddress);
   const [selectedSlot, setSelectedSlot] = useState<DeliverySlot | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cash">("card");
@@ -229,8 +223,8 @@ export function Checkout() {
       return;
     }
     const nextIdx = stepIndex + 1;
-    if (nextIdx < STEPS.length) {
-      setStep(STEPS[nextIdx].key);
+    if (nextIdx < localizedSteps.length) {
+      setStep(localizedSteps[nextIdx].key);
     }
   };
 
@@ -246,7 +240,7 @@ export function Checkout() {
     }
     if (step === "confirmation") return;
     const prevIdx = stepIndex - 1;
-    if (prevIdx >= 0) setStep(STEPS[prevIdx].key);
+    if (prevIdx >= 0) setStep(localizedSteps[prevIdx].key);
   };
 
   const formatCardNumber = (val: string) => {
@@ -335,7 +329,7 @@ export function Checkout() {
                       {s.label}
                     </span>
                   </div>
-                  {i < STEPS.length - 1 && (
+                  {i < localizedSteps.length - 1 && (
                     <div
                       className={`w-6 h-0.5 mx-1 mt-[-12px] ${
                         i < stepIndex ? "bg-green-400" : "bg-gray-200"

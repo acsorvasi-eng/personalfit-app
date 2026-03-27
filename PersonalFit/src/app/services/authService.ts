@@ -434,7 +434,7 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
  * Terms are auto-accepted for local users.
  */
 export async function loginLocal(name: string): Promise<AuthUser> {
-  const trimmedName = name.trim() || 'Felhasználó';
+  const trimmedName = name.trim() || 'User';
   const id = 'local_' + Date.now();
   const user: AuthUser = {
     id,

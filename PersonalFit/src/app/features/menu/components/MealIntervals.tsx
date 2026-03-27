@@ -24,38 +24,39 @@ interface MealIntervalsProps {
   onClose: () => void;
 }
 
-const PRESET_SLOTS: Record<number, MealSlot[]> = {
-  1: [{ label: "Ebéd", time: "13:00", emoji: "🍽️" }],
+/** Meal label keys for each slot — resolved via t() at render time */
+const PRESET_SLOT_KEYS: Record<number, { labelKey: string; time: string; emoji: string }[]> = {
+  1: [{ labelKey: "meal.lunch", time: "13:00", emoji: "🍽️" }],
   2: [
-    { label: "Reggeli", time: "09:00", emoji: "☀️" },
-    { label: "Vacsora", time: "19:00", emoji: "🌙" },
+    { labelKey: "meal.breakfast", time: "09:00", emoji: "☀️" },
+    { labelKey: "meal.dinner", time: "19:00", emoji: "🌙" },
   ],
   3: [
-    { label: "Reggeli", time: "08:00", emoji: "☀️" },
-    { label: "Ebéd", time: "13:00", emoji: "🍽️" },
-    { label: "Vacsora", time: "19:00", emoji: "🌙" },
+    { labelKey: "meal.breakfast", time: "08:00", emoji: "☀️" },
+    { labelKey: "meal.lunch", time: "13:00", emoji: "🍽️" },
+    { labelKey: "meal.dinner", time: "19:00", emoji: "🌙" },
   ],
   4: [
-    { label: "Reggeli", time: "07:30", emoji: "☀️" },
-    { label: "Tízórai", time: "10:30", emoji: "🥐" },
-    { label: "Ebéd", time: "13:30", emoji: "🍽️" },
-    { label: "Vacsora", time: "19:00", emoji: "🌙" },
+    { labelKey: "meal.breakfast", time: "07:30", emoji: "☀️" },
+    { labelKey: "meal.morningSnack", time: "10:30", emoji: "🥐" },
+    { labelKey: "meal.lunch", time: "13:30", emoji: "🍽️" },
+    { labelKey: "meal.dinner", time: "19:00", emoji: "🌙" },
   ],
   5: [
-    { label: "Reggeli", time: "07:00", emoji: "☀️" },
-    { label: "Tízórai", time: "10:00", emoji: "🥐" },
-    { label: "Ebéd", time: "13:00", emoji: "🍽️" },
-    { label: "Uzsonna", time: "16:00", emoji: "🍏" },
-    { label: "Vacsora", time: "19:30", emoji: "🌙" },
+    { labelKey: "meal.breakfast", time: "07:00", emoji: "☀️" },
+    { labelKey: "meal.morningSnack", time: "10:00", emoji: "🥐" },
+    { labelKey: "meal.lunch", time: "13:00", emoji: "🍽️" },
+    { labelKey: "meal.afternoonSnack", time: "16:00", emoji: "🍏" },
+    { labelKey: "meal.dinner", time: "19:30", emoji: "🌙" },
   ],
 };
 
-const COUNT_LABELS: Record<number, string> = {
-  1: "OMAD (1 étkezés)",
-  2: "Időszakos (2 étkezés)",
-  3: "Klasszikus (3 étkezés)",
-  4: "Aktív napok (4 étkezés)",
-  5: "Sport napok (5 étkezés)",
+const COUNT_LABEL_KEYS: Record<number, string> = {
+  1: "mealIntervals.omad",
+  2: "mealIntervals.periodic",
+  3: "mealIntervals.classic",
+  4: "mealIntervals.active",
+  5: "mealIntervals.sport",
 };
 
 function addMinutes(hhmm: string, delta: number): string {
@@ -79,16 +80,22 @@ function slotToWindow(slot: MealSlot): MealWindow {
   };
 }
 
-function settingsToSlots(settings: MealSettings): [number, MealSlot[]] {
+/** Resolve PRESET_SLOT_KEYS to MealSlot[] using t() */
+function resolvePresetSlots(count: number, t: (key: string) => string): MealSlot[] {
+  const keys = PRESET_SLOT_KEYS[count] ?? PRESET_SLOT_KEYS[3];
+  return keys.map((k) => ({ label: t(k.labelKey), time: k.time, emoji: k.emoji }));
+}
+
+function settingsToSlots(settings: MealSettings, t: (key: string) => string): [number, MealSlot[]] {
   const count = settings.mealCount ?? settings.meals.length ?? 3;
   if (!settings.meals || settings.meals.length === 0) {
-    const preset = PRESET_SLOTS[count] ?? PRESET_SLOTS[3];
-    return [count, preset];
+    return [count, resolvePresetSlots(count, t)];
   }
+  const presetKeys = PRESET_SLOT_KEYS[count] ?? PRESET_SLOT_KEYS[3];
   const slots: MealSlot[] = settings.meals.map((mw, idx) => {
     const centerTime = mw.startTime || "08:00";
     const presetEmoji =
-      PRESET_SLOTS[count]?.[idx]?.emoji ??
+      presetKeys[idx]?.emoji ??
       (idx === 0 ? "☀️" : idx === settings.meals.length - 1 ? "🌙" : "🍽️");
     return {
       label: mw.name,
@@ -109,7 +116,7 @@ export function MealIntervals({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [count, setCount] = useState<number>(initialCount ?? 3);
-  const [slots, setSlots] = useState<MealSlot[]>(() => initialMeals ?? PRESET_SLOTS[3]);
+  const [slots, setSlots] = useState<MealSlot[]>(() => initialMeals ?? resolvePresetSlots(3, t));
   const [settingsSnapshot, setSettingsSnapshot] = useState<MealSettings | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -119,7 +126,7 @@ export function MealIntervals({
       try {
         const settings = await getMealSettings();
         if (!mounted) return;
-        const [c, s] = settingsToSlots(settings);
+        const [c, s] = settingsToSlots(settings, t);
         setCount(initialCount ?? c);
         setSlots(initialMeals ?? s);
         setSettingsSnapshot(settings);
@@ -136,8 +143,7 @@ export function MealIntervals({
   const handleCountChange = (newCount: number) => {
     setCount(newCount);
     setValidationError(null);
-    const preset = PRESET_SLOTS[newCount] ?? PRESET_SLOTS[3];
-    setSlots(preset);
+    setSlots(resolvePresetSlots(newCount, t));
   };
 
   const handleSlotChange = (index: number, field: keyof MealSlot, value: string) => {
@@ -150,7 +156,7 @@ export function MealIntervals({
 
   const validate = () => {
     if (!slots.every((s) => s.time && /^\d{2}:\d{2}$/.test(s.time))) {
-      setValidationError("Kérlek add meg az összes étkezés időpontját (HH:MM).");
+      setValidationError(t("mealIntervals.validationTime"));
       return false;
     }
     return true;
@@ -202,11 +208,10 @@ export function MealIntervals({
           <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-border bg-primary">
             <div>
               <p className="text-[11px] font-semibold text-white/80 uppercase tracking-wide">
-                {t("menu.mealIntervalsTitle") || "Étkezési intervallumok"}
+                {t("mealIntervals.title")}
               </p>
               <h2 className="text-base font-bold text-white mt-0.5">
-                {t("menu.mealIntervalsSubtitle") ||
-                  "Állítsd be, mikor szeretnél enni a nap folyamán."}
+                {t("mealIntervals.subtitle")}
               </h2>
             </div>
             <button
@@ -225,7 +230,7 @@ export function MealIntervals({
               <label className="text-xs font-medium text-foreground flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
                 <span>
-                  {t("menu.mealCountLabel") || "Napi étkezések száma"}
+                  {t("mealIntervals.countLabel")}
                 </span>
               </label>
               <div className="relative">
@@ -236,7 +241,7 @@ export function MealIntervals({
                 >
                   {[1, 2, 3, 4, 5].map((c) => (
                     <option key={c} value={c}>
-                      {COUNT_LABELS[c]}
+                      {t(COUNT_LABEL_KEYS[c])}
                     </option>
                   ))}
                 </select>
@@ -309,8 +314,8 @@ export function MealIntervals({
             >
               <Check className="w-4 h-4" />
               {saving
-                ? t("menu.saving") || "Mentés..."
-                : (t("menu.saveIntervals") || "✓ Mentés")}
+                ? t("mealIntervals.saving")
+                : t("mealIntervals.save")}
             </button>
           </div>
         </motion.div>

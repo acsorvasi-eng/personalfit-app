@@ -357,6 +357,46 @@ const ro: LocalePartial = {
   'recipe.loadingDailyMenus': 'Căutare meniuri zilnice...',
   'recipe.dailyMenusTitle': 'Meniuri zilnice lângă tine',
   'recipe.viewMenu': 'Vezi meniul',
+
+  // SearchBar
+  'searchBar.placeholder': 'Căutare...',
+  'searchBar.ariaLabel': 'Căutare',
+  'searchBar.clearAriaLabel': 'Șterge căutarea',
+
+  // Checkout steps
+  'checkout.stepCart': 'Coș',
+  'checkout.stepDelivery': 'Livrare',
+  'checkout.stepTime': 'Orar',
+  'checkout.stepPayment': 'Plată',
+  'checkout.stepDone': 'Gata',
+  'checkout.defaultStore': 'Magazin',
+  'checkout.defaultCity': 'Târgu Mureș',
+
+  // MealIntervals
+  'mealIntervals.title': 'Intervale mese',
+  'mealIntervals.subtitle': 'Setează când vrei să mănânci în timpul zilei.',
+  'mealIntervals.countLabel': 'Numărul meselor zilnice',
+  'mealIntervals.saving': 'Se salvează...',
+  'mealIntervals.save': '✓ Salvează',
+  'mealIntervals.validationTime': 'Te rugăm completează toate orele meselor (HH:MM).',
+  'mealIntervals.omad': 'OMAD (1 masă)',
+  'mealIntervals.periodic': 'Periodic (2 mese)',
+  'mealIntervals.classic': 'Clasic (3 mese)',
+  'mealIntervals.active': 'Zile active (4 mese)',
+  'mealIntervals.sport': 'Zile sport (5 mese)',
+
+  // Calendar
+  'calendar.today': 'Azi',
+
+  // Defaults / fallbacks
+  'default.user': 'Utilizator',
+  'default.unknownError': 'Eroare necunoscută',
+  'default.processingError': 'Eroare de procesare: {msg}',
+  'default.measurementNotes': 'Măsurători extrase din PDF/text',
+  'default.goalWeightLoss': 'Pierdere în greutate',
+  'default.noAllergies': 'Niciuna',
+  'default.noDietaryPref': 'Fără restricții',
+  'default.activityMedium': 'Mediu',
 };
 
 export default ro;

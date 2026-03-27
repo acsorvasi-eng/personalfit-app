@@ -155,7 +155,7 @@ function CalendarStrip({
   const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
-  const todayLabel = language === 'hu' ? 'Ma' : (t("calendar.today") || "Today");
+  const todayLabel = t("calendar.today");
 
   // Generate 7 days centered on selected date
   const days = useMemo(() => {
@@ -725,13 +725,23 @@ export function UnifiedMenu() {
     const currentTimeInMinutes = currentHour * 60 + currentMinutes;
 
     const count = mealSettings?.mealCount ?? 3;
+    const isIF = mealSettings?.mealModel === 'if16_8' || mealSettings?.mealModel === 'if18_6';
     const mealsList = mealSettings?.meals?.length ? mealSettings.meals : [
       { name: 'Reggeli', startTime: '06:00', endTime: '08:00' },
       { name: 'Ebéd', startTime: '12:30', endTime: '13:30' },
       { name: 'Vacsora', startTime: '17:30', endTime: '18:30' },
     ];
     let BREAKFAST_START: number, BREAKFAST_END: number, LUNCH_START: number, LUNCH_END: number, DINNER_START: number, DINNER_END: number;
-    if (count === 1 && mealsList.length >= 1) {
+    if (isIF && count <= 1 && mealsList.length >= 1) {
+      // IF mode: single eating window split into lunch + dinner halves
+      const w = mealsList[0];
+      const wStart = parseTimeToMinutes(w.startTime);
+      const wEnd = parseTimeToMinutes(w.endTime);
+      const mid = wStart + Math.floor((wEnd - wStart) / 2);
+      BREAKFAST_START = wStart; BREAKFAST_END = wStart; // no breakfast in IF
+      LUNCH_START = wStart; LUNCH_END = mid;
+      DINNER_START = mid; DINNER_END = wEnd;
+    } else if (count === 1 && mealsList.length >= 1) {
       const m = mealsList[0];
       BREAKFAST_START = parseTimeToMinutes(m.startTime);
       BREAKFAST_END = parseTimeToMinutes(m.endTime);
@@ -743,13 +753,6 @@ export function UnifiedMenu() {
       LUNCH_START = BREAKFAST_END; LUNCH_END = BREAKFAST_END;
       DINNER_START = parseTimeToMinutes(mealsList[1].startTime);
       DINNER_END = parseTimeToMinutes(mealsList[1].endTime);
-    } else if (count >= 3 && mealsList.length >= 3) {
-      BREAKFAST_START = parseTimeToMinutes(mealsList[0].startTime);
-      BREAKFAST_END = parseTimeToMinutes(mealsList[0].endTime);
-      LUNCH_START = parseTimeToMinutes(mealsList[1].startTime);
-      LUNCH_END = parseTimeToMinutes(mealsList[1].endTime);
-      DINNER_START = parseTimeToMinutes(mealsList[2].startTime);
-      DINNER_END = parseTimeToMinutes(mealsList[2].endTime);
     } else if (count === 5 && mealsList.length >= 5) {
       BREAKFAST_START = parseTimeToMinutes(mealsList[0].startTime);
       BREAKFAST_END = parseTimeToMinutes(mealsList[0].endTime);
@@ -757,6 +760,13 @@ export function UnifiedMenu() {
       LUNCH_END = parseTimeToMinutes(mealsList[2].endTime);
       DINNER_START = parseTimeToMinutes(mealsList[4].startTime);
       DINNER_END = parseTimeToMinutes(mealsList[4].endTime);
+    } else if (count >= 3 && mealsList.length >= 3) {
+      BREAKFAST_START = parseTimeToMinutes(mealsList[0].startTime);
+      BREAKFAST_END = parseTimeToMinutes(mealsList[0].endTime);
+      LUNCH_START = parseTimeToMinutes(mealsList[1].startTime);
+      LUNCH_END = parseTimeToMinutes(mealsList[1].endTime);
+      DINNER_START = parseTimeToMinutes(mealsList[2].startTime);
+      DINNER_END = parseTimeToMinutes(mealsList[2].endTime);
     } else {
       BREAKFAST_START = DEFAULT_BREAKFAST_START; BREAKFAST_END = DEFAULT_BREAKFAST_END;
       LUNCH_START = DEFAULT_LUNCH_START; LUNCH_END = DEFAULT_LUNCH_END;
@@ -767,9 +777,10 @@ export function UnifiedMenu() {
     const lunchPassed = currentTimeInMinutes > LUNCH_END;
     const dinnerPassed = currentTimeInMinutes > DINNER_END;
 
-    const inBreakfastWindow = currentTimeInMinutes >= BREAKFAST_START && currentTimeInMinutes <= BREAKFAST_END;
-    const inLunchWindow = count !== 1 && count !== 2 && currentTimeInMinutes >= LUNCH_START && currentTimeInMinutes <= LUNCH_END;
-    const inDinnerWindow = count !== 1 && currentTimeInMinutes >= DINNER_START && currentTimeInMinutes <= DINNER_END;
+    const hasBreakfast = !isIF || count > 1; // IF mode has no breakfast slot
+    const inBreakfastWindow = hasBreakfast && currentTimeInMinutes >= BREAKFAST_START && currentTimeInMinutes <= BREAKFAST_END;
+    const inLunchWindow = (isIF || (count !== 1 && count !== 2)) && currentTimeInMinutes >= LUNCH_START && currentTimeInMinutes <= LUNCH_END;
+    const inDinnerWindow = (isIF || count !== 1) && currentTimeInMinutes >= DINNER_START && currentTimeInMinutes <= DINNER_END;
     const isInEatingWindow = inBreakfastWindow || inLunchWindow || inDinnerWindow;
 
     let currentMeal: string | null = null;
@@ -779,20 +790,20 @@ export function UnifiedMenu() {
     if (inBreakfastWindow) currentMeal = "breakfast";
     else if (inLunchWindow) currentMeal = "lunch";
     else if (inDinnerWindow) currentMeal = "dinner";
-    else if (!breakfastPassed) { currentMeal = "breakfast"; nextMealTime = BREAKFAST_START; restingTimeMinutes = BREAKFAST_START - currentTimeInMinutes; }
-    else if (count !== 1 && count !== 2 && !lunchPassed) { currentMeal = "lunch"; nextMealTime = LUNCH_START; restingTimeMinutes = LUNCH_START - currentTimeInMinutes; }
+    else if (hasBreakfast && !breakfastPassed) { currentMeal = "breakfast"; nextMealTime = BREAKFAST_START; restingTimeMinutes = BREAKFAST_START - currentTimeInMinutes; }
+    else if ((isIF || (count !== 1 && count !== 2)) && !lunchPassed) { currentMeal = "lunch"; nextMealTime = LUNCH_START; restingTimeMinutes = LUNCH_START - currentTimeInMinutes; }
     else if (!dinnerPassed) { currentMeal = "dinner"; nextMealTime = DINNER_START; restingTimeMinutes = DINNER_START - currentTimeInMinutes; }
-    else { restingTimeMinutes = (24 * 60 - currentTimeInMinutes) + BREAKFAST_START; currentMeal = "breakfast"; nextMealTime = BREAKFAST_START; }
+    else { restingTimeMinutes = (24 * 60 - currentTimeInMinutes) + LUNCH_START; currentMeal = isIF ? "lunch" : "breakfast"; nextMealTime = isIF ? LUNCH_START : BREAKFAST_START; }
 
     const totalRestMinutes =
-      currentMeal === "breakfast" ? (count === 1 ? 24 * 60 - (BREAKFAST_END - BREAKFAST_START) : LUNCH_START - BREAKFAST_END)
+      currentMeal === "breakfast" ? (count === 1 && !isIF ? 24 * 60 - (BREAKFAST_END - BREAKFAST_START) : LUNCH_START - BREAKFAST_END)
       : currentMeal === "lunch" ? DINNER_START - LUNCH_END
-      : currentMeal === "dinner" ? 24 * 60 - DINNER_END + BREAKFAST_START
+      : currentMeal === "dinner" ? (isIF ? 24 * 60 - DINNER_END + LUNCH_START : 24 * 60 - DINNER_END + BREAKFAST_START)
       : 0;
     const nextMealLabel =
       currentMeal === "breakfast" ? "lunch"
       : currentMeal === "lunch" ? "dinner"
-      : currentMeal === "dinner" ? "breakfast"
+      : currentMeal === "dinner" ? (isIF ? "lunch" : "breakfast")
       : null;
 
     return {
@@ -975,28 +986,104 @@ export function UnifiedMenu() {
 
   const mc = mealSettings?.mealCount ?? 3;
   const ms = mealSettings?.meals ?? [];
+  const isIFModel = mealSettings?.mealModel === 'if16_8' || mealSettings?.mealModel === 'if18_6';
 
   // Build meal slot list dynamically from settings.
-  // First meal → breakfast plan data, last → dinner plan data.
+  // IF mode: even though settings has a single "Eating window", the plan
+  // generates lunch + dinner within that window. We split the single window
+  // into two visible slots so both meals are displayed.
+  // Standard mode: first meal → breakfast, last → dinner, middle → lunch.
   // For 3+ meals: the middle meal (floor(count/2)) → lunch plan data.
   // All others → snack info rows (time only, no plan meal data).
-  const lunchIdx = mc >= 3 ? Math.floor(mc / 2) : -1;
-  const rawSlots = ms.length > 0 ? ms : [
-    { name: t("menu.breakfast"), startTime: '06:00', endTime: '08:00' },
-    { name: t("menu.lunch"),     startTime: '12:30', endTime: '13:30' },
-    { name: t("menu.dinner"),    startTime: '17:30', endTime: '18:30' },
-  ];
-  const mealSlots = rawSlots.map((m, i) => {
-    const isFirst = i === 0;
-    const isLast  = i === rawSlots.length - 1;
-    const isLunch = i === lunchIdx && !isFirst && !isLast;
-    const timeStr = `${m.startTime} - ${m.endTime}`;
-    const icon    = isFirst ? '🌅' : isLast ? '🌙' : '☀️';
-    if (isFirst) return { type: 'breakfast' as const, title: m.name, time: timeStr, icon, meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast?.[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed, isSnack: false };
-    if (isLast)  return { type: 'dinner'    as const, title: m.name, time: timeStr, icon, meals: dayMeals?.dinner    || [], selected: selectedDinner,    alternatives: dinnerAlternatives,    primary: dayMeals?.dinner?.[0],    consumed: dinnerConsumed,    canEdit: canEditDinner,    canCheck: status.canCheckDinner,    isPassed: status.dinnerPassed,    isSnack: false };
-    if (isLunch) return { type: 'lunch'     as const, title: m.name, time: timeStr, icon, meals: dayMeals?.lunch     || [], selected: selectedLunch,     alternatives: lunchAlternatives,     primary: dayMeals?.lunch?.[0],     consumed: lunchConsumed,     canEdit: canEditLunch,     canCheck: status.canCheckLunch,     isPassed: status.lunchPassed,     isSnack: false };
-    return { type: `snack_${i}` as any, title: m.name, time: timeStr, icon, meals: [], selected: undefined, alternatives: [], primary: undefined, consumed: false, canEdit: false, canCheck: false, isPassed: false, isSnack: true };
-  });
+  let mealSlots: Array<{
+    type: string;
+    title: string;
+    time: string;
+    icon: string;
+    meals: MealOption[];
+    selected: MealOption | undefined;
+    alternatives: MealOption[];
+    primary: MealOption | undefined;
+    consumed: boolean | undefined;
+    canEdit: boolean;
+    canCheck: boolean;
+    isPassed: boolean;
+    isSnack: boolean;
+  }>;
+
+  if (isIFModel && mc <= 1) {
+    // IF mode: show two slots (lunch + dinner) within the eating window.
+    // Handles both new plans (lunch+dinner) and legacy plans (breakfast+lunch+dinner)
+    // by checking which plan data arrays actually have meals.
+    const window = ms[0] || { name: 'Eating window', startTime: '12:00', endTime: '20:00' };
+    const windowStart = parseTimeToMinutes(window.startTime);
+    const windowEnd = parseTimeToMinutes(window.endTime);
+    const midpoint = windowStart + Math.floor((windowEnd - windowStart) / 2);
+    const midHH = String(Math.floor(midpoint / 60)).padStart(2, '0');
+    const midMM = String(midpoint % 60).padStart(2, '0');
+    const midTime = `${midHH}:${midMM}`;
+
+    // Determine first slot data: prefer lunch (new IF plans), fall back to breakfast (legacy plans)
+    const firstSlotMeals = (dayMeals?.lunch?.length ? dayMeals.lunch : dayMeals?.breakfast) || [];
+    const firstSlotSelected = dayMeals?.lunch?.length ? selectedLunch : selectedBreakfast;
+    const firstSlotAlts = dayMeals?.lunch?.length ? lunchAlternatives : breakfastAlternatives;
+    const firstSlotConsumed = dayMeals?.lunch?.length ? lunchConsumed : breakfastConsumed;
+    const firstSlotCanEdit = dayMeals?.lunch?.length ? canEditLunch : canEditBreakfast;
+    const firstSlotCanCheck = dayMeals?.lunch?.length ? status.canCheckLunch : status.canCheckBreakfast;
+    const firstSlotPassed = dayMeals?.lunch?.length ? status.lunchPassed : status.breakfastPassed;
+    const firstSlotType = dayMeals?.lunch?.length ? 'lunch' : 'breakfast';
+
+    mealSlots = [
+      {
+        type: firstSlotType,
+        title: t("menu.lunch"),
+        time: `${window.startTime} - ${midTime}`,
+        icon: '☀️',
+        meals: firstSlotMeals,
+        selected: firstSlotSelected,
+        alternatives: firstSlotAlts,
+        primary: firstSlotMeals[0],
+        consumed: firstSlotConsumed,
+        canEdit: firstSlotCanEdit,
+        canCheck: firstSlotCanCheck,
+        isPassed: firstSlotPassed,
+        isSnack: false,
+      },
+      {
+        type: 'dinner',
+        title: t("menu.dinner"),
+        time: `${midTime} - ${window.endTime}`,
+        icon: '🌙',
+        meals: dayMeals?.dinner || [],
+        selected: selectedDinner,
+        alternatives: dinnerAlternatives,
+        primary: dayMeals?.dinner?.[0],
+        consumed: dinnerConsumed,
+        canEdit: canEditDinner,
+        canCheck: status.canCheckDinner,
+        isPassed: status.dinnerPassed,
+        isSnack: false,
+      },
+    ];
+  } else {
+    const lunchIdx = mc >= 3 ? Math.floor(mc / 2) : -1;
+    const rawSlots = ms.length > 0 ? ms : [
+      { name: t("menu.breakfast"), startTime: '06:00', endTime: '08:00' },
+      { name: t("menu.lunch"),     startTime: '12:30', endTime: '13:30' },
+      { name: t("menu.dinner"),    startTime: '17:30', endTime: '18:30' },
+    ];
+    mealSlots = rawSlots.map((m, i) => {
+      const isFirst = i === 0;
+      const isLast  = i === rawSlots.length - 1;
+      const isLunch = i === lunchIdx && !isFirst && !isLast;
+      const timeStr = `${m.startTime} - ${m.endTime}`;
+      const icon    = isFirst ? '🌅' : isLast ? '🌙' : '☀️';
+      if (isFirst) return { type: 'breakfast' as const, title: m.name, time: timeStr, icon, meals: dayMeals?.breakfast || [], selected: selectedBreakfast, alternatives: breakfastAlternatives, primary: dayMeals?.breakfast?.[0], consumed: breakfastConsumed, canEdit: canEditBreakfast, canCheck: status.canCheckBreakfast, isPassed: status.breakfastPassed, isSnack: false };
+      if (isLast)  return { type: 'dinner'    as const, title: m.name, time: timeStr, icon, meals: dayMeals?.dinner    || [], selected: selectedDinner,    alternatives: dinnerAlternatives,    primary: dayMeals?.dinner?.[0],    consumed: dinnerConsumed,    canEdit: canEditDinner,    canCheck: status.canCheckDinner,    isPassed: status.dinnerPassed,    isSnack: false };
+      if (isLunch) return { type: 'lunch'     as const, title: m.name, time: timeStr, icon, meals: dayMeals?.lunch     || [], selected: selectedLunch,     alternatives: lunchAlternatives,     primary: dayMeals?.lunch?.[0],     consumed: lunchConsumed,     canEdit: canEditLunch,     canCheck: status.canCheckLunch,     isPassed: status.lunchPassed,     isSnack: false };
+      return { type: `snack_${i}` as any, title: m.name, time: timeStr, icon, meals: [], selected: undefined, alternatives: [], primary: undefined, consumed: false, canEdit: false, canCheck: false, isPassed: false, isSnack: true };
+    });
+  }
 
   const loggedSlotMap = { breakfast: 'after-breakfast' as const, lunch: 'after-lunch' as const, dinner: 'after-dinner' as const };
 
@@ -1154,18 +1241,35 @@ export function UnifiedMenu() {
             </motion.div>
 
             <div className="space-y-3 opacity-40 pointer-events-none">
-              {(mealSettings?.meals?.length ? mealSettings.meals : [
-                { name: t("menu.breakfast"), startTime: '06:00', endTime: '08:00' },
-                { name: t("menu.lunch"),     startTime: '12:30', endTime: '13:30' },
-                { name: t("menu.dinner"),    startTime: '17:30', endTime: '18:30' },
-              ]).map((meal, i, arr) => (
-                <EmptyMealCard
-                  key={i}
-                  title={meal.name}
-                  time={`${meal.startTime} - ${meal.endTime}`}
-                  icon={i === 0 ? '🌅' : i === arr.length - 1 ? '🌙' : '☀️'}
-                />
-              ))}
+              {(() => {
+                const isIFEmpty = mealSettings?.mealModel === 'if16_8' || mealSettings?.mealModel === 'if18_6';
+                if (isIFEmpty && mealSettings?.meals?.length === 1) {
+                  // IF mode: show two placeholder slots within the eating window
+                  const w = mealSettings.meals[0];
+                  const wStart = parseTimeToMinutes(w.startTime);
+                  const wEnd = parseTimeToMinutes(w.endTime);
+                  const mid = wStart + Math.floor((wEnd - wStart) / 2);
+                  const midHH = String(Math.floor(mid / 60)).padStart(2, '0');
+                  const midMM = String(mid % 60).padStart(2, '0');
+                  const midTime = `${midHH}:${midMM}`;
+                  return [
+                    <EmptyMealCard key="lunch" title={t("menu.lunch")} time={`${w.startTime} - ${midTime}`} icon="☀️" />,
+                    <EmptyMealCard key="dinner" title={t("menu.dinner")} time={`${midTime} - ${w.endTime}`} icon="🌙" />,
+                  ];
+                }
+                return (mealSettings?.meals?.length ? mealSettings.meals : [
+                  { name: t("menu.breakfast"), startTime: '06:00', endTime: '08:00' },
+                  { name: t("menu.lunch"),     startTime: '12:30', endTime: '13:30' },
+                  { name: t("menu.dinner"),    startTime: '17:30', endTime: '18:30' },
+                ]).map((meal, i, arr) => (
+                  <EmptyMealCard
+                    key={i}
+                    title={meal.name}
+                    time={`${meal.startTime} - ${meal.endTime}`}
+                    icon={i === 0 ? '🌅' : i === arr.length - 1 ? '🌙' : '☀️'}
+                  />
+                ));
+              })()}
             </div>
 
             <div className="h-4" />

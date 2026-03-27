@@ -430,6 +430,46 @@ const hu = {
   'recipe.loadingDailyMenus': 'Napi menük keresése...',
   'recipe.dailyMenusTitle': 'Napi menük a közeledben',
   'recipe.viewMenu': 'Menü megtekintése',
+
+  // SearchBar
+  'searchBar.placeholder': 'Keresés...',
+  'searchBar.ariaLabel': 'Keresés',
+  'searchBar.clearAriaLabel': 'Keresés törlése',
+
+  // Checkout steps
+  'checkout.stepCart': 'Kosár',
+  'checkout.stepDelivery': 'Szállítás',
+  'checkout.stepTime': 'Időpont',
+  'checkout.stepPayment': 'Fizetés',
+  'checkout.stepDone': 'Kész',
+  'checkout.defaultStore': 'Bolt',
+  'checkout.defaultCity': 'Marosvásárhely',
+
+  // MealIntervals
+  'mealIntervals.title': 'Étkezési intervallumok',
+  'mealIntervals.subtitle': 'Állítsd be, mikor szeretnél enni a nap folyamán.',
+  'mealIntervals.countLabel': 'Napi étkezések száma',
+  'mealIntervals.saving': 'Mentés...',
+  'mealIntervals.save': '✓ Mentés',
+  'mealIntervals.validationTime': 'Kérlek add meg az összes étkezés időpontját (HH:MM).',
+  'mealIntervals.omad': 'OMAD (1 étkezés)',
+  'mealIntervals.periodic': 'Időszakos (2 étkezés)',
+  'mealIntervals.classic': 'Klasszikus (3 étkezés)',
+  'mealIntervals.active': 'Aktív napok (4 étkezés)',
+  'mealIntervals.sport': 'Sport napok (5 étkezés)',
+
+  // Calendar
+  'calendar.today': 'Ma',
+
+  // Defaults / fallbacks
+  'default.user': 'Felhasználó',
+  'default.unknownError': 'Ismeretlen hiba',
+  'default.processingError': 'Feldolgozási hiba: {msg}',
+  'default.measurementNotes': 'PDF/szövegből kinyert mérések',
+  'default.goalWeightLoss': 'Fogyás',
+  'default.noAllergies': 'Nincs',
+  'default.noDietaryPref': 'Nincs megkötés',
+  'default.activityMedium': 'Közepes',
 } as const;
 
 export default hu;

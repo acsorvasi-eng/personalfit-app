@@ -227,7 +227,7 @@ async function populateUserProfile(extracted: AIParsedUserProfile): Promise<stri
 // ═══════════════════════════════════════════════════════════════
 
 export function useDataUpload() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [state, setState] = useState<UploadState>({
     step: 'idle',
     progress: 0,
@@ -377,11 +377,11 @@ export function useDataUpload() {
       } catch (extractionError) {
         // If extraction completely fails, show error — NO demo data fallback
         console.warn('[Upload] File extraction failed:', extractionError);
-        const msg = extractionError instanceof Error ? extractionError.message : 'Ismeretlen hiba';
+        const msg = extractionError instanceof Error ? extractionError.message : t('default.unknownError');
         setState(prev => ({
           ...prev,
           step: 'error',
-          error: `Feldolgozási hiba: ${msg}`,
+          error: t('default.processingError').replace('{msg}', msg),
         }));
         return;
       }
@@ -582,7 +582,7 @@ export function useDataUpload() {
           thigh: m.thigh,
           neck: m.neck,
           source: 'user_upload',
-          notes: m.notes || 'PDF/szövegből kinyert mérések',
+          notes: m.notes || t('default.measurementNotes'),
         });
         measurementsRecorded = true;
       } else if (parsed.userProfile.weight) {
@@ -1043,11 +1043,11 @@ export function useDataUpload() {
         }
       } catch (extractionError) {
         console.warn('[Upload/FoodsOnly] File extraction failed:', extractionError);
-        const msg = extractionError instanceof Error ? extractionError.message : 'Ismeretlen hiba';
+        const msg = extractionError instanceof Error ? extractionError.message : t('default.unknownError');
         setState(prev => ({
           ...prev,
           step: 'error',
-          error: `Feldolgozási hiba: ${msg}`,
+          error: t('default.processingError').replace('{msg}', msg),
         }));
         return;
       }

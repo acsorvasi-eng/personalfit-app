@@ -357,6 +357,46 @@ const en: LocalePartial = {
   'recipe.loadingDailyMenus': 'Searching daily menus...',
   'recipe.dailyMenusTitle': 'Daily menus near you',
   'recipe.viewMenu': 'View menu',
+
+  // SearchBar
+  'searchBar.placeholder': 'Search...',
+  'searchBar.ariaLabel': 'Search',
+  'searchBar.clearAriaLabel': 'Clear search',
+
+  // Checkout steps
+  'checkout.stepCart': 'Cart',
+  'checkout.stepDelivery': 'Delivery',
+  'checkout.stepTime': 'Time',
+  'checkout.stepPayment': 'Payment',
+  'checkout.stepDone': 'Done',
+  'checkout.defaultStore': 'Store',
+  'checkout.defaultCity': 'Târgu Mureș',
+
+  // MealIntervals
+  'mealIntervals.title': 'Meal intervals',
+  'mealIntervals.subtitle': 'Set when you want to eat during the day.',
+  'mealIntervals.countLabel': 'Number of daily meals',
+  'mealIntervals.saving': 'Saving...',
+  'mealIntervals.save': '✓ Save',
+  'mealIntervals.validationTime': 'Please enter all meal times (HH:MM).',
+  'mealIntervals.omad': 'OMAD (1 meal)',
+  'mealIntervals.periodic': 'Periodic (2 meals)',
+  'mealIntervals.classic': 'Classic (3 meals)',
+  'mealIntervals.active': 'Active days (4 meals)',
+  'mealIntervals.sport': 'Sport days (5 meals)',
+
+  // Calendar
+  'calendar.today': 'Today',
+
+  // Defaults / fallbacks
+  'default.user': 'User',
+  'default.unknownError': 'Unknown error',
+  'default.processingError': 'Processing error: {msg}',
+  'default.measurementNotes': 'Measurements extracted from PDF/text',
+  'default.goalWeightLoss': 'Weight loss',
+  'default.noAllergies': 'None',
+  'default.noDietaryPref': 'No restrictions',
+  'default.activityMedium': 'Medium',
 };
 
 export default en;

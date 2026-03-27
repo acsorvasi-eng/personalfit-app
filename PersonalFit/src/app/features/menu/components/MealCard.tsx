@@ -10,12 +10,14 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
-import { Check, Clock, X } from 'lucide-react';
+import { Check, Clock, X, ExternalLink } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { hapticFeedback } from '@/lib/haptics';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { translateFoodName } from '../../../utils/foodTranslations';
 import { FoodImage } from '../../../components/FoodImage';
+import { getDeliveryLinks } from '../../../services/DailyMenuMatcherService';
+import { useGeolocation } from '../../../hooks/useGeolocation';
 import type { MealOption } from '../../../hooks/usePlanData';
 import type { StoredUserProfile } from '../../../backend/services/UserProfileService';
 
@@ -223,7 +225,9 @@ function MealDetailOverlay({
   onRecipeOpen: (tab: 'home' | 'restaurant') => void;
 }) {
   const { t, language } = useLanguage();
-  const [recipeSheet, setRecipeSheet] = useState<'home' | 'restaurant' | null>(null);
+  const [recipeSheet, setRecipeSheet] = useState<'home' | null>(null);
+  const [orderSheet, setOrderSheet] = useState(false);
+  const geo = useGeolocation();
   const totalKcal = parseInt(meal.calories?.replace(/[^0-9]/g, '') || '0') || 0;
   const details = meal.ingredientDetails as Array<{ name: string; quantity: string; calories: number; protein: number; carbs: number; fat: number }> | undefined;
   const mealProtein = meal.totalProtein ?? Math.round((totalKcal * 0.30) / 4);
@@ -231,10 +235,25 @@ function MealDetailOverlay({
   const mealFat = meal.totalFat ?? Math.round((totalKcal * 0.30) / 9);
   const canShowRecipe = mealType === 'lunch' || mealType === 'dinner' || mealType === 'breakfast';
 
+  // Delivery links with meal name as search query
+  const deliveryLinks = getDeliveryLinks(
+    translateFoodName(meal.name, language),
+    geo.city || '',
+    geo.country || '',
+  );
+
+  const openDeliveryApp = (url: string) => {
+    // Capacitor native: opens in external browser/app if installed
+    window.open(url, '_blank');
+  };
+
   // Bottom sheet drag
   const sheetY = useMotionValue(0);
   const handleSheetDragEnd = useCallback((_: any, info: PanInfo) => {
-    if (info.offset.y > 100 || info.velocity.y > 400) setRecipeSheet(null);
+    if (info.offset.y > 100 || info.velocity.y > 400) {
+      setRecipeSheet(null);
+      setOrderSheet(false);
+    }
   }, []);
 
   return (
@@ -321,7 +340,7 @@ function MealDetailOverlay({
             🍳 {t('menu.recipeBtn')}
           </button>
           <button
-            onClick={() => { onClose(); setTimeout(() => onRecipeOpen('restaurant'), 150); }}
+            onClick={() => { hapticFeedback('light'); setOrderSheet(true); }}
             className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
           >
             🛵 {t('menu.orderBtn')}
@@ -331,11 +350,10 @@ function MealDetailOverlay({
 
       {!canShowRecipe && <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />}
 
-      {/* ── Recipe/Order bottom sheet (slides up INSIDE detail page) ── */}
+      {/* ── Recipe bottom sheet (slides up INSIDE detail page) ── */}
       <AnimatePresence>
         {recipeSheet && (
           <>
-            {/* Backdrop — tap to dismiss */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.4 }}
@@ -344,8 +362,6 @@ function MealDetailOverlay({
               style={{ zIndex: 10000 }}
               onClick={() => setRecipeSheet(null)}
             />
-
-            {/* Sheet */}
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -359,36 +375,94 @@ function MealDetailOverlay({
               className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl"
             >
               <div className="max-h-[70vh] overflow-y-auto">
-                {/* Drag handle */}
                 <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white rounded-t-3xl z-10">
                   <div className="w-10 h-1 rounded-full bg-gray-300" />
                 </div>
-
                 <div className="px-5 pb-4">
-                  <h3 className="font-bold text-lg text-foreground mb-1">
-                    {recipeSheet === 'home' ? '🍳 ' + t('menu.recipeBtn') : '🛵 ' + t('menu.orderBtn')}
-                  </h3>
+                  <h3 className="font-bold text-lg text-foreground mb-1">🍳 {t('menu.recipeBtn')}</h3>
                   <p className="text-sm text-gray-500 mb-4">{meal.name}</p>
-
-                  {/* "Open full recipe/restaurant page" button */}
                   <button
                     onClick={() => {
-                      const tab = recipeSheet;
                       setRecipeSheet(null);
                       onClose();
-                      setTimeout(() => onRecipeOpen(tab!), 150);
+                      setTimeout(() => onRecipeOpen('home'), 150);
                     }}
                     className="w-full h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
                   >
-                    {recipeSheet === 'home'
-                      ? '🍳 ' + (t('recipe.showFullRecipe') || 'Teljes recept megnyitása')
-                      : '🛵 ' + (t('recipe.showRestaurants') || 'Éttermek és napi menük')
-                    }
+                    🍳 {t('recipe.showFullRecipe') || 'Teljes recept megnyitása'}
                   </button>
                 </div>
-
                 <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Order bottom sheet — direct delivery app buttons ── */}
+      <AnimatePresence>
+        {orderSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black"
+              style={{ zIndex: 10000 }}
+              onClick={() => setOrderSheet(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleSheetDragEnd}
+              style={{ y: sheetY, zIndex: 10001 }}
+              className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl"
+            >
+              <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white rounded-t-3xl z-10">
+                <div className="w-10 h-1 rounded-full bg-gray-300" />
+              </div>
+              <div className="px-5 pb-4">
+                <h3 className="font-bold text-lg text-foreground mb-1">🛵 {t('menu.orderBtn')}</h3>
+                <p className="text-sm text-gray-500 mb-4">{translateFoodName(meal.name, language)}</p>
+
+                <div className="space-y-3">
+                  {deliveryLinks.map((link) => (
+                    <button
+                      key={link.name}
+                      onClick={() => {
+                        hapticFeedback('light');
+                        openDeliveryApp(link.url);
+                      }}
+                      className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 text-base font-bold transition-colors active:opacity-80"
+                      style={{
+                        backgroundColor: `${link.color}18`,
+                        color: link.color,
+                        border: `1.5px solid ${link.color}40`,
+                      }}
+                    >
+                      {link.name}
+                      <ExternalLink className="w-4 h-4 opacity-70" />
+                    </button>
+                  ))}
+                </div>
+
+                {geo.loading && (
+                  <p className="text-xs text-gray-400 text-center mt-3">
+                    {t('recipe.searchingRestaurants') || 'Helymeghatározás...'}
+                  </p>
+                )}
+                {geo.city && (
+                  <p className="text-xs text-gray-400 text-center mt-3">
+                    📍 {geo.city}
+                  </p>
+                )}
+              </div>
+              <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
             </motion.div>
           </>
         )}
