@@ -20,6 +20,7 @@ import { GenerateMealPlanSheet } from "../../nutrition/components/GenerateMealPl
 import type { WorkoutScheduleMap } from "../../workout/components/WorkoutCalendar";
 import { getMealSettings, getUserProfile, type MealSettings, type StoredUserProfile } from "../../../backend/services/UserProfileService";
 import { RecipeOverlay } from './RecipeOverlay';
+import { MealCard } from './MealCard';
 import { getSetting, setSetting } from "../../../backend/services/SettingsService";
 import { SleepService } from "../../../backend/services/SleepService";
 import { WaterService } from "../../../backend/services/WaterService";
@@ -1628,28 +1629,20 @@ export function UnifiedMenu() {
                     transition={{ delay: 0.05 * slotIdx, duration: 0.3 }}
                   >
                     <div className="relative">
-                      <MealCardWithAlternatives
-                        title={slot.title} time={slot.time} icon={slot.icon}
-                        meals={slot.meals} selectedMeal={slot.selected} alternatives={slot.alternatives}
-                        primaryMeal={slot.primary} mealType={slot.type} dayKey={dayKey}
-                        onSelect={(mealId) => handleMealSelect(mealId, slot.type, dayKey)}
-                        checked={slot.selected ? checkedMeals.has(slot.selected.id) : false}
-                        onCheck={() => slot.selected && handleMealCheck(slot.selected.id, selectedDate, slot.type)}
-                        isCurrent={status.currentMeal === slot.type}
-                        isFocus={isFocusMeal}
-                        isPassed={slot.isPassed}
-                        canCheck={slot.canCheck}
+                      <MealCardV5Wrapper
+                        slot={slot}
+                        dayKey={dayKey}
+                        isFocusMeal={isFocusMeal}
                         isToday={status.isToday}
-                        canEdit={slot.canEdit && !checkedMeals.has(slot.selected?.id || '')}
-                        isTrainingDay={isTrainingDay}
-                        dayLabel={dayLabel}
-                        calorieTarget={calorieTarget}
-                        mealRef={isFocusMeal ? currentMealRef : (status.isToday && status.currentMeal === slot.type ? currentMealRef : undefined)}
+                        isPassed={slot.isPassed}
+                        checkedMeals={checkedMeals}
+                        onMealSelect={(mealId) => handleMealSelect(mealId, slot.type, dayKey)}
+                        onMealCheck={() => slot.selected && handleMealCheck(slot.selected.id, selectedDate, slot.type)}
+                        onLogMeal={() => navigate('/log-meal')}
                         userProfile={userProfile}
                         weekMeals={weekMeals}
                         todayMeals={todayMeals}
                       />
-                      {/* Water: shown ONLY as floating during meal time; never on dinner card to avoid duplicate */}
                     </div>
                     {status.isToday && getLoggedMealsForSlot(loggedSlotMap[slot.type as keyof typeof loggedSlotMap]).map(meal => (
                       <LoggedMealAsCard key={meal.id} meal={meal} onRemove={() => removeLoggedMeal(meal.id)} />
@@ -2034,8 +2027,66 @@ function ConsumedMealCompact({ title, icon, time }: {
 }
 
 // ══════════════════════════════════════════════════════════════
-// MealCardWithAlternatives — v4 (Inline expand with ingredient details)
-// Tap → expand inline (food items + macros). Swap button → full-screen.
+// ══════════════════════════════════════════════════════════════
+// MealCardV5Wrapper — bridges new MealCard to UnifiedMenu's data/callbacks
+// ══════════════════════════════════════════════════════════════
+
+function MealCardV5Wrapper({ slot, dayKey, isFocusMeal, isToday, isPassed, checkedMeals, onMealSelect, onMealCheck, onLogMeal, userProfile, weekMeals, todayMeals }: {
+  slot: any;
+  dayKey: string;
+  isFocusMeal: boolean;
+  isToday: boolean;
+  isPassed: boolean;
+  checkedMeals: Set<string>;
+  onMealSelect: (mealId: string) => void;
+  onMealCheck: () => void;
+  onLogMeal: () => void;
+  userProfile: StoredUserProfile | null;
+  weekMeals: MealOption[];
+  todayMeals: MealOption[];
+}) {
+  const [showRecipe, setShowRecipe] = useState(false);
+  const [recipeTab, setRecipeTab] = useState<'home' | 'restaurant'>('home');
+
+  const checked = slot.selected ? checkedMeals.has(slot.selected.id) : false;
+
+  return (
+    <>
+      <MealCard
+        title={slot.title}
+        time={slot.time}
+        icon={slot.icon}
+        selectedMeal={slot.selected}
+        mealType={slot.type}
+        checked={checked}
+        onCheck={onMealCheck}
+        isFocus={isFocusMeal}
+        isPassed={isPassed}
+        isToday={isToday}
+        onSwapRequest={onLogMeal}
+        onRecipeOpen={(tab) => { setRecipeTab(tab); setShowRecipe(true); }}
+        userProfile={userProfile}
+      />
+
+      {/* Recipe overlay (opened from MealCard detail page) */}
+      <AnimatePresence>
+        {showRecipe && slot.selected && (
+          <RecipeOverlay
+            meal={slot.selected}
+            userProfile={userProfile}
+            weekMeals={weekMeals}
+            todayMeals={todayMeals}
+            onClose={() => setShowRecipe(false)}
+            initialTab={recipeTab}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// MealCardWithAlternatives — v4 (LEGACY — kept for reference)
 // ══════════════════════════════════════════════════════════════
 
 interface MealCardWithAlternativesProps {
