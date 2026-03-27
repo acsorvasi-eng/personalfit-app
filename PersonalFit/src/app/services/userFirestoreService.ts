@@ -302,7 +302,6 @@ export async function syncPlanToCloud(uid: string, planData: any): Promise<void>
       ...planData,
       syncedAt: new Date().toISOString(),
     });
-    console.log('[userFirestore] Plan synced to cloud');
   } catch (err) {
     console.warn('[userFirestore] syncPlanToCloud failed:', err);
   }

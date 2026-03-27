@@ -72,7 +72,7 @@ const HU_SOURCES: DailyMenuSource[] = [
   { id: 'hu_siofok_mit',       country: 'HU', city: 'siofok',         cityLocal: 'Siófok',         lat: 46.9048, lng: 18.0498, platform: 'mitegyek', url: 'https://www.mitegyek.hu/napi-menu/siofok' },
 
   // napimenu.eu — Budapest
-  { id: 'hu_budapest_nme',     country: 'HU', city: 'budapest',       cityLocal: 'Budapest',       lat: 47.4979, lng: 19.0402, platform: 'napimenu', url: 'http://www.napimenu.eu/' },
+  { id: 'hu_budapest_nme',     country: 'HU', city: 'budapest',       cityLocal: 'Budapest',       lat: 47.4979, lng: 19.0402, platform: 'napimenu', url: 'https://www.napimenu.eu/' },
 
   // hovamenjek.hu — Budapest
   { id: 'hu_budapest_hmj',     country: 'HU', city: 'budapest',       cityLocal: 'Budapest',       lat: 47.4979, lng: 19.0402, platform: 'hovamenjek', url: 'https://hovamenjek.hu/budapest/napi-menu' },

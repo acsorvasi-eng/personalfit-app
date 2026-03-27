@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import SharedPremiumLoader, { MEAL_GEN_PHASES, getPhaseText } from '../PremiumLoader';
 import {
@@ -851,9 +851,7 @@ export function ProfileSetupWizard() {
           fat_per_100g: f.fat_per_100g,
           source: 'user_uploaded' as any,
         }));
-      console.log('[ProfileSetup] Saving', foodsToSave.length, 'foods to catalog');
       await createFoodsBatch(foodsToSave, { upsertSource: true });
-      console.log('[ProfileSetup] Foods saved OK');
 
       // 3. Generate meal plan (non-blocking — failure is OK)
       try {
@@ -892,12 +890,11 @@ export function ProfileSetupWizard() {
           }
         }
 
-        console.log('[ProfileSetup] Calling /api/generate-meal-plan with', ingredients.length, 'ingredients, target:', dailyTarget, 'mealModel:', effectiveMealModel ?? '3meals(default)');
         const abortCtrl = new AbortController();
         const timeoutId = setTimeout(() => abortCtrl.abort(), 90_000); // 90s max
         let resp: Response;
         try {
-          resp = await fetch(`${apiBase}/api/generate-meal-plan`, {
+          resp = await authFetch(`${apiBase}/api/generate-meal-plan`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: abortCtrl.signal,
@@ -916,12 +913,9 @@ export function ProfileSetupWizard() {
           clearTimeout(timeoutId);
         }
 
-        console.log('[ProfileSetup] API response status:', resp.status);
         if (resp.ok) {
           const data = await resp.json();
-          console.log('[ProfileSetup] API response keys:', Object.keys(data));
           if (data.nutritionPlan) {
-            console.log('[ProfileSetup] Importing nutrition plan...');
 
             // Chef review with 15s timeout — skip if slow
             let improvedPlan = data.nutritionPlan;
@@ -945,7 +939,6 @@ export function ProfileSetupWizard() {
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
             const plan = await importFromAIParse(improvedPlan as any, label);
             await activatePlan(plan.id);
-            console.log('[ProfileSetup] Nutrition plan imported and activated OK, id:', plan.id);
 
             // Fire-and-forget cloud sync for cross-device access
             if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {

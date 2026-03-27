@@ -215,7 +215,6 @@ function sanitizeExtractedText(raw: string): string {
 
   text = cleanLines.join('\n');
 
-  console.log(`[AIParser v4] Sanitized text: ${raw.length} → ${text.length} chars (removed ${raw.length - text.length} garbage chars)`);
   return text;
 }
 
@@ -415,10 +414,7 @@ export async function extractTextFromPDF(file: File): Promise<string> {
 
     // If we got meaningful text, sanitize and return
     if (fullText.trim().length >= 10) {
-      console.log(`[AIParser] PDF text extracted: ${fullText.trim().length} chars from ${pdf.numPages} pages`);
-      const sanitized = sanitizeExtractedText(fullText);
-      console.log(`[AIParser] First 500 chars (sanitized):\n${sanitized.substring(0, 500)}`);
-      return sanitized;
+      return sanitizeExtractedText(fullText);
     }
 
     // pdfjs returned empty/near-empty text — likely scanned/image PDF
@@ -473,7 +469,6 @@ export async function extractTextFromPDF(file: File): Promise<string> {
 
     const fullText = pages.join('\n\n');
     if (fullText.trim().length >= 10) {
-      console.log(`[AIParser] PDF text extracted (CDN worker): ${fullText.trim().length} chars`);
       return sanitizeExtractedText(fullText);
     }
   } catch (err2) {
@@ -486,7 +481,6 @@ export async function extractTextFromPDF(file: File): Promise<string> {
     // Filter out binary garbage — keep only printable chars
     const cleaned = text.replace(/[^\x20-\x7E\xC0-\xFF\n\r\tÁáÉéÍíÓóÖöŐőÚúÜüŰűĂăÂâÎîȘșȚț]/g, ' ');
     if (cleaned.replace(/\s/g, '').length > 50) {
-      console.log(`[AIParser] Raw text fallback: ${cleaned.replace(/\s/g, '').length} printable chars`);
       return sanitizeExtractedText(cleaned);
     }
   } catch { /* ignore */ }
@@ -1396,8 +1390,6 @@ function intelligentPreprocess(rawText: string): string[] {
     '$1\n$2'
   );
 
-  console.log(`[AIParser v3] Pre-processed text (first 500 chars):\n${text.substring(0, 500)}`);
-
   // Split into lines, heal broken fragments
   const rawLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
   return healBrokenLines(rawLines);
@@ -1622,7 +1614,6 @@ export async function parseNutritionPlanText(
       }
     }
     if (flatIngredients.length > 0) {
-      console.log(`[AIParser v3] Fallback: extracted ${flatIngredients.length} food items as flat list (no week/day/meal structure).`);
       warnings.splice(warnings.findIndex(w => w.startsWith('PARSE_ERROR:')), 1);
       warnings.push('Strukturált hét/nap/étkezés nem található; a dokumentumból étellista került importálásra egy nap alatt.');
       finalPlan = {
@@ -1763,11 +1754,6 @@ export function toStructuredMealPlanJSON(
     };
   }
 
-  console.log(
-    `[AIParser v4] Clean structured output: ${totalFoodsInOutput} food items ` +
-    `(${totalWithCalories} with calorie data, ${totalFoodsInOutput - totalWithCalories} unknown) ` +
-    `across ${Object.keys(result).length} weeks`
-  );
   return { data: result, error: null };
 }
 

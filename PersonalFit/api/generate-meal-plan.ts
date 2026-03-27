@@ -1,4 +1,8 @@
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
+import { checkAndIncrementUsage } from './_shared/limits';
+import { sanitizeUserInput, sanitizeArray } from './_shared/sanitize';
+import { validateBodySize } from './_shared/validate';
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
@@ -148,7 +152,27 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Auth check
+  let authUser;
   try {
+    authUser = await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
+  // Rate limiting (expensive endpoint)
+  try {
+    await checkAndIncrementUsage(authUser.uid, authUser.isAdmin);
+  } catch (err: any) {
+    if (err?.status === 429) {
+      return res.status(429).json({ error: err.message, resetsAt: err.resetsAt });
+    }
+    console.error('[generate-meal-plan] Rate limit check failed:', err);
+  }
+
+  try {
+    validateBodySize(req.body);
+
     const {
       ingredients = [],
       dailyCalorieTarget = 2000,
@@ -169,18 +193,16 @@ export default async function handler(req: any, res: any) {
       goal?: string;
     } = req.body || {};
 
-    // TODO: re-enable calorie validation before production
-    // const valid = (ingredients as Ingredient[]).filter(i => (i.calories_per_100g ?? 0) > 0);
-    // if (valid.length === 0) {
-    //   return res.status(400).json({ error: 'Nincs érvényes kalória-adattal rendelkező alapanyag. Add hozzá az ételeket az "Add food" dialógon keresztül.' });
-    // }
-    const valid = (ingredients as Ingredient[]).length > 0 ? (ingredients as Ingredient[]) : [{ name: 'csirke', calories_per_100g: 165, protein_per_100g: 31, carbs_per_100g: 0, fat_per_100g: 3.6 }, { name: 'rizs', calories_per_100g: 130, protein_per_100g: 2.7, carbs_per_100g: 28, fat_per_100g: 0.3 }, { name: 'tojás', calories_per_100g: 155, protein_per_100g: 13, carbs_per_100g: 1.1, fat_per_100g: 11 }];
+    // Re-enabled calorie validation
+    const valid = (ingredients as Ingredient[]).filter(i => (i.calories_per_100g ?? 0) > 0);
+    if (valid.length === 0) {
+      return res.status(400).json({ error: 'No ingredients with valid calorie data provided.' });
+    }
 
-    // TODO: re-enable 40-ingredient cap before production
-    // const selected = valid.length > 40
-    //   ? valid.sort(() => Math.random() - 0.5).slice(0, 40)
-    //   : valid;
-    const selected = valid;
+    // Re-enabled 40-ingredient cap
+    const selected = valid.length > 40
+      ? valid.sort(() => Math.random() - 0.5).slice(0, 40)
+      : valid;
 
     const clampedDays = Math.min(Math.max(days, 1), 7);
     const lang = ['hu', 'ro', 'en'].includes(language) ? language : 'hu';
@@ -252,8 +274,6 @@ SÉMA:
 
 Generáld le mind a ${clampedDays} napot:`;
 
-    console.log(`[generate-meal-plan] Starting: lang=${lang} days=${clampedDays} ingredients=${selected.length} target=${dailyCalorieTarget}kcal model=${effectiveModel}`);
-
     let parsed: { days?: any[] } | null = null;
     let lastErr = '';
 
@@ -265,7 +285,6 @@ Generáld le mind a ${clampedDays} napot:`;
           messages: [{ role: 'user', content: prompt }],
         });
         const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
-        console.log(`[generate-meal-plan] Attempt ${attempt} raw (first 200):`, raw.slice(0, 200));
         parsed = extractJSON(raw) as { days?: any[] } | null;
         if (parsed?.days?.length) break;
         lastErr = `No days in LLM response (attempt ${attempt})`;
@@ -326,8 +345,6 @@ Generáld le mind a ${clampedDays} napot:`;
       / baseWeek.length
     );
 
-    console.log(`[generate-meal-plan] Done: ${TOTAL_DAYS} days (${baseWeek.length}-day rotation), avg ${avgCal} kcal/day, model=${effectiveModel}`);
-
     return res.status(200).json({
       nutritionPlan: {
         days: allDays,
@@ -344,8 +361,10 @@ Generáld le mind a ${clampedDays} napot:`;
   } catch (err: any) {
     const msg = err?.message ?? 'Internal server error';
     console.error('[generate-meal-plan] Fatal error:', msg);
-    // Surface billing errors with a specific flag so the frontend can show a friendly message
     const isBilling = msg.includes('credit balance') || msg.includes('billing') || msg.includes('Plans & Billing') || msg.includes('billing_error') || err?.status === 400;
-    return res.status(500).json({ error: msg, billing: isBilling });
+    return res.status(err?.status || 500).json({
+      error: isBilling ? 'Service temporarily unavailable due to billing. Please try again later.' : 'An error occurred generating your meal plan.',
+      billing: isBilling,
+    });
   }
 }

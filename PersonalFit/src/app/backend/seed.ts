@@ -87,7 +87,6 @@ export async function seedFoods(): Promise<{ seeded: number; skipped: number }> 
     seeded++;
   }
 
-  console.log(`[Seed] Foods: ${seeded} seeded, ${skipped} skipped`);
   return { seeded, skipped };
 }
 
@@ -99,11 +98,8 @@ export async function seedDatabase(): Promise<void> {
   const db = await getDB();
   const existingFoods = await db.count('foods');
   if (existingFoods > 0) {
-    console.log(`[Seed] Skipping database seed; foods already present: ${existingFoods}`);
     return;
   }
 
-  console.log('[Seed] Starting database seed...');
   const foodResult = await seedFoods();
-  console.log(`[Seed] Complete. Foods: ${foodResult.seeded} new, ${foodResult.skipped} existing`);
 }

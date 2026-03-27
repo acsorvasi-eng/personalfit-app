@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import { findNearestSources, type DailyMenuSource } from '../data/dailyMenuSources';
 
 // ─────────────────────────────────────────────────────────────────
@@ -142,7 +142,7 @@ export function useDailyMenus(lat?: number, lng?: number) {
 // ─────────────────────────────────────────────────────────────────
 
 async function fetchDailyMenus(source: DailyMenuSource & { distanceKm: number }): Promise<DailyMenuRestaurant[]> {
-  const resp = await fetch(`${apiBase}/api/chef`, {
+  const resp = await authFetch(`${apiBase}/api/chef`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

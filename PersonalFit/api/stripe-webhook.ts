@@ -15,7 +15,7 @@
  *   customer.subscription.updated (status: canceled/unpaid) → downgrade to 'free'
  */
 
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
 import Stripe from 'stripe';
 import * as admin from 'firebase-admin';
 
@@ -40,7 +40,6 @@ async function setUserPlan(userId: string, plan: 'free' | 'pro'): Promise<void> 
     plan,
     updatedAt: new Date().toISOString(),
   });
-  console.log(`[stripe-webhook] User ${userId} plan → ${plan}`);
 }
 
 // ─── Handler ──────────────────────────────────────────────────────
@@ -66,7 +65,7 @@ export default async function handler(req: any, res: any) {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err: any) {
     console.error('[stripe-webhook] Signature verification failed:', err.message);
-    return res.status(400).json({ error: `Webhook signature invalid: ${err.message}` });
+    return res.status(400).json({ error: 'Webhook signature verification failed' });
   }
 
   // ── Handle events ─────────────────────────────────────────────
@@ -103,7 +102,7 @@ export default async function handler(req: any, res: any) {
     }
   } catch (err: any) {
     console.error('[stripe-webhook] Handler error:', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Internal webhook processing error' });
   }
 
   return res.status(200).json({ received: true });

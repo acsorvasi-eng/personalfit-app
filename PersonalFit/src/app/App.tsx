@@ -135,7 +135,6 @@ export default function App() {
   useEffect(() => {
     cleanupCorruptedAIFoods().then((removed) => {
       if (removed > 0) {
-        console.log(`[App] Cleanup: ${removed} korrupt étel törölve az adatbázisból`);
       }
     }).catch((err) => {
       console.warn("[App] Food cleanup failed:", err);

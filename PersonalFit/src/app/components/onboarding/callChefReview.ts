@@ -5,7 +5,7 @@
  * Returns the improved plan if the review succeeds, or the original plan if anything fails.
  * NEVER throws — designed to be a silent improvement layer.
  */
-import { apiBase } from '../../../lib/api';
+import { apiBase, authFetch } from '../../../lib/api';
 import { logChefChange } from '../../backend/services/ChefService';
 import { getRegionContext } from '../../backend/services/ChefContextService';
 import { getCurrentSeason } from '../../backend/services/ChefService';
@@ -33,7 +33,7 @@ export async function callChefReview(params: CallChefReviewParams): Promise<Reco
     // GPS → region (optional; null if denied — chef still runs without it)
     const regionCtx = await getRegionContext(language).catch(() => null);
 
-    const resp = await fetch(`${apiBase}/api/chef-review`, {
+    const resp = await authFetch(`${apiBase}/api/chef-review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -72,7 +72,6 @@ export async function callChefReview(params: CallChefReviewParams): Promise<Reco
       }).catch(() => {}); // don't block on IDB errors
     }
 
-    console.log(`[callChefReview] Applied ${changes.length} improvements`);
     onDone?.();
     return improvedPlan;
 

@@ -1,4 +1,7 @@
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
+import { sanitizeArray } from './_shared/sanitize';
+import { validateBodySize } from './_shared/validate';
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
@@ -44,21 +47,29 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Auth check
+  try {
+    await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
+  try { validateBodySize(req.body); } catch (err: any) {
+    return res.status(err?.status || 413).json({ error: err?.message || 'Request too large' });
+  }
+
   const { foods } = req.body || {};
   if (!Array.isArray(foods) || foods.length === 0) {
     return res.status(400).json({ error: 'Missing or invalid "foods" array' });
   }
 
-  const cleanedFoods = foods
-    .map((f: any) => String(f || '').trim())
-    .filter((f: string) => f.length > 0);
+  const cleanedFoods = sanitizeArray(foods, 100, 200);
 
   if (cleanedFoods.length === 0) {
     return res.status(400).json({ error: 'No valid food names provided' });
   }
 
   try {
-    console.log('[lookup-foods] Incoming foods:', cleanedFoods);
     const listBlock = cleanedFoods.map(f => `- ${f}`).join('\n');
 
     const prompt = `
@@ -112,8 +123,6 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
     cleaned = cleaned.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
     cleaned = cleaned.replace(/^```\s*/i, '').replace(/```$/i, '').trim();
 
-    console.log('[lookup-foods] Raw LLM response (first 200 chars):', rawText.slice(0, 200));
-
     let parsed: any = null;
 
     const tryParse = (candidate: string): any | null => {
@@ -143,8 +152,6 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
       }
     }
 
-    console.log('[lookup-foods] Cleaned JSON candidate (first 200 chars):', cleaned.slice(0, 200));
-
     if (!parsed) {
       console.error('[lookup-foods] Failed to parse JSON from Claude after multiple cleaning attempts');
       return res
@@ -154,7 +161,7 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
 
     if (!Array.isArray(parsed)) {
       console.error('[lookup-foods] Parsed payload is not an array:', parsed);
-      return res.status(500).json({ error: 'Invalid payload shape', raw: parsed });
+      return res.status(500).json({ error: 'Invalid payload shape' });
     }
 
     const foodsOut = parsed
@@ -182,18 +189,16 @@ Respond ONLY with a raw JSON array, no backticks, no markdown, no explanations.`
 
     if (foodsOut.length === 0) {
       console.error('[lookup-foods] Empty foodsOut after mapping:', parsed);
-      return res.status(500).json({ error: 'No valid foods returned from LLM', raw: parsed });
+      return res.status(500).json({ error: 'No valid foods returned from LLM' });
     }
-
-    console.log('[lookup-foods] Final foodsOut:', foodsOut);
 
     // Match parse-document.ts pattern: wrap result array
     return res.status(200).json({ result: foodsOut });
   } catch (error: any) {
-    console.error('[lookup-foods] Error:', error);
+    console.error('[lookup-foods] Error:', error?.message || error);
     return res
       .status(500)
-      .json({ error: error?.message || 'Failed to look up foods with LLM' });
+      .json({ error: 'An error occurred looking up foods.' });
   }
 }
 

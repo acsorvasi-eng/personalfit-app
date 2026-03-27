@@ -1,163 +1,110 @@
-# PersonalFit — Architecture Guide
-> **Cursor kontextus fájl.** Olvasd be minden session elején: `@ARCHITECTURE.md`
+# nura — Architecture Guide
+> **Cursor kontextus fajl.** Olvasd be minden session elejen: `@ARCHITECTURE.md`
 
 ---
 
-## Projekt vízió
+## Projekt vizio
 
-Offline-first fitness app iOS + Android platformra. Magyar és román piac.  
-- **€5/hó** előfizetés (Apple/Google IAP)  
-- **Nincs szerver**, nincs adatgyűjtés, nincs GDPR rizikó  
-- **Minden adat a user telefonján** — ez a fő marketing üzenet  
-- **Bolt integráció** (Lidl HU/RO, Carrefour RO) affiliate linkeken keresztül
-
----
-
-## Platform stratégia
-
-### Fázis 1 — Capacitor (most, ~6-8 hét)
-A meglévő React SPA-t Capacitor shell foglalja be → App Store + Play Store.  
-A cél: minél hamarabb élő app, minél kevesebb kód változtatással.
-
-### Fázis 2 — React Native (párhuzamosan épül)
-Igazi natív élmény. A `packages/core` **változatlanul** használható RN-ben.  
-Csak a UI komponensek különböznek — minden más megosztott.
+Offline-first fitness & nutrition app iOS + Android platformra. Magyar es roman piac.
+- **Capacitor** nativ shell (React SPA becsomagolva)
+- **Firebase Auth** (Google Sign-In) + **Cloud Firestore** cross-device sync
+- **Stripe** elofizetesi fizetes
+- **Vercel Serverless** backend (10+ API fuggveny)
+- **Chef AI agent** — szemelyre szabott etrend generalas es review
 
 ---
 
-## Mappastruktúra — jelenlegi (feature-based, src/app)
+## Platform strategia
 
-A UI feature-alapú struktúrában van; a backend és a megosztott elemek külön mappákban.
+### Jelenlegi — Capacitor (elo)
+A meglevo React SPA-t Capacitor shell foglalja be -> App Store + Play Store.
+Vite build -> `dist/` -> `npx cap sync` -> nativ build.
+
+### Jovobeni — React Native (opcionalis)
+Ha szukseges, a backend services (`src/app/backend/`) valtozatlanul hasznalhato RN-ben.
+Csak a UI komponensek kulonboznek — minden mas megosztott.
+
+---
+
+## Mappastruktura
 
 ```
-src/
-├── app/
-│   ├── features/
-│   │   ├── nutrition/
-│   │   │   ├── components/       ← Foods.tsx, stb.
-│   │   │   └── hooks/           ← (üres, később: useFoodCatalog, useNutritionPlan)
-│   │   │
-│   │   ├── workout/
-│   │   │   ├── components/      ← Workout.tsx, WorkoutCalendar.tsx
-│   │   │   └── hooks/          ← (üres, később: useWorkout, useTimer)
-│   │   │
-│   │   ├── menu/
-│   │   │   ├── components/     ← UnifiedMenu.tsx, MealDetail.tsx
-│   │   │   └── hooks/         ← (üres, később: useMenu, useDailyPlan)
-│   │   │
-│   │   ├── coach/              ← (üres, később: AI voice panel, useAICoach)
-│   │   ├── shopping/
-│   │   │   └── components/     ← ShoppingList.tsx
-│   │   │
-│   │   └── profile/
-│   │       └── components/    ← Profile.tsx
-│   │
-│   ├── shared/
-│   │   ├── components/         ← (közös UI elemek, pl. WaterWidget, Toast — opcionális)
-│   │   ├── hooks/              ← (üres, később: useAppData, useDB áthelyezés)
-│   │   └── layouts/            ← Layout.tsx, (BottomNav a components/dsm-ben marad)
-│   │
-│   ├── components/             ← megosztott / legacy: PageHeader, EmptyState, dsm/, ui/, onboarding/, stb.
-│   ├── backend/
-│   │   ├── services/           ← FoodCatalogService, NutritionPlanService, ActivityService, stb.
-│   │   ├── models/
-│   │   └── db.ts               ← IDatabase adapter
-│   ├── hooks/                  ← useAppData, usePlanData, useCalorieTracker, stb.
-│   ├── contexts/
-│   ├── data/
-│   └── utils/
+PersonalFit/
+├── api/                            <- Vercel serverless functions
+│   ├── chef-review.ts
+│   ├── chef-suggest.ts
+│   ├── create-checkout-session.ts
+│   ├── food-image.ts
+│   ├── generate-meal-plan.ts
+│   ├── lookup-foods.ts
+│   ├── parse-document.ts
+│   ├── parse-gmon.ts
+│   ├── split-food-name.ts
+│   └── stripe-webhook.ts
 │
-├── api/                        ← Vercel serverless (változatlan)
-└── capacitor.config.ts
-```
-
-**Szabályok:**  
-- Service-ek a `backend/services/` mappában maradnak (nem kerülnek a feature mappákba).  
-- Csak UI komponensek és (opcionálisan) hook-ok kerülnek a `features/*` alá.  
-- Importok: feature komponensek a `../../../components`, `../../../hooks`, `../../../backend` stb. útvonalakkal hivatkoznak az app rétegre.
-
----
-
-## Mappastruktúra (cél állapot — packages/core)
-
-```
-personalfit/
-│
-├── packages/
-│   └── core/                          ← PLATFORM-FÜGGETLEN (megosztott mag)
-│       ├── services/
-│       │   ├── AIParserService.ts
-│       │   ├── NutritionPlanService.ts
-│       │   ├── FoodCatalogService.ts
-│       │   ├── ShoppingListService.ts
-│       │   ├── MeasurementService.ts
-│       │   └── ActivityService.ts
-│       ├── db/
-│       │   ├── IDatabase.ts            ← közös interface
-│       │   ├── IndexedDBAdapter.ts     ← web/Capacitor implementáció
-│       │   └── SQLiteAdapter.ts        ← React Native implementáció (később)
-│       ├── models/
-│       │   ├── NutritionPlan.ts
-│       │   ├── Food.ts
-│       │   ├── MealItem.ts
-│       │   └── UserProfile.ts
-│       ├── parsers/
-│       │   ├── foodKnowledge.ts        ← HU/RO élelmiszer adatbázis (~500+ étel)
-│       │   └── regexPatterns.ts        ← HU/RO/EN minták
+├── src/
+│   └── app/
+│       ├── features/
+│       │   ├── nutrition/          <- Foods.tsx, GenerateMealPlanSheet
+│       │   ├── workout/            <- Workout.tsx, WorkoutCalendar
+│       │   ├── menu/               <- UnifiedMenu, MealCard, RecipeOverlay
+│       │   ├── shopping/           <- ShoppingList, OrderDeliverySheet
+│       │   └── profile/            <- Profile.tsx
+│       │
+│       ├── shared/
+│       │   ├── components/         <- PageHeader, kozos UI elemek
+│       │   └── layouts/            <- Layout.tsx
+│       │
+│       ├── components/             <- megosztott: dsm/, ui/, onboarding/, Checkout
+│       ├── backend/
+│       │   ├── services/           <- 20+ service (Chef, FoodCatalog, NutritionPlan, stb.)
+│       │   ├── models/
+│       │   ├── db.ts               <- IDatabase adapter (IndexedDB)
+│       │   ├── seed.ts
+│       │   └── seedFoods.ts
+│       ├── services/               <- authService, paymentService, userFirestoreService, DailyMenuMatcher
+│       ├── hooks/                  <- useAppData, usePlanData, useNearbyStores, stb.
+│       ├── contexts/               <- AuthContext, stb.
+│       ├── data/                   <- aiFoodKnowledge (~250+ etel), foodImages, mealData, dailyMenuSources
 │       └── utils/
-│           ├── macroCalculator.ts
-│           ├── affiliateLinks.ts       ← Lidl/Carrefour link generátor
-│           └── i18n/
-│               ├── hu.json
-│               └── ro.json
 │
-├── apps/
-│   ├── capacitor/                      ← Jelenlegi React SPA + Capacitor
-│   │   ├── src/
-│   │   │   ├── components/
-│   │   │   ├── screens/
-│   │   │   └── hooks/
-│   │   └── capacitor.config.ts
-│   │
-│   └── react-native/                   ← Jövőbeni RN app
-│       ├── src/
-│       │   ├── components/
-│       │   ├── screens/
-│       │   └── hooks/
-│       └── app.json
-│
-└── landing/                            ← Vercel landing (Next.js / HTML)
+├── ios/                            <- Capacitor iOS projekt
+├── android/                        <- Capacitor Android projekt
+├── capacitor.config.ts
+├── vercel.json
+└── vite.config.ts
 ```
+
+**Szabalyok:**
+- Service-ek a `backend/services/` mappaban maradnak (nem kerulnek a feature mappakba).
+- Csak UI komponensek es (opcionalisam) hook-ok kerulnek a `features/*` ala.
+- API fuggvenyek mindig a root `api/` mappaban (Vercel deploy).
 
 ---
 
-## Az 5 Szabály — MINDIG tartsd be
+## Az 5 Szabaly — MINDIG tartsd be
 
-Ezek a szabályok garantálják hogy a React Native átírás ne legyen fájdalmas.
-
-### ① Service-ek soha nem importálnak UI-t
+### 1. Service-ek soha nem importalnak UI-t
 ```typescript
-// ❌ TILOS
+// TILOS
 import { useState } from 'react';
 import { toast } from '../components/Toast';
 
-// ✅ HELYES
-// Service csak pure TypeScript, semmi React
+// HELYES — Service csak pure TypeScript, semmi React
 ```
 
-### ② Service-ek soha nem érnek el közvetlenül adatbázist
+### 2. Service-ek soha nem ernek el kozvetlenul adatbazist
 ```typescript
-// ❌ TILOS — IndexedDB közvetlen hívás
+// TILOS — IndexedDB kozvetlen hivas
 const db = await openDB('personalfit', 1);
 await db.put('foods', food);
 
-// ✅ HELYES — adapter interface-en keresztül
+// HELYES — adapter interface-en keresztul
 await this.db.set('foods', food.id, food);
 ```
 
-### ③ Modellek pure TypeScript interface-ek
+### 3. Modellek pure TypeScript interface-ek
 ```typescript
-// ✅ HELYES — semmi platform-specifikus
 export interface NutritionPlan {
   id: string;
   name: string;
@@ -166,22 +113,20 @@ export interface NutritionPlan {
 }
 ```
 
-### ④ UI csak hook-okon keresztül ér adatot
+### 4. UI csak hook-okon keresztul er adatot
 ```typescript
-// ✅ HELYES — adatáramlás
-// Screen → Hook → Service → DB Adapter → IndexedDB/SQLite
+// Screen -> Hook -> Service -> DB Adapter -> IndexedDB
 function FoodsScreen() {
-  const { foods, addFood } = useFoodCatalog(); // hook
-  // nem hív közvetlenül FoodCatalogService-t
+  const { foods, addFood } = useFoodCatalog();
 }
 ```
 
-### ⑤ localStorage TILOS — csak DB adapter
+### 5. localStorage TILOS — csak DB adapter
 ```typescript
-// ❌ TILOS — nem működik React Native-ban
+// TILOS — nem mukodik React Native-ban
 localStorage.setItem('userProfile', JSON.stringify(profile));
 
-// ✅ HELYES
+// HELYES
 await this.db.set('profile', 'current', profile);
 ```
 
@@ -189,11 +134,9 @@ await this.db.set('profile', 'current', profile);
 
 ## Database Adapter Interface
 
-Ez a legfontosabb absztrakció. Minden service ezt kapja dependency injection-ön.
+Minden service ezt kapja dependency injection-on.
 
 ```typescript
-// packages/core/db/IDatabase.ts
-
 export interface IDatabase {
   get<T>(store: string, key: string): Promise<T | null>;
   set<T>(store: string, key: string, value: T): Promise<void>;
@@ -201,204 +144,101 @@ export interface IDatabase {
   delete(store: string, key: string): Promise<void>;
   clear(store: string): Promise<void>;
 }
-
-// Stores (konstansok):
-export const STORES = {
-  FOODS: 'foods',
-  NUTRITION_PLANS: 'nutrition_plans',
-  MEAL_DAYS: 'meal_days',
-  MEALS: 'meals',
-  MEAL_ITEMS: 'meal_items',
-  SHOPPING_LIST: 'shopping_list',
-  PROFILE: 'profile',
-  MEASUREMENTS: 'measurements',
-  ACTIVITIES: 'activities',
-} as const;
 ```
 
-### IndexedDB implementáció (Capacitor/web)
+### IndexedDB implementacio (Capacitor/web)
 ```typescript
-// packages/core/db/IndexedDBAdapter.ts
-import { IDatabase } from './IDatabase';
-
 export class IndexedDBAdapter implements IDatabase {
   async get<T>(store: string, key: string): Promise<T | null> {
     const db = await getDB();
     return db.get(store, key) ?? null;
   }
-  async set<T>(store: string, key: string, value: T): Promise<void> {
-    const db = await getDB();
-    await db.put(store, value, key);
-  }
-  // ... query, delete, clear
+  // ... set, query, delete, clear
 }
-```
-
-### Service-ek dependency injection-nel
-```typescript
-// packages/core/services/FoodCatalogService.ts
-export class FoodCatalogService {
-  constructor(private db: IDatabase) {}
-
-  async getAllFoods(): Promise<Food[]> {
-    return this.db.query<Food>(STORES.FOODS);
-  }
-
-  async saveFood(food: Food): Promise<void> {
-    await this.db.set(STORES.FOODS, food.id, food);
-  }
-}
-
-// Inicializálás (Capacitor appban):
-const db = new IndexedDBAdapter();
-const foodService = new FoodCatalogService(db);
-
-// Inicializálás (React Native appban — UGYANAZ a service!):
-const db = new SQLiteAdapter();
-const foodService = new FoodCatalogService(db);
 ```
 
 ---
 
-## AI Parser — Működési elvek
+## AI Parser — Mukodesi elvek
 
-Az `AIParserService` a fő feldolgozó motor. **Lokális, offline, determinisztikus.**
+Az `AIParserService` a fo feldolgozo motor.
 
 ```
-PDF / szöveg / Excel / hang
-        ↓
-  normalize() → tiszta UTF-8 szöveg
-        ↓
-  langDetect() → HU / RO / EN
-        ↓
-  structureParser() → hetek → napok → étkezések
-        ↓
-  ingredientExtractor() → név + mennyiség + egység
-        ↓
-  noiseFilter() → kizárja: összefoglalók, fejlécek, kalória-sorok
-        ↓
-  nutritionEnrich() → LocalDB → FuzzyMatch → CategoryFallback
-        ↓
+PDF / szoveg / Excel / hang
+        |
+  normalize() -> tiszta UTF-8 szoveg
+        |
+  langDetect() -> HU / RO / EN
+        |
+  structureParser() -> hetek -> napok -> etkezesek
+        |
+  ingredientExtractor() -> nev + mennyiseg + egyseg
+        |
+  noiseFilter() -> kizarja: osszefoglalok, fejlecek, kaloria-sorok
+        |
+  nutritionEnrich() -> LocalDB -> FuzzyMatch -> CategoryFallback
+        |
   [LLM fallback — csak ha confidence < 60%]
-        ↓
+        |
   MealPlan JSON
 ```
 
 ### Fast Mode vs Full Mode
 ```typescript
-// FAST MODE — 3-5mp, csak ételista
+// FAST MODE — 3-5mp, csak eteliista
 uploadFileFoodsOnly(file) / processTextFoodsOnly(text)
-→ extractFoodsOnly() → deduplikált Food lista → FoodCatalog
+-> extractFoodsOnly() -> deduplikalt Food lista -> FoodCatalog
 
-// FULL MODE — teljes étrend import
+// FULL MODE — teljes etrend import
 uploadFile(file) / processText(text)
-→ NutritionPlan + MealDays + Meals + MealItems + ShoppingList
+-> NutritionPlan + MealDays + Meals + MealItems + ShoppingList
 ```
-
-### Confidence Score
-Minden ételnél:
-- `✓ megbízható` — LocalDB pontos találat
-- `⚠ becsült` — FuzzyMatch vagy kategória fallback
-- `✗ ismeretlen` — LLM fallback szükséges
 
 ---
 
-## Élelmiszer Adatbázis
+## Elelmiszer Adatbazis
 
-**Jelenlegi állapot:** ~60-70 alap étel (`foodKnowledge.ts` + `foodDatabase.ts`)  
-**Célállapot:** ~500-800 HU + RO specifikus élelmiszer
-
-### Prioritás lista (bővítéshez)
-1. Magyar alapételek (tojás, csirkemell, marha, sertés, hal fajták)
-2. Magyar összetett ételek (lencsefőzelék, karfiolpüré, lecsó, stb.)
-3. Román ételek (mămăligă, sarmale, ciorbă, mici, stb.)
-4. Lidl HU/RO tipikus termékek (private label)
-5. Carrefour RO tipikus termékek
+**Jelenlegi allapot:** ~250+ alap etel (`aiFoodKnowledge.ts` + seedFoods)
+- Magyar alapetelek, osszetett etelek, roman etelek
+- HU/RO/EN alias rendszer
 
 ### Alias rendszer
 ```typescript
-// foodKnowledge.ts
 {
-  name: 'csirkemell',
-  aliases: ['csirke mell', 'csirkemell filé', 'chicken breast', 'piept de pui'],
-  per100g: { kcal: 165, protein: 31, carbs: 0, fat: 3.6 }
+  names: ['csirkemell', 'csirke mell', 'csirkemell file', 'chicken breast', 'piept de pui'],
+  category: 'Hus & Hal',
+  per100: { calories: 165, protein: 31, carbs: 0, fat: 3.6 }
 }
 ```
 
 ---
 
-## Affiliate / Bolt Integráció
+## Auth & Sync Strategia
 
-```typescript
-// packages/core/utils/affiliateLinks.ts
+**Firebase Auth:** Google Sign-In (web + Capacitor)
+- `authService.ts` — Firebase Auth logika
+- `AuthContext` — app-szintu auth allapot
+- `LoginScreen.tsx` — belepes UI
 
-export function generateShoppingLink(
-  items: ShoppingItem[],
-  store: 'lidl_hu' | 'lidl_ro' | 'carrefour_ro' | 'kaufland_hu',
-  country: 'HU' | 'RO'
-): string {
-  const base = STORE_URLS[store];
-  const affiliateTag = AFFILIATE_TAGS[store];
-  // deep link generálás a bolt saját appjához / weboldalához
-  return `${base}?ref=${affiliateTag}&items=${encodeItems(items)}`;
-}
-```
+**Cloud Firestore:** Cross-device szinkronizacio
+- `userFirestoreService.ts` — profil, etkezesi terv, kedvencek sync
+- Offline-first: lokalis IndexedDB az elsodleges, Firestore a masodlagos
 
-**Regisztrációk szükségesek:**
-- Lidl HU affiliate program → lidl.hu/affiliate (vagy impact.com)
-- Carrefour RO affiliate program → carrefour.ro / 2performant.com
-- Kaufland HU → kaufland.hu affiliate
+**Stripe:** Elofizetesi fizetes
+- `create-checkout-session.ts` (API) — Stripe Checkout Session letrehozas
+- `stripe-webhook.ts` (API) — webhook feldolgozas
+- `paymentService.ts` — kliens oldali fizetes logika
+- `SubscriptionScreen.tsx` — elofizetesi UI
 
 ---
 
-## Auth Stratégia
-
-**Jelenlegi:** Firebase Auth (email + Google OAuth)  
-**Célállapot:** Teljesen lokális, nincs regisztráció
-
-### Firebase kivezetési terv
-```typescript
-// Amit el kell távolítani:
-// - firebase SDK dependency
-// - AuthContext Firebase logika
-// - LoginScreen (vagy drastikusan egyszerűsíteni)
-
-// Ami marad:
-// - Lokális userProfile az IDatabase-ben
-// - Onboarding flow (profil adatok helyi mentése)
-// - Nincs jelszó, nincs email — csak a telefon azonosít
-```
-
-**GDPR üzenet utána:**  
-*"Az egyetlen magyar/román fitness app ahol az adataid soha nem hagyják el a telefonodat."*
-
----
-
-## Capacitor Integráció — Lépések
-
-```bash
-# 1. Telepítés
-npm install @capacitor/core @capacitor/cli
-npm install @capacitor/ios @capacitor/android
-npx cap init
-
-# 2. Build + sync
-npm run build
-npx cap sync
-
-# 3. Natív projektek megnyitása
-npx cap open ios     # Xcode
-npx cap open android # Android Studio
-
-# 4. OTA update (kis javítások store approval nélkül)
-npm install @capacitor/live-updates
-```
+## Capacitor Integracio
 
 ```typescript
 // capacitor.config.ts
 const config: CapacitorConfig = {
   appId: 'com.personalfit.app',
-  appName: 'PersonalFit',
+  appName: 'nura',
   webDir: 'dist',
   server: { androidScheme: 'https' },
   plugins: {
@@ -407,57 +247,27 @@ const config: CapacitorConfig = {
 };
 ```
 
----
-
-## Tech Stack Összefoglaló
-
-| Réteg | Capacitor app | React Native app |
-|-------|--------------|-----------------|
-| UI framework | React 18 + Tailwind v4 | React Native + StyleSheet |
-| Animációk | Framer Motion | Reanimated 3 |
-| Komponensek | Radix UI | React Native Paper / custom |
-| Navigation | React Router | React Navigation |
-| **DB** | **IndexedDBAdapter** | **SQLiteAdapter** |
-| **Services** | **packages/core (megosztott)** | **packages/core (ugyanaz)** |
-| **Parser** | **packages/core (megosztott)** | **packages/core (ugyanaz)** |
-| **i18n** | **packages/core/utils/i18n** | **packages/core/utils/i18n** |
-| Build | Vite + Capacitor | Expo EAS |
-| Deploy | App Store + Play Store | App Store + Play Store |
+Build: `npm run build && npx cap sync && npx cap open ios`
 
 ---
 
-## Migrációs Prioritások (sorrendben)
+## Tech Stack Osszefoglalo
 
-### Most (Capacitor előtt) — 1-2 hét
-- [ ] `localStorage` → `IDatabase` migráció (`userProfile`, `weightHistory`)
-- [ ] `IDatabase` interface létrehozása
-- [ ] `IndexedDBAdapter` refaktor (jelenlegi `db.ts` alapján)
-- [ ] Service-ek dependency injection-re átállítása
-- [ ] `window.*` / `document.*` referenciák kiszedése service fájlokból
-
-### Capacitor integráció — 1-2 hét
-- [ ] `@capacitor/core` + `@capacitor/ios` + `@capacitor/android` telepítés
-- [ ] `capacitor.config.ts` beállítás
-- [ ] iOS + Android első build tesztelés
-- [ ] Splash screen + app icon beállítás
-
-### Firebase kivezetés — 1 hét
-- [ ] Firebase Auth eltávolítása
-- [ ] Lokális profil kezelés `IDatabase`-ben
-- [ ] Login screen egyszerűsítése vagy eltávolítása
-- [ ] Onboarding flow frissítése
-
-### Bolt integráció — 1 hét
-- [ ] `affiliateLinks.ts` utility megírása
-- [ ] Affiliate programok regisztrációja (Lidl HU/RO, Carrefour RO)
-- [ ] ShoppingList UI-hoz "Rendelés" CTA hozzáadása
-
-### App Store submit — 3-4 hét
-- [ ] Apple Developer Program ($99/év)
-- [ ] Google Play Console ($25 egyszeri)
-- [ ] Privacy policy oldal (Vercelen)
-- [ ] App Store screenshots + leírás (HU + RO)
-- [ ] Review + publish
+| Reteg | Technologia |
+|-------|-------------|
+| UI framework | React 18 + Tailwind v4 |
+| Animaciok | Framer Motion |
+| Komponensek | Radix UI |
+| Navigation | React Router |
+| DB (lokal) | IndexedDB via `idb` |
+| DB (cloud) | Cloud Firestore |
+| Auth | Firebase Auth (Google Sign-In) |
+| Fizetes | Stripe |
+| Backend | Vercel Serverless (10+ function) |
+| AI | OpenAI API (Chef agent, food parsing) |
+| Nativ | Capacitor (iOS + Android) |
+| Build | Vite |
+| Deploy | Vercel (web) + App Store / Play Store (nativ) |
 
 ---
 
@@ -471,39 +281,19 @@ const config: CapacitorConfig = {
 - Spec: full viewport width (edge to edge), `border-radius: 0`, `padding-top: 48px`, `padding-bottom: 1rem`, `padding-left/right: 1rem`, background `linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #14b8a6 100%)`, color white, `position: sticky`, `top: 0`, `z-index: 50`.
 - Title: `font-size: 1.25rem`, `font-weight: 700`, color white.
 - Subtitle: `font-size: 0.875rem`, color `rgba(255,255,255,0.8)`.
-- Close/back button (subpages): `position: absolute`, `top: 1rem`, `right: 1rem`, 2rem×2rem, `background: rgba(255,255,255,0.2)`, `border-radius: 50%`, white, no border.
-- **Zero custom header implementations** — always use `<PageHeader title={...} subtitle={...} onClose={...} | onBack={...} />`. Optional extra content (e.g. stat cards) via `children`.
+- Close/back button (subpages): `position: absolute`, `top: 1rem`, `right: 1rem`, 2rem x 2rem, `background: rgba(255,255,255,0.2)`, `border-radius: 50%`, white, no border.
+- **Zero custom header implementations** — always use `<PageHeader>`.
 
 ### Universal Footer Standard (Rule 2)
 
 - Every page footer (primary action area) uses the shared **PageFooter** component or the same visual spec.
-- Spec: full width, `border-radius: 0`, `padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom))`, background white, `border-top: 2px solid #e5e7eb`, `box-shadow: 0 -4px 16px rgba(0,0,0,0.08)`, `position: fixed`, `bottom: 0`, `left: 0`, `right: 0`, `z-index: 50`.
-- Primary button: full width, `padding: 1rem`, `border-radius: 0.75rem`, background `linear-gradient(135deg, #3b82f6, #14b8a6)`, color white, `font-size: 1rem`, `font-weight: 700`, `box-shadow: 0 4px 12px rgba(59,130,246,0.35)`.
-- **Zero custom footer implementations** for action bars — use shared PageFooter or match this spec exactly.
+- Primary button: full width, `padding: 1rem`, `border-radius: 0.75rem`, background `linear-gradient(135deg, #3b82f6, #14b8a6)`, color white, `font-size: 1rem`, `font-weight: 700`.
+- **Zero custom footer implementations** for action bars.
 
 ### Rule 3 — Meal names
 
-- Meal names (Reggeli, Ebéd, Vacsora, etc.) use the existing translation keys; no typo changes required.
+- Meal names (Reggeli, Ebed, Vacsora, etc.) use the existing translation keys.
 
 ---
 
-## Cursor-ban való használat
-
-```
-# Session elején mindig:
-@ARCHITECTURE.md
-
-# Példa promptok:
-"@ARCHITECTURE.md alapján refaktoráld a FoodCatalogService-t 
-hogy IDatabase interface-t használjon dependency injection-nel"
-
-"@ARCHITECTURE.md alapján hozd létre az IndexedDBAdapter-t 
-a packages/core/db/ mappába"
-
-"@ARCHITECTURE.md szabályai szerint ellenőrizd ezt a service fájlt 
-— van-e benne localStorage vagy közvetlen IndexedDB hívás?"
-```
-
----
-
-*Utoljára frissítve: 2026. március — PersonalFit Architecture v1.0*
+*Utoljara frissitve: 2026. marcius — nura Architecture v2.0*

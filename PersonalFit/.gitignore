@@ -1,2 +1,9 @@
 .vercel
 .env*.local
+
+# Firebase native config
+ios/App/App/GoogleService-Info.plist
+android/app/google-services.json
+
+# Native environment
+.env.native

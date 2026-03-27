@@ -202,7 +202,6 @@ export function useDailyReset() {
     const previousDate = lastDateRef.current;
 
     if (currentDate !== previousDate) {
-      console.log(`[DailyReset] Day changed: ${previousDate} → ${currentDate}. Archiving & resetting.`);
       archiveDay(previousDate).then(() => {
         resetDailyValues().then(() => {
           lastDateRef.current = currentDate;

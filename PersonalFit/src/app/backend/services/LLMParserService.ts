@@ -4,7 +4,7 @@
  * ====================================================================
  */
 
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import type {
   AIParsedNutritionPlan,
   AIParsedDay,
@@ -16,13 +16,8 @@ import type { AIParsedUserProfile, AIParsedDocument } from './AIParserService';
 import { parseDocumentText, isCleanFoodName } from './AIParserService';
 import { normalizeIngredientName } from './FoodCatalogService';
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-haiku-4-5';
 const MAX_TOKENS = 8192;
-
-function getApiKey(): string | null {
-  return import.meta.env.VITE_ANTHROPIC_API_KEY ?? null;
-}
 
 const SYSTEM_PROMPT = `Te egy táplálkozási dokumentum elemző vagy. A felhasználó egy 30 napos étkezési tervből kinyert szöveget ad neked.
 
@@ -90,70 +85,38 @@ interface LLMParserOutput {
 }
 
 async function callClaudeAPI(text: string): Promise<string> {
-  // Production: use Vercel serverless proxy
-  // Development: use direct API (needs VITE_ANTHROPIC_API_KEY)
-  const isProduction = import.meta.env.PROD;
+  // Always use the server-side proxy — API key stays server-only
+  const response = await authFetch(`${apiBase}/api/parse-document`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text.substring(0, 50000) }),
+  });
+  if (!response.ok) throw new Error(`Proxy hiba: ${response.status}`);
+  const data = await response.json();
+  if (!data.result && !data.foods) throw new Error('Üres válasz a proxytól');
 
-  if (isProduction) {
-    const response = await fetch(`${apiBase}/api/parse-document`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text.substring(0, 50000) }),
-    });
-    if (!response.ok) throw new Error(`Proxy hiba: ${response.status}`);
-    const data = await response.json();
-    if (!data.result && !data.foods) throw new Error('Üres válasz a proxytól');
-
-    // Proxy returns { result: stringified { ingredients?, weeks, detected_weeks, detected_days_per_week } }.
-    // REQUIREMENT 1: ingredients = clean atomic names. REQUIREMENT 2: weeks = 4-week meal plan.
-    if (data.result) {
-      try {
-        const plan = JSON.parse(data.result);
-        const nutritionPlan = {
-          weeks: plan.weeks ?? [],
-          detected_weeks: plan.detected_weeks ?? (plan.weeks?.length ?? 0),
-          detected_days_per_week: typeof plan.detected_days_per_week === 'number'
-            ? plan.detected_days_per_week
-            : (plan.weeks?.[0]?.length ?? 7),
-        };
-        return JSON.stringify({
-          nutritionPlan: nutritionPlan.weeks?.length ? nutritionPlan : null,
-          ingredients: Array.isArray(plan.ingredients) ? plan.ingredients : undefined,
-        });
-      } catch {
-        return String(data.result);
-      }
+  // Proxy returns { result: stringified { ingredients?, weeks, detected_weeks, detected_days_per_week } }.
+  // REQUIREMENT 1: ingredients = clean atomic names. REQUIREMENT 2: weeks = 4-week meal plan.
+  if (data.result) {
+    try {
+      const plan = JSON.parse(data.result);
+      const nutritionPlan = {
+        weeks: plan.weeks ?? [],
+        detected_weeks: plan.detected_weeks ?? (plan.weeks?.length ?? 0),
+        detected_days_per_week: typeof plan.detected_days_per_week === 'number'
+          ? plan.detected_days_per_week
+          : (plan.weeks?.[0]?.length ?? 7),
+      };
+      return JSON.stringify({
+        nutritionPlan: nutritionPlan.weeks?.length ? nutritionPlan : null,
+        ingredients: Array.isArray(plan.ingredients) ? plan.ingredients : undefined,
+      });
+    } catch {
+      return String(data.result);
     }
-
-    return JSON.stringify({ nutritionPlan: data.foods ?? null });
   }
 
-  // Development fallback: direct API call
-  const apiKey = getApiKey();
-  if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY nincs beállítva');
-
-  const maxTextLength = 50000;
-  const truncatedText = text.length > maxTextLength ? text.substring(0, maxTextLength) + '\n\n[CSONKÍTVA]' : text;
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5',
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Elemezd ezt a 30 napos étkezési tervet és add vissza a kért JSON formátumban. Különösen fontos: az ingredients tömbben legyen minden egyedi alapélelmiszer amit megtalálsz (minimum 50 db), kizárólag magyar nevekkel, atomikusan (nem összetett ételek).\n\nSZÖVEG:\n${truncatedText}` }],
-    }),
-  });
-
-  if (!response.ok) throw new Error(`API hiba: ${response.status}`);
-  const data = await response.json();
-  return data.content?.[0]?.text ?? '';
+  return JSON.stringify({ nutritionPlan: data.foods ?? null });
 }
 
 function safeParseJSON(rawResponse: string): LLMParserOutput | null {
@@ -273,26 +236,12 @@ function convertToAIParsedDocument(llmOutput: LLMParserOutput, rawText: string):
 }
 
 export async function parseWithLLM(rawText: string): Promise<AIParsedDocument & { usedLLM: boolean }> {
-  const isProduction = import.meta.env.PROD;
-  const apiKey = getApiKey();
-
-  // In production, always use the proxy (no VITE_ANTHROPIC_API_KEY needed)
-  // In development, fallback to regex if no API key
-  if (!isProduction && !apiKey) {
-    console.warn('[LLMParser] API kulcs nincs beállítva — regex parser használata');
-    const regexResult = await parseDocumentText(rawText);
-    return { ...regexResult, usedLLM: false };
-  }
-
-  console.log('[LLMParser] Claude API hívás indítása...');
-
   try {
     const rawResponse = await callClaudeAPI(rawText);
     const llmOutput = safeParseJSON(rawResponse);
     if (!llmOutput) throw new Error('Claude válasza nem valid JSON');
 
     const result = convertToAIParsedDocument(llmOutput, rawText);
-    console.log(`[LLMParser] ✅ Sikeres — confidence: ${result.confidence}`);
     return { ...result, usedLLM: true };
 
   } catch (err) {
@@ -303,7 +252,8 @@ export async function parseWithLLM(rawText: string): Promise<AIParsedDocument & 
 }
 
 export function isLLMParserAvailable(): boolean {
-  return !!getApiKey() || import.meta.env.PROD;
+  // Always available — calls go through the server-side proxy
+  return true;
 }
 
 export function getParserInfo(): { name: string; available: boolean } {

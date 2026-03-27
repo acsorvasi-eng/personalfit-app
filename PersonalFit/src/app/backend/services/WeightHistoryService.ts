@@ -81,7 +81,6 @@ export class WeightHistoryService {
         } as WeightEntry);
       }
       await removeSetting('weightHistory');
-      console.log(`[WeightHistoryService] Migrated ${(entries as any[]).length} entries to IndexedDB`);
     } catch (e) {
       console.error('[WeightHistoryService] Migration failed:', e);
     }

@@ -1,7 +1,7 @@
 // PersonalFit/src/app/services/DailyMenuMatcherService.ts
 import { getDB } from '../backend/db';
 import type { DailyMenuMatch, DailyMenuCacheEntry, GooglePlaceRestaurant } from './recipeModels';
-import { apiBase } from '../../lib/api';
+import { apiBase, authFetch } from '../../lib/api';
 
 const CITY_DEFAULTS: Record<string, string> = {
   hu: 'Budapest',
@@ -39,7 +39,7 @@ export async function getDailyMenuMatches(
   }
 
   // API call
-  const response = await fetch(`${apiBase}/api/chef-review`, {
+  const response = await authFetch(`${apiBase}/api/chef-review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -83,7 +83,7 @@ export async function findNearbyRestaurants(
   radius?: number,
 ): Promise<{ restaurants: GooglePlaceRestaurant[]; fallback: boolean }> {
   try {
-    const response = await fetch(`${apiBase}/api/chef-review`, {
+    const response = await authFetch(`${apiBase}/api/chef-review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

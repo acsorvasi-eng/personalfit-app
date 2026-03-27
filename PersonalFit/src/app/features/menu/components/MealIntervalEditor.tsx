@@ -203,12 +203,6 @@ export function MealIntervalEditor() {
         allowedSnacks,
         mealModel,
       };
-      console.log("[MealEditor] saving settings:", {
-        mealCount,
-        meals,
-        allowedSnacks,
-        selectedSnackIds,
-      });
       await saveMealSettings(payload);
       window.dispatchEvent(new Event("mealSettingsUpdated"));
       hapticFeedback('light');

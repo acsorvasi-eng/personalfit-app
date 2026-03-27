@@ -214,6 +214,11 @@ export function BodyVision3D() {
   }, []);
 
   const handleImageUpload = useCallback(async (file: File, position: keyof BodyImages) => {
+    // File size validation: max 5MB for images
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_IMAGE_SIZE) {
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64 = reader.result as string;

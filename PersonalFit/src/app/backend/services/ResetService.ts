@@ -63,13 +63,9 @@ export async function performFullReset(
   setTimeout(() => window.location.reload(), 4000);
 
   try {
-    console.log('[Reset] Starting full data wipe...');
-
     // Step 1: Clear all stores IN-PLACE on the currently-open connection.
     // This is the primary data wipe — reliable even when deleteDatabase is blocked.
     await clearAllStores();
-    console.log('[Reset] All object stores cleared.');
-
     // Step 2: Destroy the DB structure (belt + suspenders).
     // If this blocks (another tab/context holds a connection) we still
     // cleared the data in Step 1, so the wipe is effective either way.
@@ -88,7 +84,6 @@ export async function performFullReset(
     // Step 5: Hard reload — produces a completely clean runtime state
     window.location.reload();
 
-    console.log('[Reset] Full reset complete.');
     return { success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Ismeretlen hiba';

@@ -1,4 +1,6 @@
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
+import { validateBodySize } from './_shared/validate';
 import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -33,6 +35,17 @@ export default async function handler(req: any, res: any) {
   if (handleCors(req, res)) return;
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Auth check
+  try {
+    await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
+  try { validateBodySize(req.body); } catch (err: any) {
+    return res.status(err?.status || 413).json({ error: err?.message || 'Request too large' });
   }
 
   const { text } = req.body;
@@ -78,10 +91,9 @@ ${rawText.substring(0, 30000)}`;
       basal_metabolic_rate: typeof parsed.basal_metabolic_rate === 'number' ? parsed.basal_metabolic_rate : null,
     };
 
-    console.log('[parse-gmon] Done:', Object.keys(result).filter(k => (result as any)[k] != null).length, 'fields');
     return res.status(200).json({ result: JSON.stringify(result) });
   } catch (error: any) {
-    console.error('[parse-gmon] Error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to parse GMON' });
+    console.error('[parse-gmon] Error:', error?.message || error);
+    return res.status(500).json({ error: 'An error occurred parsing body composition data.' });
   }
 }

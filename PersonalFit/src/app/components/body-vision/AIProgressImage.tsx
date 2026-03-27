@@ -7,7 +7,21 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
+
+/** Strip dangerous content from SVG strings before rendering via innerHTML. */
+function sanitizeSVG(svg: string): string {
+  let s = svg;
+  // Remove <script> tags and content
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+  // Remove <iframe>, <embed>, <object> tags
+  s = s.replace(/<\s*\/?\s*(iframe|embed|object)[^>]*>/gi, '');
+  // Remove on* event handler attributes (onclick, onerror, onload, etc.)
+  s = s.replace(/\s+on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+  // Remove javascript: URLs
+  s = s.replace(/javascript\s*:/gi, '');
+  return s;
+}
 
 export interface AIProgressImageProps {
   currentWeight: number;
@@ -36,7 +50,7 @@ export function AIProgressImage({
     setGenerating(true);
     setError(false);
     try {
-      const res = await fetch(`${apiBase}/api/generate-body-visual`, {
+      const res = await authFetch(`${apiBase}/api/generate-body-visual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -119,7 +133,7 @@ export function AIProgressImage({
             <div
               className="w-full overflow-hidden rounded-xl"
               style={{ maxWidth: 320, margin: "0 auto" }}
-              dangerouslySetInnerHTML={{ __html: svgContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizeSVG(svgContent) }}
             />
             <p className="text-center">
               <button

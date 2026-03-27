@@ -57,6 +57,15 @@ export function BodyCompositionUploadSheet({ open, onClose, onComplete }: BodyCo
   const upload = useBodyCompositionUpload();
 
   const handleFileSelect = useCallback(async (file: File) => {
+    // File size validation: 10MB for PDFs, 5MB for images
+    const MAX_PDF_SIZE = 10 * 1024 * 1024;
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const maxSize = isPdf ? MAX_PDF_SIZE : MAX_IMAGE_SIZE;
+    if (file.size > maxSize) {
+      return;
+    }
+
     setSelectedFile(file);
     setMode('processing');
     hapticFeedback('light');

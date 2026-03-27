@@ -193,7 +193,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Strip the 'id' field — local always uses 'current'
             const { id: _ignore, ...rest } = cloudProfile;
             await saveUserProfile(rest);
-            console.log('[CloudSync] Imported profile from cloud');
           }
         } else {
           // Local has data — push to cloud in background
@@ -225,7 +224,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Update React state from restored settings
             if (cloudSettings.hasCompletedFullFlow === 'true') setHasCompletedFullFlowState(true);
             if (cloudSettings.hasPlanSetup === 'true') setHasPlanSetup(true);
-            console.log('[CloudSync] Imported settings from cloud');
           }
         } else {
           syncSettingsToCloud(uid, localSettings).catch(() => {});
@@ -247,7 +245,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // No local plan — check if cloud has one (informational)
           const cloudSummary = await loadPlanSummaryFromCloud(uid);
           if (cloudSummary && !cancelled) {
-            console.log('[CloudSync] Cloud has plan summary:', cloudSummary.planName, '— re-generate on this device if needed');
           }
         }
       } catch (err) {
@@ -277,7 +274,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const cloudData = await loadPlanFromCloud(user.id);
         if (!cloudData?.parsed || cancelled) return;
 
-        console.log('[AuthContext] No local plan found — restoring from cloud');
         const plan = await importFromAIParse(
           cloudData.parsed,
           cloudData.planMeta?.label || 'Cloud sync plan',
@@ -285,7 +281,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await activatePlan(plan.id);
         setHasPlanSetup(true);
         setSetting('hasPlanSetup', 'true').catch(() => {});
-        console.log('[AuthContext] Cloud plan restored, id:', plan.id);
       } catch (err) {
         console.warn('[AuthContext] Cloud plan restore failed (non-fatal):', err);
       }

@@ -1,4 +1,4 @@
-# PersonalFit — Mission
+# nura — Mission
 
 **Offline-first fitness and nutrition app for Hungarian and Romanian markets.**
 
@@ -6,11 +6,14 @@
 
 ## Stack
 
-- **React 18**, **TypeScript**, **Vite**
+- **React 18**, **TypeScript**, **Vite** — SPA, deployed on Vercel
+- **Capacitor** — native iOS + Android shell
 - **Tailwind v4**, **Radix UI**, **Framer Motion**
-- **IndexedDB** via `idb` — primary persistence
-- No server required for core flows; optional Vercel serverless for LLM proxy
-- The app is single-user and offline-first: no multi-tenant or server session; optional serverless only for LLM.
+- **IndexedDB** via `idb` — primary local persistence
+- **Firebase Auth** (Google Sign-In) — authentication
+- **Cloud Firestore** — cross-device sync for user data
+- **Stripe** — subscription payments (checkout + webhook)
+- **Vercel Serverless** (`api/`) — 10+ server functions (Chef AI, food image, Stripe, PDF parse, meal plan generation, daily menu scraper, etc.)
 
 ## Rules
 
@@ -20,9 +23,20 @@
 
 3. **No localStorage in backend** — Backend services must not read or write `localStorage`. Config/preferences that need persistence use the DB or a dedicated adapter, not raw `localStorage`.
 
-4. **No Firebase Auth in backend** — Backend services must not depend on Firebase or any cloud auth. Auth state may be consumed at the app shell (e.g. AuthContext) for gating UI only; services assume a local-first, single-user model.
+4. **Firebase Auth at the app shell** — Auth state is consumed in AuthContext for gating UI and identifying the user. Backend services do not depend on Firebase directly; they receive user context via parameters when needed.
 
-5. **Foods table = base ingredients only** — The Foods store contains only single base ingredients (e.g. tojás, brokkoli, quinoa). Composite meal names must be split before saving; meal combinations exist only in My Menu (meal_items).
+5. **Foods table = base ingredients only** — The Foods store contains only single base ingredients (e.g. tojas, brokkoli, quinoa). Composite meal names must be split before saving; meal combinations exist only in My Menu (meal_items).
+
+## Key Features
+
+- **Chef AI agent** — personalized meal plan generation and review via OpenAI
+- **Restaurant finder** — nearby restaurant discovery with daily menu scraping (HU/RO)
+- **Recipe overlay** — full recipe details with ordering capability
+- **Smart Shopping** — auto-generated shopping lists with store locator
+- **PDF import** — nutrition plan upload and AI parsing
+- **Visual onboarding** — multi-step profile setup wizard with plan generation
+- **Cross-device sync** — Firestore-backed data sync across devices
+- **Stripe payments** — subscription checkout and webhook handling
 
 ## Data layer (IndexedDB)
 
@@ -37,7 +51,7 @@
 
 ### Data hygiene & cleanup
 
-- The `FoodCatalogService.cleanupCorruptedAIFoods()` routine removes corrupted or composite food names and, when needed, uses the LLM-assisted splitter to replace composite meals with individual base-ingredient rows (e.g. \"Sült csirkemell quinoa\" → csirkemell, quinoa).
+- The `FoodCatalogService.cleanupCorruptedAIFoods()` routine removes corrupted or composite food names and, when needed, uses the LLM-assisted splitter to replace composite meals with individual base-ingredient rows (e.g. "Sult csirkemell quinoa" -> csirkemell, quinoa).
 - New foods created from AI/upload go through the base-ingredient pipeline before being written to the `foods` store; composite names are rejected or split, never stored as-is.
 
 ## Markets

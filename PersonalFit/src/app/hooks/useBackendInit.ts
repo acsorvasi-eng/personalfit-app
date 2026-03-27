@@ -42,7 +42,6 @@ export function useBackendInit(): BackendInitState {
         const foodCount = await db.count('foods');
         setState({ isReady: true, isLoading: false, error: null, foodCount });
 
-        console.log(`[Backend] Initialized. Foods in DB: ${await db.count('foods')}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Backend initialization failed';
         console.error('[Backend] Init error:', message);

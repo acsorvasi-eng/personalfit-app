@@ -189,6 +189,16 @@ export function DataUploadSheet({ open, onClose, onComplete }: DataUploadSheetPr
   }, [upload, strategy]);
 
   const handleFileSelect = useCallback(async (file: File) => {
+    // File size validation: 10MB for PDFs, 5MB for images
+    const MAX_PDF_SIZE = 10 * 1024 * 1024;
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const maxSize = isPdf ? MAX_PDF_SIZE : MAX_IMAGE_SIZE;
+    if (file.size > maxSize) {
+      showToast(t('upload.fileTooLarge') || `File too large. Max ${isPdf ? '10' : '5'}MB.`, 'warning');
+      return;
+    }
+
     setSelectedFile(file);
 
     // Ellenőrizzük, hogy van-e már aktív étrendterv

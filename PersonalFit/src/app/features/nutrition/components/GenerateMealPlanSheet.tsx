@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, X, ArrowRight, ArrowLeft, Check,
@@ -222,7 +222,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
 
   useEffect(() => {
     if (!open || !user?.id) return;
-    fetch(`${apiBase}/api/usage?userId=${encodeURIComponent(user.id)}`)
+    authFetch(`${apiBase}/api/usage`)
       .then(r => r.json())
       .then((data: { remaining: number | null; limit: number | null; isAdmin: boolean; resetsAt: string }) => {
         setRemaining(data.remaining ?? null);
@@ -303,7 +303,7 @@ export function GenerateMealPlanSheet({ open, onClose, foods, onSaved }: Props) 
       }
       setBurnPerDay(computedBurnPerDay);
 
-      const resp = await fetch(`${apiBase}/api/generate-meal-plan`, {
+      const resp = await authFetch(`${apiBase}/api/generate-meal-plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

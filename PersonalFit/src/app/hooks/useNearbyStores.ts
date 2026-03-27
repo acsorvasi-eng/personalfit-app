@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import {
   CHAIN_PROFILES,
   isFoodAvailableAtChain,
@@ -182,7 +182,7 @@ export function useNearbyStores(lat?: number, lng?: number) {
 // ─────────────────────────────────────────────────────────────────
 
 async function fetchNearbyStores(lat: number, lng: number): Promise<NearbyStore[]> {
-  const resp = await fetch(`${apiBase}/api/chef`, {
+  const resp = await authFetch(`${apiBase}/api/chef`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'find-stores', lat, lng, radius: 10000 }),

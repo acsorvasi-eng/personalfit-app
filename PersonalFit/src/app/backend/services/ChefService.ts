@@ -6,7 +6,7 @@ import type {
 } from '../../../lib/chef-types';
 import { getDB, generateId, todayDate } from '../db';
 import { getSetting, setSetting } from './SettingsService';
-import { apiBase } from '../../../lib/api';
+import { apiBase, authFetch } from '../../../lib/api';
 
 // ─── Pure helper functions (exported for testing) ─────────────────────────────
 
@@ -168,7 +168,7 @@ export async function runDaily(params: RunDailyParams): Promise<ChefPendingMessa
     const queued = await dequeueNextChefSuggestion();
     if (queued) {
       try {
-        const resp = await fetch(`${apiBase}/api/chef-suggest`, {
+        const resp = await authFetch(`${apiBase}/api/chef-suggest`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: queued.type, context: queued.context }),
@@ -197,7 +197,7 @@ export async function runDaily(params: RunDailyParams): Promise<ChefPendingMessa
   if (typeof navigator !== 'undefined' && navigator.onLine) {
     const rejected = await getRejectedDishes(14);
     try {
-      const resp = await fetch(`${apiBase}/api/chef-suggest`, {
+      const resp = await authFetch(`${apiBase}/api/chef-suggest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

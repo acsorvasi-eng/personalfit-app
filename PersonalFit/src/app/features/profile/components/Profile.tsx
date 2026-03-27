@@ -455,6 +455,11 @@ export function Profile() {
 
   // ─── Handlers ───────────────────────────────────────────────────
   const handleAvatarUpload = (file: File) => {
+    // File size validation: max 5MB for images
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_IMAGE_SIZE) {
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = () => { setTempAvatarImage(reader.result as string); setIsAvatarEditorOpen(true); };
     reader.readAsDataURL(file);
@@ -1103,13 +1108,11 @@ function ProfileGoalsTab({
       setSelectedBedtime(preferred.bedtime);
       setSelectedCycles(preferred.cycleCount);
     }
-    console.log('Saving sleep settings:', { wakeTime: time, selectedBedtime: newBedtime, selectedCycles: newCycles });
     await SleepService.saveSleepSettings({
       wakeTime: time,
       selectedBedtime: newBedtime,
       selectedCycles: newCycles,
     });
-    console.log('Sleep saved, showing toast');
     showToast(t('toast.sleepSaved'));
     try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
   };
@@ -1117,13 +1120,11 @@ function ProfileGoalsTab({
   const handleBedtimeSelect = async (bedtime: string, cycles: number) => {
     setSelectedBedtime(bedtime);
     setSelectedCycles(cycles);
-    console.log('Saving sleep settings:', { wakeTime, selectedBedtime: bedtime, selectedCycles: cycles });
     await SleepService.saveSleepSettings({
       wakeTime,
       selectedBedtime: bedtime,
       selectedCycles: cycles,
     });
-    console.log('Sleep saved, showing toast');
     showToast(t('toast.sleepSaved'));
     try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
   };

@@ -23,7 +23,7 @@
 import { hapticFeedback } from '@/lib/haptics';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 // Worker URL resolved at runtime via CDN (the ?url Vite import breaks in sandbox)
 import * as MeasurementSvc from '../backend/services/MeasurementService';
 import * as VersionControlSvc from '../backend/services/VersionControlService';
@@ -365,7 +365,7 @@ export function useBodyCompositionUpload() {
 
       if (rawText.trim().length > 20) {
         try {
-          const apiRes = await fetch(`${apiBase}/api/parse-gmon`, {
+          const apiRes = await authFetch(`${apiBase}/api/parse-gmon`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: rawText }),

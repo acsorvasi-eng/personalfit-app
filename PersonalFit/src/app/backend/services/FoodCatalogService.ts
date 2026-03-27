@@ -15,7 +15,7 @@
 import { getDB, generateId, nowISO, notifyDBChange } from '../db';
 import type { FoodEntity, FoodCategory, FoodSource } from '../models';
 import { isCleanFoodName } from './AIParserService';
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 
 // ═══════════════════════════════════════════════════════════════
 // QUERY
@@ -569,11 +569,6 @@ export async function createFoodsBatch(
   const created: FoodEntity[] = [];
   const skipped: string[] = [];
 
-  console.log('[FoodCatalog] createFoodsBatch start', {
-    totalInputs: inputs.length,
-    names: inputs.map(i => i.name),
-  });
-
   for (const input of inputs) {
     const isUserUploaded = input.source === 'user_uploaded';
 
@@ -606,14 +601,12 @@ export async function createFoodsBatch(
         patch.fat_per_100g      = input.fat_per_100g;
         patch.category          = input.category;
         needsUpdate = true;
-        console.log(`[FoodCatalog] createFoodsBatch upserted nutrition for "${input.name}": ${input.calories_per_100g} kcal`);
       }
       if (needsUpdate) {
         const updated: FoodEntity = { ...existingFood, ...patch, updated_at: now };
         await db.put('foods', updated);
         existingByName.set(input.name.toLowerCase(), updated);
       } else {
-        console.log('[FoodCatalog] createFoodsBatch skipped duplicate name:', input.name);
       }
       skipped.push(input.name);
       continue;
@@ -646,12 +639,6 @@ export async function createFoodsBatch(
   if (created.length > 0) {
     notifyDBChange({ store: 'foods', action: 'put' });
   }
-
-  console.log('[FoodCatalog] createFoodsBatch done', {
-    requested: inputs.length,
-    created: created.length,
-    skipped,
-  });
 
   return { created, skipped };
 }
@@ -762,75 +749,20 @@ function isSuspiciousCompositeCandidate(name: string): boolean {
 }
 
 async function splitFoodNameWithLLM(name: string): Promise<SplitResult | null> {
-  const isProduction = import.meta.env.PROD;
-
+  // Always use the server-side proxy — API key stays server-only
   try {
-    if (isProduction) {
-      const response = await fetch(`${apiBase}/api/split-food-name`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!response.ok) {
-        console.warn('[FoodCatalog] split-food-name proxy error:', response.status);
-        return null;
-      }
-      const data = (await response.json()) as SplitResult;
-      if (!data || !Array.isArray(data.ingredients)) return null;
-      return data;
-    }
-
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      console.warn('[FoodCatalog] LLM split not available (no VITE_ANTHROPIC_API_KEY)');
-      return null;
-    }
-
-    const prompt = `
-You are a nutrition ingredient normalizer.
-
-TASK:
-- Decide if the given Hungarian food name is a single base ingredient or a composite meal.
-- A base ingredient is a single atomic food like "tojás", "spenót", "gomba", "paprika", "quinoa", "csirkemell", "zabpehely", "mandulatej".
-- A composite meal combines multiple ingredients, often with cooking adjectives like "sült", "grillezett", "párolt", "rántott", or with multiple ingredients listed inline.
-- If it is a composite meal, extract the individual base ingredients as short Hungarian ingredient names (singular form, no quantities).
-
-Input: "${name}"
-
-Respond ONLY in strict JSON, no markdown, no explanation:
-{"type":"single","ingredients":["<single-ingredient-name>"]}
-OR
-{"type":"composite","ingredients":["<ingredient-1>","<ingredient-2>", "..."]}`;
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await authFetch(`${apiBase}/api/split-food-name`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 256,
-        messages: [{ role: 'user', content: prompt }],
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
     });
-
     if (!response.ok) {
-      console.warn('[FoodCatalog] Anthropic split API error:', response.status);
+      console.warn('[FoodCatalog] split-food-name proxy error:', response.status);
       return null;
     }
-
-    const data = await response.json();
-    let text: string =
-      data?.content?.[0]?.type === 'text' ? data.content[0].text : data?.content?.[0]?.text || '';
-    let cleaned = String(text || '').trim();
-    cleaned = cleaned.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
-    cleaned = cleaned.replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-
-    const parsed = JSON.parse(cleaned) as SplitResult;
-    if (!parsed || !Array.isArray(parsed.ingredients)) return null;
-    return parsed;
+    const data = (await response.json()) as SplitResult;
+    if (!data || !Array.isArray(data.ingredients)) return null;
+    return data;
   } catch (err) {
     console.warn('[FoodCatalog] LLM split error for name:', name, err);
     return null;
@@ -867,7 +799,6 @@ export async function migrateFruitCategories(): Promise<number> {
     }
   }
   if (fixed > 0) {
-    console.log(`[FoodCatalog] migrateFruitCategories: fixed ${fixed} food(s)`);
   }
   return fixed;
 }
@@ -1010,9 +941,6 @@ export async function cleanupCorruptedAIFoods(): Promise<number> {
 
   if (removed > 0 || createdFromSplit > 0) {
     notifyDBChange({ store: 'foods', action: 'delete' });
-    console.log(
-      `[FoodCatalog] Deep cleanup befejezve: ${removed} étel törölve, ${splitCount} composite szétbontva, ${createdFromSplit} új alapanyag létrehozva`
-    );
   }
 
   return removed;

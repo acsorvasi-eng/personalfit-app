@@ -460,6 +460,5 @@ export async function seedSystemFoods(db: any): Promise<void> {
       inserted++;
     }
   }
-  console.log(`✅ seedSystemFoods: ${inserted} új étel hozzáadva (${SYSTEM_FOODS.length} összesen)`);
 }
 

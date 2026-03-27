@@ -1,120 +1,133 @@
-# Személyre Szabott 4 Hetes Étkezési Terv Alkalmazás
+# nura — Szemelyre Szabott Taplalkozasi es Fitness Alkalmazas
 
-## Áttekintés
+## Attekintes
 
-Ez egy mobilra optimalizált magyar nyelvű étkezési terv követő alkalmazás, amely 4 hetes személyre szabott étrendet biztosít, követési funkciókkal, bevásárló lista generálással és progresszió nyomon követéssel.
+Mobilra optimalizalt magyar es roman nyelvu taplalkozasi es fitness alkalmazas. 4 hetes szemelyre szabott etrendet biztosit Chef AI agenssel, etterem keresoval, bevasarlo lista generatassal, PDF import-tal es cross-device szinkronizacioval.
 
-## Főbb Funkciók
+**Technologia:** React 18 + Vite SPA, Capacitor nativ shell (iOS + Android), Firebase Auth, Cloud Firestore, Stripe fizetes, Vercel Serverless backend.
 
-### 1. **Napi Menü** (Kezdőlap - `/`)
-- A nap étkezéseinek megjelenítése (Reggeli, Ebéd, Vacsora)
-- Több opció közül választás lehetősége
-- Checkbox az elfogyasztott ételek jelölésére
-- Valós idejű kalória számítás
-- Hét és nap váltó navigáció
-- Heti összegzés megjelenítése
+## Fobb Funkciok
 
-### 2. **Heti Menü** (`/weekly`)
-- Teljes 4 hetes terv áttekintése
-- Összecsukható hetek és napok
-- Minden napra vonatkozó részletes étkezési opciók
-- Heti összegzések (kalória, makrók, várható fogyás)
-- Könnyen navigálható naptár nézet
+### 1. **Napi Menu** (Kezdolap - `/`)
+- A nap etkezeseinek megjelenitese (Reggeli, Ebed, Vacsora)
+- Tobb opcio kozul valasztas lehetosege
+- Checkbox az elfogyasztott etelek jelolesere
+- Valos ideju kaloria szamitas
+- Het es nap valto navigacio
+- Heti osszegzes megjelenitese
 
-### 3. **Élelmiszerek** (`/foods`)
-- Teljes élelmiszer katalógus
-- Keresés és kategória szerinti szűrés
-- Részletes tápanyag információk
-- Előnyök és alkalmazási javaslatok
-- Kedvencek mentése
-- Részletes termék nézet modal ablakban
+### 2. **Chef AI Agent**
+- Szemelyre szabott 4 hetes etrend generalas
+- AI-alapu etrend review es javaslatok
+- Profil alapjan optimalizalt makro aranyok
+- Etkezes-tervezes a felhasznalo celjai szerint (fogyas/tartas/gyarapodas)
 
-### 4. **Bevásárló Lista** (`/shopping`)
-- Automatikus lista generálás a heti menü alapján
-- Kategóriák szerinti csoportosítás:
-  - 🥩 Fehérje
-  - 🥛 Tejtermék
-  - 🥬 Zöldségek
-  - 🍎 Gyümölcsök
-  - 🌾 Gabonafélék
-  - 🧂 Fűszerek és egyéb
-- Egyéni termékek hozzáadása
-- Checkbox a megvásárolt termékek jelölésére
-- Progresszió kijelző
+### 3. **Etterem Kereso**
+- Kozeli etteremek felderitese (Google Places integracio)
+- Napi menu scraping magyar es roman oldalakrol (meniulzilei.info, mitegyek.hu)
+- Rendeles gomb delivery appokhoz (Glovo, Wolt, Bolt Food)
+- Etterem tab a recept overlay-ben
 
-### 5. **Profil** (`/profile`)
-- Személyes adatok szerkesztése:
-  - Kor, Súly, Magasság
-  - Vérnyomás
-  - Aktivitási szint
-  - Cél (fogyás/tartás/gyarapodás)
-  - Allergiák
-  - Étkezési preferenciák
-- Automatikus számítások:
-  - BMI
-  - Napi kalória szükséglet
-  - Makro arányok (fehérje, szénhidrát, zsír)
-- Haladás követése
+### 4. **Recept Overlay**
+- Teljes recept reszletek megtekintesel
+- Hozzavalok listaja mennyisegekkel
+- Etterem tab napi menukkel
+- Rendeles lehetoseg kozvetlenul az alkalmazasbol
 
-### 6. **Extra Funkciók**
+### 5. **Elelmiszerek** (`/foods`)
+- 250+ eteles katalogus (HU/EN/RO)
+- Kereses es kategoria szerinti szures
+- Reszletes tapanyag informaciok
+- Elonyok es alkalmazasi javaslatok
+- Kedvencek mentese
 
-#### Víz Tracker 💧
-- Lebegő widget a jobb alsó sarokban
-- Vizuális pohár feltöltődéssel
-- 3L napi cél
-- 250ml-es lépésközök
+### 6. **Bevasarlo Lista** (`/shopping`)
+- Automatikus lista generalas a heti menu alapjan
+- Kategoriak szerinti csoportositas (feherje, tejtermek, zoldsegek, gyumolcsok, gabonafelek, fuszerek)
+- Bolt kereso (Lidl, Carrefour, Aldi, stb.) Google Places-szel
+- Egyeni termekek hozzaadasa
+- Checkbox a megvasarolt termekek jelolesere
 
-#### Edzés Tracker 🏆
-- Heti edzések számlálója a fejlécben
-- 4 alkalom/hét cél
-- Érme achievement 4 edzés teljesítésekor
+### 7. **Profil** (`/profile`)
+- Szemelyes adatok szerkesztese (kor, suly, magassag, aktivitasi szint, cel, allergiak, etkezesi preferenciak)
+- Automatikus szamitasok: BMI, napi kaloria szukseglet, makro aranyok
+- Haladas kovetese
 
-## Navigáció
+### 8. **PDF Import**
+- Etkezesi terv feltoltes PDF-bol
+- AI-alapu dokumentum feldolgozas es strukturalas
+- "Van mar etrendem" opcio az onboarding-ban
 
-Alsó navigációs menü 5 fő opcióval:
-1. 🥦 Élelmiszerek
-2. 📅 Heti menü
-3. 🍽 Napi menü (Kiemelt/központi)
-4. 🛒 Bevásárló lista
-5. 👤 Profil
+### 9. **Vizualis Onboarding**
+- Tobblepeses profil beallitas varazsslo (ProfileSetupWizard)
+- Google Sign-In belepes
+- Elofizetesi kepernyo (Stripe Checkout)
+- Etrend generalas vagy PDF feltoltes valasztas
 
-## Dizájn Elvek
+### 10. **Cross-device Szinkronizacio**
+- Firebase Auth + Cloud Firestore
+- Profil, etkezesi terv es kedvencek szinkronizacio eszkozok kozott
+- Offline-first: lokalis IndexedDB az elsodleges, Firestore a masodlagos
 
-- **Minimalizmus**: Tiszta, világos felület
-- **Színpaletta**:
-  - Zöld: Egészséges élelmiszerek, fő akciók
-  - Kék: Hidratáció, progresszió
-  - Meleg neutrális: Menük, kártyák
-- **Mobilra optimalizált**: Elsősorban mobil élmény
-- **Gyors interakció**: Kevés kattintás, azonnali visszajelzés
+### 11. **Extra Funkciok**
 
-## Technológiai Stack
+#### Viz Tracker
+- Lebeho widget vizualis pohar feltoltodessel
+- 3L napi cel, 250ml-es lepeskozok
 
-- **React 18** - UI framework
-- **React Router** - Navigáció
-- **Tailwind CSS v4** - Stílusok
-- **Lucide React** - Ikonok
-- **TypeScript** - Típusbiztonság
+#### Edzes Tracker
+- Heti edzesek szamlaloja
+- 4 alkalom/het cel
+- Erme achievement teljesiteskor
+
+#### Stripe Fizetes
+- Elofizetesi checkout (Stripe)
+- Webhook feldolgozas
+
+## Navigacio
+
+Also navigacios menu 5 fo opcioval:
+1. Elelmiszerek
+2. Heti menu
+3. Napi menu (kiemelt/kozponti)
+4. Bevasarlo lista
+5. Profil
+
+## Dizajn Elvek
+
+- **Minimalizmus**: Tiszta, vilagos felulet
+- **Szinpaletta**: Teal/feher/fekete, gradiens akcio gombok
+- **Mobilra optimalizalt**: Elsosoorban mobil elmeny
+- **Gyors interakcio**: Keves kattintas, azonnali visszajelzes
+- **Minimum 14px** betumeret mindenhol
+
+## Technologiai Stack
+
+- **React 18** + **TypeScript** — UI framework
+- **Vite** — build tool
+- **Tailwind CSS v4** — stilusok
+- **Capacitor** — nativ iOS + Android shell
+- **Firebase Auth** — Google Sign-In
+- **Cloud Firestore** — cross-device sync
+- **Stripe** — fizetes
+- **Vercel Serverless** — backend API (10+ function)
+- **OpenAI API** — Chef AI agent
+- **Radix UI** — komponensek
+- **Framer Motion** — animaciok
+- **Lucide React** — ikonok
+- **React Router** — navigacio
 
 ## Adatok
 
-Az étkezési tervek a csatolt PDF dokumentumokból lettek strukturálva és a `/src/app/data/mealData.ts` fájlban tárolódnak.
+Az etkezesi tervek a Chef AI agent altal generaltoak vagy PDF-bol importaltoak. Lokalis adatok IndexedDB-ben, szinkronizacio Cloud Firestore-ban.
 
-## Használat
+## Hasznalat
 
-1. Nyisd meg az alkalmazást
-2. Tekintsd meg a mai napra vonatkozó étkezési tervet
-3. Válassz opciót minden étkezéshez
-4. Jelöld be, amikor megettél valamit
-5. Kövesd a progressziódat
-6. Generálj bevásárló listát a hétre
-7. Frissítsd a profilodat a személyre szabott kalória és makró célokhoz
-
-## Jövőbeli Fejlesztési Lehetőségek
-
-- Supabase backend integráció adatok mentésére
-- Push értesítések étkezési időpontokra
-- Progresszió grafikonok
-- Recept részletek fotókkal
-- Barcode scanner a bevásárlás könnyítésére
-- Közösségi funkciók (megosztás, motiváció)
+1. Nyisd meg az alkalmazast
+2. Lepj be Google fiokkal
+3. Toltsd ki a profilodat az onboarding-ban
+4. Generaltass etrendet a Chef AI-val VAGY toltsd fel a sajat PDF etrendedet
+5. Kovetsd a napi menudet
+6. Jelold be az elfogyasztott eteleket
+7. Generalf bevasarlo listat a hetre
+8. Keressen kozeli ettermeket ha nem foznel

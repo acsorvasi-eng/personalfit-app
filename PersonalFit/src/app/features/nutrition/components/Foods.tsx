@@ -26,7 +26,7 @@ declare var SpeechRecognitionEvent: any;
 
 import { hapticFeedback } from '@/lib/haptics';
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import {
   Search,
   X,
@@ -218,8 +218,7 @@ export function Foods() {
     if (zeroFoods.length === 0) return;
     repairDoneRef.current = true;
     const names = zeroFoods.map(f => f.name);
-    console.log("[AutoRepair] Fixing 0-kcal foods:", names);
-    fetch(`${apiBase}/api/lookup-foods`, {
+    authFetch(`${apiBase}/api/lookup-foods`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ foods: names }),
@@ -248,31 +247,6 @@ export function Foods() {
       .catch(() => { /* silent fail — don't disturb the user */ });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planLoading]);
-
-  // ── Browser-direct Anthropic fallback (used when proxy /api/lookup-foods fails) ──
-  const lookupFoodsDirect = useCallback(async (names: string[]): Promise<any[]> => {
-    const apiKey = (import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined) ?? null;
-    if (!apiKey) throw new Error('no_api_key');
-    const listBlock = names.map(f => `- ${f}`).join('\n');
-    const prompt = `You are a nutrition expert. For each food below return ONLY a JSON array, no markdown.\nEach item: {"name_hu":string,"calories_per_100g":number,"protein_g":number,"fat_g":number,"carbs_g":number,"category":"Fehérje"|"Zsír"|"Szénhidrát"|"Tejtermék"|"Zöldség"|"Gyümölcs"}\nFoods:\n${listBlock}`;
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 512, messages: [{ role: 'user', content: prompt }] }),
-    });
-    if (!resp.ok) throw new Error('direct_api_error');
-    const data = await resp.json();
-    const rawText = data.content?.[0]?.text ?? '';
-    let cleaned = rawText.trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
-    const arrMatch = cleaned.match(/\[[\s\S]*\]/);
-    const parsed = arrMatch ? JSON.parse(arrMatch[0]) : JSON.parse(cleaned);
-    return Array.isArray(parsed) ? parsed : [];
-  }, []);
 
   // ── Normalize food name: strip "bio " / "friss " / "nyers " prefixes ──
   const normalizeChipName = (raw: string): string => {
@@ -308,7 +282,6 @@ export function Foods() {
     setLookupError(null);
 
     const names = pendingSnapshot.map(c => normalizeChipName(c.raw));
-    console.log("[AddFood] Nutrition lookup for:", names);
 
     const applyResults = (foods: any[]) => {
       setChips(prev =>
@@ -334,7 +307,7 @@ export function Foods() {
       );
     };
 
-    fetch(`${apiBase}/api/lookup-foods`, {
+    authFetch(`${apiBase}/api/lookup-foods`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ foods: names }),
@@ -354,23 +327,16 @@ export function Foods() {
         }
         applyResults(foods);
       })
-      .catch(async (e) => {
-        console.warn("[AddFood] Proxy lookup failed, trying direct API fallback:", e);
-        try {
-          const foods = await lookupFoodsDirect(names);
-          if (foods.length === 0) throw new Error("empty direct response");
-          applyResults(foods);
-        } catch (directErr) {
-          console.error("[AddFood] Both lookup paths failed:", directErr);
-          setLookupError(t("foods.lookupFailed"));
-          setChips(prev =>
-            prev.map(chip =>
-              pendingSnapshot.some(s => s.id === chip.id)
-                ? { ...chip, lookupFailed: true }
-                : chip
-            )
-          );
-        }
+      .catch((e) => {
+        console.error("[AddFood] Proxy lookup failed:", e);
+        setLookupError(t("foods.lookupFailed"));
+        setChips(prev =>
+          prev.map(chip =>
+            pendingSnapshot.some(s => s.id === chip.id)
+              ? { ...chip, lookupFailed: true }
+              : chip
+          )
+        );
       })
       .finally(() => {
         fetchInProgressRef.current = false;
@@ -395,7 +361,6 @@ export function Foods() {
       try {
         const removed = await cleanupCorruptedAIFoods();
         if (removed > 0) {
-          console.log(`[Foods] Törölt korrupt AI ételek száma: ${removed}`);
         }
         await migrateFruitCategories();
       } catch (err) {
@@ -407,7 +372,6 @@ export function Foods() {
   // Reload foods explicitly when quick-mode upload finishes.
   useEffect(() => {
     const handler = () => {
-      console.log("[Foods] foodsUpdated event received — reloading foods");
       refreshPlanFoods();
     };
     window.addEventListener("foodsUpdated", handler);
@@ -803,9 +767,7 @@ export function Foods() {
             <button
               type="button"
               onClick={() => {
-                console.log("[AddFood][Voice] Mic button tapped. isListening =", isListening);
                 if (isListening && recognitionRef.current) {
-                  console.log("[AddFood][Voice] Stopping existing recognition session");
                   recognitionRef.current.stop();
                   setIsListening(false);
                   return;
@@ -819,16 +781,12 @@ export function Foods() {
                   console.warn("[AddFood][Voice] SpeechRecognition not supported in this browser");
                   return;
                 }
-                console.log("[AddFood][Voice] Initializing SpeechRecognition");
                 const rec = new SR();
                 recognitionRef.current = rec;
                 rec.lang = LOCALE_MAP[language] ?? "hu-HU";
                 rec.continuous = true;
                 rec.interimResults = true;
                 rec.onresult = (event: any) => {
-                  console.log("[AddFood][Voice] onresult fired", {
-                    resultCount: event.results.length,
-                  });
                   // Építsük fel a teljes szöveget referenciaként (későbbi bővítéshez)
                   let combined = "";
                   for (let i = 0; i < event.results.length; i++) {
@@ -842,13 +800,11 @@ export function Foods() {
                     const res = event.results[i];
                     if (res.isFinal) {
                       const phrase = res[0].transcript || "";
-                      console.log("[AddFood][Voice] Final result phrase:", phrase);
                       phrase
                         .split(/[,;\n]+/)
                         .map((t: string) => t.trim())
                         .filter(Boolean)
                         .forEach((token: string) => {
-                          console.log("[AddFood][Voice] Creating chip from token:", token);
                           addTokenAsChip(token);
                         });
                     }
@@ -864,11 +820,9 @@ export function Foods() {
                   setIsListening(false);
                 };
                 rec.onend = () => {
-                  console.log("[AddFood][Voice] SpeechRecognition ended");
                   setIsListening(false);
                 };
                 setIsListening(true);
-                console.log("[AddFood][Voice] Starting SpeechRecognition");
                 rec.start();
               }}
               className={`flex items-center justify-center w-16 h-16 rounded-full border-4 ${
@@ -1000,7 +954,6 @@ export function Foods() {
                 try {
                   setAddingFoods(true);
                   setAddResultMessage(null);
-                  console.log("[AddFood] Saving chips (valid + pending):", chipsToSave);
                   const inputs = chipsToSave.map((chip) => {
                     // Prefer category from the API lookup; fall back to local inference
                     const API_CAT_MAP: Record<string, FoodCategory> = {
@@ -1023,7 +976,6 @@ export function Foods() {
                     };
                   });
                   const result = await createFoodsBatch(inputs as any, { upsertNutrition: true, upsertSource: true });
-                  console.log("[AddFood] createFoodsBatch result:", result);
                   // All valid chips are considered processed (created + nutrition-updated in skipped)
                   const processedCount = chipsToSave.length;
                   setAddResultMessage(t("foods.foodAdded").replace("{n}", String(processedCount)));

@@ -6,17 +6,14 @@
  * Requires UNSPLASH_ACCESS_KEY env var set in Vercel dashboard.
  */
 
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
 
 const CACHE: Map<string, { url: string | null; photographer: string | null; ts: number }> = new Map();
 const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 hours in-memory
 
 export default async function handler(req: any, res: any) {
   if (handleCors(req, res)) return;
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const q = (req.query?.q as string || '').trim();

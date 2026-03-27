@@ -270,7 +270,6 @@ export function usePlanData(): PlanDataState {
       try {
         const { getSetting } = await import('../backend/services/SettingsService');
         if ((await getSetting('forceNoActivePlan')) === '1') {
-          console.log('[usePlanData] forceNoActivePlan flag set — returning empty data');
           setPlanData([]);
           setActivePlan(null);
           setIsLoading(false);
@@ -283,7 +282,6 @@ export function usePlanData(): PlanDataState {
       const plan = await NutritionPlanSvc.getActivePlan();
       if (!plan) {
         // Nincs aktív terv: valóban üres állapotot adunk vissza.
-        console.log('[usePlanData] No active plan, returning empty data');
         setPlanData([]);
         setActivePlan(null);
         setIsLoading(false);
@@ -295,7 +293,6 @@ export function usePlanData(): PlanDataState {
       if (!hasActualMealData(weeks)) {
         // Aktív terv van, de nincs benne étkezési adat → fallback.
         // activePlan marad beállítva (van terv), csak az adat üres → hardcoded fallback.
-        console.log('[usePlanData] Active plan has no meal data, using hardcoded fallback');
         setPlanData(getFallbackPlanData());
         // activePlan already set above — do NOT null it out, plan exists
       } else {
@@ -380,7 +377,6 @@ export function usePlanFoods() {
       try {
         const { getSetting } = await import('../backend/services/SettingsService');
         if ((await getSetting('forceNoActivePlan')) === '1') {
-          console.log('[usePlanFoods] forceNoActivePlan flag set — returning empty foods');
           setFoods([]);
           setCategories(['Osszes']);
           setIsLoading(false);
@@ -454,7 +450,6 @@ export function usePlanFoods() {
       }
 
       if (planFoods.length === 0) {
-        console.log('[usePlanFoods] No foods found in DB');
         setFoods([]);
         setCategories(['Osszes']);
         setIsLoading(false);

@@ -8,6 +8,7 @@ import { PageHeader } from "./PageHeader";
 import { useCalorieTracker } from "../hooks/useCalorieTracker";
 import { recognizeFoodFromText, searchFoodKnowledge, AIRecognitionResult, FoodItem, searchCompoundFoods, CompoundFood, CompoundFoodVariant, calculateCompoundFoodNutrition } from "../data/aiFoodKnowledge";
 import { getSetting, setSetting } from "../backend/services/SettingsService";
+import { apiBase, authFetch } from '@/lib/api';
 import { FoodImage } from "./FoodImage";
 
 interface LoggedMeal {
@@ -385,63 +386,49 @@ export function LogMeal() {
     }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
   }, [loggedMeals]);
 
-  // Shared Claude API helper for food analysis
+  // Shared Claude API helper for food analysis — routes through server proxy
   const callClaudeForFood = async (
     prompt: string,
     imageData?: { base64: string; mediaType: string }
   ): Promise<AIFoodAnalysis | null> => {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) return null;
-    const content: any[] = [];
-    if (imageData) {
-      content.push({ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.base64 } });
-    }
-    content.push({ type: 'text', text: prompt });
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const body: Record<string, any> = { prompt, maxTokens: 200 };
+      if (imageData) {
+        body.imageBase64 = imageData.base64;
+        body.imageMediaType = imageData.mediaType;
+      }
+      const resp = await authFetch(`${apiBase}/api/analyze-food`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 200, messages: [{ role: 'user', content }] }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
       if (!resp.ok) return null;
       const data = await resp.json();
-      const text: string = data.content[0].text.trim();
+      const text: string = (data.result || '').trim();
       const match = text.match(/\{[\s\S]*?\}/);
       return match ? JSON.parse(match[0]) : null;
     } catch { return null; }
   };
 
-  // Claude multi-food API helper
+  // Claude multi-food API helper — routes through server proxy
   const callClaudeForMultiMeal = async (
     prompt: string,
     imageData?: { base64: string; mediaType: string }
   ): Promise<MultiMealAnalysis | null> => {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-    if (!apiKey) return null;
-    const content: any[] = [];
-    if (imageData) {
-      content.push({ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.base64 } });
-    }
-    content.push({ type: 'text', text: prompt });
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const body: Record<string, any> = { prompt, maxTokens: 600 };
+      if (imageData) {
+        body.imageBase64 = imageData.base64;
+        body.imageMediaType = imageData.mediaType;
+      }
+      const resp = await authFetch(`${apiBase}/api/analyze-food`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 600, messages: [{ role: 'user', content }] }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
       if (!resp.ok) return null;
       const data = await resp.json();
-      const text: string = data.content[0].text.trim();
+      const text: string = (data.result || '').trim();
       const match = text.match(/\{[\s\S]*\}/);
       if (!match) return null;
       const parsed = JSON.parse(match[0]);
@@ -501,6 +488,13 @@ Válaszolj KIZÁRÓLAG érvényes JSON-nal:
 
     if (!file.type.startsWith('image/')) {
       setRecognitionError(t("logMealExt.errorImageOnly"));
+      return;
+    }
+
+    // File size validation: max 5MB for images
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_IMAGE_SIZE) {
+      setRecognitionError(t("logMealExt.errorFileTooLarge") || "File too large. Max 5MB.");
       return;
     }
 

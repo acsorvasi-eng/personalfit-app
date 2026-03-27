@@ -1,4 +1,7 @@
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
+import { validateBodySize } from './_shared/validate';
+import { sanitizeUserInput } from './_shared/sanitize';
 import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -14,8 +17,20 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name } = req.body || {};
-  if (!name || typeof name !== 'string') {
+  // Auth check
+  try {
+    await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
+  try { validateBodySize(req.body); } catch (err: any) {
+    return res.status(err?.status || 413).json({ error: err?.message || 'Request too large' });
+  }
+
+  const { name: rawName } = req.body || {};
+  const name = sanitizeUserInput(rawName, 500);
+  if (!name) {
     return res.status(400).json({ error: 'Missing or invalid "name" field' });
   }
 
@@ -61,7 +76,7 @@ OR
       console.error('[split-food-name] Failed to parse JSON from Claude:', cleaned);
       return res
         .status(500)
-        .json({ error: 'LLM response was not valid JSON', raw: cleaned });
+        .json({ error: 'Failed to parse food name' });
     }
 
     if (
@@ -69,7 +84,7 @@ OR
       (parsed.type !== 'single' && parsed.type !== 'composite') ||
       !Array.isArray(parsed.ingredients)
     ) {
-      return res.status(500).json({ error: 'Invalid LLM split payload', raw: parsed });
+      return res.status(500).json({ error: 'Invalid response from food name parser' });
     }
 
     const ingredients = parsed.ingredients
@@ -81,10 +96,10 @@ OR
       ingredients,
     });
   } catch (error: any) {
-    console.error('[split-food-name] Error:', error);
+    console.error('[split-food-name] Error:', error?.message || error);
     return res
       .status(500)
-      .json({ error: error?.message || 'Failed to split food name with LLM' });
+      .json({ error: 'An error occurred processing your request.' });
   }
 }
 

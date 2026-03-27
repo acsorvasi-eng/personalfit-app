@@ -1,4 +1,8 @@
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
+import { checkAndIncrementUsage } from './_shared/limits';
+import { sanitizeUserInput } from './_shared/sanitize';
+import { validateBodySize } from './_shared/validate';
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
@@ -62,7 +66,25 @@ export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json');
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Auth check
+  let authUser;
   try {
+    authUser = await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
+  // Rate limiting for chef-review (expensive endpoint)
+  try {
+    await checkAndIncrementUsage(authUser.uid, authUser.isAdmin);
+  } catch (err: any) {
+    if (err?.status === 429) {
+      return res.status(429).json({ error: err.message, resetsAt: err.resetsAt });
+    }
+  }
+
+  try {
+    validateBodySize(req.body);
     const { type } = req.body || {};
 
     // Route recipe / menu / restaurant requests (merged from former api/chef.ts)
@@ -146,8 +168,6 @@ Válaszolj KIZÁRÓLAG JSON-ben, semmi más szöveg:
 {"changes":[{"original":"<eredeti_étel_neve>","replacement":"<javasolt_étel_neve>","reason":"<rövid indok ${language === 'ro' ? 'românul' : language === 'en' ? 'in English' : 'magyarul'}>"}]}
 Ha nincs szükség változtatásra: {"changes":[]}`;
 
-    console.log(`[chef-review] season=${season} month=${month} region="${region}" uniqueMeals=${uniqueMeals.size}`);
-
     const msg = await getClient().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
@@ -157,7 +177,6 @@ Ha nincs szükség változtatásra: {"changes":[]}`;
     const raw = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
     const parsed = extractJSON(raw) as { changes?: Array<{ original: string; replacement: string; reason: string }> } | null;
     const llmChanges = parsed?.changes ?? [];
-    console.log(`[chef-review] LLM suggested ${llmChanges.length} changes`);
 
     // Apply changes to the plan by renaming matching meals (preserves ingredients/calories)
     const improvedPlan = JSON.parse(JSON.stringify(mealPlan)) as typeof mealPlan;
@@ -188,12 +207,11 @@ Ha nincs szükség változtatásra: {"changes":[]}`;
       }
     }
 
-    console.log(`[chef-review] Applied ${appliedChanges.length} change entries`);
     return res.status(200).json({ mealPlan: improvedPlan, changes: appliedChanges });
 
   } catch (err: any) {
-    console.error('[chef-review] Error:', err.message);
-    return res.status(500).json({ error: err.message });
+    console.error('[chef-review] Error:', err?.message || err);
+    return res.status(err?.status || 500).json({ error: 'An error occurred processing your request.' });
   }
 }
 
@@ -244,8 +262,6 @@ Return ONLY valid JSON (no markdown, no extra text):
 
 Keep steps concise (max 6-8 steps). Use everyday language.`;
 
-  console.log(`[chef-review/recipe] request: "${meal.name}" lang=${language}`);
-
   const msg = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
@@ -276,15 +292,12 @@ async function handleFindRestaurants(req: any, res: any) {
 
   // If no API key configured, return empty so the client falls back to AI suggestions
   if (!apiKey) {
-    console.log('[chef-review/find-restaurants] No GOOGLE_PLACES_API_KEY set — returning empty');
     return res.status(200).json({ restaurants: [], fallback: true });
   }
 
   try {
     const query = encodeURIComponent(`${mealName} restaurant`);
     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&type=restaurant&key=${apiKey}`;
-
-    console.log(`[chef-review/find-restaurants] Searching: "${mealName}" near ${lat},${lng} radius=${radius}`);
 
     const resp = await fetch(url);
     if (!resp.ok) {
@@ -307,7 +320,6 @@ async function handleFindRestaurants(req: any, res: any) {
       openNow: place.opening_hours?.open_now ?? null,
     }));
 
-    console.log(`[chef-review/find-restaurants] Found ${restaurants.length} restaurants`);
     return res.status(200).json({ restaurants, fallback: false });
   } catch (err: any) {
     console.error('[chef-review/find-restaurants] Error:', err.message);
@@ -329,7 +341,6 @@ async function handleFindStores(req: any, res: any) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
   if (!apiKey) {
-    console.log('[chef-review/find-stores] No GOOGLE_PLACES_API_KEY — returning fallback');
     return res.status(200).json({ stores: [], fallback: true });
   }
 
@@ -337,8 +348,6 @@ async function handleFindStores(req: any, res: any) {
     // Search for supermarkets near the user
     const query = encodeURIComponent('supermarket grocery store');
     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&location=${lat},${lng}&radius=${radius}&type=supermarket&key=${apiKey}`;
-
-    console.log(`[chef-review/find-stores] Searching stores near ${lat},${lng} radius=${radius}`);
 
     const resp = await fetch(url);
     if (!resp.ok) {
@@ -358,7 +367,6 @@ async function handleFindStores(req: any, res: any) {
       openNow: place.opening_hours?.open_now ?? null,
     }));
 
-    console.log(`[chef-review/find-stores] Found ${stores.length} stores`);
     return res.status(200).json({ stores, fallback: false });
   } catch (err: any) {
     console.error('[chef-review/find-stores] Error:', err.message);
@@ -402,8 +410,6 @@ Return ONLY valid JSON array (no markdown):
 ]
 
 Be realistic about restaurant types in ${city}. Use local restaurant categories and dish names.`;
-
-  console.log(`[chef-review/menu] request: "${targetMeal.name}" city=${city} lang=${language}`);
 
   const msg = await getClient().messages.create({
     model: 'claude-haiku-4-5-20251001',

@@ -31,7 +31,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { apiBase } from '@/lib/api';
+import { apiBase, authFetch } from '@/lib/api';
 import * as AIParser from '../backend/services/AIParserService';
 import { extractTextFromPDF } from '../backend/services/AIParserService';
 import type { AIParsedDocument, AIParsedUserProfile } from '../backend/services/AIParserService';
@@ -217,7 +217,6 @@ async function populateUserProfile(extracted: AIParsedUserProfile): Promise<stri
     } catch {
       // window not available (non-browser env) — ignore
     }
-    console.log('[Upload] Profile updated:', fieldsUpdated.join(', '));
   }
 
   return fieldsUpdated;
@@ -295,7 +294,7 @@ export function useDataUpload() {
 
           if (base64) {
             try {
-              const resp = await fetch(`${apiBase}/api/parse-document`, {
+              const resp = await authFetch(`${apiBase}/api/parse-document`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -313,10 +312,6 @@ export function useDataUpload() {
               }
 
               const response = await resp.json();
-              console.log('[upload] API response:', JSON.stringify(response).substring(0, 500));
-              console.log('[upload] stats:', response.stats);
-              console.log('[DEBUG] response keys:', Object.keys(response || {}));
-              console.log('[DEBUG] response.stats:', JSON.stringify(response?.stats));
               if (!response.result) {
                 throw new Error('Üres válasz az AI PDF parser-től');
               }
@@ -355,7 +350,6 @@ export function useDataUpload() {
 
               if (response.stats) {
                 const apiStats = response.stats;
-                console.log('[useDataUpload] setting importStats from API:', apiStats);
                 setState(prev => ({
                   ...prev,
                   importStats: {
@@ -474,10 +468,6 @@ export function useDataUpload() {
       // ── Step 1: Populate user profile from extracted data ──
       setStep('parsing', 20);
       const extractedFields = await populateUserProfile(parsed.userProfile);
-      if (extractedFields.length > 0) {
-        console.log(`[Upload] Extracted personal data: ${extractedFields.join(', ')}`);
-      }
-
       // ── Step 2: Create nutrition plan ──
       setStep('creating_plan', 30);
       const label = `${sourceLabel} — ${new Date().toLocaleDateString(getLocale(language))}`;
@@ -492,7 +482,6 @@ export function useDataUpload() {
       // Pre-creating them here ensures they exist in the catalog BEFORE the nutrition plan importer
       // tries to match meal ingredients, which can have compound/messy names that fail validation.
       if (Array.isArray(parsed.ingredients) && parsed.ingredients.length > 0) {
-        console.log(`[Upload] Pre-populating ${parsed.ingredients.length} ingredients from clean list`);
         const ingredientInputs: FoodCatalogSvc.CreateFoodInput[] = parsed.ingredients.map(name => ({
           name,
           description: name,
@@ -504,7 +493,6 @@ export function useDataUpload() {
           source: 'user_uploaded' as const,
         }));
         const batchResult = await FoodCatalogSvc.createFoodsBatch(ingredientInputs);
-        console.log(`[Upload] Ingredients pre-populated: ${batchResult.created.length} new, ${batchResult.skipped.length} skipped`);
         newFoodsCount += batchResult.created.length;
       }
 
@@ -543,8 +531,6 @@ export function useDataUpload() {
         totalWeeks = parsed.nutritionPlan.detected_weeks;
         newFoodsCount += plan.stats.createdNew;
 
-        // Log import stats for diagnostics
-        console.log('[Upload] Import stats:', JSON.stringify(plan.stats));
         if (plan.stats.errors.length > 0) {
           allWarnings.push(...plan.stats.errors);
         }
@@ -560,7 +546,6 @@ export function useDataUpload() {
         totalDays = mealDays.length;
         totalMeals = meals.length;
 
-        console.log(`[Upload] Plan populated: ${totalDays} days, ${totalMeals} meals, ${newFoodsCount} new foods, ${plan.stats.totalMealItems} meal items`);
       } else {
         // No nutrition plan found — create empty plan shell, only personal data was extracted
         allWarnings.push('Etrend terv nem található a dokumentumban. Csak személyes adatok kerülték kinyeresre.');
@@ -600,7 +585,6 @@ export function useDataUpload() {
           notes: m.notes || 'PDF/szövegből kinyert mérések',
         });
         measurementsRecorded = true;
-        console.log('[Upload] Measurements recorded from document:', m);
       } else if (parsed.userProfile.weight) {
         // At minimum record weight if available
         await MeasurementSvc.recordMeasurement({
@@ -726,9 +710,7 @@ export function useDataUpload() {
         extractedFields,
       });
       const autoPublished = await setStagingActive();
-      if (autoPublished) {
-        console.log('[Upload] Auto-published plan:', label);
-      } else {
+      if (!autoPublished) {
         console.warn('[Upload] Auto-publish: no staging data found after stagePlan');
       }
 
@@ -782,9 +764,6 @@ export function useDataUpload() {
       // Step 1: update basic profile info (cheap, keeps UX consistent)
       setStep('parsing', 20);
       const extractedFields = await populateUserProfile(parsed.userProfile);
-      if (extractedFields.length > 0) {
-        console.log(`[Upload/FoodsOnly] Extracted personal data: ${extractedFields.join(', ')}`);
-      }
 
       // Step 2: collect unique foods from nutrition plan
       if (!parsed.nutritionPlan || parsed.nutritionPlan.weeks.length === 0) {
@@ -866,8 +845,6 @@ export function useDataUpload() {
 
       // Step 3: write foods to catalog (batched)
       const summary = await FoodCatalogSvc.createFoodsBatch(foodInputs);
-
-      console.log('[Upload/FoodsOnly] Foods created:', summary.created.length, 'skipped:', summary.skipped.length);
 
       // Step 4: finalize quick upload result (no full plan yet)
       setStep('complete', 100);
@@ -958,15 +935,12 @@ export function useDataUpload() {
           }
 
           const response = await resp.json();
-          console.log('[upload/foods-only/quick] API response:', JSON.stringify(response).substring(0, 400));
-
           const ingredientsFromApi: string[] = Array.isArray(response.ingredients)
             ? response.ingredients
             : [];
 
           if (response.stats) {
             const apiStats = response.stats;
-            console.log('[useDataUpload/foods-only] setting importStats from quick API:', apiStats);
             setState(prev => ({
               ...prev,
               importStats: {
@@ -1017,8 +991,6 @@ export function useDataUpload() {
           }
 
           const summary = await FoodCatalogSvc.createFoodsBatch(foodInputs);
-          console.log('[Upload/FoodsOnly/quick] Foods created:', summary.created.length, 'skipped:', summary.skipped.length);
-
           setStep('complete', 100);
 
           const result: UploadResult = {

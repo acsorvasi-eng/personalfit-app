@@ -1,4 +1,7 @@
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
+import { checkAndIncrementUsage } from './_shared/limits';
+import { validateBodySize } from './_shared/validate';
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
@@ -92,6 +95,27 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Auth check
+  let authUser;
+  try {
+    authUser = await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
+  // Rate limiting
+  try {
+    await checkAndIncrementUsage(authUser.uid, authUser.isAdmin);
+  } catch (err: any) {
+    if (err?.status === 429) {
+      return res.status(429).json({ error: err.message, resetsAt: err.resetsAt });
+    }
+  }
+
+  try { validateBodySize(req.body); } catch (err: any) {
+    return res.status(err?.status || 413).json({ error: err?.message || 'Request too large' });
+  }
+
   const { content, text, extracted_text } = req.body;
   const rawText: string = content || text || extracted_text || '';
 
@@ -109,8 +133,6 @@ export default async function handler(req: any, res: any) {
       detected_days_per_week: payload.detected_days_per_week,
       weeks: payload.weeks,
     };
-
-    console.log(`[parse-document] Done: ${payload.ingredients.length} ingredients, ${payload.weeks.length} weeks`);
 
     const flatWeeks = Array.isArray(result.weeks)
       ? (result.weeks as any[]).reduce<any[]>((acc, w) => {
@@ -140,8 +162,8 @@ export default async function handler(req: any, res: any) {
     });
 
   } catch (error: any) {
-    console.error('[parse-document] Error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to parse document' });
+    console.error('[parse-document] Error:', error?.message || error);
+    return res.status(error?.status || 500).json({ error: 'An error occurred parsing the document.' });
   }
 }
 

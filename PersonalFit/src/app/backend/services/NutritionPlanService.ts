@@ -532,8 +532,6 @@ export async function importFromAIParse(
     total_weeks: parsed.detected_weeks,
   });
 
-  console.log(`[NutritionPlanSvc] Importing plan: "${label}", ${parsed.detected_weeks} weeks, ${parsed.weeks.length} week groups`);
-
   // ─── Step 2: Collect all unique base ingredients & resolve/create foods ─────
   const foodIdCache = new Map<string, string>(); // canonicalIngredientName → food_id
   const foodDataCache = new Map<string, {
@@ -600,7 +598,6 @@ export async function importFromAIParse(
                 fat_per_100g: fat,
               });
               stats.createdNew++;
-              console.log(`[NutritionPlanSvc] Created food: "${displayName}" (${cal} kcal, ${pro}g P, ${carb}g C, ${fat}g F)`);
             } catch (err: any) {
               // Duplicate name error — try to find by name again
               if (err?.message?.includes('Duplikált')) {
@@ -625,8 +622,6 @@ export async function importFromAIParse(
       }
     }
   }
-
-  console.log(`[NutritionPlanSvc] Food resolution complete: ${stats.matchedExisting} matched, ${stats.createdNew} created, ${stats.totalIngredients} total`);
 
   // ─── Step 3: Create meal days, meals, and meal items ──────
   // Performance optimization: insert all items first, then recalc macros per meal once.
@@ -702,8 +697,6 @@ export async function importFromAIParse(
   for (const mealId of mealsToRecalc) {
     await recalculateMealTotals(mealId);
   }
-
-  console.log(`[NutritionPlanSvc] Import complete: ${stats.totalDays} days, ${stats.totalMeals} meals, ${stats.totalMealItems} meal items`);
 
   notifyDBChange({ store: 'foods', action: 'put' });
   notifyDBChange({ store: 'meals', action: 'put' });
@@ -856,7 +849,6 @@ async function appendToPlanInternal(
                   foodIdCache.set(key, foodId);
                   foodDataCache.set(key, foodData);
                   stats.createdNew++;
-                  console.log(`[NutritionPlanSvc] Created food (merge): "${displayName}" (${cal} kcal, ${pro}g P, ${carb}g C, ${fat}g F)`);
                 } catch (err: any) {
                   if (err?.message?.includes('Duplikált')) {
                     const retrySearch = await FoodCatalogService.searchFoods(displayName);

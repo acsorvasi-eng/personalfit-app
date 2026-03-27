@@ -486,12 +486,10 @@ export function UnifiedMenu() {
   const [mealSettings, setMealSettings] = useState<MealSettings | null>(null);
   useEffect(() => {
     getMealSettings().then((settings) => {
-      console.log("[UnifiedMenu] loaded mealSettings:", settings);
       setMealSettings(settings);
     });
     const onUpdated = () =>
       getMealSettings().then((settings) => {
-        console.log("[UnifiedMenu] reloaded mealSettings (after save):", settings);
         setMealSettings(settings);
       });
     window.addEventListener("mealSettingsUpdated", onUpdated);

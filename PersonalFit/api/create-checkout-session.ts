@@ -10,7 +10,8 @@
  *   APP_URL                — Base URL for success/cancel redirects (https://yourapp.com)
  */
 
-function handleCors(req: any, res: any): boolean { res.setHeader('Access-Control-Allow-Origin', '*'); res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'); res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); if (req.method === 'OPTIONS') { res.status(204).end(); return true; } return false; }
+import { handleCors } from './_shared/cors';
+import { verifyAuth, sendAuthError } from './_shared/auth';
 import Stripe from 'stripe';
 
 function getStripe(): Stripe | null {
@@ -23,6 +24,14 @@ export default async function handler(req: any, res: any) {
   if (handleCors(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // Auth check — use verified UID from the token
+  let authUser;
+  try {
+    authUser = await verifyAuth(req);
+  } catch (err: any) {
+    return sendAuthError(res, err);
+  }
+
   const stripe = getStripe();
   if (!stripe) {
     return res.status(503).json({ error: 'Stripe is not configured on this server.' });
@@ -33,8 +42,9 @@ export default async function handler(req: any, res: any) {
     return res.status(503).json({ error: 'STRIPE_PRICE_ID env var is missing.' });
   }
 
-  const { userId, userEmail } = req.body || {};
-  if (!userId) return res.status(400).json({ error: 'userId required' });
+  // Use verified UID and email from token, not from request body
+  const userId = authUser.uid;
+  const userEmail = authUser.email;
 
   const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
 
@@ -53,6 +63,6 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ url: session.url });
   } catch (err: any) {
     console.error('[create-checkout-session] Stripe error:', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Failed to create checkout session. Please try again.' });
   }
 }

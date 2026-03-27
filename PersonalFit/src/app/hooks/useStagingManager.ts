@@ -104,7 +104,6 @@ export function stagePlan(params: {
     publishedAt: null,
   };
   writeStaging(staging);
-  console.log('[StagingManager] Plan staged:', staging.label);
 }
 
 /**
