@@ -1,7 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence } from "firebase/auth";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
+// App Check temporarily disabled — was blocking Google Sign-In on Vercel
+// import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD6Coh3mrokyWQ-AV6rP1rx1nbVfMQai5I",
@@ -26,13 +27,8 @@ try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
 
-  // App Check — protects Firestore/Auth from unauthorized access
-  if (typeof window !== 'undefined' && !isNative) {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider('6Lfpb5osAAAAAEgIWqNyt9ZcAKokIQKSlbi0E_xK'),
-      isTokenAutoRefreshEnabled: true,
-    });
-  }
+  // App Check temporarily disabled — was blocking Google Sign-In on Vercel
+  // Will re-enable after proper reCAPTCHA domain configuration
 
   // Capacitor WebView needs explicit persistence — getAuth() default fails silently
   if (isNative) {
