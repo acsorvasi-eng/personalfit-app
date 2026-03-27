@@ -289,14 +289,11 @@ function MealDetailOverlay({
           <div className="space-y-2">
             {details.map((ing, idx) => (
               <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <FoodImage foodName={ing.name} size="sm" fallbackEmoji="🥄" />
-                  <div className="min-w-0">
-                    <p className="text-[15px] font-medium text-gray-800 truncate">{translateFoodName(ing.name, language)}</p>
-                    {ing.quantity && <p className="text-sm text-gray-400">{ing.quantity}</p>}
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing.name, language)}</p>
+                  {ing.quantity && <p className="text-sm text-gray-400">{ing.quantity}</p>}
                 </div>
-                <span className="text-sm font-bold text-primary flex-shrink-0">{Math.round(ing.calories)} kcal</span>
+                <span className="text-sm font-bold text-primary flex-shrink-0 ml-2">{Math.round(ing.calories)} kcal</span>
               </div>
             ))}
           </div>
@@ -309,8 +306,7 @@ function MealDetailOverlay({
           <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients') || 'Összetevők'}</h4>
           <div className="space-y-2">
             {meal.ingredients.map((ing, idx) => (
-              <div key={idx} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
-                <FoodImage foodName={ing} size="sm" fallbackEmoji="🥄" />
+              <div key={idx} className="flex items-center bg-gray-50 rounded-xl px-4 py-3">
                 <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing, language)}</p>
               </div>
             ))}

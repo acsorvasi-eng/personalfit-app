@@ -15,7 +15,9 @@ interface FoodImageEntry {
 
 const FOOD_IMAGES: FoodImageEntry[] = [
   // ── Breakfast items ──
-  { keywords: ['kása', 'kasa', 'porridge', 'oatmeal', 'zabpehely', 'terci'],
+  { keywords: ['köles', 'koles', 'millet porridge'],
+    url: 'https://images.unsplash.com/photo-1495214783159-3503fd1b572d?w=400&h=300&fit=crop&auto=format', emoji: '🥣' },
+  { keywords: ['kása', 'kasa', 'porridge', 'oatmeal', 'zabkása', 'zabpehely', 'terci'],
     url: 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=400&h=300&fit=crop&auto=format', emoji: '🥣' },
   { keywords: ['tojás', 'tojas', 'egg', 'rántotta', 'rantotta', 'scrambled', 'omlett', 'ou'],
     url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=300&fit=crop&auto=format', emoji: '🍳' },
