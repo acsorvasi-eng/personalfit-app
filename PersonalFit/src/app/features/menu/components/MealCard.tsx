@@ -223,6 +223,8 @@ function MealDetailOverlay({
   onRecipeOpen: (tab: 'home' | 'restaurant') => void;
 }) {
   const { t, language } = useLanguage();
+  const [showRecipeSheet, setShowRecipeSheet] = useState(false);
+  const [recipeSheetTab, setRecipeSheetTab] = useState<'home' | 'restaurant'>('home');
   const totalKcal = parseInt(meal.calories?.replace(/[^0-9]/g, '') || '0') || 0;
   const details = meal.ingredientDetails as Array<{ name: string; quantity: string; calories: number; protein: number; carbs: number; fat: number }> | undefined;
   const mealProtein = meal.totalProtein ?? Math.round((totalKcal * 0.30) / 4);
@@ -230,12 +232,133 @@ function MealDetailOverlay({
   const mealFat = meal.totalFat ?? Math.round((totalKcal * 0.30) / 9);
   const canShowRecipe = mealType === 'lunch' || mealType === 'dinner' || mealType === 'breakfast';
 
-  // Drag to dismiss
-  const sheetY = useMotionValue(0);
-  const bgOpacity = useTransform(sheetY, [0, 400], [0.5, 0]);
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 bg-white overflow-y-auto"
+      style={{ zIndex: 9999, paddingTop: 'env(safe-area-inset-top, 20px)' }}
+    >
+      {/* Header with X close button */}
+      <div className="flex items-center justify-between px-5 py-3">
+        <h2 className="font-bold text-lg text-foreground">{title} · {time}</h2>
+        <button
+          onClick={onClose}
+          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
+        >
+          <X className="w-5 h-5 text-gray-500" />
+        </button>
+      </div>
 
-  const handleSheetDragEnd = useCallback((_: any, info: PanInfo) => {
-    if (info.offset.y > 150 || info.velocity.y > 500) {
+      {/* Hero image */}
+      <div className="px-5 pb-3">
+        <div className="rounded-2xl overflow-hidden shadow-lg" style={{ height: 200 }}>
+          <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji="🍽️" className="w-full h-full" />
+        </div>
+      </div>
+
+      {/* Meal name */}
+      <div className="px-5 mt-1">
+        <h3 className="text-xl font-bold text-foreground">{meal.name}</h3>
+      </div>
+
+      {/* Macro cards */}
+      <div className="px-5 mt-4">
+        <div className="grid grid-cols-4 gap-2">
+          <MacroCard value={`${totalKcal}`} unit="kcal" emoji="🔥" primary />
+          <MacroCard value={`${mealProtein}`} unit="g" emoji="🍖" />
+          <MacroCard value={`${mealCarbs}`} unit="g" emoji="🌾" />
+          <MacroCard value={`${mealFat}`} unit="g" emoji="🫒" />
+        </div>
+      </div>
+
+      {/* Ingredients */}
+      {details && details.length > 0 && (
+        <div className="px-5 mt-5">
+          <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients')}</h4>
+          <div className="space-y-2">
+            {details.map((ing, idx) => (
+              <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing.name, language)}</p>
+                  {ing.quantity && <p className="text-sm text-gray-400">{ing.quantity}</p>}
+                </div>
+                <span className="text-sm font-bold text-primary flex-shrink-0 ml-2">{Math.round(ing.calories)} kcal</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fallback ingredient list */}
+      {(!details || details.length === 0) && meal.ingredients && meal.ingredients.length > 0 && (
+        <div className="px-5 mt-5">
+          <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients')}</h4>
+          <div className="space-y-2">
+            {meal.ingredients.map((ing, idx) => (
+              <div key={idx} className="flex items-center bg-gray-50 rounded-xl px-4 py-3">
+                <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing, language)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      {canShowRecipe && (
+        <div className="px-5 mt-5 flex gap-3 pb-6">
+          <button
+            onClick={() => { setRecipeSheetTab('home'); setShowRecipeSheet(true); }}
+            className="flex-1 h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
+          >
+            🍳 {t('menu.recipeBtn')}
+          </button>
+          <button
+            onClick={() => { setRecipeSheetTab('restaurant'); setShowRecipeSheet(true); }}
+            className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
+          >
+            🛵 {t('menu.orderBtn')}
+          </button>
+        </div>
+      )}
+
+      <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
+
+      {/* Recipe bottom sheet — slides up OVER the detail page */}
+      <AnimatePresence>
+        {showRecipeSheet && (
+          <RecipeBottomSheet
+            onClose={() => setShowRecipeSheet(false)}
+            onFullOpen={() => {
+              setShowRecipeSheet(false);
+              onRecipeOpen(recipeSheetTab);
+            }}
+            tab={recipeSheetTab}
+            mealName={meal.name}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Recipe bottom sheet (slides up over detail page, drag to dismiss)
+// ═══════════════════════════════════════════════════════════════
+
+function RecipeBottomSheet({ onClose, onFullOpen, tab, mealName }: {
+  onClose: () => void;
+  onFullOpen: () => void;
+  tab: 'home' | 'restaurant';
+  mealName: string;
+}) {
+  const { t } = useLanguage();
+  const sheetY = useMotionValue(0);
+
+  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
+    if (info.offset.y > 120 || info.velocity.y > 400) {
       onClose();
     }
   }, [onClose]);
@@ -245,14 +368,14 @@ function MealDetailOverlay({
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: 0.4 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0"
-        style={{ zIndex: 9998, backgroundColor: 'rgba(0,0,0,0.5)', opacity: bgOpacity }}
+        className="fixed inset-0 bg-black"
+        style={{ zIndex: 10000 }}
         onClick={onClose}
       />
 
-      {/* Bottom sheet */}
+      {/* Sheet */}
       <motion.div
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
@@ -261,95 +384,37 @@ function MealDetailOverlay({
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.2}
-        onDragEnd={handleSheetDragEnd}
-        style={{ y: sheetY, zIndex: 9999 }}
-        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl overflow-hidden"
-        // Max height: 92% of screen
+        onDragEnd={handleDragEnd}
+        style={{ y: sheetY, zIndex: 10001 }}
+        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl"
       >
-        <div className="max-h-[92vh] overflow-y-auto">
+        <div className="max-h-[75vh] overflow-y-auto">
           {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white z-10">
+          <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white rounded-t-3xl z-10">
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
 
-          {/* Hero image */}
           <div className="px-5 pb-3">
-            <div className="rounded-2xl overflow-hidden shadow-lg" style={{ height: 200 }}>
-              <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji="🍽️" className="w-full h-full" />
-            </div>
+            <h3 className="font-bold text-lg text-foreground">
+              {tab === 'home' ? `🍳 ${t('menu.recipeBtn')}` : `🛵 ${t('menu.orderBtn')}`}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">{mealName}</p>
           </div>
 
-          {/* Meal name + time */}
-          <div className="px-5">
-            <h3 className="text-xl font-bold text-foreground">{meal.name}</h3>
-            <div className="flex items-center gap-1.5 mt-1">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-sm text-gray-400">{title} · {time}</span>
-            </div>
+          {/* Placeholder — this will open the full RecipeOverlay */}
+          <div className="px-5 pb-6">
+            <button
+              onClick={onFullOpen}
+              className="w-full h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
+            >
+              {tab === 'home'
+                ? `🍳 ${t('recipe.showFullRecipe') || 'Teljes recept megnyitása'}`
+                : `🛵 ${t('recipe.showRestaurants') || 'Éttermek és napi menük'}`
+              }
+            </button>
           </div>
 
-          {/* Macro cards */}
-          <div className="px-5 mt-4">
-            <div className="grid grid-cols-4 gap-2">
-              <MacroCard value={`${totalKcal}`} unit="kcal" emoji="🔥" primary />
-              <MacroCard value={`${mealProtein}`} unit="g" emoji="🍖" />
-              <MacroCard value={`${mealCarbs}`} unit="g" emoji="🌾" />
-              <MacroCard value={`${mealFat}`} unit="g" emoji="🫒" />
-            </div>
-          </div>
-
-          {/* Ingredients */}
-          {details && details.length > 0 && (
-            <div className="px-5 mt-5">
-              <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients')}</h4>
-              <div className="space-y-2">
-                {details.map((ing, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing.name, language)}</p>
-                      {ing.quantity && <p className="text-sm text-gray-400">{ing.quantity}</p>}
-                    </div>
-                    <span className="text-sm font-bold text-primary flex-shrink-0 ml-2">{Math.round(ing.calories)} kcal</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Fallback: plain ingredient list */}
-          {(!details || details.length === 0) && meal.ingredients && meal.ingredients.length > 0 && (
-            <div className="px-5 mt-5">
-              <h4 className="font-semibold text-base text-foreground mb-3">{t('menu.ingredients')}</h4>
-              <div className="space-y-2">
-                {meal.ingredients.map((ing, idx) => (
-                  <div key={idx} className="flex items-center bg-gray-50 rounded-xl px-4 py-3">
-                    <p className="text-[15px] font-medium text-gray-800">{translateFoodName(ing, language)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          {canShowRecipe && (
-            <div className="px-5 mt-5 flex gap-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}>
-              <button
-                onClick={() => { onClose(); setTimeout(() => onRecipeOpen('home'), 200); }}
-                className="flex-1 h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
-              >
-                🍳 {t('menu.recipeBtn')}
-              </button>
-              <button
-                onClick={() => { onClose(); setTimeout(() => onRecipeOpen('restaurant'), 200); }}
-                className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
-              >
-                🛵 {t('menu.orderBtn')}
-              </button>
-            </div>
-          )}
-
-          {/* Bottom padding if no buttons */}
-          {!canShowRecipe && <div className="h-[max(1.5rem,env(safe-area-inset-bottom))]" />}
+          <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
         </div>
       </motion.div>
     </>
