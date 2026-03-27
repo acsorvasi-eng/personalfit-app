@@ -140,22 +140,19 @@ export function MealCard({
           onPointerCancel={clearLongPress}
           className={`relative flex items-center gap-3 p-3 rounded-2xl border ${cardBorder} ${cardBg} transition-colors select-none touch-pan-y`}
         >
-          {/* Food image (left) — real photo from Unsplash or colorful emoji */}
-          <div className="flex-shrink-0 relative">
+          {/* Food image (left) */}
+          <div className="flex-shrink-0">
             <FoodImage
               foodName={mealName || title}
               size="md"
               fallbackEmoji={vis.emoji}
             />
-            {/* Meal type badge overlay on image */}
-            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${vis.bg} border-2 border-white flex items-center justify-center text-xs`}>
-              {vis.emoji}
-            </div>
           </div>
 
           {/* Content (center) */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
+              <span className="text-base">{vis.emoji}</span>
               <span className={`font-bold text-[15px] ${checked ? 'text-green-700 line-through' : isFocus ? 'text-primary' : 'text-foreground'}`}>
                 {title}
               </span>
