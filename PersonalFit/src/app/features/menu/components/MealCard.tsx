@@ -223,12 +223,19 @@ function MealDetailOverlay({
   onRecipeOpen: (tab: 'home' | 'restaurant') => void;
 }) {
   const { t, language } = useLanguage();
+  const [recipeSheet, setRecipeSheet] = useState<'home' | 'restaurant' | null>(null);
   const totalKcal = parseInt(meal.calories?.replace(/[^0-9]/g, '') || '0') || 0;
   const details = meal.ingredientDetails as Array<{ name: string; quantity: string; calories: number; protein: number; carbs: number; fat: number }> | undefined;
   const mealProtein = meal.totalProtein ?? Math.round((totalKcal * 0.30) / 4);
   const mealCarbs = meal.totalCarbs ?? Math.round((totalKcal * 0.40) / 4);
   const mealFat = meal.totalFat ?? Math.round((totalKcal * 0.30) / 9);
   const canShowRecipe = mealType === 'lunch' || mealType === 'dinner' || mealType === 'breakfast';
+
+  // Bottom sheet drag
+  const sheetY = useMotionValue(0);
+  const handleSheetDragEnd = useCallback((_: any, info: PanInfo) => {
+    if (info.offset.y > 100 || info.velocity.y > 400) setRecipeSheet(null);
+  }, []);
 
   return (
     <motion.div
@@ -304,17 +311,17 @@ function MealDetailOverlay({
         </div>
       )}
 
-      {/* Action buttons — directly open RecipeOverlay */}
+      {/* Action buttons — open recipe sheet INSIDE detail page */}
       {canShowRecipe && (
         <div className="px-5 mt-5 flex gap-3" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 1rem)' }}>
           <button
-            onClick={() => { onClose(); setTimeout(() => onRecipeOpen('home'), 150); }}
+            onClick={() => setRecipeSheet('home')}
             className="flex-1 h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
           >
             🍳 {t('menu.recipeBtn')}
           </button>
           <button
-            onClick={() => { onClose(); setTimeout(() => onRecipeOpen('restaurant'), 150); }}
+            onClick={() => setRecipeSheet('restaurant')}
             className="flex-1 h-14 bg-primary/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-2 text-base border border-primary/20 active:bg-primary/20 transition-colors"
           >
             🛵 {t('menu.orderBtn')}
@@ -323,6 +330,69 @@ function MealDetailOverlay({
       )}
 
       {!canShowRecipe && <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />}
+
+      {/* ── Recipe/Order bottom sheet (slides up INSIDE detail page) ── */}
+      <AnimatePresence>
+        {recipeSheet && (
+          <>
+            {/* Backdrop — tap to dismiss */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black"
+              style={{ zIndex: 10000 }}
+              onClick={() => setRecipeSheet(null)}
+            />
+
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.2}
+              onDragEnd={handleSheetDragEnd}
+              style={{ y: sheetY, zIndex: 10001 }}
+              className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl"
+            >
+              <div className="max-h-[70vh] overflow-y-auto">
+                {/* Drag handle */}
+                <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white rounded-t-3xl z-10">
+                  <div className="w-10 h-1 rounded-full bg-gray-300" />
+                </div>
+
+                <div className="px-5 pb-4">
+                  <h3 className="font-bold text-lg text-foreground mb-1">
+                    {recipeSheet === 'home' ? '🍳 ' + t('menu.recipeBtn') : '🛵 ' + t('menu.orderBtn')}
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">{meal.name}</p>
+
+                  {/* "Open full recipe/restaurant page" button */}
+                  <button
+                    onClick={() => {
+                      const tab = recipeSheet;
+                      setRecipeSheet(null);
+                      onClose();
+                      setTimeout(() => onRecipeOpen(tab!), 150);
+                    }}
+                    className="w-full h-14 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-base active:bg-primary/90 transition-colors"
+                  >
+                    {recipeSheet === 'home'
+                      ? '🍳 ' + (t('recipe.showFullRecipe') || 'Teljes recept megnyitása')
+                      : '🛵 ' + (t('recipe.showRestaurants') || 'Éttermek és napi menük')
+                    }
+                  </button>
+                </div>
+
+                <div className="h-[max(1rem,env(safe-area-inset-bottom))]" />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
