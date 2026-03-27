@@ -501,6 +501,8 @@ const hu = {
   'fasting.reason.ashWednesday': 'Hamvazószerda',
   'fasting.reason.goodFriday': 'Nagypéntek',
   'fasting.reason.lentenFriday': 'Nagyböjti péntek',
+  'fasting.reason.lent': 'Nagyböjt',
+  'fasting.reason.adventFriday': 'Adventi péntek',
   'fasting.reason.customDay': 'Egyéni böjti nap',
   'fasting.dayNames.mon': 'H',
   'fasting.dayNames.tue': 'K',

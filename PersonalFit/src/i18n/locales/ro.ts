@@ -428,6 +428,8 @@ const ro: LocalePartial = {
   'fasting.reason.ashWednesday': 'Miercurea Cenușii',
   'fasting.reason.goodFriday': 'Vinerea Mare',
   'fasting.reason.lentenFriday': 'Vineri din Postul Mare',
+  'fasting.reason.lent': 'Postul Mare',
+  'fasting.reason.adventFriday': 'Vineri din Advent',
   'fasting.reason.customDay': 'Zi de post personalizată',
   'fasting.dayNames.mon': 'L',
   'fasting.dayNames.tue': 'Ma',

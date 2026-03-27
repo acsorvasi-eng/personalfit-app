@@ -428,6 +428,8 @@ const en: LocalePartial = {
   'fasting.reason.ashWednesday': 'Ash Wednesday',
   'fasting.reason.goodFriday': 'Good Friday',
   'fasting.reason.lentenFriday': 'Lenten Friday',
+  'fasting.reason.lent': 'Lent',
+  'fasting.reason.adventFriday': 'Advent Friday',
   'fasting.reason.customDay': 'Custom fasting day',
   'fasting.dayNames.mon': 'Mon',
   'fasting.dayNames.tue': 'Tue',

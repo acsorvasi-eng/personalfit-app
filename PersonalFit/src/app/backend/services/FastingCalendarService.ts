@@ -177,20 +177,30 @@ function checkCatholic(date: Date): FastingDayInfo {
 
   // Ash Wednesday: 46 days before Easter
   const ashWednesday = addDays(easter, -46);
+  const holySaturday = addDays(easter, -1);
+
+  // Ash Wednesday — strict fast (no animal products)
   if (sameDay(date, ashWednesday)) {
-    return { isFasting: true, restrictions: ['meat'], reasonKey: 'fasting.reason.ashWednesday' };
+    return { isFasting: true, restrictions: ['meat', 'dairy', 'eggs'], reasonKey: 'fasting.reason.ashWednesday' };
   }
 
-  // Good Friday
+  // Good Friday — strict fast (no animal products)
   const goodFriday = addDays(easter, -2);
   if (sameDay(date, goodFriday)) {
-    return { isFasting: true, restrictions: ['meat'], reasonKey: 'fasting.reason.goodFriday' };
+    return { isFasting: true, restrictions: ['meat', 'dairy', 'eggs'], reasonKey: 'fasting.reason.goodFriday' };
   }
 
-  // Fridays in Lent (Ash Wednesday → Holy Saturday)
-  const holySaturday = addDays(easter, -1);
-  if (wd === 4 && isInRange(date, ashWednesday, holySaturday)) { // Fri=4
-    return { isFasting: true, restrictions: ['meat'], reasonKey: 'fasting.reason.lentenFriday' };
+  // Entire Lent period (Ash Wednesday → Holy Saturday) — no animal products
+  if (isInRange(date, ashWednesday, holySaturday)) {
+    return { isFasting: true, restrictions: ['meat', 'dairy', 'eggs'], reasonKey: 'fasting.reason.lent' };
+  }
+
+  // Ember days (Kántorböjt) — Wednesdays/Fridays of Ember weeks
+  // Advent Fridays (December)
+  const dec1 = new Date(year, 11, 1);
+  const dec24 = new Date(year, 11, 24);
+  if (wd === 4 && isInRange(date, dec1, dec24)) { // Fridays in Advent
+    return { isFasting: true, restrictions: ['meat'], reasonKey: 'fasting.reason.adventFriday' };
   }
 
   return { isFasting: false, restrictions: [], reasonKey: '' };

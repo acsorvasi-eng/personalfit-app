@@ -316,9 +316,13 @@ function checkFasting(date: Date, religion: Religion, customDays: number[]): Fas
   } else if (religion === 'catholic') {
     const easter = catholicEasterDate(year);
     const ash = addD(easter,-46);
-    if (sameD(date,ash)) return { isFasting:true, restrictions:['meat'], reasonKey:'ashWednesday' };
-    if (sameD(date,addD(easter,-2))) return { isFasting:true, restrictions:['meat'], reasonKey:'goodFriday' };
-    if (wd===4 && inRange(date,ash,addD(easter,-1))) return { isFasting:true, restrictions:['meat'], reasonKey:'lentenFriday' };
+    const holySaturday = addD(easter,-1);
+    if (sameD(date,ash)) return { isFasting:true, restrictions:noAnimal, reasonKey:'ashWednesday' };
+    if (sameD(date,addD(easter,-2))) return { isFasting:true, restrictions:noAnimal, reasonKey:'goodFriday' };
+    if (inRange(date,ash,holySaturday)) return { isFasting:true, restrictions:noAnimal, reasonKey:'lent' };
+    // Advent Fridays
+    const dec1 = new Date(year,11,1), dec24 = new Date(year,11,24);
+    if (wd===4 && inRange(date,dec1,dec24)) return { isFasting:true, restrictions:['meat'], reasonKey:'adventFriday' };
   } else if (religion === 'custom' || religion === 'protestant') {
     if (customDays.includes(wd)) return { isFasting:true, restrictions:noAnimal, reasonKey:'customDay' };
   }
