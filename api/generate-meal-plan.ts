@@ -351,9 +351,11 @@ function validateAllMealNames(parsed: { days?: any[] }, language: string): void 
             .slice(0, 3)
             .map((i: any) => i.name)
             .filter((n: string) => n);
+          const conj = language === 'hu' ? ' és ' : language === 'ro' ? ' și ' : ' and ';
+          const fallback = language === 'hu' ? 'Házi étel' : language === 'ro' ? 'Mâncare de casă' : 'Home meal';
           meal.name = ingNames.length > 0
-            ? ingNames.slice(0, -1).join(', ') + (ingNames.length > 1 ? ingredientListConjunction(language) : '') + ingNames[ingNames.length - 1]
-            : hallucinationFallbackMealName(language);
+            ? ingNames.length === 1 ? ingNames[0] : ingNames.slice(0, -1).join(', ') + conj + ingNames[ingNames.length - 1]
+            : fallback;
         } else {
           meal.name = validated;
         }

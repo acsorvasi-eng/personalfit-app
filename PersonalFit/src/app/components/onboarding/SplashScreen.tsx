@@ -1,6 +1,6 @@
 /**
- * SplashScreen — the frog-branded first screen users see.
- * Animated frog mascot with spring entrance, idle float, and blink.
+ * SplashScreen — the kix-branded first screen users see.
+ * Animated Kix (frog mascot) with spring entrance, idle float, and blink.
  * Language selector, brand gradient background, ambient glow blobs.
  * Navigates to /onboarding (the white slides) on CTA tap.
  */
@@ -272,7 +272,7 @@ export function SplashScreen() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          frog
+          kix
         </motion.h1>
 
         {/* Tagline */}
