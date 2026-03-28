@@ -1,13 +1,13 @@
 /**
  * SplashScreen — the kix-branded first screen users see.
- * Animated Kix (frog mascot) with spring entrance, idle float, and blink.
- * Language selector, brand gradient background, ambient glow blobs.
- * Navigates to /onboarding (the white slides) on CTA tap.
+ * Animated Kix mascot (artistic frog) with spring entrance, idle float, and blink.
+ * Single language flag (top-right, tap to cycle), brand gradient, ambient glow.
+ * Navigates to /onboarding on CTA tap.
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { hapticFeedback } from '@/lib/haptics';
 import { useLanguage, LanguageCode } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,8 +21,9 @@ const languages = SUPPORTED_LANGUAGES.map((code) => ({
   flag: LANGUAGE_META[code]?.flag ?? '',
 }));
 
-// ── Animated Frog Face ───────────────────────────────────────────────
-function AnimatedFrog() {
+// ── Artistic Kix Mascot ─────────────────────────────────────────────
+// More expressive frog: bigger eyes, leaf crown, wider smile, subtle gradient
+function KixMascot() {
   const blinkRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const leftPupilRef = useRef<SVGEllipseElement>(null);
   const rightPupilRef = useRef<SVGEllipseElement>(null);
@@ -37,79 +38,89 @@ function AnimatedFrog() {
       setTimeout(() => {
         pupils.forEach((p) => {
           if (!p) return;
-          p.setAttribute('ry', '20');
+          p.setAttribute('ry', '22');
         });
       }, 150);
     };
-
-    blinkRef.current = setInterval(blink, 4000);
-    return () => {
-      if (blinkRef.current) clearInterval(blinkRef.current);
-    };
+    blinkRef.current = setInterval(blink, 3500);
+    return () => { if (blinkRef.current) clearInterval(blinkRef.current); };
   }, []);
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+      initial={{ scale: 0, opacity: 0, rotate: -8 }}
+      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+      transition={{ type: 'spring', stiffness: 180, damping: 14, delay: 0.1 }}
     >
       <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ filter: 'drop-shadow(0 12px 40px rgba(0,0,0,0.25))' }}
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ filter: 'drop-shadow(0 16px 48px rgba(0,0,0,0.3))' }}
       >
-        <svg
-          width="160"
-          height="160"
-          viewBox="0 0 400 400"
-          fill="none"
-          aria-hidden="true"
-        >
-          {/* Head shape */}
-          <ellipse cx="200" cy="220" rx="110" ry="90" fill="#f0fdfa" />
+        <svg width="180" height="180" viewBox="0 0 400 400" fill="none" aria-hidden="true">
+          <defs>
+            {/* Body gradient — adds depth */}
+            <radialGradient id="bodyGrad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#f0fdfa" />
+              <stop offset="100%" stopColor="#ccfbf1" />
+            </radialGradient>
+            {/* Eye glow */}
+            <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#0d9488" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#0d9488" stopOpacity="0" />
+            </radialGradient>
+          </defs>
 
-          {/* Left eye bump */}
-          <circle cx="145" cy="155" r="45" fill="#f0fdfa" />
+          {/* Head shape — rounder, friendlier */}
+          <ellipse cx="200" cy="215" rx="120" ry="100" fill="url(#bodyGrad)" />
+
+          {/* Left eye bump — bigger */}
+          <circle cx="140" cy="145" r="52" fill="url(#bodyGrad)" />
           {/* Right eye bump */}
-          <circle cx="255" cy="155" r="45" fill="#f0fdfa" />
+          <circle cx="260" cy="145" r="52" fill="url(#bodyGrad)" />
 
-          {/* Left pupil (animated via ref) */}
-          <ellipse
-            ref={leftPupilRef}
-            cx="145"
-            cy="155"
-            rx="20"
-            ry="20"
-            fill="#134e4a"
-          />
-          {/* Left eye shine */}
-          <circle cx="152" cy="148" r="6" fill="#f0fdfa" />
+          {/* Eye glow rings */}
+          <circle cx="140" cy="145" r="38" fill="url(#eyeGlow)" />
+          <circle cx="260" cy="145" r="38" fill="url(#eyeGlow)" />
 
-          {/* Right pupil (animated via ref) */}
-          <ellipse
-            ref={rightPupilRef}
-            cx="255"
-            cy="155"
-            rx="20"
-            ry="20"
-            fill="#134e4a"
-          />
+          {/* Left pupil */}
+          <ellipse ref={leftPupilRef} cx="140" cy="148" rx="22" ry="22" fill="#134e4a" />
+          {/* Left eye shine — double highlight */}
+          <circle cx="149" cy="139" r="7" fill="#f0fdfa" />
+          <circle cx="155" cy="150" r="3.5" fill="#f0fdfa" opacity="0.6" />
+
+          {/* Right pupil */}
+          <ellipse ref={rightPupilRef} cx="260" cy="148" rx="22" ry="22" fill="#134e4a" />
           {/* Right eye shine */}
-          <circle cx="262" cy="148" r="6" fill="#f0fdfa" />
+          <circle cx="269" cy="139" r="7" fill="#f0fdfa" />
+          <circle cx="275" cy="150" r="3.5" fill="#f0fdfa" opacity="0.6" />
 
-          {/* Smile */}
+          {/* Wider, friendlier smile */}
           <path
-            d="M 155 240 Q 200 280 245 240"
+            d="M 145 240 Q 172 280 200 282 Q 228 280 255 240"
             fill="none"
-            stroke="#134e4a"
+            stroke="#0f766e"
             strokeWidth="5"
             strokeLinecap="round"
           />
 
-          {/* Cheek blush */}
-          <circle cx="140" cy="235" r="14" fill="#99f6e4" opacity="0.5" />
-          <circle cx="260" cy="235" r="14" fill="#99f6e4" opacity="0.5" />
+          {/* Subtle tongue peek */}
+          <ellipse cx="200" cy="275" rx="12" ry="8" fill="#f87171" opacity="0.6" />
+
+          {/* Cheek blush — larger, softer */}
+          <circle cx="120" cy="230" r="18" fill="#99f6e4" opacity="0.4" />
+          <circle cx="280" cy="230" r="18" fill="#99f6e4" opacity="0.4" />
+
+          {/* Leaf crown — 3 small leaves on top of head */}
+          <g transform="translate(200, 118)">
+            {/* Center leaf */}
+            <path d="M0 -8 Q-6 -28 0 -38 Q6 -28 0 -8Z" fill="#0d9488" opacity="0.8" />
+            <path d="M0 -12 L0 -35" stroke="#134e4a" strokeWidth="1" opacity="0.4" />
+            {/* Left leaf */}
+            <path d="M-18 -2 Q-30 -18 -22 -28 Q-14 -20 -18 -2Z" fill="#14b8a6" opacity="0.6" />
+            {/* Right leaf */}
+            <path d="M18 -2 Q30 -18 22 -28 Q14 -20 18 -2Z" fill="#14b8a6" opacity="0.6" />
+          </g>
         </svg>
       </motion.div>
     </motion.div>
@@ -123,14 +134,13 @@ export function SplashScreen() {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { markSplashSeen } = useAuth();
+  const [langOpen, setLangOpen] = useState(false);
 
   // Auto-detect browser language on mount
   useEffect(() => {
     const browserLang = navigator.language.split('-')[0];
     const matched = languages.find((l) => l.code === browserLang);
-    if (matched) {
-      setLanguage(matched.code as LanguageCode);
-    }
+    if (matched) setLanguage(matched.code as LanguageCode);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = useCallback(() => {
@@ -139,131 +149,113 @@ export function SplashScreen() {
     navigate('/onboarding');
   }, [markSplashSeen, navigate]);
 
-  const handleSkip = useCallback(() => {
-    markSplashSeen();
-    hapticFeedback('light');
-    navigate('/onboarding');
-  }, [markSplashSeen, navigate]);
+  const cycleLang = useCallback(() => {
+    if (langOpen) {
+      setLangOpen(false);
+      return;
+    }
+    setLangOpen(true);
+  }, [langOpen]);
 
-  const handleLanguageChange = useCallback(
-    (code: LanguageCode) => {
-      setLanguage(code);
-      hapticFeedback('light');
-    },
-    [setLanguage],
-  );
+  const selectLang = useCallback((code: LanguageCode) => {
+    setLanguage(code);
+    hapticFeedback('light');
+    setLangOpen(false);
+  }, [setLanguage]);
+
+  const currentLang = languages.find((l) => l.code === language) ?? languages[0];
 
   return (
     <div
       className="min-h-screen flex flex-col overflow-hidden relative"
-      style={{
-        background: 'linear-gradient(160deg, #0d9488, #0f766e, #134e4a)',
-      }}
+      style={{ background: 'linear-gradient(160deg, #0d9488, #0f766e, #134e4a)' }}
     >
       {/* Ambient glow blobs */}
-      <div
-        className="absolute inset-0 overflow-hidden pointer-events-none"
-        aria-hidden="true"
-      >
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <motion.div
           className="absolute rounded-full blur-3xl"
-          style={{
-            width: 320,
-            height: 320,
-            background: '#14b8a6',
-            top: -120,
-            right: -100,
-            opacity: 0.12,
-          }}
+          style={{ width: 320, height: 320, background: '#14b8a6', top: -120, right: -100, opacity: 0.12 }}
           animate={{ x: [0, 20, 0], y: [0, 15, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
           className="absolute rounded-full blur-3xl"
-          style={{
-            width: 260,
-            height: 260,
-            background: '#134e4a',
-            bottom: -80,
-            left: -80,
-            opacity: 0.25,
-          }}
+          style={{ width: 260, height: 260, background: '#134e4a', bottom: -80, left: -80, opacity: 0.25 }}
           animate={{ x: [0, -15, 0], y: [0, -20, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
           className="absolute rounded-full blur-3xl"
-          style={{
-            width: 200,
-            height: 200,
-            background: '#2dd4bf',
-            top: '45%',
-            left: '55%',
-            transform: 'translate(-50%, -50%)',
-            opacity: 0.06,
-          }}
+          style={{ width: 200, height: 200, background: '#2dd4bf', top: '45%', left: '55%', transform: 'translate(-50%, -50%)', opacity: 0.06 }}
           animate={{ scale: [1, 1.15, 1] }}
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 
-      {/* Top bar: language flags + skip */}
-      <div className="relative z-20 flex items-center justify-between px-5 pt-[max(1rem,env(safe-area-inset-top))]">
-        {/* Language flag buttons */}
-        <div className="flex items-center gap-1.5">
-          {languages.map((lang) => {
-            const isActive = language === lang.code;
-            return (
-              <motion.button
-                key={lang.code}
-                whileTap={{ scale: 0.88 }}
-                onClick={() =>
-                  handleLanguageChange(lang.code as LanguageCode)
-                }
-                type="button"
-                className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer select-none transition-all"
-                style={{
-                  background: isActive
-                    ? 'rgba(255,255,255,0.25)'
-                    : 'rgba(255,255,255,0.08)',
-                  border: isActive
-                    ? '2px solid rgba(255,255,255,0.5)'
-                    : '2px solid transparent',
-                }}
-                aria-label={lang.name}
-              >
-                <span className="text-base leading-none">{lang.flag}</span>
-              </motion.button>
-            );
-          })}
-        </div>
+      {/* Top bar: language flag (right side only, no skip) */}
+      <div className="relative z-20 flex items-center justify-end px-5 pt-[max(1rem,env(safe-area-inset-top))] min-h-[48px]">
+        <div className="relative">
+          {/* Current language flag */}
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={cycleLang}
+            type="button"
+            className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer select-none"
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.3)',
+            }}
+            aria-label={t('splash.chooseLanguage')}
+          >
+            <span className="text-lg leading-none">{currentLang.flag}</span>
+          </motion.button>
 
-        {/* Skip button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.4 }}
-          onClick={handleSkip}
-          type="button"
-          className="text-sm font-medium cursor-pointer px-2 py-1"
-          style={{ color: 'rgba(255,255,255,0.45)' }}
-        >
-          {t('onboarding.skip')}
-        </motion.button>
+          {/* Dropdown with other languages */}
+          <AnimatePresence>
+            {langOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.9 }}
+                transition={{ duration: 0.15 }}
+                className="absolute top-12 right-0 flex flex-col gap-1.5 p-1.5 rounded-2xl"
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                }}
+              >
+                {languages.filter(l => l.code !== language).map((lang) => (
+                  <motion.button
+                    key={lang.code}
+                    whileTap={{ scale: 0.88 }}
+                    onClick={() => selectLang(lang.code as LanguageCode)}
+                    type="button"
+                    className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer select-none"
+                    style={{ background: 'rgba(255,255,255,0.1)' }}
+                    aria-label={lang.name}
+                  >
+                    <span className="text-lg leading-none">{lang.flag}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-        {/* Frog logo */}
-        <div className="mb-6">
-          <AnimatedFrog />
+        {/* Kix mascot */}
+        <div className="mb-8">
+          <KixMascot />
         </div>
 
-        {/* Brand name */}
+        {/* Brand name — large, white, bold */}
         <motion.h1
           className="text-white mb-3"
           style={{
-            fontSize: 42,
+            fontSize: 48,
             fontWeight: 800,
             letterSpacing: '-0.02em',
             lineHeight: 1,
@@ -275,19 +267,36 @@ export function SplashScreen() {
           kix
         </motion.h1>
 
-        {/* Tagline */}
+        {/* Subtitle — bigger, white, readable (like onboarding style) */}
+        <motion.p
+          className="text-center mb-2"
+          style={{
+            fontSize: 18,
+            fontWeight: 600,
+            color: '#ffffff',
+            lineHeight: 1.4,
+            maxWidth: 280,
+          }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55, duration: 0.5 }}
+        >
+          {t('splash.appSubtitle')}
+        </motion.p>
+
+        {/* Tagline — glow teal */}
         <motion.p
           style={{
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 400,
             textTransform: 'uppercase',
-            letterSpacing: 4,
+            letterSpacing: 3,
             color: '#5eead4',
             lineHeight: 1.6,
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
         >
           {t('splash.tagline')}
         </motion.p>
@@ -297,13 +306,13 @@ export function SplashScreen() {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ delay: 0.9, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full"
       >
         <button
           onClick={handleStart}
           type="button"
-          className="w-full rounded-2xl font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
+          className="w-full font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
           style={{
             height: 56,
             background: 'rgba(255,255,255,0.2)',
@@ -311,19 +320,14 @@ export function SplashScreen() {
             borderRadius: 16,
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.15)',
+            fontSize: 16,
           }}
         >
           {t('splash.startButton')}
         </button>
 
         {/* Version badge */}
-        <p
-          className="text-center mt-4"
-          style={{
-            fontSize: 12,
-            color: 'rgba(255,255,255,0.25)',
-          }}
-        >
+        <p className="text-center mt-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
           v{APP_VERSION}
         </p>
       </motion.div>
