@@ -1038,23 +1038,13 @@ export function ProfileSetupWizard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Top bar */}
+      {/* Top bar — back button only, no progress bar */}
       <div className="flex items-center gap-3 px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 20px) + 0.5rem)" }}>
         {(step > 0 || step === LEGACY_FOODS_STEP) && (
           <button onClick={goPrev} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
         )}
-        <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-primary"
-            animate={{ width: `${(step === LEGACY_FOODS_STEP ? 2 : (step + 1)) / STEPS.length * 100}%` }}
-            transition={{ type: 'spring', stiffness: 200, damping: 30 }}
-          />
-        </div>
-        <span className="text-xs text-gray-400 tabular-nums w-10 text-right">
-          {step === LEGACY_FOODS_STEP ? 2 : step + 1}/{STEPS.length}
-        </span>
       </div>
 
       {/* Step title — removed duplicate label, the step content has its own title */}
@@ -1069,7 +1059,7 @@ export function ProfileSetupWizard() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="px-6 pb-6"
+            className="px-6 pb-40"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
             {step === 1 && (
@@ -1110,46 +1100,59 @@ export function ProfileSetupWizard() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom CTA */}
+      {/* Bottom CTA — fixed with gradient fade */}
       {step !== LEGACY_FOODS_STEP && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm px-6 pt-3 border-t border-gray-100 z-50" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 0.75rem)' }}>
-          {step < STEPS.length - 1 ? (
-            <>
+        <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+          <div className="px-6 pt-8" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}>
+            {/* Step dots */}
+            <div className="flex items-center justify-center gap-1.5 mb-3">
+              {STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === step ? 'w-6 h-2 bg-primary' : 'w-2 h-2 bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+            {step < STEPS.length - 1 ? (
+              <>
+                <DSMButton
+                  onClick={goNext}
+                  disabled={step === 1 && selectedStyles.length < 1}
+                  variant="primary"
+                  className="w-full h-14 rounded-2xl gap-2 text-base"
+                >
+                  {step === 1 && selectedStyles.length < 1
+                    ? t('wizard.foodStyle.ctaDisabled')
+                    : <>{t('wizard.next')} <ChevronRight className="w-5 h-5" /></>
+                  }
+                </DSMButton>
+                {/* Upload own plan option — show on food style step */}
+                {step === 1 && (
+                  <button
+                    onClick={() => setShowUploadSheet(true)}
+                    className="w-full text-center text-sm text-gray-500 mt-2 py-2"
+                  >
+                    {t('wizard.uploadOwnPlan') || 'Van már étrendem →'}
+                  </button>
+                )}
+              </>
+            ) : (
               <DSMButton
-                onClick={goNext}
-                disabled={step === 1 && selectedStyles.length < 1}
+                onClick={handleGenerate}
+                disabled={isGenerating}
                 variant="primary"
                 className="w-full h-14 rounded-2xl gap-2 text-base"
               >
-                {step === 1 && selectedStyles.length < 1
-                  ? t('wizard.foodStyle.ctaDisabled')
-                  : <>{t('wizard.next')} <ChevronRight className="w-5 h-5" /></>
-                }
+                {isGenerating ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> {t('wizard.generating')}</>
+                ) : (
+                  <><Sparkles className="w-5 h-5" /> {t('wizard.generate')}</>
+                )}
               </DSMButton>
-              {/* Upload own plan option — show on food style step */}
-              {step === 1 && (
-                <button
-                  onClick={() => setShowUploadSheet(true)}
-                  className="w-full text-center text-sm text-gray-500 mt-2 py-2"
-                >
-                  {t('wizard.uploadOwnPlan') || 'Van már étrendem →'}
-                </button>
-              )}
-            </>
-          ) : (
-            <DSMButton
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              variant="primary"
-              className="w-full h-14 rounded-2xl gap-2 text-base"
-            >
-              {isGenerating ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> {t('wizard.generating')}</>
-              ) : (
-                <><Sparkles className="w-5 h-5" /> {t('wizard.generate')}</>
-              )}
-            </DSMButton>
-          )}
+            )}
+          </div>
         </div>
       )}
 

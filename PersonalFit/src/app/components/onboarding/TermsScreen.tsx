@@ -90,7 +90,7 @@ export function TermsScreen() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="flex-1 overflow-y-auto px-6 pb-4"
+        className="flex-1 overflow-y-auto px-6 pb-40"
       >
         <div className="max-w-md mx-auto">
           {/* Trust Badges */}
@@ -135,60 +135,63 @@ export function TermsScreen() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="border-t border-border bg-background px-6 py-5 shadow-sm"
+        className="fixed bottom-0 left-0 right-0 z-20"
+        style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
       >
-        <div className="max-w-md mx-auto space-y-4">
-          {/* Decline Warning */}
-          {showDeclineWarning && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="p-4 bg-amber-50 border border-amber-200 rounded-xl"
-            >
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-amber-800 text-sm">
-                    {t("terms.declineWarning")}
-                  </p>
-                  <div className="flex gap-2 mt-3">
-                    <DSMButton variant="secondary" size="sm" onClick={() => setShowDeclineWarning(false)} className="text-xs">
-                      {t("terms.cancelBtn")}
-                    </DSMButton>
-                    <DSMButton variant="danger" size="sm" onClick={handleConfirmDecline} className="text-xs">
-                      {t("terms.declineBtn")}
-                    </DSMButton>
+        <div className="px-6 pt-8 pb-2" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}>
+          <div className="max-w-md mx-auto space-y-4">
+            {/* Decline Warning */}
+            {showDeclineWarning && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="p-4 bg-amber-50 border border-amber-200 rounded-xl"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-amber-800 text-sm">
+                      {t("terms.declineWarning")}
+                    </p>
+                    <div className="flex gap-2 mt-3">
+                      <DSMButton variant="secondary" size="sm" onClick={() => setShowDeclineWarning(false)} className="text-xs">
+                        {t("terms.cancelBtn")}
+                      </DSMButton>
+                      <DSMButton variant="danger" size="sm" onClick={handleConfirmDecline} className="text-xs">
+                        {t("terms.declineBtn")}
+                      </DSMButton>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          {/* Checkbox */}
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="terms-accept"
-              checked={isAccepted}
-              onCheckedChange={(checked) => {
-                setIsAccepted(checked === true);
-                setShowDeclineWarning(false);
-              }}
-              className="mt-0.5"
-            />
-            <label htmlFor="terms-accept" className="text-sm text-gray-700 cursor-pointer leading-relaxed">
-              {t("terms.acceptCheckbox")}
-            </label>
-          </div>
+            {/* Checkbox */}
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="terms-accept"
+                checked={isAccepted}
+                onCheckedChange={(checked) => {
+                  setIsAccepted(checked === true);
+                  setShowDeclineWarning(false);
+                }}
+                className="mt-0.5"
+              />
+              <label htmlFor="terms-accept" className="text-sm text-gray-700 cursor-pointer leading-relaxed">
+                {t("terms.acceptCheckbox")}
+              </label>
+            </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3">
-            <DSMButton variant="secondary" onClick={handleDecline} className="flex-1 h-12 rounded-xl">
-              {t("terms.declineBtn")}
-            </DSMButton>
-            <DSMButton variant="primary" onClick={handleAcceptAndContinue} disabled={!isAccepted} className="flex-1 h-12 rounded-xl">
-              {t("terms.acceptBtn")}
-              <ChevronRight className="w-4 h-4" />
-            </DSMButton>
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <DSMButton variant="secondary" onClick={handleDecline} className="flex-1 h-14 rounded-2xl">
+                {t("terms.declineBtn")}
+              </DSMButton>
+              <DSMButton variant="primary" onClick={handleAcceptAndContinue} disabled={!isAccepted} className="flex-1 h-14 rounded-2xl">
+                {t("terms.acceptBtn")}
+                <ChevronRight className="w-4 h-4" />
+              </DSMButton>
+            </div>
           </div>
         </div>
       </motion.div>

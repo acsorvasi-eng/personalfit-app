@@ -86,7 +86,7 @@ export function PlanSetupScreen() {
       </motion.div>
 
       {/* Option Cards */}
-      <div className="flex-1 px-6 space-y-4 pb-6">
+      <div className="flex-1 px-6 space-y-4 pb-40 overflow-y-auto">
         {/* PDF Upload Option */}
         <motion.button
           initial={{ opacity: 0, x: -20 }}
@@ -212,26 +212,29 @@ export function PlanSetupScreen() {
         </motion.button>
       </div>
 
-      {/* Continue Button */}
+      {/* Continue Button — fixed bottom with gradient fade */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="px-6 pb-8"
+        className="fixed bottom-0 left-0 right-0 z-20"
+        style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
       >
-        <DSMButton
-          onClick={handleContinue}
-          disabled={!selected}
-          variant="primary"
-          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2"
-        >
-          {t('planSetup.continue')}
-          <ArrowRight className="w-4 h-4" />
-        </DSMButton>
+        <div className="px-6 pt-8" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}>
+          <DSMButton
+            onClick={handleContinue}
+            disabled={!selected}
+            variant="primary"
+            className="w-full h-14 rounded-2xl flex items-center justify-center gap-2"
+          >
+            {t('planSetup.continue')}
+            <ArrowRight className="w-4 h-4" />
+          </DSMButton>
 
-        <p className="text-center text-2xs text-gray-400 mt-3">
-          {t('planSetup.changeLater')}
-        </p>
+          <p className="text-center text-2xs text-gray-400 mt-3">
+            {t('planSetup.changeLater')}
+          </p>
+        </div>
       </motion.div>
     </div>
   );

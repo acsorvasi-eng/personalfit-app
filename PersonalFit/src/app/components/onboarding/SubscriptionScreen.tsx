@@ -197,8 +197,8 @@ export function SubscriptionScreen() {
   // ─── Main View ───
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      {/* ── Sticky Header ── */}
-      <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border">
+      {/* ── Header ── */}
+      <div className="bg-background border-b border-border">
         <div className="max-w-lg mx-auto flex items-center gap-3 px-4 py-3">
           <div className="flex-1 min-w-0">
             <h1 className="text-base text-foreground" style={{ fontWeight: 700 }}>{t("subscription.title")}</h1>
@@ -494,8 +494,8 @@ export function SubscriptionScreen() {
       </div>
 
       {/* ═══ FLOATING BOTTOM CTA ═══ */}
-      <div className="fixed bottom-0 left-0 right-0 z-30" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="bg-gradient-to-t from-background via-background/95 to-transparent pt-6 pb-4 px-4">
+      <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        <div className="pt-8 px-4" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}>
           <div className="max-w-lg mx-auto">
             <DSMButton
               onClick={handleSubscribe}
