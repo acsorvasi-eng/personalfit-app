@@ -1088,12 +1088,7 @@ export function ProfileSetupWizard() {
                   selectAllVisible={selectAllVisible} deselectAll={deselectAll}
                   getStoresForFood={getStoresForFood}
                 />
-                <button
-                  onClick={() => { setUsedLegacyFoodPicker(true); setStep(2); }}
-                  className="mt-3 w-full text-sm text-center text-gray-500 underline"
-                >
-                  {t('wizard.next')}
-                </button>
+                <div className="pb-40" />
               </div>
             )}
           </motion.div>
@@ -1101,7 +1096,7 @@ export function ProfileSetupWizard() {
       </div>
 
       {/* Bottom CTA — fixed with gradient fade */}
-      {step !== LEGACY_FOODS_STEP && (
+      {(
         <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           <div className="px-6 pt-8" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}>
             {/* Step dots */}
