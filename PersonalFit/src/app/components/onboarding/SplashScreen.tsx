@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'framer-motion';
 import { hapticFeedback } from '@/lib/haptics';
 import { useLanguage, LanguageCode } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -122,6 +122,85 @@ function KixMascot() {
             <path d="M18 -2 Q30 -18 22 -28 Q14 -20 18 -2Z" fill="#14b8a6" opacity="0.6" />
           </g>
         </svg>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Mock Notification (swipe up to dismiss, tap to open app) ─────────
+function MockNotification({ language, t, onTap }: { language: string; t: (k: string) => string; onTap: () => void }) {
+  const [visible, setVisible] = useState(true);
+  const [appeared, setAppeared] = useState(false);
+  const y = useMotionValue(0);
+  const opacity = useTransform(y, [-80, -40, 0], [0, 0.5, 1]);
+  const controls = useAnimation();
+
+  // Show after 2.2s, auto-dismiss after 8s
+  useEffect(() => {
+    const showTimer = setTimeout(() => setAppeared(true), 2200);
+    const hideTimer = setTimeout(() => setVisible(false), 10200);
+    return () => { clearTimeout(showTimer); clearTimeout(hideTimer); };
+  }, []);
+
+  const handleDragEnd = useCallback((_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
+    if (info.offset.y < -30 || info.velocity.y < -200) {
+      controls.start({ y: -150, opacity: 0, transition: { duration: 0.2 } }).then(() => setVisible(false));
+    } else {
+      controls.start({ y: 0, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 25 } });
+    }
+  }, [controls]);
+
+  const bodyText = language === 'en'
+    ? "Good morning! Today's breakfast: Oatmeal with nuts (420 kcal). Daily goal: 2100 kcal."
+    : language === 'ro'
+    ? 'Bună dimineața! Micul dejun: Terci cu nuci (420 kcal). Ținta zilnică: 2100 kcal.'
+    : 'Jó reggelt! Mai reggeli: Zabkása dióval (420 kcal). Napi célod: 2100 kcal.';
+
+  if (!visible || !appeared) return null;
+
+  return (
+    <motion.div
+      className="absolute left-4 right-4 z-30 cursor-pointer"
+      style={{ top: 'max(3.5rem, calc(env(safe-area-inset-top) + 0.5rem))', y, opacity }}
+      initial={{ y: -120, opacity: 0 }}
+      animate={controls}
+      drag="y"
+      dragConstraints={{ top: -100, bottom: 10 }}
+      dragElastic={0.3}
+      onDragEnd={handleDragEnd}
+      onClick={onTap}
+      transition={{ type: 'spring', stiffness: 200, damping: 22 }}
+    >
+      {/* Swipe indicator pill */}
+      <div className="flex justify-center mb-1.5">
+        <div className="w-8 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.3)' }} />
+      </div>
+      <motion.div
+        className="rounded-2xl px-4 py-3 flex items-start gap-3"
+        style={{
+          background: 'rgba(255,255,255,0.95)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+        }}
+        initial={{ y: -120 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 22 }}
+      >
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}>
+          <span className="text-lg">🐸</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>kix</span>
+            <span style={{ fontSize: 11, color: '#94a3b8' }}>most</span>
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', lineHeight: 1.3 }}>
+            {t('notification.morningTitle')}
+          </p>
+          <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.35, marginTop: 2 }}>
+            {bodyText}
+          </p>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -244,46 +323,12 @@ export function SplashScreen() {
         </div>
       </div>
 
-      {/* Mock notification — slides in from top after 2s */}
-      <motion.div
-        className="absolute left-4 right-4 z-30"
-        style={{ top: 'max(3.5rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
-        initial={{ y: -120, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 2.2, type: 'spring', stiffness: 200, damping: 22 }}
-      >
-        <motion.div
-          className="rounded-2xl px-4 py-3 flex items-start gap-3"
-          style={{
-            background: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-          }}
-          animate={{ y: [0, -2, 0] }}
-          transition={{ delay: 4, duration: 0.3 }}
-        >
-          {/* Mini frog icon */}
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}>
-            <span className="text-lg">🐸</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>kix</span>
-              <span style={{ fontSize: 11, color: '#94a3b8' }}>most</span>
-            </div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', lineHeight: 1.3 }}>
-              {t('notification.morningTitle')}
-            </p>
-            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.35, marginTop: 2 }}>
-              {t('splash.tagline') === 'Transform what you eat'
-                ? 'Good morning! Today\'s breakfast: Oatmeal with nuts (420 kcal). Daily goal: 2100 kcal.'
-                : t('splash.tagline') === 'Transformă ce mănânci'
-                ? 'Bună dimineața! Micul dejun: Terci cu nuci (420 kcal). Ținta zilnică: 2100 kcal.'
-                : 'Jó reggelt! Mai reggeli: Zabkása dióval (420 kcal). Napi célod: 2100 kcal.'}
-            </p>
-          </div>
-        </motion.div>
-      </motion.div>
+      {/* Mock notification — slides in from top, swipe up to dismiss, tap to proceed */}
+      <MockNotification
+        language={language}
+        t={t}
+        onTap={handleStart}
+      />
 
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
