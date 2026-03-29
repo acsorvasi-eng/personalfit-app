@@ -118,20 +118,30 @@ function FastingSettingsCard({ onOpenJourney }: { onOpenJourney: () => void }) {
     return () => window.removeEventListener('profileUpdated', handler);
   }, []);
 
+  const [showBreakConfirm, setShowBreakConfirm] = useState(false);
+
   const handleToggle = async () => {
     if (!settings.enabled) {
-      // Opening: launch the journey
+      // OFF → ON: launch the journey
       onOpenJourney();
     } else {
-      // Turning off: just disable
-      const next = { ...settings, enabled: false };
-      setSettings(next);
-      await saveFastingSettings(next);
-      setUpcomingDays([]);
-      hapticFeedback('light');
-      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-      showToast(t('toast.saved'));
+      // ON → OFF: show confirmation alert
+      setShowBreakConfirm(true);
+      hapticFeedback('medium');
     }
+  };
+
+  const confirmBreakFast = async () => {
+    setShowBreakConfirm(false);
+    const next = { ...settings, enabled: false, restrictions: [], enabledPeriods: [] };
+    setSettings(next);
+    await saveFastingSettings(next);
+    setUpcomingDays([]);
+    hapticFeedback('light');
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+    // Trigger regeneration with all foods allowed
+    window.dispatchEvent(new CustomEvent('fastingActivated'));
+    showToast(t('fasting.journey.deactivated') || 'Böjt kikapcsolva. Étrend újragenerálódik.');
   };
 
   const formatDate = (d: Date) => {
@@ -248,6 +258,63 @@ function FastingSettingsCard({ onOpenJourney }: { onOpenJourney: () => void }) {
           )}
         </>
       )}
+      {/* Break fast confirmation overlay */}
+      <AnimatePresence>
+        {showBreakConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 60,
+              background: 'rgba(0,0,0,0.5)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', padding: 24,
+            }}
+            onClick={() => setShowBreakConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: '#fff', borderRadius: 20, padding: 24,
+                maxWidth: 340, width: '100%', textAlign: 'center',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+              }}
+            >
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🕯️</div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
+                {t('fasting.breakConfirm.title') || 'Böjt megszakítása?'}
+              </h3>
+              <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.5, marginBottom: 20 }}>
+                {t('fasting.breakConfirm.message') || 'Egy folyamatban lévő böjtöt szakítanál meg. A kitartás a lélek ereje — gondold át! Ha mégis megszakítod, az étrendet újrageneráljuk az összes élelmiszerrel.'}
+              </p>
+              <button
+                onClick={() => setShowBreakConfirm(false)}
+                style={{
+                  width: '100%', height: 48, borderRadius: 12,
+                  background: '#0d9488', color: '#fff', fontWeight: 700,
+                  fontSize: 15, border: 'none', cursor: 'pointer',
+                  marginBottom: 10,
+                }}
+              >
+                {t('fasting.breakConfirm.keepGoing') || 'Folytatom a böjtöt 💪'}
+              </button>
+              <button
+                onClick={confirmBreakFast}
+                style={{
+                  width: '100%', height: 44, borderRadius: 12,
+                  background: 'transparent', color: '#ef4444', fontWeight: 600,
+                  fontSize: 14, border: '1px solid #fecaca', cursor: 'pointer',
+                }}
+              >
+                {t('fasting.breakConfirm.breakIt') || 'Megszakítom a böjtöt'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </SettingsCard>
   );
 }
