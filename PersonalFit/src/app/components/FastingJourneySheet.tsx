@@ -3,9 +3,12 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Church, Calendar, Check, X } from 'lucide-react';
+import { ArrowLeft, Church, Calendar, Check, X, Loader2 } from 'lucide-react';
 import { hapticFeedback } from '@/lib/haptics';
+import { apiBase, authFetch } from '@/lib/api';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import SharedPremiumLoader from './PremiumLoader';
 import {
   type FastingSettings,
   type Religion,
@@ -65,7 +68,7 @@ interface Props {
 // ─── Component ───────────────────────────────────────────────────────
 
 export default function FastingJourneySheet({ open, onClose, onComplete }: Props) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Wizard state
   const [step, setStep] = useState(1);
@@ -151,11 +154,18 @@ export default function FastingJourneySheet({ open, onClose, onComplete }: Props
     }
   }, [step]);
 
+  const [genPhase, setGenPhase] = useState<'plan' | 'chef' | 'done' | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const { user } = useAuth();
+
   const handleComplete = useCallback(async () => {
     setSaving(true);
+    setGenPhase('plan');
+    setGenError(null);
     hapticFeedback('medium');
+
     const religion: Religion = fastingType;
-    const settings: FastingSettings = {
+    const newSettings: FastingSettings = {
       enabled: true,
       religion,
       customDays: religion === 'custom' ? customDays : [],
@@ -166,10 +176,117 @@ export default function FastingJourneySheet({ open, onClose, onComplete }: Props
       customRangeEnd: religion === 'custom' && !customRecurring ? customRangeEnd : undefined,
       enabledPeriods: (religion === 'orthodox' || religion === 'catholic') ? enabledPeriodIds : [],
     };
-    await saveFastingSettings(settings);
-    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-    onComplete(settings);
-  }, [fastingType, customDays, restrictions, wantRecipes, customRecurring, customRangeStart, customRangeEnd, enabledPeriodIds, onComplete]);
+
+    // 1. Save fasting settings
+    await saveFastingSettings(newSettings);
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch {}
+
+    // 2. Load user profile + foods for generation
+    try {
+      const { getUserProfile, getMealSettings } = await import('../backend/services/UserProfileService');
+      const { getAllFoods } = await import('../backend/services/FoodCatalogService');
+      const { importFromAIParse, activatePlan, exportActivePlan } = await import('../backend/services/NutritionPlanService');
+      const { callChefReview } = await import('./onboarding/callChefReview');
+
+      const profile = await getUserProfile();
+      const mealSettings = await getMealSettings();
+      const allFoods = await getAllFoods();
+      const validFoods = allFoods.filter((f: any) => f.calories_per_100g > 0);
+
+      const dailyTarget = profile?.calorieTarget || 2000;
+      const lang = language;
+
+      // 3. Call generate API
+      const resp = await authFetch(`${apiBase}/api/generate-meal-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          ...(validFoods.length > 0 ? {
+            ingredients: validFoods.slice(0, 40).map((f: any) => ({
+              name: f.name,
+              calories_per_100g: f.calories_per_100g ?? 100,
+              protein_per_100g: f.protein_per_100g ?? 5,
+              carbs_per_100g: f.carbs_per_100g ?? 10,
+              fat_per_100g: f.fat_per_100g ?? 3,
+            })),
+          } : {}),
+          dailyCalorieTarget: dailyTarget,
+          days: 7,
+          language,
+          userProfile: {
+            goal: profile?.goal || 'maintain',
+            activityLevel: profile?.activityLevel || 'moderate',
+            age: profile?.age || 30,
+            weight: profile?.weight || 70,
+            gender: profile?.gender || 'male',
+            allergies: profile?.allergies || '',
+            mealCount: mealSettings?.mealCount || 3,
+          },
+          fasting: { enabled: true, religion: newSettings.religion, customDays: newSettings.customDays },
+        }),
+      });
+
+      if (!resp.ok) throw new Error(`API error ${resp.status}`);
+      const data = await resp.json();
+      if (!data?.nutritionPlan) throw new Error('No nutrition plan returned');
+
+      // 4. Chef review (15s timeout)
+      setGenPhase('chef');
+      let improvedPlan = data.nutritionPlan;
+      try {
+        improvedPlan = await Promise.race([
+          callChefReview({
+            nutritionPlan: data.nutritionPlan,
+            language,
+            userName: user?.name ?? '',
+            userProfile: {},
+          }),
+          new Promise<typeof data.nutritionPlan>((_, reject) =>
+            setTimeout(() => reject(new Error('chef-timeout')), 15000)
+          ),
+        ]);
+      } catch {}
+
+      // 5. Convert days → weeks + import + activate
+      let planToSave = improvedPlan;
+      if (improvedPlan.days && !improvedPlan.weeks) {
+        const weeksMap = new Map<number, any[]>();
+        for (const day of improvedPlan.days) {
+          const weekNum = day.week ?? 1;
+          if (!weeksMap.has(weekNum)) weeksMap.set(weekNum, []);
+          weeksMap.get(weekNum)!.push(day);
+        }
+        const weeks = Array.from(weeksMap.values());
+        planToSave = { weeks, detected_weeks: weeks.length, detected_days_per_week: 7 };
+      }
+
+      const label = `Böjti étrend — ${new Date().toLocaleDateString('hu-HU')}`;
+      const plan = await importFromAIParse(planToSave as any, label);
+      await activatePlan(plan.id);
+
+      // Cloud sync
+      if (user?.id && user.provider !== 'local' && user.provider !== 'demo') {
+        exportActivePlan().then((exported: any) => {
+          if (exported) {
+            import('../services/userFirestoreService').then(({ syncPlanToCloud }) => {
+              syncPlanToCloud(user.id, exported).catch(() => {});
+            });
+          }
+        }).catch(() => {});
+      }
+
+      setGenPhase('done');
+      hapticFeedback('heavy');
+      await new Promise(r => setTimeout(r, 800));
+      onComplete(newSettings);
+
+    } catch (err: any) {
+      setGenError(err?.message || 'Hiba történt a generálás közben');
+      setGenPhase(null);
+      setSaving(false);
+    }
+  }, [fastingType, customDays, restrictions, wantRecipes, customRecurring, customRangeStart, customRangeEnd, enabledPeriodIds, onComplete, user, language]);
 
   // Toggle restriction
   const toggleRestriction = (id: RestrictionCategory) => {
@@ -324,21 +441,50 @@ export default function FastingJourneySheet({ open, onClose, onComplete }: Props
             {t('fasting.journey.next')}
           </button>
         ) : (
-          <button
-            onClick={handleComplete}
-            disabled={saving}
-            style={{
-              width: '100%', padding: '16px', borderRadius: 16,
-              background: saving ? '#99d5d0' : '#0d9488',
-              color: '#fff', border: 'none',
-              fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
-              opacity: saving ? 0.7 : 1,
-            }}
-          >
-            {saving ? t('fasting.journey.saving') : t('fasting.journey.regenerate')}
-          </button>
+          <>
+            {genError && (
+              <p style={{ color: '#ef4444', fontSize: 14, textAlign: 'center', marginBottom: 8 }}>{genError}</p>
+            )}
+            <button
+              onClick={handleComplete}
+              disabled={saving}
+              style={{
+                width: '100%', padding: '16px', borderRadius: 16,
+                background: saving ? '#99d5d0' : '#0d9488',
+                color: '#fff', border: 'none',
+                fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
+                opacity: saving ? 0.7 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              {saving ? (
+                <><Loader2 size={20} className="animate-spin" /> {genPhase === 'chef' ? t('fasting.journey.chefReview') || 'Séf ellenőrzés...' : t('fasting.journey.generating') || 'Étrend generálás...'}</>
+              ) : (
+                t('fasting.journey.regenerate')
+              )}
+            </button>
+          </>
         )}
       </div>
+
+      {/* Full-screen loading overlay when generating */}
+      {genPhase && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 100,
+          background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: 32,
+        }}>
+          <SharedPremiumLoader
+            progress={genPhase === 'plan' ? 40 : genPhase === 'chef' ? 75 : 100}
+            phaseText={genPhase === 'plan'
+              ? (t('fasting.journey.generating') || 'Böjti étrend generálása...')
+              : genPhase === 'chef'
+              ? (t('fasting.journey.chefReview') || 'Séf ellenőrzés...')
+              : (t('fasting.journey.done') || 'Kész!')}
+          />
+        </div>
+      )}
     </div>
   );
 }
