@@ -91,7 +91,7 @@ function mapAccountError(code: string): string {
 
 // ─── Religious Fasting Card ──────────────────────────────────────────
 
-function FastingSettingsCard({ onOpenJourney }: { onOpenJourney: () => void }) {
+function FastingSettingsCard({ onOpenJourney, onBreakFast }: { onOpenJourney: () => void; onBreakFast: () => void }) {
   const { t } = useLanguage();
   const [settings, setSettings] = useState<FastingSettings>({ enabled: false, religion: 'orthodox', customDays: [], restrictions: [], fastingRecipes: false, customRecurring: true, enabledPeriods: [] });
   const [expanded, setExpanded] = useState(false);
@@ -139,9 +139,9 @@ function FastingSettingsCard({ onOpenJourney }: { onOpenJourney: () => void }) {
     setUpcomingDays([]);
     hapticFeedback('light');
     try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-    // Trigger regeneration with all foods allowed
-    window.dispatchEvent(new CustomEvent('fastingActivated'));
     showToast(t('fasting.journey.deactivated') || 'Böjt kikapcsolva. Étrend újragenerálódik.');
+    // Delegate navigation + regeneration to parent (which has navigate & onClose)
+    onBreakFast();
   };
 
   const formatDate = (d: Date) => {
@@ -662,7 +662,16 @@ export default function SettingsSheet(props: SettingsSheetProps) {
         </SettingsCard>
 
         {/* Section 3c: Religious Fasting */}
-        <FastingSettingsCard onOpenJourney={() => setFastingJourneyOpen(true)} />
+        <FastingSettingsCard
+          onOpenJourney={() => setFastingJourneyOpen(true)}
+          onBreakFast={() => {
+            onClose();
+            navigate('/', { replace: true });
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('fastingActivated'));
+            }, 500);
+          }}
+        />
 
         {/* Fasting Journey overlay */}
         <FastingJourneySheet

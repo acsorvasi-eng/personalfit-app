@@ -464,6 +464,18 @@ function checkFasting(date: Date, religion: Religion, customDays: number[]): Fas
   return { isFasting:false, restrictions:[], reasonKey:'' };
 }
 
+// Explicit list of forbidden foods during fasting (used in prompt AND post-generation validation)
+const FASTING_FORBIDDEN_FOODS = [
+  'hús', 'szalonna', 'kolbász', 'csirkemell', 'csirke', 'sertés', 'marha', 'pulyka', 'kacsa', 'bárány',
+  'tej', 'tejföl', 'sajt', 'túró', 'vaj', 'joghurt', 'kefir', 'tejszín', 'mascarpone', 'mozzarella', 'parmezán',
+  'tojás',
+  'bacon', 'sonka', 'virsli', 'hurka',
+  // Romanian equivalents
+  'carne', 'lapte', 'smântână', 'brânză', 'unt', 'iaurt', 'ou', 'ouă', 'slănină',
+  // English equivalents
+  'meat', 'milk', 'sour cream', 'cheese', 'butter', 'yogurt', 'egg', 'cream', 'chicken', 'pork', 'beef',
+];
+
 function buildFastingPromptBlock(fastingDays: Map<number, FastingInfo>, dayNames: string[], lang: string): string {
   if (fastingDays.size === 0) return '';
   const labels: Record<string, Record<string, string>> = {
@@ -482,7 +494,60 @@ function buildFastingPromptBlock(fastingDays: Map<number, FastingInfo>, dayNames
     ro: 'POST RELIGIOS — în zilele următoare se aplică restricții alimentare speciale:',
     en: 'RELIGIOUS FASTING — the following days have dietary restrictions:',
   };
-  return `\n${header[lang] || header.en}\n${lines.join('\n')}\n`;
+  const forbiddenBlock = `
+TILTOTT ÉLELMISZEREK BÖJTI NAPOKON: hús, szalonna, kolbász, csirkemell, csirke, sertés, marha, pulyka, kacsa, bárány, tej, tejföl, sajt, túró, vaj, joghurt, kefir, tejszín, tojás, bacon, sonka, virsli, hurka, mascarpone, mozzarella, parmezán.
+A recept leírásában (description) és az összetevőkben (ingredients) SEM szerepelhet tiltott élelmiszer!
+Ellenőrizd MINDEN ételt: a név, a leírás és az összetevők mind böjti kell legyenek!
+Böjti napokon KIZÁRÓLAG növényi alapanyagokat használj: zöldségek, gyümölcsök, gabonafélék, hüvelyesek, olajos magvak, növényi olajok.`;
+  return `\n${header[lang] || header.en}\n${lines.join('\n')}\n${forbiddenBlock}\n`;
+}
+
+/**
+ * Post-generation validation: strip forbidden ingredients from fasting-day meals.
+ * If a meal on a fasting day contains forbidden foods, replace the ingredient name
+ * with a plant-based alternative and log a warning.
+ */
+function validateFastingMeals(days: any[], fastingMap: Map<number, FastingInfo>): void {
+  if (fastingMap.size === 0) return;
+  const forbidden = FASTING_FORBIDDEN_FOODS.map(f => f.toLowerCase());
+
+  for (let i = 0; i < days.length; i++) {
+    const dayIdx = i % 7;
+    if (!fastingMap.has(dayIdx)) continue;
+
+    const day = days[i];
+    if (!day?.meals) continue;
+
+    for (const meal of day.meals) {
+      // Check meal name and description
+      const nameLower = (meal.name || '').toLowerCase();
+      const descLower = (meal.description || '').toLowerCase();
+      for (const fw of forbidden) {
+        if (nameLower.includes(fw)) {
+          console.warn(`[fasting-validation] Forbidden word "${fw}" found in meal name "${meal.name}" on fasting day ${i + 1}, clearing name`);
+          meal.name = meal.name.replace(new RegExp(fw, 'gi'), 'növényi').replace(/\s+/g, ' ').trim();
+        }
+        if (descLower.includes(fw)) {
+          console.warn(`[fasting-validation] Forbidden word "${fw}" found in description on fasting day ${i + 1}, clearing`);
+          meal.description = meal.description.replace(new RegExp(fw, 'gi'), 'növényi').replace(/\s+/g, ' ').trim();
+        }
+      }
+
+      // Check ingredients
+      if (meal.ingredients) {
+        meal.ingredients = meal.ingredients.filter((ing: any) => {
+          const ingName = (ing.name || '').toLowerCase();
+          for (const fw of forbidden) {
+            if (ingName.includes(fw)) {
+              console.warn(`[fasting-validation] Removing forbidden ingredient "${ing.name}" from fasting day ${i + 1}`);
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+    }
+  }
 }
 
 // ─── Handler ──────────────────────────────────────────────────
@@ -669,6 +734,9 @@ Generáld le mind a ${clampedDays} napot TELJESEN, minden mezővel kitöltve:`;
 
     // Anti-hallucination: validate all meal names and descriptions
     validateAllMealNames(parsed, lang);
+
+    // Post-generation fasting validation: remove forbidden ingredients from fasting-day meals
+    validateFastingMeals(parsed.days, fastingMap);
 
     // Validate and enrich every day/meal with complete data
     function enrich(ing: any) {

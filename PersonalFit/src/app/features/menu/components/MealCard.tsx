@@ -170,7 +170,7 @@ export function MealCard({
               <span className="text-sm text-gray-400">{time}</span>
             </div>
             {mealName && (
-              <p className="text-sm text-gray-600 truncate mt-0.5">{mealName}</p>
+              <p className="text-sm text-gray-600 line-clamp-2 mt-0.5">{mealName}</p>
             )}
           </div>
 
