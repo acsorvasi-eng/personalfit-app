@@ -966,14 +966,21 @@ export function ProfileSetupWizard() {
               }).catch(() => {});
             }
           } else {
-            console.warn('[ProfileSetup] API returned ok but no nutritionPlan key:', data);
+            throw new Error('API returned ok but no nutritionPlan');
           }
         } else {
-          const errText = await resp.text().catch(() => '(unreadable)');
-          console.warn('[ProfileSetup] API error', resp.status, errText.slice(0, 200));
+          throw new Error(`API error ${resp.status}`);
         }
-      } catch (planErr) {
-        console.warn('[ProfileSetup] Plan generation failed, continuing anyway:', planErr);
+      } catch (planErr: any) {
+        // Generation failed — show error and let user retry
+        setIsGenerating(false);
+        setGenProgress(0);
+        setGenPhase(0);
+        const msg = planErr?.message?.includes('abort')
+          ? t('wizard.generateTimeout') || 'A generálás túl sokáig tartott. Próbáld újra!'
+          : t('wizard.generateError') || 'Hiba történt a generálás közben. Próbáld újra!';
+        alert(msg);
+        return; // Don't navigate — stay on wizard so user can retry
       }
 
       // 4. Increment usage counter in Firestore
