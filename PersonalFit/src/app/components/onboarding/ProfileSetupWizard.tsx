@@ -867,6 +867,14 @@ export function ProfileSetupWizard() {
 
         const activeAllergenList = Array.from(activeAllergens).join(', ');
 
+        // Load fasting settings if available
+        let fastingPayload: { enabled: boolean; religion: string; customDays: number[] } | undefined;
+        try {
+          const { getFastingSettings } = await import('../../backend/services/FastingCalendarService');
+          const fs = await getFastingSettings();
+          if (fs.enabled) fastingPayload = fs;
+        } catch {}
+
         const userProfilePayload = {
           goal,
           activityLevel: activity,
@@ -877,6 +885,11 @@ export function ProfileSetupWizard() {
           allergies: activeAllergenList || undefined,
           mealCount,
           mealModel: effectiveMealModel,
+          macroProteinPct: 30,
+          macroCarbsPct: 40,
+          macroFatPct: 30,
+          likedFoods: [] as string[],
+          dislikedFoods: [] as string[],
         };
 
         const trainingDayIndices = [...new Set(sports.flatMap(s => s.days))].sort();
@@ -907,6 +920,8 @@ export function ProfileSetupWizard() {
               userProfile: userProfilePayload,
               trainingDays: trainingDayIndices,
               trainingCaloriesPerDay: wizardBurnPerDay,
+              goal: goal === 'lose' ? 'loss' : goal === 'gain' ? 'gain' : 'maintain',
+              fasting: fastingPayload,
             }),
           });
         } finally {
