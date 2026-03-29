@@ -53,9 +53,9 @@ const STRINGS: Record<string, NotificationStrings> = {
     lunchTitle: 'Ebed 1 ora mulva \u{1F37D}\u{FE0F}',
     dinnerTitle: 'Vacsora 1 ora mulva \u{1F319}',
     mealBody: (mealName, kcal) => `${mealName} (${kcal} kcal)`,
-    eveningTitle: 'Szep napot! \u{1F438}',
+    eveningTitle: 'Jo ejszakat! \u{1F31B}',
     eveningBody: (name, tomorrowMeal) =>
-      `Szep napot ${name}! Holnap: ${tomorrowMeal} reggelire \u{1F438}`,
+      `Jo ejszakat ${name}! Holnap reggelire: ${tomorrowMeal}. Aludj jol! \u{1F438}`,
   },
   en: {
     morningTitle: 'Good morning! \u{1F305}',
@@ -64,9 +64,9 @@ const STRINGS: Record<string, NotificationStrings> = {
     lunchTitle: 'Lunch in 1 hour \u{1F37D}\u{FE0F}',
     dinnerTitle: 'Dinner in 1 hour \u{1F319}',
     mealBody: (mealName, kcal) => `${mealName} (${kcal} kcal)`,
-    eveningTitle: 'Great day! \u{1F438}',
+    eveningTitle: 'Good night! \u{1F31B}',
     eveningBody: (name, tomorrowMeal) =>
-      `Great day ${name}! Tomorrow: ${tomorrowMeal} for breakfast \u{1F438}`,
+      `Good night ${name}! Tomorrow's breakfast: ${tomorrowMeal}. Sleep well! \u{1F438}`,
   },
   ro: {
     morningTitle: 'Buna dimineata! \u{1F305}',
@@ -75,9 +75,9 @@ const STRINGS: Record<string, NotificationStrings> = {
     lunchTitle: 'Pranz in 1 ora \u{1F37D}\u{FE0F}',
     dinnerTitle: 'Cina in 1 ora \u{1F319}',
     mealBody: (mealName, kcal) => `${mealName} (${kcal} kcal)`,
-    eveningTitle: 'Zi frumoasa! \u{1F438}',
+    eveningTitle: 'Noapte buna! \u{1F31B}',
     eveningBody: (name, tomorrowMeal) =>
-      `Zi frumoasa ${name}! Maine: ${tomorrowMeal} la micul dejun \u{1F438}`,
+      `Noapte buna ${name}! Maine la micul dejun: ${tomorrowMeal}. Somn usor! \u{1F438}`,
   },
 };
 
