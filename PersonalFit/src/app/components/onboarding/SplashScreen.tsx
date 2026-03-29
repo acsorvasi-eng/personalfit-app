@@ -244,6 +244,47 @@ export function SplashScreen() {
         </div>
       </div>
 
+      {/* Mock notification — slides in from top after 2s */}
+      <motion.div
+        className="absolute left-4 right-4 z-30"
+        style={{ top: 'max(3.5rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
+        initial={{ y: -120, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 2.2, type: 'spring', stiffness: 200, damping: 22 }}
+      >
+        <motion.div
+          className="rounded-2xl px-4 py-3 flex items-start gap-3"
+          style={{
+            background: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          }}
+          animate={{ y: [0, -2, 0] }}
+          transition={{ delay: 4, duration: 0.3 }}
+        >
+          {/* Mini frog icon */}
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}>
+            <span className="text-lg">🐸</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>kix</span>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>most</span>
+            </div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', lineHeight: 1.3 }}>
+              {t('notification.morningTitle')}
+            </p>
+            <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.35, marginTop: 2 }}>
+              {t('splash.tagline') === 'Transform what you eat'
+                ? 'Good morning! Today\'s breakfast: Oatmeal with nuts (420 kcal). Daily goal: 2100 kcal.'
+                : t('splash.tagline') === 'Transformă ce mănânci'
+                ? 'Bună dimineața! Micul dejun: Terci cu nuci (420 kcal). Ținta zilnică: 2100 kcal.'
+                : 'Jó reggelt! Mai reggeli: Zabkása dióval (420 kcal). Napi célod: 2100 kcal.'}
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+
       {/* Center content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
         {/* Kix mascot */}
