@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Church, Calendar, Check } from 'lucide-react';
+import { ArrowLeft, Church, Calendar, Check, X } from 'lucide-react';
 import { hapticFeedback } from '@/lib/haptics';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
@@ -228,25 +228,24 @@ export default function FastingJourneySheet({ open, onClose, onComplete }: Props
         {step > 1 ? (
           <button
             onClick={goBack}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, width: 32 }}
           >
             <ArrowLeft size={24} color="#111827" />
           </button>
         ) : (
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, fontSize: '0.875rem', color: '#6b7280' }}
-          >
-            {t('fasting.journey.cancel')}
-          </button>
+          <div style={{ width: 32 }} />
         )}
         <div style={{ flex: 1, textAlign: 'center' }}>
           <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#111827' }}>
             {stepTitle}
           </div>
         </div>
-        {/* Spacer to center title */}
-        <div style={{ width: 32 }} />
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, width: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <X size={22} color="#9ca3af" />
+        </button>
       </div>
 
       {/* ── Content area ── */}
