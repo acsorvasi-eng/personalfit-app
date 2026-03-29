@@ -386,6 +386,17 @@ export function SplashScreen() {
         >
           {t('splash.tagline')}
         </motion.p>
+
+        {/* Version badge — between content and button */}
+        <motion.p
+          className="mt-6"
+          style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
+        >
+          v{APP_VERSION}
+        </motion.p>
       </div>
 
       {/* Fixed bottom: CTA + version — always visible, floating */}
@@ -413,11 +424,6 @@ export function SplashScreen() {
           >
             {t('splash.startButton')}
           </button>
-
-          {/* Version badge */}
-          <p className="text-center mt-3" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
-            v{APP_VERSION}
-          </p>
         </div>
       </motion.div>
     </div>
