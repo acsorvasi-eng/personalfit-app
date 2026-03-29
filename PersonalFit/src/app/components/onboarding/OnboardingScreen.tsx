@@ -1,8 +1,8 @@
 /**
  * OnboardingScreen — white slides with animated SVG illustrations
  * 3 slides: (1) personalized health, (2) data privacy, (3) sport+sleep balance
- * Top progress bar + swipe gesture + fixed CTA button position
- * Titles support *italic* markers for premium typography
+ * No skip, no top progress bar — discrete dot pagination between text and button.
+ * Fixed floating CTA at the bottom.
  */
 
 import { useState, useCallback, useRef, useMemo } from 'react';
@@ -67,19 +67,13 @@ function AnimatedRect({ x, y, width, height, rx, stroke = '#0f172a', strokeWidth
 
 const TEAL = '#0d9488';
 
-// Slide 1: plate + fork + knife + heart (inside plate, clearly visible)
 function Slide1Illustration() {
   return (
     <svg width="240" height="240" viewBox="0 0 130 130" fill="none" aria-hidden="true">
-      {/* outer plate circle — full closed circle */}
       <AnimatedCircle cx={65} cy={72} r={36} delay={0} />
-      {/* inner dashed circle — smaller so it closes cleanly */}
       <AnimatedCircle cx={65} cy={72} r={24} stroke="#0f172a" strokeWidth={1.5} strokeDasharray="5 4" delay={0.2} />
-      {/* fork left — moved further out, bigger, lower */}
       <AnimatedPath d="M14 40 L14 62 M14 62 L14 78 M11 40 L11 52 C11 57 17 57 17 52 L17 40" strokeWidth={2.2} delay={0.3} />
-      {/* knife right — moved further out, bigger, lower */}
       <AnimatedPath d="M116 40 L116 78 M116 40 C116 40 121 48 121 58 C121 64 116 66 116 66" strokeWidth={2.2} delay={0.3} />
-      {/* heart — centered inside plate */}
       <AnimatedPath
         d="M65 80 C65 80 54 72 54 65 C54 60 59 58 65 63 C71 58 76 60 76 65 C76 72 65 80 65 80 Z"
         stroke={TEAL} strokeWidth={2.2} delay={0.65}
@@ -88,42 +82,31 @@ function Slide1Illustration() {
   );
 }
 
-// Slide 2: phone + shield + checkmark
 function Slide2Illustration() {
   return (
     <svg width="240" height="240" viewBox="0 0 120 120" fill="none" aria-hidden="true">
       <AnimatedRect x={34} y={14} width={52} height={92} rx={8} delay={0} />
       <AnimatedPath d="M46 22 L74 22" delay={0.2} />
-      {/* home button — small filled circle so it doesn't break */}
       <AnimatedCircle cx={60} cy={97} r={3.5} stroke="#0f172a" strokeWidth={2.5} delay={0.2} />
-      {/* shield */}
       <AnimatedPath
         d="M60 34 C54 34 46 38 46 38 L46 54 C46 63 60 72 60 72 C60 72 74 63 74 54 L74 38 C74 38 66 34 60 34 Z"
         stroke={TEAL} strokeWidth={2.2} delay={0.4}
       />
-      {/* checkmark */}
       <AnimatedPath d="M52 53 L57 59 L69 46" stroke={TEAL} strokeWidth={2.4} delay={0.85} />
     </svg>
   );
 }
 
-// Slide 3: balance scale — sun (sport) ↔ moon (sleep)
 function Slide3Illustration() {
   return (
     <svg width="240" height="240" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-      {/* post */}
       <AnimatedPath d="M60 22 L60 96" delay={0} />
       <AnimatedPath d="M44 96 L76 96" delay={0.05} />
-      {/* arm */}
       <AnimatedPath d="M26 42 L60 32 L94 42" delay={0.15} />
-      {/* left bowl — deeper so sun fits inside */}
       <AnimatedPath d="M26 42 L20 62 C20 68 32 72 32 72 C32 72 44 68 44 62 L38 42" delay={0.3} />
-      {/* sun — centered inside left bowl, above the bottom */}
       <AnimatedCircle cx={32} cy={56} r={6} stroke={TEAL} strokeWidth={2} delay={0.55} />
       <AnimatedPath d="M32 47 L32 45 M32 67 L32 65 M23 56 L21 56 M43 56 L41 56 M26 50 L24.5 48.5 M39.5 63.5 L38 62 M26 62 L24.5 63.5 M39.5 48.5 L38 50" stroke={TEAL} strokeWidth={1.4} delay={0.7} />
-      {/* right bowl — deeper so moon fits inside */}
       <AnimatedPath d="M82 42 L76 62 C76 68 88 72 88 72 C88 72 100 68 100 62 L94 42" delay={0.3} />
-      {/* moon — centered inside right bowl, above the bottom */}
       <AnimatedPath
         d="M91 49 C88 49 85 52 85 56 C85 61 88 64 92 64 C89 65 85 64 83 62 C80 59 80 53 83 50 C85 47 89 47 91 49 Z"
         stroke={TEAL} strokeWidth={2} delay={0.55}
@@ -133,7 +116,6 @@ function Slide3Illustration() {
 }
 
 const ILLUSTRATIONS = [Slide1Illustration, Slide2Illustration, Slide3Illustration];
-
 const TOTAL_SLIDES = 3;
 
 /** Converts *word* markers to italic <em> spans */
@@ -188,11 +170,6 @@ export function OnboardingScreen() {
     }
   }, [current]);
 
-  const skip = useCallback(() => {
-    markOnboardingComplete();
-    navigate('/login');
-  }, [markOnboardingComplete, navigate]);
-
   const isLast = current === slides.length - 1;
   const slide = slides[current];
   const Illustration = ILLUSTRATIONS[current];
@@ -200,31 +177,12 @@ export function OnboardingScreen() {
   return (
     <div className="min-h-screen bg-white flex flex-col overflow-hidden">
 
-      {/* Top bar: skip right-aligned */}
-      <div className="flex items-center justify-end px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-2 min-h-[48px]">
-        {!isLast && (
-          <button onClick={skip} type="button"
-            className="text-sm text-gray-400 font-medium cursor-pointer px-1 py-1">
-            {t('onboarding.skip')}
-          </button>
-        )}
-      </div>
-
-      {/* Progress bar */}
-      <div className="px-6 max-w-md mx-auto w-full">
-        <div className="h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: '#e5e7eb' }}>
-          <motion.div
-            className="h-full rounded-full"
-            style={{ backgroundColor: '#0d9488' }}
-            animate={{ width: `${((current + 1) / TOTAL_SLIDES) * 100}%` }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          />
-        </div>
-      </div>
+      {/* Spacer for safe area — no skip, no progress bar */}
+      <div className="pt-[max(1rem,env(safe-area-inset-top))]" />
 
       {/* Swipeable content */}
       <div
-        className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full"
+        className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full pb-40"
         onTouchStart={e => { touchStart.current = e.touches[0].clientX; }}
         onTouchEnd={e => {
           const dx = e.changedTouches[0].clientX - touchStart.current;
@@ -242,7 +200,7 @@ export function OnboardingScreen() {
             className="w-full flex flex-col items-center text-center"
           >
             {/* SVG illustration */}
-            <div className="mb-12 flex items-center justify-center" style={{ minHeight: 240 }}>
+            <div className="mb-10 flex items-center justify-center" style={{ minHeight: 240 }}>
               <Illustration />
             </div>
 
@@ -264,17 +222,37 @@ export function OnboardingScreen() {
         </AnimatePresence>
       </div>
 
-      {/* Fixed bottom: CTA — always visible, floating */}
+      {/* Fixed bottom: pagination dots + CTA */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-20 px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-3"
-        style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.95) 60%, transparent)' }}
+        className="fixed bottom-0 left-0 right-0 z-20 px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4"
+        style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}
       >
         <div className="max-w-md mx-auto w-full">
+          {/* Discrete dot pagination — between text and button */}
+          <div className="flex items-center justify-center gap-2 mb-5">
+            {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
+              <motion.div
+                key={i}
+                animate={{
+                  width: i === current ? 24 : 6,
+                  backgroundColor: i === current ? TEAL : '#d1d5db',
+                  opacity: i === current ? 1 : 0.5,
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                style={{
+                  height: 6,
+                  borderRadius: 3,
+                }}
+              />
+            ))}
+          </div>
+
+          {/* CTA button */}
           <button
             onClick={goNext}
             type="button"
             className="w-full h-14 rounded-2xl text-white font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
-            style={{ background: '#0d9488' }}
+            style={{ background: TEAL }}
           >
             {isLast ? t('onboarding.start') : t('onboarding.next')} →
           </button>
