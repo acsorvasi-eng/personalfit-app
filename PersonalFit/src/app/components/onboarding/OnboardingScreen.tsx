@@ -264,18 +264,21 @@ export function OnboardingScreen() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom: CTA */}
-      <div className="px-6 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full">
-
-        {/* CTA button — same position on every slide */}
-        <button
-          onClick={goNext}
-          type="button"
-          className="w-full h-14 rounded-2xl text-white font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
-          style={{ background: '#0d9488' }}
-        >
-          {isLast ? t('onboarding.start') : t('onboarding.next')} →
-        </button>
+      {/* Fixed bottom: CTA — always visible, floating */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-20 px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-3"
+        style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.95) 60%, transparent)' }}
+      >
+        <div className="max-w-md mx-auto w-full">
+          <button
+            onClick={goNext}
+            type="button"
+            className="w-full h-14 rounded-2xl text-white font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
+            style={{ background: '#0d9488' }}
+          >
+            {isLast ? t('onboarding.start') : t('onboarding.next')} →
+          </button>
+        </div>
       </div>
     </div>
   );

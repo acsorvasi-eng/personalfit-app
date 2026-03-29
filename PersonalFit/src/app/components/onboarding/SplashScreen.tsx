@@ -388,34 +388,37 @@ export function SplashScreen() {
         </motion.p>
       </div>
 
-      {/* Bottom: CTA + version */}
+      {/* Fixed bottom: CTA + version — always visible, floating */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 max-w-md mx-auto w-full"
+        className="fixed bottom-0 left-0 right-0 z-20 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3"
+        style={{ background: 'linear-gradient(to top, rgba(19,78,74,0.95) 60%, transparent)' }}
       >
-        <button
-          onClick={handleStart}
-          type="button"
-          className="w-full font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
-          style={{
-            height: 56,
-            background: 'rgba(255,255,255,0.2)',
-            color: '#ffffff',
-            borderRadius: 16,
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            fontSize: 16,
-          }}
-        >
-          {t('splash.startButton')}
-        </button>
+        <div className="max-w-md mx-auto w-full">
+          <button
+            onClick={handleStart}
+            type="button"
+            className="w-full font-bold text-base transition-all active:scale-[0.98] cursor-pointer"
+            style={{
+              height: 56,
+              background: 'rgba(255,255,255,0.2)',
+              color: '#ffffff',
+              borderRadius: 16,
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              fontSize: 16,
+            }}
+          >
+            {t('splash.startButton')}
+          </button>
 
-        {/* Version badge */}
-        <p className="text-center mt-4" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
-          v{APP_VERSION}
-        </p>
+          {/* Version badge */}
+          <p className="text-center mt-3" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
+            v{APP_VERSION}
+          </p>
+        </div>
       </motion.div>
     </div>
   );
