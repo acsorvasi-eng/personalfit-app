@@ -357,6 +357,13 @@ export function UnifiedMenu() {
     };
   }, []);
 
+  // Listen for fastingActivated event — auto-open generate sheet
+  useEffect(() => {
+    const handleFasting = () => setGenerateSheetOpen(true);
+    window.addEventListener('fastingActivated', handleFasting);
+    return () => window.removeEventListener('fastingActivated', handleFasting);
+  }, []);
+
   // Listen for openUploadSheet event (from PlanSetupScreen PDF choice)
   useEffect(() => {
     const handleOpenUpload = () => setUploadSheetOpen(true);

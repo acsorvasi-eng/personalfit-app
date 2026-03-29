@@ -603,7 +603,9 @@ export default function SettingsSheet(props: SettingsSheetProps) {
           onClose={() => setFastingJourneyOpen(false)}
           onComplete={() => {
             setFastingJourneyOpen(false);
-            showToast(t('toast.saved'));
+            showToast(t('fasting.journey.saved') || 'Böjt beállítva! Az étrend újragenerálódik.');
+            // Trigger meal plan regeneration by navigating to menu with generate flag
+            window.dispatchEvent(new CustomEvent('fastingActivated'));
           }}
         />
 
