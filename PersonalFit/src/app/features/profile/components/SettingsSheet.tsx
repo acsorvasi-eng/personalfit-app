@@ -671,8 +671,11 @@ export default function SettingsSheet(props: SettingsSheetProps) {
           onComplete={() => {
             setFastingJourneyOpen(false);
             showToast(t('fasting.journey.saved') || 'Böjt beállítva! Az étrend újragenerálódik.');
-            // Trigger meal plan regeneration by navigating to menu with generate flag
-            window.dispatchEvent(new CustomEvent('fastingActivated'));
+            // Navigate to menu first, then trigger generation after mount
+            navigate('/', { replace: true });
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('fastingActivated'));
+            }, 500);
           }}
         />
 

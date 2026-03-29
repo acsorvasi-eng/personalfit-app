@@ -216,9 +216,10 @@ export default function FastingJourneySheet({ open, onClose, onComplete }: Props
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 50,
+      position: 'fixed', inset: 0, zIndex: 9999,
       background: '#fff', display: 'flex', flexDirection: 'column',
       overflow: 'hidden',
+      paddingTop: 'max(0px, env(safe-area-inset-top))',
     }}>
       {/* ── Header ── */}
       <div style={{
