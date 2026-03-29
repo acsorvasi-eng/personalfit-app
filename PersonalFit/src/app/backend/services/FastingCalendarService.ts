@@ -11,11 +11,25 @@ import { getSetting, setSetting } from './SettingsService';
 
 export type Religion = 'orthodox' | 'catholic' | 'protestant' | 'custom';
 
+export type RestrictionCategory = 'meat' | 'dairy' | 'eggs' | 'fish' | 'alcohol' | 'sweets';
+
 export interface FastingSettings {
   enabled: boolean;
   religion: Religion;
   /** For 'custom': array of weekday indices (0=Mon … 6=Sun) */
   customDays: number[];
+  /** Food categories the user restricts during fasting */
+  restrictions: RestrictionCategory[];
+  /** Whether to include fasting recipes in meal plan */
+  fastingRecipes: boolean;
+  /** Custom date range start (ISO string) — only for 'custom' religion */
+  customRangeStart?: string;
+  /** Custom date range end (ISO string) — only for 'custom' religion */
+  customRangeEnd?: string;
+  /** Whether custom mode uses recurring weekdays (true) or date range (false) */
+  customRecurring: boolean;
+  /** IDs of enabled religious fasting periods (for orthodox/catholic) */
+  enabledPeriods: string[];
 }
 
 export interface FastingDayInfo {
@@ -32,6 +46,10 @@ const DEFAULT_SETTINGS: FastingSettings = {
   enabled: false,
   religion: 'orthodox',
   customDays: [],
+  restrictions: [],
+  fastingRecipes: false,
+  customRecurring: true,
+  enabledPeriods: [],
 };
 
 // ─── Persistence ────────────────────────────────────────────────────
@@ -254,6 +272,57 @@ export function getFastingDays(
     result.push({ ...info, date: d });
   }
   return result;
+}
+
+// ─── Fasting periods list (for UI) ─────────────────────────────────
+
+export interface FastingPeriod {
+  id: string;
+  nameKey: string;
+  start: Date;
+  end: Date;
+}
+
+/**
+ * Get the named fasting periods for a given religion and year.
+ * Returns periods that haven't fully passed yet.
+ */
+export function getFastingPeriods(religion: 'orthodox' | 'catholic', year: number): FastingPeriod[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (religion === 'orthodox') {
+    const easter = orthodoxEaster(year);
+    const cleanMonday = addDays(easter, -48);
+    const holySaturday = addDays(easter, -1);
+    const natStart = new Date(year, 10, 15);
+    const natEnd = new Date(year, 11, 24);
+    const dormStart = new Date(year, 7, 1);
+    const dormEnd = new Date(year, 7, 14);
+    const allSaints = addDays(easter, 57);
+    const apostlesStart = addDays(allSaints, 1);
+    const apostlesEnd = new Date(year, 5, 28);
+
+    return [
+      { id: 'greatLent', nameKey: 'fasting.reason.greatLent', start: cleanMonday, end: holySaturday },
+      { id: 'apostlesFast', nameKey: 'fasting.reason.apostlesFast', start: apostlesStart, end: apostlesEnd },
+      { id: 'dormitionFast', nameKey: 'fasting.reason.dormitionFast', start: dormStart, end: dormEnd },
+      { id: 'nativityFast', nameKey: 'fasting.reason.nativityFast', start: natStart, end: natEnd },
+      { id: 'wedFri', nameKey: 'fasting.reason.wedFri', start: today, end: new Date(year, 11, 31) },
+    ].filter(p => p.end >= today);
+  }
+
+  // Catholic
+  const easter = catholicEaster(year);
+  const ashWednesday = addDays(easter, -46);
+  const holySaturday = addDays(easter, -1);
+  const dec1 = new Date(year, 11, 1);
+  const dec24 = new Date(year, 11, 24);
+
+  return [
+    { id: 'lent', nameKey: 'fasting.reason.lent', start: ashWednesday, end: holySaturday },
+    { id: 'adventFriday', nameKey: 'fasting.reason.adventFriday', start: dec1, end: dec24 },
+  ].filter(p => p.end >= today);
 }
 
 /**

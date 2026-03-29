@@ -26,6 +26,7 @@ import {
 import {
   isNotificationsEnabled, setNotificationsEnabled,
 } from "../../../services/NotificationService";
+import FastingJourneySheet from "../../../components/FastingJourneySheet";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -90,47 +91,47 @@ function mapAccountError(code: string): string {
 
 // ─── Religious Fasting Card ──────────────────────────────────────────
 
-const RELIGIONS: Religion[] = ['orthodox', 'catholic', 'protestant', 'custom'];
-const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
-
-function FastingSettingsCard() {
+function FastingSettingsCard({ onOpenJourney }: { onOpenJourney: () => void }) {
   const { t } = useLanguage();
-  const [settings, setSettings] = useState<FastingSettings>({ enabled: false, religion: 'orthodox', customDays: [] });
+  const [settings, setSettings] = useState<FastingSettings>({ enabled: false, religion: 'orthodox', customDays: [], restrictions: [], fastingRecipes: false, customRecurring: true, enabledPeriods: [] });
   const [expanded, setExpanded] = useState(false);
   const [upcomingDays, setUpcomingDays] = useState<{ date: Date; reasonKey: string }[]>([]);
 
-  useEffect(() => {
+  const reload = () => {
     getFastingSettings().then((s) => {
       setSettings(s);
       if (s.enabled) {
         const days = getFastingDays(new Date(), 30, s).filter(d => d.isFasting);
         setUpcomingDays(days.slice(0, 5).map(d => ({ date: d.date, reasonKey: d.reasonKey })));
+      } else {
+        setUpcomingDays([]);
       }
     });
-  }, []);
-
-  const updateSettings = async (patch: Partial<FastingSettings>) => {
-    const next = { ...settings, ...patch };
-    setSettings(next);
-    await saveFastingSettings(next);
-    hapticFeedback('light');
-    // Recompute upcoming
-    if (next.enabled) {
-      const days = getFastingDays(new Date(), 30, next).filter(d => d.isFasting);
-      setUpcomingDays(days.slice(0, 5).map(d => ({ date: d.date, reasonKey: d.reasonKey })));
-    } else {
-      setUpcomingDays([]);
-    }
-    // Notify other components
-    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-    showToast(t('toast.saved'));
   };
 
-  const toggleCustomDay = (dayIdx: number) => {
-    const days = settings.customDays.includes(dayIdx)
-      ? settings.customDays.filter(d => d !== dayIdx)
-      : [...settings.customDays, dayIdx];
-    updateSettings({ customDays: days });
+  useEffect(() => { reload(); }, []);
+
+  // Listen for profileUpdated (fired after journey completes)
+  useEffect(() => {
+    const handler = () => reload();
+    window.addEventListener('profileUpdated', handler);
+    return () => window.removeEventListener('profileUpdated', handler);
+  }, []);
+
+  const handleToggle = async () => {
+    if (!settings.enabled) {
+      // Opening: launch the journey
+      onOpenJourney();
+    } else {
+      // Turning off: just disable
+      const next = { ...settings, enabled: false };
+      setSettings(next);
+      await saveFastingSettings(next);
+      setUpcomingDays([]);
+      hapticFeedback('light');
+      try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
+      showToast(t('toast.saved'));
+    }
   };
 
   const formatDate = (d: Date) => {
@@ -151,7 +152,7 @@ function FastingSettingsCard() {
           <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: 2 }}>{t('fasting.enabledSubtitle')}</div>
         </div>
         <button
-          onClick={() => updateSettings({ enabled: !settings.enabled })}
+          onClick={handleToggle}
           style={{
             background: settings.enabled ? '#0d9488' : '#e5e7eb',
             borderRadius: 999, width: 44, height: 24, border: 'none',
@@ -167,60 +168,28 @@ function FastingSettingsCard() {
 
       {settings.enabled && (
         <>
-          {/* Religion selector */}
+          {/* Religion + restrictions summary */}
           <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f3f4f6' }}>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 8 }}>{t('fasting.religion')}</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {RELIGIONS.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => updateSettings({ religion: r })}
-                  style={{
-                    padding: '6px 14px', borderRadius: 20, border: 'none',
-                    background: settings.religion === r ? '#0d9488' : '#f3f4f6',
-                    color: settings.religion === r ? '#fff' : '#374151',
-                    fontSize: '0.875rem', fontWeight: settings.religion === r ? 600 : 400,
-                    cursor: 'pointer', transition: 'all 0.15s',
-                  }}
-                >
-                  {t(`fasting.religion.${r}` as any)}
-                </button>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                {t(`fasting.religion.${settings.religion}` as string)}
+                {settings.restrictions.length > 0 && (
+                  <span style={{ marginLeft: 6 }}>
+                    &middot; {settings.restrictions.length} {t('fasting.journey.step2Title').toLowerCase()}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={onOpenJourney}
+                style={{
+                  background: 'none', border: 'none', color: '#0d9488',
+                  fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {t('fasting.journey.title')}
+              </button>
             </div>
           </div>
-
-          {/* Protestant note */}
-          {settings.religion === 'protestant' && (
-            <div style={{
-              padding: '0.75rem 1rem', borderBottom: '1px solid #f3f4f6',
-              fontSize: '0.875rem', color: '#6b7280', fontStyle: 'italic',
-            }}>
-              {t('fasting.protestantNote')}
-            </div>
-          )}
-
-          {/* Custom weekday picker */}
-          {(settings.religion === 'custom' || settings.religion === 'protestant') && (
-            <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #f3f4f6' }}>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: 8 }}>{t('fasting.customDaysHint')}</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {WEEKDAY_KEYS.map((key, idx) => (
-                  <button
-                    key={key}
-                    onClick={() => toggleCustomDay(idx)}
-                    style={{
-                      width: 40, height: 40, borderRadius: '50%', border: 'none',
-                      background: settings.customDays.includes(idx) ? '#0d9488' : '#f3f4f6',
-                      color: settings.customDays.includes(idx) ? '#fff' : '#374151',
-                      fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
-                    }}
-                  >
-                    {t(`fasting.dayNames.${key}` as any)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Upcoming fasting days mini-list */}
           {upcomingDays.length > 0 && (
@@ -267,7 +236,7 @@ function FastingSettingsCard() {
                             {formatDate(d.date)}
                           </span>
                           <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: 8 }}>
-                            {t(d.reasonKey as any)}
+                            {t(d.reasonKey as string)}
                           </span>
                         </div>
                       </div>
@@ -482,6 +451,8 @@ export default function SettingsSheet(props: SettingsSheetProps) {
     showToast(t(next ? 'notification.enabled' : 'notification.disabled'));
   };
 
+  const [fastingJourneyOpen, setFastingJourneyOpen] = useState(false);
+
   const [sleepSheetOpen, setSleepSheetOpen] = useState(false);
   const [wakeTime, setWakeTime] = useState("07:00");
   const [selectedBedtime, setSelectedBedtime] = useState("");
@@ -624,7 +595,17 @@ export default function SettingsSheet(props: SettingsSheetProps) {
         </SettingsCard>
 
         {/* Section 3c: Religious Fasting */}
-        <FastingSettingsCard />
+        <FastingSettingsCard onOpenJourney={() => setFastingJourneyOpen(true)} />
+
+        {/* Fasting Journey overlay */}
+        <FastingJourneySheet
+          open={fastingJourneyOpen}
+          onClose={() => setFastingJourneyOpen(false)}
+          onComplete={() => {
+            setFastingJourneyOpen(false);
+            showToast(t('toast.saved'));
+          }}
+        />
 
         {/* Section 4: Subscription */}
         <SettingsCard sectionTitle={t('profile.sectionSubscription')}>
