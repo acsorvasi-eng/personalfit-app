@@ -1110,7 +1110,7 @@ export function ProfileSetupWizard() {
                 />
               ))}
             </div>
-            {step < STEPS.length - 1 ? (
+            {step < STEPS.length - 1 || step === LEGACY_FOODS_STEP ? (
               <>
                 <DSMButton
                   onClick={goNext}
