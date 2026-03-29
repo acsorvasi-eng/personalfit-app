@@ -445,6 +445,17 @@ const en: LocalePartial = {
   'fasting.dayNames.sat': 'Sat',
   'fasting.dayNames.sun': 'Sun',
   'fasting.protestantNote': 'Protestant churches have no mandatory fasting, but you can set custom fasting days.',
+
+  // Notifications
+  'notification.settingsTitle': 'Notifications',
+  'notification.settingsToggle': 'Daily reminders',
+  'notification.settingsSubtitle': 'Breakfast, lunch, dinner reminders',
+  'notification.enabled': 'Notifications enabled',
+  'notification.disabled': 'Notifications disabled',
+  'notification.morningTitle': 'Good morning! 🌅',
+  'notification.lunchTitle': 'Lunch in 1 hour 🍽️',
+  'notification.dinnerTitle': 'Dinner in 1 hour 🌙',
+  'notification.eveningTitle': 'Great day! 🐸',
 };
 
 export default en;

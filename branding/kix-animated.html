@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kix — Brand Showcase</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; background: #020617;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    padding: 60px 20px; gap: 80px;
+  }
+
+  .section {
+    display: flex; flex-direction: column; align-items: center; gap: 24px;
+  }
+
+  .label {
+    color: #475569; font-size: 11px; letter-spacing: 4px;
+    text-transform: uppercase; font-weight: 700;
+  }
+
+  /* ========== HERO: BIG WORDMARK ========== */
+  .hero {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 32px; padding: 60px 0;
+  }
+
+  .hero-icon { width: 100px; height: 100px; }
+
+  @keyframes heroFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .hero-icon svg {
+    animation: heroFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 20px 40px rgba(13, 148, 136, 0.4));
+  }
+
+  @keyframes blink {
+    0%, 42%, 46%, 100% { transform: scaleY(1); }
+    44% { transform: scaleY(0.05); }
+  }
+  .hero-eye { animation: blink 4s ease-in-out infinite; transform-origin: center; }
+  .hero-eye:nth-of-type(2) { animation-delay: 0.05s; }
+
+  .hero-name {
+    font-size: 96px; font-weight: 900; letter-spacing: 16px;
+    color: #f0fdfa;
+    text-shadow: 0 0 60px rgba(13, 148, 136, 0.5), 0 0 120px rgba(13, 148, 136, 0.2);
+  }
+
+  .hero-tagline {
+    font-size: 14px; color: #5eead4; letter-spacing: 8px;
+    text-transform: uppercase; font-weight: 400;
+  }
+
+  .hero-sub {
+    font-size: 13px; color: #334155; letter-spacing: 2px; margin-top: -16px;
+  }
+
+  /* ========== APP ICON ========== */
+  .icon-wrap { width: 180px; height: 180px; }
+
+  @keyframes iconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(1deg); }
+  }
+  .icon-wrap svg {
+    animation: iconFloat 3s ease-in-out infinite;
+    filter: drop-shadow(0 24px 48px rgba(13, 148, 136, 0.35));
+  }
+
+  .icon-eye { animation: blink 4s ease-in-out infinite; transform-origin: center; }
+
+  /* ========== PEEK ========== */
+  .peek-wrap {
+    width: 180px; height: 180px; overflow: hidden;
+    border-radius: 42px; background: #0d9488; position: relative;
+    box-shadow: 0 24px 48px rgba(13, 148, 136, 0.3), inset 0 -2px 8px rgba(0,0,0,0.1);
+  }
+
+  @keyframes peekUp {
+    0%, 100% { transform: translateY(35px); }
+    25%, 75% { transform: translateY(0px); }
+  }
+  .peek-frog { animation: peekUp 5s ease-in-out infinite; }
+
+  @keyframes peekBlink {
+    0%, 52%, 56%, 100% { transform: scaleY(1); }
+    54% { transform: scaleY(0.05); }
+  }
+  .peek-eye { animation: peekBlink 5s ease-in-out infinite; transform-origin: center; }
+
+  /* ========== MASCOT ========== */
+  .mascot-wrap { width: 220px; height: 260px; }
+
+  @keyframes mascotBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.03); }
+  }
+  .mascot-wrap svg {
+    animation: mascotBounce 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 20px 40px rgba(13, 148, 136, 0.25));
+  }
+
+  @keyframes wave {
+    0%, 60%, 100% { transform: rotate(0deg); }
+    10% { transform: rotate(16deg); }
+    20% { transform: rotate(-10deg); }
+    30% { transform: rotate(16deg); }
+    40% { transform: rotate(-6deg); }
+    50% { transform: rotate(12deg); }
+  }
+  .wave-arm { animation: wave 3s ease-in-out infinite; transform-origin: 280px 240px; }
+
+  @keyframes mascotBlink {
+    0%, 35%, 39%, 70%, 74%, 100% { transform: scaleY(1); }
+    37% { transform: scaleY(0.05); }
+    72% { transform: scaleY(0.05); }
+  }
+  .mascot-eye { animation: mascotBlink 4s ease-in-out infinite; transform-origin: center; }
+
+  /* ========== WORDMARK ANIMATED ========== */
+  .wordmark-wrap {
+    display: flex; align-items: center; gap: 24px;
+    padding: 32px 48px; border-radius: 24px;
+    background: rgba(13, 148, 136, 0.06);
+    border: 1px solid rgba(13, 148, 136, 0.15);
+  }
+
+  .wm-icon { width: 72px; height: 72px; }
+
+  @keyframes wmPop {
+    0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60% { transform: scale(1.12) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .wm-icon svg {
+    animation: wmPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    filter: drop-shadow(0 8px 20px rgba(13, 148, 136, 0.35));
+  }
+
+  .wm-eye { animation: blink 4s ease-in-out infinite; animation-delay: 2s; transform-origin: center; }
+
+  .wm-text { display: flex; flex-direction: column; gap: 6px; }
+
+  .wm-name {
+    font-size: 64px; font-weight: 900; color: #f0fdfa; letter-spacing: 8px;
+    text-shadow: 0 0 40px rgba(13, 148, 136, 0.3);
+  }
+  .wm-name span {
+    display: inline-block;
+    animation: letterDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .wm-name span:nth-child(1) { animation-delay: 0.6s; }
+  .wm-name span:nth-child(2) { animation-delay: 0.72s; }
+  .wm-name span:nth-child(3) { animation-delay: 0.84s; }
+
+  @keyframes letterDrop {
+    0% { transform: translateY(-40px) scale(0.5); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .wm-tagline {
+    font-size: 11px; color: #5eead4; letter-spacing: 6px;
+    text-transform: uppercase; font-weight: 500;
+    animation: fadeIn 0.6s ease both; animation-delay: 1.2s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== SPLASH SCREEN (THE STAR) ========== */
+  .splash {
+    width: 320px; height: 560px; border-radius: 44px;
+    background: linear-gradient(160deg, #0d9488, #0f766e, #134e4a);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; position: relative; overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  /* Glow orb */
+  .splash::before {
+    content: ''; position: absolute; width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(94, 234, 212, 0.12) 0%, transparent 60%);
+    animation: orbPulse 4s ease-in-out infinite;
+  }
+  @keyframes orbPulse {
+    0%, 100% { transform: scale(0.7); opacity: 0.4; }
+    50% { transform: scale(1.3); opacity: 1; }
+  }
+
+  /* Subtle grid pattern */
+  .splash::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+  }
+
+  .splash-kix { width: 110px; height: 110px; z-index: 1; }
+
+  @keyframes splashPop {
+    0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+    50% { transform: scale(1.18) rotate(2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .splash-kix svg {
+    animation: splashPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: 0.3s;
+    filter: drop-shadow(0 12px 32px rgba(0,0,0,0.25));
+  }
+
+  .splash-eye { animation: mascotBlink 3.5s ease-in-out infinite; animation-delay: 1.5s; transform-origin: center; }
+
+  .splash-brand {
+    font-size: 56px; font-weight: 900; color: white; letter-spacing: 12px;
+    z-index: 1; animation: fadeIn 0.8s ease both; animation-delay: 0.8s;
+    text-shadow: 0 0 40px rgba(255,255,255,0.15);
+  }
+
+  .splash-tagline {
+    font-size: 10px; color: #99f6e4; letter-spacing: 5px;
+    text-transform: uppercase; font-weight: 500;
+    z-index: 1; animation: fadeIn 0.8s ease both; animation-delay: 1.2s;
+  }
+
+  .splash-dots {
+    display: flex; gap: 10px; z-index: 1; margin-top: 48px;
+    animation: fadeIn 0.5s ease both; animation-delay: 1.6s;
+  }
+  .splash-dots span {
+    width: 6px; height: 6px; border-radius: 50%; background: #5eead4;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotPulse {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+    40% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* Divider */
+  .divider {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, #0d9488, transparent);
+    opacity: 0.3;
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO: Big wordmark -->
+<div class="section hero">
+  <div class="hero-icon">
+    <svg viewBox="0 0 100 100">
+      <rect width="100" height="100" rx="25" fill="#0d9488"/>
+      <ellipse cx="50" cy="58" rx="30" ry="24" fill="#f0fdfa"/>
+      <circle cx="36" cy="40" r="14" fill="#f0fdfa"/>
+      <circle cx="64" cy="40" r="14" fill="#f0fdfa"/>
+      <g class="hero-eye"><circle cx="36" cy="40" r="6" fill="#134e4a"/><circle cx="38" cy="38" r="2" fill="#f0fdfa"/></g>
+      <g class="hero-eye"><circle cx="64" cy="40" r="6" fill="#134e4a"/><circle cx="66" cy="38" r="2" fill="#f0fdfa"/></g>
+      <path d="M 40 62 Q 50 70 60 62" fill="none" stroke="#134e4a" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="hero-name">kix</div>
+  <div class="hero-tagline">Transform what you eat</div>
+  <div class="hero-sub">AI Nutrition Coach</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- APP ICON -->
+<div class="section">
+  <div class="label">App Icon</div>
+  <div class="icon-wrap">
+    <svg viewBox="0 0 200 200">
+      <rect width="200" height="200" rx="45" fill="#0d9488"/>
+      <ellipse cx="100" cy="115" rx="55" ry="45" fill="#f0fdfa"/>
+      <circle cx="72" cy="80" r="24" fill="#f0fdfa"/>
+      <circle cx="128" cy="80" r="24" fill="#f0fdfa"/>
+      <g class="icon-eye"><circle cx="72" cy="80" r="11" fill="#134e4a"/><circle cx="76" cy="76" r="3.5" fill="#f0fdfa"/></g>
+      <g class="icon-eye"><circle cx="128" cy="80" r="11" fill="#134e4a"/><circle cx="132" cy="76" r="3.5" fill="#f0fdfa"/></g>
+      <path d="M 78 120 Q 100 138 122 120" fill="none" stroke="#134e4a" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="70" cy="118" r="7" fill="#99f6e4" opacity="0.5"/>
+      <circle cx="130" cy="118" r="7" fill="#99f6e4" opacity="0.5"/>
+    </svg>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PEEK -->
+<div class="section">
+  <div class="label">Peek</div>
+  <div class="peek-wrap">
+    <svg viewBox="0 0 200 200">
+      <g class="peek-frog">
+        <ellipse cx="100" cy="180" rx="70" ry="60" fill="#ccfbf1"/>
+        <circle cx="72" cy="120" r="28" fill="#ccfbf1"/>
+        <circle cx="128" cy="120" r="28" fill="#ccfbf1"/>
+        <g class="peek-eye"><circle cx="72" cy="120" r="13" fill="#134e4a"/><circle cx="76" cy="116" r="4" fill="#ccfbf1"/></g>
+        <g class="peek-eye"><circle cx="128" cy="120" r="13" fill="#134e4a"/><circle cx="132" cy="116" r="4" fill="#ccfbf1"/></g>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- MASCOT -->
+<div class="section">
+  <div class="label">Mascot — Kix</div>
+  <div class="mascot-wrap">
+    <svg viewBox="0 0 400 460">
+      <ellipse cx="200" cy="310" rx="85" ry="70" fill="#0d9488"/>
+      <ellipse cx="200" cy="220" rx="100" ry="80" fill="#14b8a6"/>
+      <circle cx="150" cy="160" r="42" fill="#14b8a6"/>
+      <circle cx="250" cy="160" r="42" fill="#14b8a6"/>
+      <ellipse cx="150" cy="158" rx="24" ry="26" fill="white"/>
+      <g class="mascot-eye"><ellipse cx="155" cy="160" rx="12" ry="17" fill="#134e4a"/><circle cx="160" cy="153" r="5" fill="white"/></g>
+      <ellipse cx="250" cy="158" rx="24" ry="26" fill="white"/>
+      <g class="mascot-eye"><ellipse cx="255" cy="160" rx="12" ry="17" fill="#134e4a"/><circle cx="260" cy="153" r="5" fill="white"/></g>
+      <path d="M 155 245 Q 200 278 245 245" fill="none" stroke="#0f766e" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="200" cy="320" rx="55" ry="45" fill="#99f6e4"/>
+      <path d="M 118 290 Q 85 300 78 330" fill="none" stroke="#0d9488" stroke-width="16" stroke-linecap="round"/>
+      <line x1="75" y1="323" x2="68" y2="300" stroke="#134e4a" stroke-width="4" stroke-linecap="round"/>
+      <line x1="63" y1="302" x2="64" y2="290" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+      <line x1="68" y1="301" x2="68" y2="289" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+      <line x1="73" y1="301" x2="72" y2="289" stroke="#134e4a" stroke-width="3" stroke-linecap="round"/>
+      <g class="wave-arm">
+        <path d="M 282 290 Q 315 275 325 250" fill="none" stroke="#0d9488" stroke-width="16" stroke-linecap="round"/>
+        <circle cx="325" cy="242" r="12" fill="#14b8a6"/>
+      </g>
+      <ellipse cx="160" cy="380" rx="32" ry="13" fill="#0d9488"/>
+      <ellipse cx="240" cy="380" rx="32" ry="13" fill="#0d9488"/>
+    </svg>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- WORDMARK -->
+<div class="section">
+  <div class="label">Wordmark</div>
+  <div class="wordmark-wrap">
+    <div class="wm-icon">
+      <svg viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="25" fill="#0d9488"/>
+        <ellipse cx="50" cy="58" rx="30" ry="24" fill="#f0fdfa"/>
+        <circle cx="36" cy="40" r="14" fill="#f0fdfa"/>
+        <circle cx="64" cy="40" r="14" fill="#f0fdfa"/>
+        <g class="wm-eye"><circle cx="36" cy="40" r="6" fill="#134e4a"/><circle cx="38" cy="38" r="2" fill="#f0fdfa"/></g>
+        <g class="wm-eye"><circle cx="64" cy="40" r="6" fill="#134e4a"/><circle cx="66" cy="38" r="2" fill="#f0fdfa"/></g>
+        <path d="M 40 62 Q 50 70 60 62" fill="none" stroke="#134e4a" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="wm-text">
+      <div class="wm-name"><span>k</span><span>i</span><span>x</span></div>
+      <div class="wm-tagline">Transform what you eat</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SPLASH SCREEN -->
+<div class="section">
+  <div class="label">Splash Screen</div>
+  <div class="splash">
+    <div class="splash-kix">
+      <svg viewBox="0 0 120 120">
+        <ellipse cx="60" cy="70" rx="40" ry="32" fill="#ccfbf1"/>
+        <circle cx="42" cy="45" r="20" fill="#ccfbf1"/>
+        <circle cx="78" cy="45" r="20" fill="#ccfbf1"/>
+        <g class="splash-eye"><circle cx="42" cy="45" r="9" fill="#134e4a"/><circle cx="45" cy="42" r="3" fill="#ccfbf1"/></g>
+        <g class="splash-eye"><circle cx="78" cy="45" r="9" fill="#134e4a"/><circle cx="81" cy="42" r="3" fill="#ccfbf1"/></g>
+        <path d="M 46 74 Q 60 86 74 74" fill="none" stroke="#0f766e" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="splash-brand">kix</div>
+    <div class="splash-tagline">Transform what you eat</div>
+    <div class="splash-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -445,6 +445,17 @@ const ro: LocalePartial = {
   'fasting.dayNames.sat': 'S',
   'fasting.dayNames.sun': 'D',
   'fasting.protestantNote': 'Bisericile protestante nu au post obligatoriu, dar poți seta zile de post personalizate.',
+
+  // Notifications
+  'notification.settingsTitle': 'Notificări',
+  'notification.settingsToggle': 'Memento-uri zilnice',
+  'notification.settingsSubtitle': 'Memento-uri mic dejun, prânz, cină',
+  'notification.enabled': 'Notificări activate',
+  'notification.disabled': 'Notificări dezactivate',
+  'notification.morningTitle': 'Bună dimineața! 🌅',
+  'notification.lunchTitle': 'Prânz în 1 oră 🍽️',
+  'notification.dinnerTitle': 'Cină în 1 oră 🌙',
+  'notification.eveningTitle': 'Zi frumoasă! 🐸',
 };
 
 export default ro;

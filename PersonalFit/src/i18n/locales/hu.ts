@@ -518,6 +518,17 @@ const hu = {
   'fasting.dayNames.sat': 'Szo',
   'fasting.dayNames.sun': 'V',
   'fasting.protestantNote': 'A protestáns egyházakban nincs kötelező böjt, de egyéni böjti napokat megadhatsz.',
+
+  // Notifications
+  'notification.settingsTitle': 'Értesítések',
+  'notification.settingsToggle': 'Napi emlékeztetők',
+  'notification.settingsSubtitle': 'Reggeli, ebéd, vacsora emlékeztetők',
+  'notification.enabled': 'Értesítések bekapcsolva',
+  'notification.disabled': 'Értesítések kikapcsolva',
+  'notification.morningTitle': 'Jó reggelt! 🌅',
+  'notification.lunchTitle': 'Ebéd 1 óra múlva 🍽️',
+  'notification.dinnerTitle': 'Vacsora 1 óra múlva 🌙',
+  'notification.eveningTitle': 'Szép napot! 🐸',
 } as const;
 
 export default hu;

@@ -23,6 +23,9 @@ import {
   getFastingSettings, saveFastingSettings, getFastingDays, checkFastingDay,
   type FastingSettings, type Religion,
 } from "../../../backend/services/FastingCalendarService";
+import {
+  isNotificationsEnabled, setNotificationsEnabled,
+} from "../../../services/NotificationService";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -469,6 +472,16 @@ export default function SettingsSheet(props: SettingsSheetProps) {
   const [mealCount, setMealCount] = useState(3);
   useEffect(() => { getMealSettings().then(s => setMealCount(s.mealCount || 3)); }, []);
 
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  useEffect(() => { isNotificationsEnabled().then(setNotifEnabled); }, []);
+  const handleNotifToggle = async () => {
+    const next = !notifEnabled;
+    setNotifEnabled(next);
+    await setNotificationsEnabled(next);
+    hapticFeedback('light');
+    showToast(t(next ? 'notification.enabled' : 'notification.disabled'));
+  };
+
   const [sleepSheetOpen, setSleepSheetOpen] = useState(false);
   const [wakeTime, setWakeTime] = useState("07:00");
   const [selectedBedtime, setSelectedBedtime] = useState("");
@@ -584,7 +597,33 @@ export default function SettingsSheet(props: SettingsSheetProps) {
           />
         </DSMBottomSheet>
 
-        {/* Section 3b: Religious Fasting */}
+        {/* Section 3b: Notifications */}
+        <SettingsCard sectionTitle={t('notification.settingsTitle')}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '1rem', borderBottom: '1px solid #f3f4f6',
+          }}>
+            <div>
+              <div style={{ fontSize: '1rem', fontWeight: 500, color: '#111827' }}>{t('notification.settingsToggle')}</div>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: 2 }}>{t('notification.settingsSubtitle')}</div>
+            </div>
+            <button
+              onClick={handleNotifToggle}
+              style={{
+                background: notifEnabled ? '#0d9488' : '#e5e7eb',
+                borderRadius: 999, width: 44, height: 24, border: 'none',
+                cursor: 'pointer', transition: 'background 0.2s', position: 'relative',
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 2, left: notifEnabled ? 22 : 2,
+                width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+              }} />
+            </button>
+          </div>
+        </SettingsCard>
+
+        {/* Section 3c: Religious Fasting */}
         <FastingSettingsCard />
 
         {/* Section 4: Subscription */}

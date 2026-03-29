@@ -14,6 +14,7 @@ import { getDatabase } from "./app/backend/DatabaseService";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { App as CapacitorApp } from "@capacitor/app";
+import { initNotifications, rescheduleNotifications } from "./app/services/NotificationService";
 
 // Expose one-off debug helper on window so it can be triggered from DevTools.
 // Usage in browser console:  await window.cleanupCorruptedAIFoods()
@@ -54,6 +55,17 @@ async function initApp() {
   } catch (e) {
     console.warn('seedSystemFoods failed:', e);
   }
+  // Initialize local notifications (request permission, set up listeners)
+  try {
+    await initNotifications();
+    // Schedule notifications for the active plan (no-op if no plan or web)
+    rescheduleNotifications().catch((e) =>
+      console.warn('[main] rescheduleNotifications failed:', e)
+    );
+  } catch (e) {
+    console.warn('[main] Notification init failed:', e);
+  }
+
   try {
     createRoot(document.getElementById("root")!).render(<App />);
   } catch (e) { showDebugError('createRoot.render', e); return; }

@@ -32,6 +32,7 @@ import type {
   MealItemEntity,
 } from '../backend/models';
 import { mealPlan as hardcodedMealPlan } from '../data/mealData';
+import { rescheduleNotifications } from '../services/NotificationService';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES (compatible with old mealData.ts format)
@@ -302,6 +303,10 @@ export function usePlanData(): PlanDataState {
       } else {
         setPlanData(weeks);
       }
+      // Reschedule notifications whenever plan data loads successfully
+      rescheduleNotifications().catch((e) =>
+        console.warn('[usePlanData] rescheduleNotifications failed:', e)
+      );
       setIsLoading(false);
     } catch (error) {
       console.warn('[usePlanData] Failed to load:', error);
