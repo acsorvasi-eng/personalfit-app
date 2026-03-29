@@ -952,7 +952,21 @@ export function ProfileSetupWizard() {
 
             const { importFromAIParse, activatePlan, exportActivePlan } = await import('../../backend/services/NutritionPlanService');
             const label = `AI étrend — ${new Date().toLocaleDateString('hu-HU')}`;
-            const plan = await importFromAIParse(improvedPlan as any, label);
+
+            // Convert flat days array → weeks format expected by importFromAIParse
+            let planToSave = improvedPlan;
+            if (improvedPlan.days && !improvedPlan.weeks) {
+              const weeksMap = new Map<number, any[]>();
+              for (const day of improvedPlan.days) {
+                const weekNum = day.week ?? 1;
+                if (!weeksMap.has(weekNum)) weeksMap.set(weekNum, []);
+                weeksMap.get(weekNum)!.push(day);
+              }
+              const weeks = Array.from(weeksMap.values());
+              planToSave = { weeks, detected_weeks: weeks.length, detected_days_per_week: 7 };
+            }
+
+            const plan = await importFromAIParse(planToSave as any, label);
             await activatePlan(plan.id);
 
             // Fire-and-forget cloud sync for cross-device access
