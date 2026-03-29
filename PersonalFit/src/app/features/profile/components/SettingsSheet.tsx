@@ -133,14 +133,27 @@ function FastingSettingsCard({ onOpenJourney, onBreakFast }: { onOpenJourney: ()
 
   const confirmBreakFast = async () => {
     setShowBreakConfirm(false);
-    const next = { ...settings, enabled: false, restrictions: [], enabledPeriods: [] };
+    hapticFeedback('light');
+
+    // Try to restore the pre-fasting plan
+    const prePlanId = settings.preFastingPlanId;
+    if (prePlanId) {
+      try {
+        const { activatePlan } = await import('../../../backend/services/NutritionPlanService');
+        await activatePlan(prePlanId);
+        showToast(t('fasting.breakConfirm.restored') || 'Böjt előtti étrend visszaállítva!');
+      } catch {
+        showToast(t('fasting.journey.deactivated') || 'Böjt kikapcsolva.');
+      }
+    } else {
+      showToast(t('fasting.journey.deactivated') || 'Böjt kikapcsolva.');
+    }
+
+    const next = { ...settings, enabled: false, restrictions: [], enabledPeriods: [], preFastingPlanId: undefined };
     setSettings(next);
     await saveFastingSettings(next);
     setUpcomingDays([]);
-    hapticFeedback('light');
-    try { window.dispatchEvent(new Event('profileUpdated')); } catch { /* ignore */ }
-    showToast(t('fasting.journey.deactivated') || 'Böjt kikapcsolva. Étrend újragenerálódik.');
-    // Delegate navigation + regeneration to parent (which has navigate & onClose)
+    try { window.dispatchEvent(new Event('profileUpdated')); } catch {}
     onBreakFast();
   };
 

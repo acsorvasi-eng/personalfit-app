@@ -185,8 +185,15 @@ export default function FastingJourneySheet({ open, onClose, onComplete }: Props
     try {
       const { getUserProfile, getMealSettings } = await import('../backend/services/UserProfileService');
       const { getAllFoods } = await import('../backend/services/FoodCatalogService');
-      const { importFromAIParse, activatePlan, exportActivePlan } = await import('../backend/services/NutritionPlanService');
+      const { importFromAIParse, activatePlan, exportActivePlan, getActivePlan } = await import('../backend/services/NutritionPlanService');
       const { callChefReview } = await import('./onboarding/callChefReview');
+
+      // Save current active plan ID so we can restore it if fast is broken
+      const currentPlan = await getActivePlan();
+      if (currentPlan) {
+        newSettings.preFastingPlanId = currentPlan.id;
+        await saveFastingSettings(newSettings);
+      }
 
       const profile = await getUserProfile();
       const mealSettings = await getMealSettings();

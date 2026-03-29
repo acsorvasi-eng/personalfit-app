@@ -30,6 +30,8 @@ export interface FastingSettings {
   customRecurring: boolean;
   /** IDs of enabled religious fasting periods (for orthodox/catholic) */
   enabledPeriods: string[];
+  /** Plan ID that was active BEFORE fasting — restored when fast is broken */
+  preFastingPlanId?: string;
 }
 
 export interface FastingDayInfo {
