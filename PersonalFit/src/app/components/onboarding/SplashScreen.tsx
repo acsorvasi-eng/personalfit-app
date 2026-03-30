@@ -151,10 +151,10 @@ function MockNotification({ language, t, onTap }: { language: string; t: (k: str
   }, [controls]);
 
   const bodyText = language === 'en'
-    ? "Good morning! Today's breakfast: Oatmeal with nuts (420 kcal). Daily goal: 2100 kcal."
+    ? "Good morning, Attila! Today's breakfast: Oatmeal with nuts (420 kcal). Daily goal: 2100 kcal."
     : language === 'ro'
-    ? 'Bună dimineața! Micul dejun: Terci cu nuci (420 kcal). Ținta zilnică: 2100 kcal.'
-    : 'Jó reggelt! Mai reggeli: Zabkása dióval (420 kcal). Napi célod: 2100 kcal.';
+    ? 'Bună dimineața, Attila! Micul dejun: Terci cu nuci (420 kcal). Ținta zilnică: 2100 kcal.'
+    : 'Jó reggelt Attila! Mai reggeli: Zabkása dióval (420 kcal). Napi célod: 2100 kcal.';
 
   if (!visible || !appeared) return null;
 
@@ -186,8 +186,25 @@ function MockNotification({ language, t, onTap }: { language: string; t: (k: str
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 200, damping: 22 }}
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}>
-          <span className="text-lg">🐸</span>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0d9488, #0f766e)' }}>
+          <svg width="32" height="32" viewBox="0 0 400 400" fill="none" aria-hidden="true">
+            <ellipse cx="200" cy="215" rx="120" ry="100" fill="#ccfbf1" />
+            <circle cx="140" cy="145" r="52" fill="#ccfbf1" />
+            <circle cx="260" cy="145" r="52" fill="#ccfbf1" />
+            <ellipse cx="140" cy="148" rx="22" ry="22" fill="#134e4a" />
+            <circle cx="149" cy="139" r="7" fill="#f0fdfa" />
+            <ellipse cx="260" cy="148" rx="22" ry="22" fill="#134e4a" />
+            <circle cx="269" cy="139" r="7" fill="#f0fdfa" />
+            <path d="M 145 240 Q 172 280 200 282 Q 228 280 255 240" fill="none" stroke="#0f766e" strokeWidth="5" strokeLinecap="round" />
+            <ellipse cx="200" cy="275" rx="12" ry="8" fill="#f87171" opacity="0.6" />
+            <circle cx="120" cy="230" r="18" fill="#99f6e4" opacity="0.4" />
+            <circle cx="280" cy="230" r="18" fill="#99f6e4" opacity="0.4" />
+            <g transform="translate(200, 118)">
+              <path d="M0 -8 Q-6 -28 0 -38 Q6 -28 0 -8Z" fill="#0d9488" opacity="0.8" />
+              <path d="M-18 -2 Q-30 -18 -22 -28 Q-14 -20 -18 -2Z" fill="#14b8a6" opacity="0.6" />
+              <path d="M18 -2 Q30 -18 22 -28 Q14 -20 18 -2Z" fill="#14b8a6" opacity="0.6" />
+            </g>
+          </svg>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
@@ -405,7 +422,7 @@ export function SplashScreen() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="fixed bottom-0 left-0 right-0 z-20 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3"
-        style={{ background: 'linear-gradient(to top, rgba(19,78,74,0.95) 60%, transparent)' }}
+        style={{ background: 'transparent' }}
       >
         <div className="max-w-md mx-auto w-full">
           <button

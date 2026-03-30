@@ -1137,7 +1137,7 @@ export function ProfileSetupWizard() {
       {/* Bottom CTA — fixed with gradient fade */}
       {(
         <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
-          <div className="px-6 pt-8" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.98) 65%, transparent)' }}>
+          <div className="px-6 pt-8" style={{ background: '#ffffff' }}>
             {/* Step dots */}
             <div className="flex items-center justify-center gap-1.5 mb-3">
               {STEPS.map((_, i) => (
