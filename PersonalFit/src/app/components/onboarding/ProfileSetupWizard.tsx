@@ -987,12 +987,15 @@ export function ProfileSetupWizard() {
         }
       } catch (planErr: any) {
         // Generation failed — show error and let user retry
+        console.error('[ProfileSetup] Plan generation failed:', planErr);
         setIsGenerating(false);
         setGenProgress(0);
         setGenPhase(0);
-        const msg = planErr?.message?.includes('abort')
+        const detail = planErr?.message || '';
+        const msg = detail.includes('abort')
           ? t('wizard.generateTimeout') || 'A generálás túl sokáig tartott. Próbáld újra!'
-          : t('wizard.generateError') || 'Hiba történt a generálás közben. Próbáld újra!';
+          : (t('wizard.generateError') || 'Hiba történt a generálás közben. Próbáld újra!')
+            + (detail ? `\n\n(${detail})` : '');
         alert(msg);
         return; // Don't navigate — stay on wizard so user can retry
       }

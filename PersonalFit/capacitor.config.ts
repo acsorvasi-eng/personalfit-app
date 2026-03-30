@@ -29,6 +29,12 @@ const config: CapacitorConfig = {
       resize: 'native',
       style: 'dark',
     },
+    LocalNotifications: {
+      // Android: use the frog (Kix) icon for notification small icon
+      smallIcon: 'ic_notification',
+      // Teal accent colour for notification LED / icon tint
+      iconColor: '#0f766e',
+    },
     FirebaseAuthentication: {
       skipNativeAuth: false,
       providers: ['google.com'],

@@ -20,68 +20,62 @@ const languages = SUPPORTED_LANGUAGES.map((code) => ({
   flag: LANGUAGE_META[code]?.flag ?? '',
 }));
 
-function NuraLogo() {
+function KixLogo() {
   return (
-    <svg width="130" height="130" viewBox="0 0 130 130" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="nGrad" x1="10" y1="130" x2="120" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#0a5c5c" />
-          <stop offset="35%" stopColor="#0d9488" />
-          <stop offset="100%" stopColor="#2dd4bf" />
-        </linearGradient>
-        <linearGradient id="nFill" x1="20" y1="110" x2="110" y2="20" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#0d9488" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="#2dd4bf" stopOpacity="0.05" />
-        </linearGradient>
-        <linearGradient id="hbGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#5eead4" stopOpacity="0.5" />
-          <stop offset="50%" stopColor="#99f6e4" />
-          <stop offset="100%" stopColor="#5eead4" stopOpacity="0.5" />
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-
-      {/* Circular frame behind the n */}
-      <motion.circle
-        cx={65} cy={65} r={58}
-        stroke="url(#nGrad)"
-        strokeWidth="2.5"
-        fill="none"
-        opacity={0.3}
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 0.3 }}
-        transition={{ duration: 1.0, ease: [0.4, 0, 0.2, 1] }}
-      />
-
-      {/* Stylized "n" — fluid calligraphic single stroke with a sweeping tail */}
+    <svg width="130" height="130" viewBox="0 0 108 108" fill="none" aria-hidden="true">
+      {/* Head */}
       <motion.path
-        d="M 34 95 L 34 55 C 34 38 50 30 65 42 C 80 30 96 38 96 55 L 96 95"
-        stroke="url(#nGrad)"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="url(#nFill)"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 1.2, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        d="M54,38 C38,38 28,46 28,58 C28,70 38,78 54,78 C70,78 80,70 80,58 C80,46 70,38 54,38Z"
+        fill="#14b8a6"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        style={{ transformOrigin: '54px 58px' }}
       />
-
-      {/* Heartbeat line weaving through the base */}
-      <motion.path
-        d="M 18 92 L 34 92 L 40 80 L 48 104 L 54 88 L 65 92 L 76 88 L 82 104 L 90 80 L 96 92 L 112 92"
-        stroke="url(#hbGrad)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-        filter="url(#glow)"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 0.8 }}
-        transition={{ delay: 1.4, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-      />
+      {/* Left eye bulge */}
+      <motion.path d="M36,42 C36,36 40,32 44,32 C48,32 52,36 52,42 C52,46 48,48 44,48 C40,48 36,46 36,42Z" fill="#14b8a6"
+        initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }} style={{ transformOrigin: '44px 40px' }} />
+      {/* Right eye bulge */}
+      <motion.path d="M56,42 C56,36 60,32 64,32 C68,32 72,36 72,42 C72,46 68,48 64,48 C60,48 56,46 56,42Z" fill="#14b8a6"
+        initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.2 }} style={{ transformOrigin: '64px 40px' }} />
+      {/* Left eye white */}
+      <motion.path d="M39,41 C39,37.5 41,35.5 44,35.5 C47,35.5 49,37.5 49,41 C49,44 47,45.5 44,45.5 C41,45.5 39,44 39,41Z" fill="#FFFFFF"
+        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4, type: 'spring', stiffness: 400 }}
+        style={{ transformOrigin: '44px 41px' }} />
+      {/* Right eye white */}
+      <motion.path d="M59,41 C59,37.5 61,35.5 64,35.5 C67,35.5 69,37.5 69,41 C69,44 67,45.5 64,45.5 C61,45.5 59,44 59,41Z" fill="#FFFFFF"
+        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4, type: 'spring', stiffness: 400 }}
+        style={{ transformOrigin: '64px 41px' }} />
+      {/* Left pupil */}
+      <motion.path d="M42,40 C42,38.5 43,37.5 44.5,37.5 C46,37.5 47,38.5 47,40 C47,41.5 46,42.5 44.5,42.5 C43,42.5 42,41.5 42,40Z" fill="#0c1f1e"
+        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.55 }} style={{ transformOrigin: '44.5px 40px' }} />
+      {/* Right pupil */}
+      <motion.path d="M61,40 C61,38.5 62,37.5 63.5,37.5 C65,37.5 66,38.5 66,40 C66,41.5 65,42.5 63.5,42.5 C62,42.5 61,41.5 61,40Z" fill="#0c1f1e"
+        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.55 }} style={{ transformOrigin: '63.5px 40px' }} />
+      {/* Eye shines */}
+      <motion.circle cx={43.8} cy={38.5} r={0.8} fill="#FFFFFF"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} />
+      <motion.circle cx={62.8} cy={38.5} r={0.8} fill="#FFFFFF"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} />
+      {/* Belly */}
+      <motion.path d="M42,58 C42,54 46,52 54,52 C62,52 66,54 66,58 C66,64 62,70 54,70 C46,70 42,64 42,58Z" fill="#5eead4"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} />
+      {/* Smile */}
+      <motion.path d="M38,62 Q46,70 54,68 Q62,70 70,62" fill="none" stroke="#0c1f1e" strokeWidth={2} strokeLinecap="round"
+        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.5 }} />
+      {/* Nostrils */}
+      <motion.ellipse cx={49} cy={52} rx={1} ry={1.2} fill="#0f766e"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} />
+      <motion.ellipse cx={59} cy={52} rx={1} ry={1.2} fill="#0f766e"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} />
+      {/* Cheeks */}
+      <motion.path d="M32,58 C32,56 34,54 37,54 C39,54 40,56 40,58 C40,60 39,61 37,61 C34,61 32,60 32,58Z" fill="rgba(255,255,255,0.12)"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} />
+      <motion.path d="M68,58 C68,56 70,54 71,54 C74,54 76,56 76,58 C76,60 74,61 71,61 C70,61 68,60 68,58Z" fill="rgba(255,255,255,0.12)"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} />
     </svg>
   );
 }
@@ -244,12 +238,12 @@ export function SplashScreen() {
           style={{ filter: 'drop-shadow(0 8px 32px rgba(13,148,136,0.45))' }}
           onDoubleClick={handleSecretLogoBypass}
         >
-          <NuraLogo />
+          <KixLogo />
         </div>
 
         {/* Brand name */}
         <h1 className="text-3xl text-white mb-3" style={{ fontWeight: 800, letterSpacing: '-0.01em' }}>
-          nura
+          kix
         </h1>
 
         {/* Tagline */}

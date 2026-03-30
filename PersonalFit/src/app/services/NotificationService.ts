@@ -21,6 +21,7 @@ import { getSetting, setSetting } from '../backend/services/SettingsService';
 import { getActivePlan } from '../backend/services/NutritionPlanService';
 import { getDB } from '../backend/db';
 import type { MealEntity, MealDayEntity, MealItemEntity } from '../backend/models';
+import { getStoredUser } from './authService';
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -269,7 +270,11 @@ export async function scheduleAllDailyNotifications(language?: string): Promise<
       return;
     }
 
-    const userName = profile.name || '';
+    // Resolve user name: prefer profile name, fall back to auth user name.
+    // Filter out generic "Demo User" placeholder.
+    const authUser = await getStoredUser();
+    const rawName = profile.name || authUser?.name || '';
+    const userName = rawName === 'Demo User' ? '' : rawName;
     const calorieTarget = profile.calorieTarget || 2000;
     const wakeTime = profile.wakeTime || '07:00';
     const bedtime = profile.bedtime || '23:00';
@@ -287,6 +292,9 @@ export async function scheduleAllDailyNotifications(language?: string): Promise<
            m.name.toLowerCase().includes('cina')
     );
 
+    const isAndroid = Capacitor.getPlatform() === 'android';
+    // Android: show Kix frog logo as the large icon (left side of notification)
+    const largeIconProp = isAndroid ? { largeIcon: 'ic_launcher' } : {};
     const notifications: LocalNotificationSchema[] = [];
 
     // Calculate the current plan day
@@ -320,6 +328,7 @@ export async function scheduleAllDailyNotifications(language?: string): Promise<
           schedule: { at: morningDate },
           sound: 'default',
           extra: { type: 'morning' },
+          ...largeIconProp,
           ...(Capacitor.getPlatform() === 'ios' ? { threadIdentifier: 'kix-meals' } : {}),
         });
       }
@@ -336,6 +345,7 @@ export async function scheduleAllDailyNotifications(language?: string): Promise<
             schedule: { at: lunchDate },
             sound: 'default',
             extra: { type: 'lunch' },
+            ...largeIconProp,
             ...(Capacitor.getPlatform() === 'ios' ? { threadIdentifier: 'kix-meals' } : {}),
           });
         }
@@ -353,6 +363,7 @@ export async function scheduleAllDailyNotifications(language?: string): Promise<
             schedule: { at: dinnerDate },
             sound: 'default',
             extra: { type: 'dinner' },
+            ...largeIconProp,
             ...(Capacitor.getPlatform() === 'ios' ? { threadIdentifier: 'kix-meals' } : {}),
           });
         }
@@ -372,6 +383,7 @@ export async function scheduleAllDailyNotifications(language?: string): Promise<
           schedule: { at: eveningDate },
           sound: 'default',
           extra: { type: 'evening' },
+          ...largeIconProp,
           ...(Capacitor.getPlatform() === 'ios' ? { threadIdentifier: 'kix-meals' } : {}),
         });
       }
