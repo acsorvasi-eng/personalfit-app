@@ -3,18 +3,10 @@
  * MealDetail — Meal Detail & Alternatives Page
  * ====================================================================
  * Shows full detail for a specific meal type (breakfast/lunch/dinner)
- * including ingredients and alternative meals from the same type
- * across the entire uploaded plan.
+ * including hero image, macros, ingredients with calories, and action buttons.
  *
  * Navigation: /meals/:mealType
  * Receives planData and context via route state from Foods.tsx
- *
- * Features:
- *   - Full ingredient list for today's selected meal
- *   - Calorie & macro summary
- *   - Alternative meals from same type + same day type (training/rest)
- *   - Tap alternative to view its details
- *   - Back navigation
  */
 
 import { hapticFeedback } from '@/lib/haptics';
@@ -24,17 +16,17 @@ import {
   ChevronDown,
   ChevronUp,
   Flame,
-  UtensilsCrossed,
   RefreshCw,
   Sparkles,
   X,
+  ShoppingCart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlanData, type MealOption, type WeekData } from "../../../hooks/usePlanData";
 import { mealPlan } from "../../../data/mealData";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { translateFoodName } from "../../../utils/foodTranslations";
-import { DSMSubPageHeader } from "../../../components/dsm";
+import { FoodImage } from "../../../components/FoodImage";
 import { getUserProfile, type StoredUserProfile } from "../../../backend/services/UserProfileService";
 import { RecipeOverlay } from "./RecipeOverlay";
 
@@ -42,7 +34,6 @@ import { RecipeOverlay } from "./RecipeOverlay";
 // TYPES & CONSTANTS
 // ═══════════════════════════════════════════════════════════════
 
-// Meal config is now built dynamically using t()
 interface AlternativeMeal extends MealOption {
   weekNum: number;
   dayNum: number;
@@ -94,7 +85,6 @@ function collectAlternatives(
           : [];
 
       for (const meal of meals) {
-        // Skip the current/primary meal and duplicates by name
         if (meal.id === excludeMealId || seenNames.has(meal.name)) continue;
         seenNames.add(meal.name);
 
@@ -111,6 +101,14 @@ function collectAlternatives(
 
   return alternatives;
 }
+
+// Time slot keys per meal type
+const TIME_KEYS: Record<string, string> = {
+  breakfast: 'menu.timeBreakfast',
+  lunch: 'menu.timeLunch',
+  dinner: 'menu.timeDinner',
+  snack: 'menu.timeSnack',
+};
 
 // ═══════════════════════════════════════════════════════════════
 // COMPONENT
@@ -166,20 +164,18 @@ export function MealDetail() {
     return [...dayData.breakfast, ...dayData.lunch, ...dayData.dinner];
   }, [effectivePlan]);
 
-  const config = useMemo(() => {
-    const gradients: Record<string, { gradientFrom: string; gradientTo: string; icon: string }> = {
-      breakfast: { icon: "🌅", gradientFrom: "from-amber-400", gradientTo: "to-orange-500" },
-      lunch: { icon: "☀️", gradientFrom: "from-yellow-400", gradientTo: "to-amber-500" },
-      dinner: { icon: "🌙", gradientFrom: "from-indigo-400", gradientTo: "to-purple-500" },
-    };
-    const mealTitles: Record<string, string> = {
+  const mealTitle = useMemo(() => {
+    const titles: Record<string, string> = {
       breakfast: t('menu.breakfast'),
       lunch: t('menu.lunch'),
       dinner: t('menu.dinner'),
     };
-    const key = mealType || "lunch";
-    const g = gradients[key] || gradients.lunch;
-    return { title: mealTitles[key] || mealTitles.lunch, ...g };
+    return titles[mealType || 'lunch'] || titles.lunch;
+  }, [mealType, t]);
+
+  const mealTimeSlot = useMemo(() => {
+    const key = TIME_KEYS[mealType || 'lunch'] || TIME_KEYS.lunch;
+    return t(key);
   }, [mealType, t]);
 
   const isTrainingDay = routeState?.isTrainingDay ?? false;
@@ -245,121 +241,142 @@ export function MealDetail() {
 
   const calories =
     parseInt(displayedMeal.calories.replace(/[^0-9]/g, "")) || 0;
+  const protein = displayedMeal.totalProtein || 0;
+  const carbs = displayedMeal.totalCarbs || 0;
+  const fiber = displayedMeal.ingredientDetails
+    ? Math.round(calories * 0.02) // estimate fiber as ~2% of calories if no field
+    : 0;
+
+  const macros = [
+    { icon: '🔥', value: `${calories}`, unit: 'kcal', color: '#f97316' },
+    { icon: '🥩', value: `${protein.toFixed(1)}g`, unit: t('foods.protein') || 'Fehérje', color: '#ef4444' },
+    { icon: '🌾', value: `${carbs.toFixed(0)}g`, unit: t('foods.carbs') || 'Szénhidrát', color: '#eab308' },
+    { icon: '💚', value: `${fiber}g`, unit: t('foods.fiber') || 'Rost', color: '#22c55e' },
+  ];
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* ─── Header ─────────────────────────────────────────── */}
-      <div className="flex-shrink-0">
-        <DSMSubPageHeader
-          title={config.title}
-          subtitle={`${isTrainingDay ? t('menu.trainingDay') : t('menu.restDay')} • ${calories} kcal`}
-          onBack={handleClose}
-        />
-        {/* Selected alternative indicator */}
-        {selectedAlternative && (
-          <div className="px-4 pb-2">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
+      {/* ─── Scrollable content ─────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto" ref={contentRef}>
+        {/* ── Hero image — full bleed, no border radius ── */}
+        <div className="relative w-full overflow-hidden" style={{ height: 260 }}>
+          <div className="w-full h-full [&_div]:!rounded-none [&_img]:!rounded-none">
+            <FoodImage
+              foodName={displayedMeal.name}
+              mealType={mealType}
+              size="lg"
+              className="w-full h-full"
+            />
+          </div>
+          {/* Close button */}
+          <button
+            onClick={handleClose}
+            className="absolute right-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md cursor-pointer active:scale-95 transition-transform"
+            style={{ top: 'calc(env(safe-area-inset-top, 12px) + 12px)' }}
+          >
+            <X className="w-4 h-4 text-gray-700" />
+          </button>
+        </div>
+
+        {/* ── Meal info ── */}
+        <div className="px-5 pt-5 pb-4">
+          {/* Meal type + time */}
+          <p className="text-sm text-gray-400 mb-1">
+            {mealTitle} · {mealTimeSlot}
+          </p>
+
+          {/* Meal name */}
+          <h1
+            className="text-[22px] text-foreground leading-tight mb-4"
+            style={{ fontWeight: 700 }}
+          >
+            {translateFoodName(displayedMeal.name, language)}
+          </h1>
+
+          {/* Selected alternative indicator */}
+          {selectedAlternative && (
             <motion.button
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               onClick={() => setSelectedAlternative(null)}
-              className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full cursor-pointer"
+              className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full cursor-pointer mb-4"
             >
               <RefreshCw className="w-3.5 h-3.5 text-primary" />
-              <span
-                className="text-sm text-primary"
-                style={{ fontWeight: 500 }}
-              >
+              <span className="text-sm text-primary" style={{ fontWeight: 500 }}>
                 {t('foods.backToOriginal')}
               </span>
             </motion.button>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* ─── Content ───────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto" ref={contentRef}>
-        <div className="px-4 py-4 space-y-4">
-          {/* ── Current meal details ── */}
-          <motion.div
-            key={displayedMeal.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-background rounded-2xl border border-gray-100 p-5 shadow-sm"
-          >
-            <h2
-              className="text-[17px] text-foreground mb-1"
-              style={{ fontWeight: 700 }}
-            >
-              {translateFoodName(displayedMeal.name, language)}
-            </h2>
-            <p className="text-sm text-gray-500 mb-4">
-              {displayedMeal.description}
-            </p>
-
-            {/* Calorie badge */}
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-lg">
-                <Flame className="w-4 h-4" />
-                <span className="text-sm" style={{ fontWeight: 700 }}>
-                  {calories} kcal
-                </span>
-              </div>
-            </div>
-
-            {/* Ingredients */}
-            <div className="border-t border-gray-100 pt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <UtensilsCrossed className="w-4 h-4 text-gray-400" />
-                <h3
-                  className="text-sm text-gray-500 uppercase tracking-wider"
-                  style={{ fontWeight: 600 }}
-                >
-                  {t('foods.ingredients')}
-                </h3>
-              </div>
-
-              <div className="space-y-2">
-                {displayedMeal.ingredients.map((ingredient, i) => (
-                  <motion.div
-                    key={`${displayedMeal.id}-ing-${i}`}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05, duration: 0.2 }}
-                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50"
-                  >
-                    <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-sm text-primary shrink-0" style={{ fontWeight: 700 }}>
-                      {i + 1}
-                    </span>
-                    <span
-                      className="text-sm text-gray-700"
-                      style={{ fontWeight: 500 }}
-                    >
-                      {translateFoodName(ingredient, language)}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Recipe button (lunch/dinner only) ── */}
-            {(mealType === 'lunch' || mealType === 'dinner') && (
-              <motion.button
-                onClick={() => { hapticFeedback('light'); setShowRecipe(true); }}
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200/60 active:bg-amber-100 transition-colors cursor-pointer"
-                whileTap={{ scale: 0.98 }}
+          {/* ── Macro cards row ── */}
+          <div className="grid grid-cols-4 gap-2 mb-6">
+            {macros.map((m, i) => (
+              <div
+                key={i}
+                className="flex flex-col items-center py-3 rounded-xl bg-gray-50"
               >
-                <span className="text-base leading-none">🍳</span>
-                <span className="text-sm text-teal-700" style={{ fontWeight: 700 }}>
-                  {t("recipe.openRecipe") || 'Recept'}
+                <span style={{ color: m.color }}>{m.icon}</span>
+                <span
+                  className="text-[17px] text-foreground mt-1"
+                  style={{ fontWeight: 700 }}
+                >
+                  {m.value}
                 </span>
-              </motion.button>
-            )}
-          </motion.div>
+                <span className="text-[11px] text-gray-400 mt-0.5">
+                  {m.unit}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Ingredients ── */}
+          <h2
+            className="text-[17px] text-foreground mb-4"
+            style={{ fontWeight: 700 }}
+          >
+            {t('foods.ingredients')}
+          </h2>
+
+          <div className="space-y-0">
+            {(displayedMeal.ingredientDetails && displayedMeal.ingredientDetails.length > 0)
+              ? displayedMeal.ingredientDetails.map((ing, i) => (
+                <motion.div
+                  key={`${displayedMeal.id}-ing-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04, duration: 0.2 }}
+                  className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0"
+                >
+                  <div>
+                    <p className="text-[15px] text-foreground" style={{ fontWeight: 600 }}>
+                      {translateFoodName(ing.name, language)}
+                    </p>
+                    <p className="text-sm text-gray-400 mt-0.5">{ing.quantity}</p>
+                  </div>
+                  <span className="text-[15px] text-primary" style={{ fontWeight: 600 }}>
+                    {Math.round(ing.calories)} kcal
+                  </span>
+                </motion.div>
+              ))
+              : displayedMeal.ingredients.map((ingredient, i) => (
+                <motion.div
+                  key={`${displayedMeal.id}-ing-${i}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04, duration: 0.2 }}
+                  className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0"
+                >
+                  <p className="text-[15px] text-foreground" style={{ fontWeight: 500 }}>
+                    {translateFoodName(ingredient, language)}
+                  </p>
+                </motion.div>
+              ))
+            }
+          </div>
 
           {/* ── Alternatives section ── */}
           {allAlternatives.length > 0 && (
-            <div>
+            <div className="mt-8">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
@@ -367,7 +384,7 @@ export function MealDetail() {
                     className="text-sm text-gray-700"
                     style={{ fontWeight: 600 }}
                   >
-                    {t('foods.alternativeMeals')} {config.title.toLowerCase()}
+                    {t('foods.alternativeMeals')} {mealTitle.toLowerCase()}
                   </h3>
                   <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                     {filteredAlternatives.length}
@@ -412,7 +429,6 @@ export function MealDetail() {
                       onClick={() => {
                         hapticFeedback('light');
                         setSelectedAlternative(alt);
-                        // Scroll to top
                         contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className={`w-full text-left p-4 rounded-2xl border-2 transition-all cursor-pointer ${
@@ -493,8 +509,40 @@ export function MealDetail() {
             </div>
           )}
 
-          <div className="h-8" />
+          {/* Bottom spacer for fixed buttons */}
+          <div className="h-24" />
         </div>
+      </div>
+
+      {/* ─── Fixed bottom action buttons ──────────────────── */}
+      <div
+        className="flex-shrink-0 bg-background border-t border-gray-100 px-5 py-3 flex gap-3"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
+        {/* Recipe button */}
+        <motion.button
+          onClick={() => { hapticFeedback('light'); setShowRecipe(true); }}
+          className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-4 cursor-pointer active:scale-[0.98] transition-transform"
+          style={{ background: '#0d9488', color: '#ffffff' }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <span className="text-base">👨‍🍳</span>
+          <span className="text-[15px]" style={{ fontWeight: 700 }}>
+            {t("recipe.openRecipe") || 'Recept'}
+          </span>
+        </motion.button>
+
+        {/* Order button */}
+        <motion.button
+          onClick={() => { hapticFeedback('light'); }}
+          className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-4 border-2 border-gray-200 bg-background cursor-pointer active:scale-[0.98] transition-transform"
+          whileTap={{ scale: 0.98 }}
+        >
+          <ShoppingCart className="w-5 h-5 text-gray-600" />
+          <span className="text-[15px] text-gray-700" style={{ fontWeight: 600 }}>
+            {t('foods.order') || 'Megrendelés'}
+          </span>
+        </motion.button>
       </div>
 
       {/* ─── RECIPE OVERLAY ─── */}
