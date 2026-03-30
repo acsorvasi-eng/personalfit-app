@@ -171,7 +171,7 @@ const hu = {
   'sleep.bedtimeLabel': 'Lefekvés',
   'sleep.wakeLabel': 'Ébredés',
   'sleep.firstMeal': 'Első étkezés',
-  'sleep.lastMeal': 'Utolsó étel',
+  'sleep.lastMeal': 'Utolsó étkezés',
   'sleep.workout': 'Edzés',
   'sleep.lowSleepWarning': 'Kevés alvás: +{n} kcal mai cél',
   'sleep.label.minimum': 'Minimum',
@@ -299,7 +299,7 @@ const hu = {
 
   'common.save': 'Mentés',
 
-  'shopping.fridgeRunningLow': 'Fogyandóba van',
+  'shopping.fridgeRunningLow': 'Fogyóban van',
   'shopping.comingSoon': 'Hamarosan',
   'shopping.fridgePairedDesc': 'figyelni fogja mi van fogyóban és automatikusan ide kerülnek a hiányzó termékek.',
   'shopping.fridgeUnpairedDesc': 'Ha párosítasz egy okos hűtőt a beállításokban, automatikusan megjelenik itt ami fogyóban van.',
@@ -377,7 +377,7 @@ const hu = {
   'store.share': 'Megosztás',
   'store.directions': 'Útvonal',
   'store.productSuffix': 'termék',
-  'store.estimated': 'lei becsült',
+  'store.estimated': 'becsült',
 
   // DSM defaults
   'dsm.confirm': 'Megerősítés',

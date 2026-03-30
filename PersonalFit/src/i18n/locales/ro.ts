@@ -144,7 +144,7 @@ const ro: LocalePartial = {
   'login.continueWithGoogle': 'Continuă cu Google',
   'login.or': 'sau',
   'login.passwordShort': 'Parolă (min. 6 caractere)',
-  'login.createAccountBtn': 'Crează cont',
+  'login.createAccountBtn': 'Creează cont',
   'login.signInBtn': 'Conectare',
   'login.switchToSignIn': 'Ai deja un cont? Conectează-te →',
   'login.switchToSignUp': 'Nu ai cont? Înregistrează-te →',

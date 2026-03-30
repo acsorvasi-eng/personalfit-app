@@ -180,7 +180,7 @@ export const SEED_FOODS: SeedFood[] = [
   // ── Növényi fehérjék (new) ───────────────────────────────────────
   { name: 'Zöld lencse', emoji: '🫘', calories_per_100g: 116, protein_per_100g: 9, carbs_per_100g: 20, fat_per_100g: 0.4, vegetarian: true },
   { name: 'Tarkabab', emoji: '🫘', calories_per_100g: 127, protein_per_100g: 8.7, carbs_per_100g: 22, fat_per_100g: 0.5, vegetarian: true },
-  { name: 'Kidney bab', emoji: '🫘', calories_per_100g: 127, protein_per_100g: 8.7, carbs_per_100g: 22, fat_per_100g: 0.5, vegetarian: true },
+  { name: 'Vörösbab', emoji: '🫘', calories_per_100g: 127, protein_per_100g: 8.7, carbs_per_100g: 22, fat_per_100g: 0.5, vegetarian: true },
   { name: 'Mandulavaj', emoji: '🫙', calories_per_100g: 614, protein_per_100g: 21, carbs_per_100g: 19, fat_per_100g: 56, vegetarian: true, allergens: ['diófélék'] },
   // ── Gabonák (new names) ─────────────────────────────────────────
   { name: 'Fehér tészta', emoji: '🍝', calories_per_100g: 157, protein_per_100g: 5.8, carbs_per_100g: 31, fat_per_100g: 0.9, vegetarian: true, allergens: ['glutén'] },
@@ -208,7 +208,7 @@ export const SEED_FOODS: SeedFood[] = [
   { name: 'Pak choi', emoji: '🥬', calories_per_100g: 13, protein_per_100g: 1.5, carbs_per_100g: 2.2, fat_per_100g: 0.2, vegetarian: true },
   // ── Zöldségek — levél ───────────────────────────────────────────
   { name: 'Jégsaláta', emoji: '🥗', calories_per_100g: 14, protein_per_100g: 0.9, carbs_per_100g: 2.9, fat_per_100g: 0.1, vegetarian: true },
-  { name: 'Rukkola', emoji: '🥗', calories_per_100g: 25, protein_per_100g: 2.6, carbs_per_100g: 3.7, fat_per_100g: 0.7, vegetarian: true },
+  { name: 'Rucola', emoji: '🥗', calories_per_100g: 25, protein_per_100g: 2.6, carbs_per_100g: 3.7, fat_per_100g: 0.7, vegetarian: true },
   { name: 'Sóska', emoji: '🥬', calories_per_100g: 22, protein_per_100g: 2, carbs_per_100g: 3.2, fat_per_100g: 0.7, vegetarian: true },
   { name: 'Cikória', emoji: '🥬', calories_per_100g: 23, protein_per_100g: 1.7, carbs_per_100g: 4.7, fat_per_100g: 0.3, vegetarian: true },
   { name: 'Endívia', emoji: '🥬', calories_per_100g: 17, protein_per_100g: 1.3, carbs_per_100g: 3.4, fat_per_100g: 0.2, vegetarian: true },

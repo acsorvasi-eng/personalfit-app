@@ -32,7 +32,7 @@ export const mealPlan: WeekData[] = [
   {
     week: 1,
     summary: {
-      avgCalories: "~2000 kcal/nap",
+      avgCalories: "~1700 kcal/nap",
       protein: "~180g/nap",
       carbs: "Edzésnap ~170g, Pihenőnap ~100g",
       fat: "~70-80g/nap",
@@ -129,7 +129,7 @@ export const mealPlan: WeekData[] = [
         lunch: [
           {
             id: "w1d3l1",
-            name: "Marhahús quinoával és cukkini",
+            name: "Marhahús quinoával és cukkinivel",
             type: "lunch",
             calories: "720 kcal",
             description: "200g marhahús + 180g főtt quinoa + 200g cukkini",
@@ -296,7 +296,7 @@ export const mealPlan: WeekData[] = [
   {
     week: 2,
     summary: {
-      avgCalories: "~2000 kcal/nap",
+      avgCalories: "~1700 kcal/nap",
       protein: "~180g/nap",
       carbs: "Edzésnap ~170g, Pihenőnap ~100g",
       fat: "~70-80g/nap",
@@ -383,7 +383,7 @@ export const mealPlan: WeekData[] = [
         breakfast: [
           {
             id: "w2d3b1",
-            name: "Zabkása mandulatejjel és kendermag",
+            name: "Zabkása mandulatejjel és kendermaggal",
             type: "breakfast",
             calories: "500 kcal",
             description: "50g zab + 200ml mandulatej + 1 ek kendermag + 30g fehérjepor",
@@ -560,7 +560,7 @@ export const mealPlan: WeekData[] = [
   {
     week: 3,
     summary: {
-      avgCalories: "~2000 kcal/nap",
+      avgCalories: "~1700 kcal/nap",
       protein: "~180g/nap",
       carbs: "Edzésnap ~170g, Pihenőnap ~100g",
       fat: "~70-80g/nap",
@@ -824,7 +824,7 @@ export const mealPlan: WeekData[] = [
   {
     week: 4,
     summary: {
-      avgCalories: "~2000 kcal/nap",
+      avgCalories: "~1700 kcal/nap",
       protein: "~180g/nap",
       carbs: "Edzésnap ~170g, Pihenőnap ~100g",
       fat: "~70-80g/nap",
@@ -1019,7 +1019,7 @@ export const mealPlan: WeekData[] = [
         breakfast: [
           {
             id: "w4d6b1",
-            name: "Protein smoothie bowl",
+            name: "Fehérje smoothie tál",
             type: "breakfast",
             calories: "480 kcal",
             description: "40g zab + 30g fehérjepor + 200ml mandulatej + toppings",
@@ -1108,7 +1108,7 @@ export const foodDatabase: Food[] = [
     name: "Tojás",
     category: "Fehérje",
     description: "Teljes értékű fehérjeforrás, gazdag vitaminokban és ásványi anyagokban",
-    calories: "143",
+    calories: "155",
     protein: 13,
     carbs: 1,
     fat: 10,
@@ -1835,7 +1835,7 @@ export const foodDatabase: Food[] = [
   {
     id: "f51",
     name: "Áfonya",
-    category: "Egészséges zsír",
+    category: "Gyümölcs",
     description: "Antioxidánsokban gazdag bogyós gyümölcs",
     calories: "57",
     protein: 1,
@@ -1847,7 +1847,7 @@ export const foodDatabase: Food[] = [
   {
     id: "f52",
     name: "Gránátalma",
-    category: "Egészséges zsír",
+    category: "Gyümölcs",
     description: "Antioxidánsokban rendkívül gazdag gyümölcs",
     calories: "83",
     protein: 2,
@@ -1859,7 +1859,7 @@ export const foodDatabase: Food[] = [
   {
     id: "f53",
     name: "Kiwi",
-    category: "Egészséges zsír",
+    category: "Gyümölcs",
     description: "C-vitaminban rendkívül gazdag gyümölcs",
     calories: "61",
     protein: 1,
@@ -1871,7 +1871,7 @@ export const foodDatabase: Food[] = [
   {
     id: "f54",
     name: "Citrom",
-    category: "Egészséges zsír",
+    category: "Gyümölcs",
     description: "C-vitaminban gazdag citrusfélé",
     calories: "29",
     protein: 1,
@@ -1883,7 +1883,7 @@ export const foodDatabase: Food[] = [
   {
     id: "f55",
     name: "Málna",
-    category: "Egészséges zsír",
+    category: "Gyümölcs",
     description: "Magas rosttartalmú bogyós gyümölcs",
     calories: "52",
     protein: 1,
@@ -1919,7 +1919,7 @@ export const foodDatabase: Food[] = [
   },
   {
     id: "f58",
-    name: "Kókusztej",
+    name: "Kókusztej (konzerv)",
     category: "Egészséges zsír",
     description: "Közepes láncú zsírsavakban gazdag növényi tej",
     calories: "230",

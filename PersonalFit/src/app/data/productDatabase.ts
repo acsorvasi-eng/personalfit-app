@@ -1337,7 +1337,7 @@ const multiStoreProducts: MultiStoreProductDef[] = [
   },
   // Kiwi
   {
-    baseName: 'Kivi',
+    baseName: 'Kiwi',
     category: 'Gyümölcs',
     image: '🥝',
     unit: 'kg',

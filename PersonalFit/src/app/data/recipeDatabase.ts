@@ -199,7 +199,7 @@ export const recipeDatabase: Recipe[] = [
     ]
   },
   {
-    id: 'palacsintat',
+    id: 'palacsinta',
     name: 'Palacsinta',
     portionSize: 280,
     servings: 4,

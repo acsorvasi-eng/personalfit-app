@@ -304,7 +304,7 @@ const en: LocalePartial = {
   'store.share': 'Share',
   'store.directions': 'Directions',
   'store.productSuffix': 'products',
-  'store.estimated': 'lei estimated',
+  'store.estimated': 'estimated',
 
   // DSM defaults
   'dsm.confirm': 'Confirm',
