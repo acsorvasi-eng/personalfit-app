@@ -16,6 +16,9 @@ import { hapticFeedback } from '@/lib/haptics';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { translateFoodName } from '../../../utils/foodTranslations';
 import { FoodImage } from '../../../components/FoodImage';
+import { findFoodImage } from '../../../data/foodImages';
+import { getDeliveryLinks } from '../../../services/DailyMenuMatcherService';
+import { useGeolocation } from '../../../hooks/useGeolocation';
 import type { MealOption } from '../../../hooks/usePlanData';
 import type { StoredUserProfile } from '../../../backend/services/UserProfileService';
 
@@ -251,110 +254,97 @@ function MealDetailOverlay({
         <X className="w-5 h-5 text-gray-700" />
       </button>
 
-      {/* Scrollable content — pb-24 for bottom buttons */}
-      <div className="h-full overflow-y-auto pb-24">
-        {/* Full Width Image — No rounded corners */}
-        <div className="w-full">
-          <div className="[&_div]:!rounded-none [&_img]:!rounded-none" style={{ height: 256 }}>
-            <FoodImage foodName={meal.name || title} size="lg" fallbackEmoji="🍽️" className="w-full h-full" mealType={mealType} />
-          </div>
-        </div>
+      {/* Scrollable content */}
+      <div className="h-full overflow-y-auto" style={{ paddingBottom: 140 }}>
+        {/* Hero image — direct img, full bleed, no FoodImage size constraint */}
+        {(() => {
+          const match = findFoodImage(meal.name || title, mealType);
+          return (
+            <div className="w-full" style={{ height: 340 }}>
+              {match.url ? (
+                <img src={match.url} alt={meal.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center text-5xl">
+                  {match.emoji}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
-        {/* Meal Type Label Below Image */}
-        <div className="px-4 pt-3 pb-2">
+        {/* Content — tight to image */}
+        <div style={{ padding: '12px 24px 0' }}>
           <p className="text-sm text-gray-500">{title} · {time}</p>
-        </div>
-
-        {/* Dish Name */}
-        <div className="px-4 pb-4">
-          <h1 className="text-xl text-gray-900" style={{ fontWeight: 600 }}>
+          <h1 className="text-xl text-gray-900" style={{ fontWeight: 600, marginTop: 4 }}>
             {translateFoodName(meal.name, language)}
           </h1>
-        </div>
 
-        {/* Nutrition Info — Clean Grid (matches design zip) */}
-        <div className="px-4 pb-6">
-          <div className="grid grid-cols-4 gap-3">
-            {/* Calories */}
+          {/* Macro grid */}
+          <div className="grid grid-cols-4 gap-3" style={{ marginTop: 16 }}>
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-xl">
               <Flame className="w-5 h-5 text-orange-500 mb-1" />
               <p className="text-lg text-gray-900" style={{ fontWeight: 600 }}>{totalKcal}</p>
               <p className="text-xs text-gray-500">kcal</p>
             </div>
-            {/* Protein */}
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-xl">
               <Beef className="w-5 h-5 text-red-500 mb-1" />
-              <p className="text-lg text-gray-900" style={{ fontWeight: 600 }}>{typeof mealProtein === 'number' && mealProtein % 1 !== 0 ? mealProtein.toFixed(1) : mealProtein}g</p>
+              <p className="text-lg text-gray-900" style={{ fontWeight: 600 }}>{mealProtein % 1 !== 0 ? mealProtein.toFixed(1) : mealProtein}g</p>
               <p className="text-xs text-gray-500">Fehérje</p>
             </div>
-            {/* Carbs */}
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-xl">
               <Wheat className="w-5 h-5 text-amber-600 mb-1" />
               <p className="text-lg text-gray-900" style={{ fontWeight: 600 }}>{mealCarbs}g</p>
               <p className="text-xs text-gray-500">Szénhidrát</p>
             </div>
-            {/* Fiber / Fat */}
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-xl">
               <Apple className="w-5 h-5 text-green-600 mb-1" />
               <p className="text-lg text-gray-900" style={{ fontWeight: 600 }}>{mealFat}g</p>
               <p className="text-xs text-gray-500">Rost</p>
             </div>
           </div>
-        </div>
 
-        {/* Ingredients Section */}
-        <div className="px-4">
-          <h2 className="text-lg text-gray-900 mb-3" style={{ fontWeight: 600 }}>
+          {/* Ingredients */}
+          <h2 className="text-lg text-gray-900" style={{ fontWeight: 600, marginTop: 24 }}>
             {t('foods.ingredients') || 'Összetevők'}
           </h2>
 
-          {details && details.length > 0 && (
-            <div className="space-y-2">
-              {details.map((ing, idx) => (
-                <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                  <div className="flex-1">
-                    <p className="text-base text-gray-900">{translateFoodName(ing.name, language)}</p>
-                    {ing.quantity && <p className="text-sm text-gray-500">{ing.quantity}</p>}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-base text-emerald-600" style={{ fontWeight: 500 }}>{Math.round(ing.calories)} kcal</p>
-                  </div>
-                </div>
-              ))}
+          {details && details.length > 0 && details.map((ing, idx) => (
+            <div key={idx} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+              <div className="flex-1">
+                <p className="text-base text-gray-900">{translateFoodName(ing.name, language)}</p>
+                {ing.quantity && <p className="text-sm text-gray-500 mt-0.5">{ing.quantity}</p>}
+              </div>
+              <p className="text-base text-emerald-600" style={{ fontWeight: 500 }}>{Math.round(ing.calories)} kcal</p>
             </div>
-          )}
+          ))}
 
-          {(!details || details.length === 0) && meal.ingredients && meal.ingredients.length > 0 && (
-            <div className="space-y-2">
-              {meal.ingredients.map((ing, idx) => (
-                <div key={idx} className="py-3 border-b border-gray-100 last:border-0">
-                  <p className="text-base text-gray-900">{translateFoodName(ing, language)}</p>
-                </div>
-              ))}
+          {(!details || details.length === 0) && meal.ingredients && meal.ingredients.length > 0 && meal.ingredients.map((ing, idx) => (
+            <div key={idx} className="py-3 border-b border-gray-100 last:border-0">
+              <p className="text-base text-gray-900">{translateFoodName(ing, language)}</p>
             </div>
-          )}
+          ))}
         </div>
       </div>
 
-      {/* Floating Action Buttons (matches design zip exactly) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setIsRecipeOpen(true)}
-            className="flex-1 bg-emerald-600 text-white py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-sm"
-            style={{ fontWeight: 500 }}
-          >
-            <span className="text-lg">👨‍🍳</span>
-            <span>{t('menu.recipeBtn') || 'Recept'}</span>
-          </button>
-          <button
-            onClick={() => setIsOrderOpen(true)}
-            className="flex-1 bg-gray-100 text-gray-900 py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ fontWeight: 500 }}
-          >
-            <span className="text-lg">🍽️</span>
-            <span>{t('menu.orderBtn') || 'Megrendelés'}</span>
-          </button>
+      {/* Floating buttons — gradient fade */}
+      <div className="fixed bottom-0 left-0 right-0 z-20" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', background: '#ffffff' }}>
+        <div style={{ padding: '24px 24px 0', background: 'linear-gradient(to top, #ffffff 65%, transparent)', marginTop: '-24px' }}>
+          <div className="flex" style={{ gap: 12 }}>
+            <button
+              onClick={() => setIsRecipeOpen(true)}
+              className="flex-1 bg-primary text-white rounded-2xl text-base active:scale-[0.98] transition-transform"
+              style={{ fontWeight: 600, height: 56 }}
+            >
+              {t('menu.recipeBtn') || 'Recept'}
+            </button>
+            <button
+              onClick={() => setIsOrderOpen(true)}
+              className="flex-1 bg-gray-100 text-gray-900 rounded-2xl text-base active:scale-[0.98] transition-transform"
+              style={{ fontWeight: 600, height: 56 }}
+            >
+              {t('menu.orderBtn') || 'Megrendelés'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -422,33 +412,32 @@ function RecipeDrawerInline({ isOpen, onClose, meal, onFullRecipe }: {
         onClick={onClose}
       />
 
-      {/* Sheet */}
+      {/* Sheet — fixed height, no resize on tab change */}
       <motion.div
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
+          if (info.offset.y > 100 || info.velocity.y > 400) onClose();
+        }}
         className="fixed bottom-0 left-0 right-0 bg-white flex flex-col rounded-t-[24px]"
-        style={{ zIndex: 20000, maxHeight: '90vh' }}
+        style={{ zIndex: 20000, height: '85vh' }}
       >
         {/* Drag Handle */}
-        <div className="flex justify-center py-4">
+        <div className="flex justify-center py-4 cursor-grab">
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
         {/* Header */}
         <div className="px-4 pb-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <h2 className="text-xl text-gray-900" style={{ fontWeight: 600 }}>
               {translateFoodName(meal.name, language)}
             </h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
-              aria-label="Bezárás"
-            >
-              <X className="w-4 h-4 text-gray-700" />
-            </button>
           </div>
 
           {/* Tabs */}
@@ -587,20 +576,11 @@ function OrderDrawerInline({ isOpen, onClose, meal }: {
   meal: MealOption;
 }) {
   const { t, language } = useLanguage();
-  const [selectedProvider, setSelectedProvider] = useState<'all' | 'glovo' | 'wolt' | 'bolt'>('all');
-  const totalKcal = parseInt(meal.calories?.replace(/[^0-9]/g, '') || '0') || 0;
+  const geo = useGeolocation();
+  const mealName = translateFoodName(meal.name, language);
+  const links = getDeliveryLinks(mealName, geo.city || '', geo.country || '');
 
-  const restaurants = [
-    { id: '1', name: 'Rustic Kitchen', address: 'Calea Victoriei 45', distance: '1.2 km', deliveryTime: '25-35 perc', rating: 4.7, reviewCount: 324, provider: 'glovo' as const, price: 45, kcal: Math.round(totalKcal * 0.99), match: 99 },
-    { id: '2', name: 'Bistro Romana', address: 'Strada Lipscani 12', distance: '2.3 km', deliveryTime: '30-40 perc', rating: 4.5, reviewCount: 189, provider: 'wolt' as const, price: 52, kcal: Math.round(totalKcal * 0.98), match: 98 },
-    { id: '3', name: 'Traditional Flavors', address: 'Bulevardul Unirii 78', distance: '3.1 km', deliveryTime: '35-45 perc', rating: 4.8, reviewCount: 456, provider: 'glovo' as const, price: 48, kcal: Math.round(totalKcal * 0.98), match: 98 },
-    { id: '4', name: 'Casa Bucatarului', address: 'Strada Dorobanți 23', distance: '1.8 km', deliveryTime: '20-30 perc', rating: 4.6, reviewCount: 267, provider: 'bolt' as const, price: 42, kcal: Math.round(totalKcal * 0.97), match: 97 },
-  ];
-
-  const filtered = selectedProvider === 'all' ? restaurants : restaurants.filter(r => r.provider === selectedProvider);
-
-  const providerEmoji: Record<string, string> = { glovo: '🛵', wolt: '🚴', bolt: '⚡' };
-  const providerColor: Record<string, string> = { glovo: 'bg-yellow-100 text-yellow-700', wolt: 'bg-blue-100 text-blue-700', bolt: 'bg-green-100 text-green-700' };
+  const providerEmoji: Record<string, string> = { 'Bolt Food': '⚡', 'Glovo': '🛵', 'Wolt': '🚴' };
 
   return (
     <>
@@ -618,107 +598,51 @@ function OrderDrawerInline({ isOpen, onClose, meal }: {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 bg-white flex flex-col rounded-t-[24px]"
-        style={{ zIndex: 20000, maxHeight: '90vh' }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
+          if (info.offset.y > 100 || info.velocity.y > 400) onClose();
+        }}
+        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[24px]"
+        style={{ zIndex: 20000 }}
       >
         {/* Drag Handle */}
-        <div className="flex justify-center py-4">
+        <div className="flex justify-center py-4 cursor-grab">
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
-        {/* Header */}
-        <div className="px-4 pb-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1">
-              <h2 className="text-xl text-gray-900" style={{ fontWeight: 600 }}>
-                {t('menu.orderBtn') || 'Megrendelés'}
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                {filtered.length} étterem · {translateFoodName(meal.name, language)}
-              </p>
-            </div>
-            <button onClick={onClose} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center" aria-label="Bezárás">
-              <X className="w-4 h-4 text-gray-700" />
-            </button>
-          </div>
+        <div style={{ padding: '0 24px 24px' }}>
+          <h2 className="text-xl text-gray-900 mb-1" style={{ fontWeight: 600 }}>
+            {t('menu.orderBtn') || 'Megrendelés'}
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">{mealName}</p>
 
-          {/* Provider Filter Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {[
-              { key: 'all' as const, label: 'Összes', emoji: '', activeClass: 'bg-emerald-600 text-white' },
-              { key: 'glovo' as const, label: 'Glovo', emoji: '🛵', activeClass: 'bg-yellow-500 text-white' },
-              { key: 'wolt' as const, label: 'Wolt', emoji: '🚴', activeClass: 'bg-blue-500 text-white' },
-              { key: 'bolt' as const, label: 'Bolt', emoji: '⚡', activeClass: 'bg-green-500 text-white' },
-            ].map(f => (
+          {/* Delivery app buttons */}
+          <div className="space-y-3">
+            {links.map(link => (
               <button
-                key={f.key}
-                onClick={() => setSelectedProvider(f.key)}
-                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                  selectedProvider === f.key ? f.activeClass : 'bg-gray-100 text-gray-600'
-                }`}
-                style={{ fontWeight: 500 }}
+                key={link.name}
+                onClick={() => {
+                  hapticFeedback('light');
+                  window.open(link.url, '_blank');
+                }}
+                className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 text-base active:scale-[0.98] transition-transform"
+                style={{
+                  fontWeight: 600,
+                  backgroundColor: `${link.color}15`,
+                  color: link.color,
+                  border: `2px solid ${link.color}30`,
+                }}
               >
-                {f.emoji && <span>{f.emoji}</span>}
-                <span>{f.label}</span>
+                <span className="text-xl">{providerEmoji[link.name] || '🍽️'}</span>
+                {link.name}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Restaurant List */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="space-y-3">
-            {filtered.map(r => (
-              <div key={r.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                {/* Restaurant Info */}
-                <div className="p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="text-base text-gray-900" style={{ fontWeight: 600 }}>{r.name}</h3>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-yellow-400 text-sm">★</span>
-                        <span className="text-sm text-gray-900" style={{ fontWeight: 500 }}>{r.rating}</span>
-                        <span className="text-sm text-gray-500">({r.reviewCount})</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg text-emerald-600" style={{ fontWeight: 700 }}>{r.price} Lei</p>
-                      <p className="text-xs text-gray-500">{r.kcal} kcal</p>
-                    </div>
-                  </div>
-
-                  {/* Location & Time & Provider */}
-                  <div className="flex items-center gap-3 mb-3 flex-wrap">
-                    <span className="flex items-center gap-1 text-xs text-gray-500">📍 {r.distance}</span>
-                    <span className="flex items-center gap-1 text-xs text-gray-500">🕐 {r.deliveryTime}</span>
-                    <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${providerColor[r.provider]}`} style={{ fontWeight: 600 }}>
-                      {providerEmoji[r.provider]} {r.provider}
-                    </span>
-                    <span className="bg-emerald-600 text-white px-2.5 py-1 rounded-full text-xs flex items-center gap-1" style={{ fontWeight: 600 }}>
-                      <Flame className="w-3 h-3" />{r.match}%
-                    </span>
-                  </div>
-
-                  {/* Order Button */}
-                  <button
-                    onClick={() => { hapticFeedback('light'); window.open('#', '_blank'); }}
-                    className="w-full bg-emerald-600 text-white py-2.5 px-4 rounded-xl text-sm active:scale-95 transition-transform"
-                    style={{ fontWeight: 500 }}
-                  >
-                    {t('menu.orderBtn') || 'Megrendelés'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-3xl">🍽️</span>
-              </div>
-              <p className="text-gray-500 text-base">Nincs elérhető étterem ennél a szállítónál</p>
-            </div>
+          {geo.city && (
+            <p className="text-xs text-gray-400 text-center mt-4">📍 {geo.city}</p>
           )}
         </div>
 
