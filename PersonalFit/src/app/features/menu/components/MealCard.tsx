@@ -49,7 +49,7 @@ interface MealCardProps {
   isPassed: boolean;
   isToday: boolean;
   onSwapRequest: () => void;
-  onRecipeOpen: (tab: 'home' | 'restaurant') => void;
+  onRecipeOpen: (tab: 'recipe' | 'steps' | 'video') => void;
   userProfile: StoredUserProfile | null;
 }
 
@@ -224,7 +224,7 @@ function MealDetailOverlay({
   time: string;
   mealType: string;
   onClose: () => void;
-  onRecipeOpen: (tab: 'home' | 'restaurant') => void;
+  onRecipeOpen: (tab: 'recipe' | 'steps' | 'video') => void;
 }) {
   const { t, language } = useLanguage();
   const [isRecipeOpen, setIsRecipeOpen] = useState(false);
@@ -299,7 +299,7 @@ function MealDetailOverlay({
             <div className="flex flex-col items-center p-3 bg-gray-50 rounded-xl">
               <Apple className="w-5 h-5 text-green-600 mb-1" />
               <p className="text-lg text-gray-900" style={{ fontWeight: 600 }}>{mealFat}g</p>
-              <p className="text-xs text-gray-500">Rost</p>
+              <p className="text-xs text-gray-500">Zsír</p>
             </div>
           </div>
 
@@ -357,7 +357,7 @@ function MealDetailOverlay({
           onFullRecipe={() => {
             setIsRecipeOpen(false);
             onClose();
-            setTimeout(() => onRecipeOpen('home'), 150);
+            setTimeout(() => onRecipeOpen('recipe'), 150);
           }}
         />,
         document.body
@@ -537,23 +537,16 @@ function RecipeDrawerInline({ isOpen, onClose, meal, onFullRecipe }: {
               <h3 className="text-lg text-gray-900 mb-4" style={{ fontWeight: 600 }}>
                 {t('recipe.videoRecipe') || 'Videó recept'}
               </h3>
-              <div className="relative aspect-video rounded-xl overflow-hidden cursor-pointer bg-gray-900">
-                <iframe
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                  title="Recept videó"
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center">
-                    <span className="text-2xl text-emerald-600">🎬</span>
+              <div className="w-full rounded-2xl overflow-hidden bg-gray-100" style={{ aspectRatio: '16/9' }}>
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                  <div className="w-14 h-14 rounded-full bg-emerald-600/10 flex items-center justify-center">
+                    <span className="text-2xl">🎬</span>
                   </div>
+                  <p className="text-[14px] text-gray-500" style={{ fontWeight: 500 }}>
+                    {t('recipe.videoComingSoon') || 'YouTube integráció hamarosan'}
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-500 text-center">
-                {t('recipe.videoHint') || 'Kattints a videóra a teljes képernyős lejátszáshoz'}
-              </p>
             </div>
           )}
         </div>
@@ -625,7 +618,7 @@ function OrderDrawerInline({ isOpen, onClose, meal }: {
                 key={link.name}
                 onClick={() => {
                   hapticFeedback('light');
-                  window.open(link.url, '_blank');
+                  window.open(link.url, '_blank', 'noopener,noreferrer');
                 }}
                 className="w-full py-4 rounded-2xl flex items-center justify-center gap-3 text-base active:scale-[0.98] transition-transform"
                 style={{

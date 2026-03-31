@@ -2178,7 +2178,7 @@ function MealCardV5Wrapper({ slot, dayKey, isFocusMeal, isToday, isPassed, check
   todayMeals: MealOption[];
 }) {
   const [showRecipe, setShowRecipe] = useState(false);
-  const [recipeTab, setRecipeTab] = useState<'home' | 'restaurant'>('home');
+  const [recipeTab, setRecipeTab] = useState<'recipe' | 'steps' | 'video'>('recipe');
 
   const checked = slot.selected ? checkedMeals.has(slot.selected.id) : false;
 
@@ -2251,7 +2251,7 @@ function MealCardWithAlternatives(props: MealCardWithAlternativesProps) {
   const [expanded, setExpanded] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
   const [showRecipe, setShowRecipe] = useState(false);
-  const [recipeInitialTab, setRecipeInitialTab] = useState<'home' | 'restaurant'>('home');
+  const [recipeInitialTab, setRecipeInitialTab] = useState<'recipe' | 'steps' | 'video'>('recipe');
   const allOptions = primaryMeal ? [primaryMeal, ...alternatives] : alternatives;
   const canShowRecipe = mealType === 'lunch' || mealType === 'dinner';
 

@@ -1823,7 +1823,7 @@ export const foodDatabase: Food[] = [
   {
     id: "f50",
     name: "Banán",
-    category: "Komplex szénhidrát",
+    category: "Gyümölcs",
     description: "Káliumban gazdag gyümölcs, gyors energiaforrás",
     calories: "89",
     protein: 1,
