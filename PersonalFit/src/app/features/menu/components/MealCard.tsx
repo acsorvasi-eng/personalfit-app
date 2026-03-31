@@ -247,15 +247,15 @@ function MealDetailOverlay({
       {/* Close Button — Fixed Position (matches design zip exactly) */}
       <button
         onClick={onClose}
-        className="fixed top-4 right-4 z-50 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"
+        className="fixed top-4 right-4 z-50 w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"
         style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}
         aria-label="Bezárás"
       >
-        <X className="w-5 h-5 text-gray-700" />
+        <X className="w-5.5 h-5.5 text-gray-700" />
       </button>
 
       {/* Scrollable content */}
-      <div className="h-full overflow-y-auto" style={{ paddingBottom: 140 }}>
+      <div className="h-full overflow-y-auto" style={{ paddingBottom: 140, paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {/* Hero image — direct img, full bleed, no FoodImage size constraint */}
         {(() => {
           const match = findFoodImage(meal.name || title, mealType);
@@ -450,7 +450,7 @@ function RecipeDrawerInline({ isOpen, onClose, meal, onFullRecipe }: {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 py-2.5 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 ${
+                className={`flex-1 py-3 px-4 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 ${
                   activeTab === tab.key
                     ? 'bg-emerald-600 text-white'
                     : 'bg-gray-100 text-gray-600'

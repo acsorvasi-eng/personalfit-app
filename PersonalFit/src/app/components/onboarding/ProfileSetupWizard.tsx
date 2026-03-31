@@ -1080,7 +1080,7 @@ export function ProfileSetupWizard() {
       {/* Top bar — back button only, no progress bar */}
       <div className="flex items-center gap-3 px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 20px) + 0.5rem)" }}>
         {(step > 0 || step === LEGACY_FOODS_STEP) && (
-          <button onClick={goPrev} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+          <button onClick={goPrev} className="p-3 rounded-xl hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
         )}
@@ -1098,7 +1098,7 @@ export function ProfileSetupWizard() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="px-6 pb-40"
+            className="px-6 pb-48"
           >
             {step === 0 && <StepPersonal gender={gender} setGender={setGender} age={age} setAge={setAge} weight={weight} setWeight={setWeight} height={height} setHeight={setHeight} goal={goal} setGoal={setGoal} />}
             {step === 1 && (

@@ -212,7 +212,7 @@ function CalendarStrip({
     <div className="bg-background backdrop-blur-sm border-b border-border" role="region" aria-label={t("calendar.calendarView")}>
       {/* Month nav — subtle & elegant */}
       <div className="relative flex items-center justify-between px-5 py-2">
-        <button onClick={onPrevMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label={t("calendar.prevMonth")}>
+        <button onClick={onPrevMonth} className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label={t("calendar.prevMonth")}>
           <ChevronLeft className="w-3.5 h-3.5 text-gray-400" />
         </button>
         <button
@@ -234,12 +234,12 @@ function CalendarStrip({
             <button
               type="button"
               onClick={handleTodayClick}
-              className="px-[12px] py-[4px] rounded-[20px] text-sm font-medium bg-[#f0f0f0] text-[#333333]"
+              className="px-[12px] py-[10px] rounded-[20px] text-sm font-medium bg-[#f0f0f0] text-[#333333]"
             >
               {todayLabel}
             </button>
           )}
-          <button onClick={onNextMonth} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label={t("calendar.nextMonth")}>
+          <button onClick={onNextMonth} className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors" aria-label={t("calendar.nextMonth")}>
             <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
           </button>
         </div>

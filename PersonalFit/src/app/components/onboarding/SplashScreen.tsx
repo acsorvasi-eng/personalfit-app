@@ -296,7 +296,7 @@ export function SplashScreen() {
             whileTap={{ scale: 0.88 }}
             onClick={cycleLang}
             type="button"
-            className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer select-none"
+            className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer select-none"
             style={{
               background: 'rgba(255,255,255,0.15)',
               border: '2px solid rgba(255,255,255,0.3)',
@@ -327,7 +327,7 @@ export function SplashScreen() {
                     whileTap={{ scale: 0.88 }}
                     onClick={() => selectLang(lang.code as LanguageCode)}
                     type="button"
-                    className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer select-none"
+                    className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer select-none"
                     style={{ background: 'rgba(255,255,255,0.1)' }}
                     aria-label={lang.name}
                   >
